@@ -17,6 +17,17 @@ test('lists untracked files by extension, relative to the root', (t) => {
   ]);
 });
 
+test('lists tracked files beside untracked ones', (t) => {
+  const root = makeTree(t);
+
+  execFileSync('git', ['add', 'package.json'], { cwd: root });
+
+  assert.deepEqual(listFiles(root, '.json').sort(), [
+    'node_modules/pkg/package.json',
+    'package.json',
+  ]);
+});
+
 test('skips the files git ignores', (t) => {
   const root = makeTree(t);
 
