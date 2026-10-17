@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { test } from 'node:test';
+import { TOOLS } from '../../hooks/m6/parse-payload.ts';
+
+const ROOT = join(import.meta.dirname, '..', '..');
+const SETTINGS = join(ROOT, '.claude', 'settings.json');
+
+test('registers the m6 hook for exactly the tools it handles, failing closed', () => {
+  const settings: unknown = JSON.parse(readFileSync(SETTINGS, 'utf8'));
+
+  assert.deepEqual(settings, {
+    hooks: {
+      PreToolUse: [
+        {
+          matcher: TOOLS.join('|'),
+          hooks: [
+            {
+              type: 'command',
+              command: 'bash "${CLAUDE_PROJECT_DIR}/hooks/run.sh" m6',
+              timeout: 10,
+              onFailure: 'block',
+            },
+          ],
+        },
+      ],
+    },
+  });
+});
+
+test('names a bash entry and a hook that exist', () => {
+  const paths = [join(ROOT, 'hooks', 'run.sh'), join(ROOT, 'hooks', 'm6', 'main.ts')];
+
+  assert.deepEqual(paths.map((path) => existsSync(path)), [true, true]);
+});
