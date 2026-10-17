@@ -1,4 +1,4 @@
-export const TOOLS = ['Write'] as const;
+export const TOOLS = ['Write', 'Edit'] as const;
 
 export type Tool = (typeof TOOLS)[number];
 
@@ -8,7 +8,14 @@ export interface WriteCall {
   readonly content: string;
 }
 
-export type ToolCall = WriteCall;
+export interface EditCall {
+  readonly tool: 'Edit';
+  readonly filePath: string;
+  readonly oldString: string;
+  readonly newString: string;
+}
+
+export type ToolCall = WriteCall | EditCall;
 
 export interface ParsedCall {
   readonly kind: 'call';
@@ -26,6 +33,7 @@ type ToolInput = Readonly<Record<string, unknown>>;
 
 const parsers = {
   Write: parseWrite,
+  Edit: parseEdit,
 } as const satisfies Record<Tool, (toolInput: ToolInput) => Parsed>;
 
 export function parsePayload(stdinText: string): Parsed {
@@ -66,6 +74,35 @@ function parseWrite(toolInput: ToolInput): Parsed {
   }
 
   return { kind: 'call', call: { tool: 'Write', filePath, content } };
+}
+
+function parseEdit(toolInput: ToolInput): Parsed {
+  const {
+    file_path: filePath,
+    old_string: oldString,
+    new_string: newString,
+    replace_all: replaceAll,
+  } = toolInput;
+
+  if (!isText(filePath)) {
+    return makeFieldFailure('file_path');
+  }
+
+  if (!isText(oldString)) {
+    return makeFieldFailure('old_string');
+  }
+
+  if (!isText(newString)) {
+    return makeFieldFailure('new_string');
+  }
+
+  const isReplaceAllValid = replaceAll === undefined || typeof replaceAll === 'boolean';
+
+  if (!isReplaceAllValid) {
+    return makeFailure('tool_input.replace_all is not a boolean');
+  }
+
+  return { kind: 'call', call: { tool: 'Edit', filePath, oldString, newString } };
 }
 
 function isRecord(value: unknown): value is ToolInput {
