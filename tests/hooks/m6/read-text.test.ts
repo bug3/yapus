@@ -3,7 +3,7 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { readText } from '../../../hooks/m6/read-text.ts';
-import { makeTempDir } from '../../support/make-temp-dir.ts';
+import { makeTempDir } from '../../helpers/make-temp-dir.ts';
 
 test('reads the text of a file', async (t) => {
   const filePath = join(makeTempDir(t), 'a.md');

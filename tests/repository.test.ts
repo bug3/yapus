@@ -2,10 +2,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { test } from 'node:test';
-import { getModulesWithoutOwnExport } from './support/get-modules-without-own-export.ts';
-import { isCanonicalJson } from './support/is-canonical-json.ts';
-import { isKebabCase } from './support/is-kebab-case.ts';
-import { listFiles, listModules } from './support/list-files.ts';
+import { getModulesWithoutOwnExport } from './helpers/get-modules-without-own-export.ts';
+import { isCanonicalJson } from './helpers/is-canonical-json.ts';
+import { isKebabCase } from './helpers/is-kebab-case.ts';
+import { listFiles, listModules } from './helpers/list-files.ts';
 
 const ROOT = join(import.meta.dirname, '..');
 

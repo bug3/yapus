@@ -3,7 +3,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { makeTempDir } from '../support/make-temp-dir.ts';
+import { makeTempDir } from '../helpers/make-temp-dir.ts';
 
 interface RunOptions {
   readonly input: string;

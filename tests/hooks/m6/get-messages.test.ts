@@ -3,7 +3,7 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { getMessages } from '../../../hooks/m6/get-messages.ts';
-import { makeTempDir } from '../../support/make-temp-dir.ts';
+import { makeTempDir } from '../../helpers/make-temp-dir.ts';
 
 const MARKDOWN_PATH = '/r/a.md';
 const EN_DASH = String.fromCodePoint(0x2013);
