@@ -13,6 +13,7 @@ interface RunOptions {
 
 const RUN_SH = join(import.meta.dirname, '..', '..', 'hooks', 'run.sh');
 const STUB = 'stub';
+const SHELLCHECK_VERSION = '0.11.0';
 const BASH = getCommandPath('bash');
 
 test('exits 0 and passes stdin through when the hook passes', (t) => {
@@ -56,6 +57,54 @@ test('exits 2 when the hook is killed', (t) => {
     result.stderr,
     /yapus run\.sh: hook stub failed with exit 137; the call is blocked, fix the hook\n$/,
   );
+});
+
+test('finds its hook when started from another directory', (t) => {
+  const sandbox = makeSandbox(t, '');
+
+  const result = run(sandbox, STUB, { input: '', env: process.env, cwd: '/' });
+
+  assert.deepEqual([result.status, result.stderr], [0, '']);
+});
+
+test('exits 2 when the hook name is not lowercase letters and digits', (t) => {
+  const sandbox = makeSandbox(t, '');
+
+  const result = run(sandbox, '../stub', { input: '', env: process.env, cwd: sandbox });
+
+  assert.deepEqual(
+    [result.status, result.stderr],
+    [
+      2,
+      "yapus run.sh: hook name '../stub' is not lowercase letters and digits; fix the hook command\n",
+    ],
+  );
+});
+
+test('exits 2 when no hook has the name', (t) => {
+  const sandbox = makeSandbox(t, '');
+
+  const result = run(sandbox, 'other', { input: '', env: process.env, cwd: sandbox });
+
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /^yapus run\.sh: no hook at .*\/other\/main\.ts; fix the hook command\n$/);
+});
+
+test('finds shellcheck at the pinned version', () => {
+  const result = spawnSync('shellcheck', ['--version'], { encoding: 'utf8' });
+
+  assert.equal(result.error, undefined, `install shellcheck ${ SHELLCHECK_VERSION }`);
+  assert.match(
+    result.stdout,
+    new RegExp(`version: ${ SHELLCHECK_VERSION.replaceAll('.', '\\.') }\n`),
+    `install shellcheck ${ SHELLCHECK_VERSION }`,
+  );
+});
+
+test('passes shellcheck with no findings', () => {
+  const result = spawnSync('shellcheck', [RUN_SH], { encoding: 'utf8' });
+
+  assert.deepEqual([result.status, result.stdout], [0, '']);
 });
 
 function getCommandPath(command: string): string {
