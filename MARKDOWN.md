@@ -1,6 +1,6 @@
 # Markdown
 
-## M1. Write every rule as one heading: its id and one sentence.
+## M1. Write every rule as one heading, its id and one sentence, with nothing under it.
 
 ## M2. Write no sentence about the file itself.
 
