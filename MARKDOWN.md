@@ -11,3 +11,7 @@
 ## M5. Open no list with one item and no section with one subsection.
 
 ## M6. Use the ASCII hyphen only; no em or en dash.
+
+## M7. State where a rule applies when it does not apply everywhere.
+
+## M8. Leave no two rules that cannot both be obeyed, in one file or across files.
