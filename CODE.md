@@ -25,3 +25,11 @@
 ## C12. Give every check at least one input it must block and one it must pass, and keep both in the repository.
 
 ## C13. Write tests that reach no network and write no file outside their own temporary directory.
+
+## C14. Comment only what the code cannot say: the reason for a branch, a workaround or an ordering; never restate the code.
+
+## C15. Find a program's own files from the location of its own code, never from the working directory.
+
+## C16. End the process only from the entry file; return from every other module.
+
+## C17. At a program's start, check that every tool it needs is present at the version it needs.
