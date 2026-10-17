@@ -1,6 +1,6 @@
-import { assertNever } from './assert-never.ts';
+import { assertNever } from '../assert-never.ts';
+import type { Finding, Place } from '../findings/get-findings.ts';
 import { formatMessage } from './format-message.ts';
-import type { Finding, Place } from './get-findings.ts';
 
 export function formatFinding({ filePath, place, dashes }: Finding): string {
   const location = getLocation(filePath, place);

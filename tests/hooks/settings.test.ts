@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { TOOLS } from '../../hooks/dashes/parse-payload.ts';
+import { TOOLS } from '../../hooks/dashes/input/parse-payload.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 const SETTINGS = join(ROOT, '.claude', 'settings.json');

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getFirstLine } from '../../../hooks/dashes/get-first-line.ts';
+import { getFirstLine } from '../../../../hooks/dashes/output/get-first-line.ts';
 
 test('takes the first line of an error message', () => {
   assert.equal(getFirstLine(new Error('boom\n    at main')), 'boom');

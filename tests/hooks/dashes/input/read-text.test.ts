@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { readText } from '../../../hooks/dashes/read-text.ts';
-import { makeTempDir } from '../../helpers/make-temp-dir.ts';
+import { readText } from '../../../../hooks/dashes/input/read-text.ts';
+import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 
 test('reads the text of a file', async (t) => {
   const filePath = join(makeTempDir(t), 'a.md');

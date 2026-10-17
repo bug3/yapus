@@ -1,9 +1,9 @@
 import { writeSync } from 'node:fs';
 import { text } from 'node:stream/consumers';
-import { formatMessage } from './format-message.ts';
-import { getExitCode } from './get-exit-code.ts';
-import { getFirstLine } from './get-first-line.ts';
 import { getMessages } from './get-messages.ts';
+import { formatMessage } from './output/format-message.ts';
+import { getExitCode } from './output/get-exit-code.ts';
+import { getFirstLine } from './output/get-first-line.ts';
 
 const LIMIT_SECONDS = 5;
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { TOOLS, parsePayload } from '../../../hooks/dashes/parse-payload.ts';
+import { TOOLS, parsePayload } from '../../../../hooks/dashes/input/parse-payload.ts';
 
 const FILE_PATH = '/repo/a.md';
 const LONE_SURROGATE = String.fromCharCode(0xd803);

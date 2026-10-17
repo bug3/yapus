@@ -1,7 +1,7 @@
-import { assertNever } from './assert-never.ts';
+import { assertNever } from '../assert-never.ts';
+import type { EditCall, ToolCall } from '../input/parse-payload.ts';
 import { getDashLines } from './get-dash-lines.ts';
 import { isMarkdown } from './is-markdown.ts';
-import type { EditCall, ToolCall } from './parse-payload.ts';
 
 export interface FilePlace {
   readonly kind: 'file';

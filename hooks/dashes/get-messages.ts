@@ -1,9 +1,9 @@
-import { formatFinding } from './format-finding.ts';
-import { formatMessage } from './format-message.ts';
-import { getFindings } from './get-findings.ts';
-import { isMarkdown } from './is-markdown.ts';
-import { parsePayload } from './parse-payload.ts';
-import { readText } from './read-text.ts';
+import { getFindings } from './findings/get-findings.ts';
+import { isMarkdown } from './findings/is-markdown.ts';
+import { parsePayload } from './input/parse-payload.ts';
+import { readText } from './input/read-text.ts';
+import { formatFinding } from './output/format-finding.ts';
+import { formatMessage } from './output/format-message.ts';
 
 export async function getMessages(stdinText: string): Promise<string[]> {
   const parsed = parsePayload(stdinText);
