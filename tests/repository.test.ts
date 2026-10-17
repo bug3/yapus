@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { basename, join } from 'node:path';
 import { test } from 'node:test';
+import { getModulesWithoutOwnExport } from './support/get-modules-without-own-export.ts';
 import { isKebabCase } from './support/is-kebab-case.ts';
-import { listFiles } from './support/list-files.ts';
+import { listFiles, listModules } from './support/list-files.ts';
 
 const ROOT = join(import.meta.dirname, '..');
 
@@ -10,4 +11,8 @@ test('names every TypeScript file in kebab-case', () => {
   const fileNames = listFiles(ROOT, '.ts').map((path) => basename(path, '.ts'));
 
   assert.deepEqual(fileNames.filter((fileName) => !isKebabCase(fileName)), []);
+});
+
+test('exports from every module the camelCase of its file name', async () => {
+  assert.deepEqual(await getModulesWithoutOwnExport(ROOT, listModules(ROOT)), []);
 });
