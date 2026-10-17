@@ -4,7 +4,7 @@
 
 ## M2. Write no sentence about the file itself.
 
-## M3. Use no adjective that a measurement does not back.
+## M3. Use no adjective of degree that a measurement does not back.
 
 ## M4. Put a phrase in a table cell, never a sentence.
 
