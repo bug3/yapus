@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
+import { makeTempDir } from '../../helpers/make-temp-dir.ts';
 import { getModulesWithoutOwnExport } from './get-modules-without-own-export.ts';
-import { makeTempDir } from './make-temp-dir.ts';
 
 const NAMED_MODULE = 'get-name.ts';
 const MISNAMED_MODULE = 'get-other.ts';

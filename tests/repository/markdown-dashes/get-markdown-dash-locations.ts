@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { getDashLines } from '../../hooks/dashes/findings/get-dash-lines.ts';
-import { isMarkdown } from '../../hooks/dashes/findings/is-markdown.ts';
-import { listFiles } from './list-files.ts';
+import { getDashLines } from '../../../hooks/dashes/findings/get-dash-lines.ts';
+import { isMarkdown } from '../../../hooks/dashes/findings/is-markdown.ts';
+import { listFiles } from '../../helpers/list-files.ts';
 
 // Every line of a markdown file under root that holds a dash other than the
 // ASCII hyphen, as path:line, the hook's own dash list and markdown scope.

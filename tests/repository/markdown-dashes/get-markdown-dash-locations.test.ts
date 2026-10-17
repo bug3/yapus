@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
+import { makeTempDir } from '../../helpers/make-temp-dir.ts';
 import { getMarkdownDashLocations } from './get-markdown-dash-locations.ts';
-import { makeTempDir } from './make-temp-dir.ts';
 
 const EN_DASH = String.fromCodePoint(0x2013);
 const EM_DASH = String.fromCodePoint(0x2014);
