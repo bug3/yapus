@@ -1,0 +1,13 @@
+# Markdown
+
+## M1. Write every rule as one heading: its id and one sentence.
+
+## M2. Write no sentence about the file itself.
+
+## M3. Use no adjective that a measurement does not back.
+
+## M4. Put a phrase in a table cell, never a sentence.
+
+## M5. Open no list with one item and no section with one subsection.
+
+## M6. Use the ASCII hyphen only; no em or en dash.
