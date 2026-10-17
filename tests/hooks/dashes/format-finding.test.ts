@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { formatFinding } from '../../../hooks/m6/format-finding.ts';
-import type { Finding } from '../../../hooks/m6/get-findings.ts';
+import { formatFinding } from '../../../hooks/dashes/format-finding.ts';
+import type { Finding } from '../../../hooks/dashes/get-findings.ts';
 
 const LINE_SEPARATOR = String.fromCodePoint(0x2028);
 
@@ -14,7 +14,7 @@ test('formats a finding at a file line', () => {
 
   assert.equal(
     formatFinding(finding),
-    'yapus m6: /r/a.md:4: U+2014, U+2013; use the ASCII hyphen',
+    'yapus dashes: /r/a.md:4: U+2014, U+2013; use the ASCII hyphen',
   );
 });
 
@@ -27,7 +27,7 @@ test('formats a finding at a new_string line', () => {
 
   assert.equal(
     formatFinding(finding),
-    'yapus m6: /r/a.md: new_string line 1: U+10D6E; use the ASCII hyphen',
+    'yapus dashes: /r/a.md: new_string line 1: U+10D6E; use the ASCII hyphen',
   );
 });
 
@@ -40,7 +40,7 @@ test('writes a line feed in the path as its code point', () => {
 
   assert.equal(
     formatFinding(finding),
-    'yapus m6: /r/a<U+000A>b.md:1: U+2014; use the ASCII hyphen',
+    'yapus dashes: /r/a<U+000A>b.md:1: U+2014; use the ASCII hyphen',
   );
 });
 
@@ -53,6 +53,6 @@ test('writes a line separator in the path as its code point', () => {
 
   assert.equal(
     formatFinding(finding),
-    'yapus m6: /r/a<U+2028>b.md:1: U+2014; use the ASCII hyphen',
+    'yapus dashes: /r/a<U+2028>b.md:1: U+2014; use the ASCII hyphen',
   );
 });

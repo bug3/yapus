@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { isMarkdown } from '../../../hooks/m6/is-markdown.ts';
+import { isMarkdown } from '../../../hooks/dashes/is-markdown.ts';
 
 test('treats a .md path as markdown', () => {
   assert.equal(isMarkdown('/r/a.md'), true);

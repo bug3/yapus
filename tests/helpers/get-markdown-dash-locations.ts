@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { getDashLines } from '../../hooks/m6/get-dash-lines.ts';
-import { isMarkdown } from '../../hooks/m6/is-markdown.ts';
+import { getDashLines } from '../../hooks/dashes/get-dash-lines.ts';
+import { isMarkdown } from '../../hooks/dashes/is-markdown.ts';
 import { listFiles } from './list-files.ts';
 
 // Every line of a markdown file under root that holds a dash other than the

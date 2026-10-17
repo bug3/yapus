@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 
 const HOOKS = join(import.meta.dirname, '..', '..', '..', 'hooks');
-const MAIN = join(HOOKS, 'm6', 'main.ts');
+const MAIN = join(HOOKS, 'dashes', 'main.ts');
 const RUN_SH = join(HOOKS, 'run.sh');
 const EM_DASH = String.fromCodePoint(0x2014);
 const DASH_WRITE = JSON.stringify({
@@ -17,7 +17,7 @@ test('exits 2 and writes the finding to stderr for a Write that adds a dash', ()
 
   assert.deepEqual(
     [result.status, result.stdout, result.stderr],
-    [2, '', 'yapus m6: /r/a.md:1: U+2014; use the ASCII hyphen\n'],
+    [2, '', 'yapus dashes: /r/a.md:1: U+2014; use the ASCII hyphen\n'],
   );
 });
 
@@ -56,16 +56,16 @@ test('exits 2 when stdin stays open past the time limit', { timeout: 15000 }, as
 
   assert.deepEqual(
     [status, stderr],
-    [2, 'yapus m6: no answer within 5 seconds; the call is blocked, retry it\n'],
+    [2, 'yapus dashes: no answer within 5 seconds; the call is blocked, retry it\n'],
   );
 });
 
 test('exits 2 through the bash entry point for a Write that adds a dash', () => {
-  const result = spawnSync('bash', [RUN_SH, 'm6'], { encoding: 'utf8', input: DASH_WRITE });
+  const result = spawnSync('bash', [RUN_SH, 'dashes'], { encoding: 'utf8', input: DASH_WRITE });
 
   assert.deepEqual(
     [result.status, result.stderr],
-    [2, 'yapus m6: /r/a.md:1: U+2014; use the ASCII hyphen\n'],
+    [2, 'yapus dashes: /r/a.md:1: U+2014; use the ASCII hyphen\n'],
   );
 });
 

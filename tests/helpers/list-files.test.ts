@@ -10,28 +10,28 @@ test('lists files by extension, skipping node_modules', (t) => {
 
   assert.deepEqual(listFiles(root, '.ts').sort(), [
     'eslint.config.ts',
-    'hooks/m6/get-name.ts',
-    'hooks/m6/main.ts',
-    'tests/hooks/m6/get-name.test.ts',
+    'hooks/dashes/get-name.ts',
+    'hooks/dashes/main.ts',
+    'tests/hooks/dashes/get-name.test.ts',
   ]);
 });
 
 test('lists modules without tests, entries and tool-named files', (t) => {
   const root = makeTree(t);
 
-  assert.deepEqual(listModules(root), ['hooks/m6/get-name.ts']);
+  assert.deepEqual(listModules(root), ['hooks/dashes/get-name.ts']);
 });
 
 function makeTree(t: TestContext): string {
   const root = makeTempDir(t);
 
-  mkdirSync(join(root, 'hooks', 'm6'), { recursive: true });
-  mkdirSync(join(root, 'tests', 'hooks', 'm6'), { recursive: true });
+  mkdirSync(join(root, 'hooks', 'dashes'), { recursive: true });
+  mkdirSync(join(root, 'tests', 'hooks', 'dashes'), { recursive: true });
   mkdirSync(join(root, 'node_modules', 'pkg'), { recursive: true });
   writeFileSync(join(root, 'eslint.config.ts'), '');
-  writeFileSync(join(root, 'hooks', 'm6', 'main.ts'), '');
-  writeFileSync(join(root, 'hooks', 'm6', 'get-name.ts'), '');
-  writeFileSync(join(root, 'tests', 'hooks', 'm6', 'get-name.test.ts'), '');
+  writeFileSync(join(root, 'hooks', 'dashes', 'main.ts'), '');
+  writeFileSync(join(root, 'hooks', 'dashes', 'get-name.ts'), '');
+  writeFileSync(join(root, 'tests', 'hooks', 'dashes', 'get-name.test.ts'), '');
   writeFileSync(join(root, 'node_modules', 'pkg', 'index.ts'), '');
   writeFileSync(join(root, 'package.json'), '');
 

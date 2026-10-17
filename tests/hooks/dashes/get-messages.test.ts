@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { getMessages } from '../../../hooks/m6/get-messages.ts';
+import { getMessages } from '../../../hooks/dashes/get-messages.ts';
 import { makeTempDir } from '../../helpers/make-temp-dir.ts';
 
 const MARKDOWN_PATH = '/r/a.md';
@@ -16,7 +16,7 @@ test('names the line of an em dash in a Write of markdown', async () => {
   });
 
   assert.deepEqual(await getMessages(stdinText), [
-    'yapus m6: /r/a.md:2: U+2014; use the ASCII hyphen',
+    'yapus dashes: /r/a.md:2: U+2014; use the ASCII hyphen',
   ]);
 });
 
@@ -27,7 +27,7 @@ test('names the line of an en dash in a Write of markdown', async () => {
   });
 
   assert.deepEqual(await getMessages(stdinText), [
-    'yapus m6: /r/a.md:1: U+2013; use the ASCII hyphen',
+    'yapus dashes: /r/a.md:1: U+2013; use the ASCII hyphen',
   ]);
 });
 
@@ -60,7 +60,7 @@ test('names the file line an Edit lands on', async (t) => {
   });
 
   assert.deepEqual(await getMessages(stdinText), [
-    `yapus m6: ${ filePath }:2: U+2014; use the ASCII hyphen`,
+    `yapus dashes: ${ filePath }:2: U+2014; use the ASCII hyphen`,
   ]);
 });
 
@@ -72,13 +72,13 @@ test('names the new_string line for an Edit of a missing file', async (t) => {
   });
 
   assert.deepEqual(await getMessages(stdinText), [
-    `yapus m6: ${ filePath }: new_string line 1: U+2013; use the ASCII hyphen`,
+    `yapus dashes: ${ filePath }: new_string line 1: U+2013; use the ASCII hyphen`,
   ]);
 });
 
 test('reports stdin that is not JSON', async () => {
   assert.deepEqual(await getMessages('{'), [
-    'yapus m6: cannot judge: stdin is not JSON; the call is blocked until the payload is valid',
+    'yapus dashes: cannot judge: stdin is not JSON; the call is blocked until the payload is valid',
   ]);
 });
 
@@ -86,6 +86,6 @@ test('reports a tool other than Write and Edit', async () => {
   const stdinText = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'ls' } });
 
   assert.deepEqual(await getMessages(stdinText), [
-    'yapus m6: cannot judge: tool_name "Bash" is not one of Write, Edit; the call is blocked until the payload is valid',
+    'yapus dashes: cannot judge: tool_name "Bash" is not one of Write, Edit; the call is blocked until the payload is valid',
   ]);
 });
