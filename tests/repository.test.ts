@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { test } from 'node:test';
 import { getModulesWithoutOwnExport } from './support/get-modules-without-own-export.ts';
+import { isCanonicalJson } from './support/is-canonical-json.ts';
 import { isKebabCase } from './support/is-kebab-case.ts';
 import { listFiles, listModules } from './support/list-files.ts';
 
@@ -15,4 +17,13 @@ test('names every TypeScript file in kebab-case', () => {
 
 test('exports from every module the camelCase of its file name', async () => {
   assert.deepEqual(await getModulesWithoutOwnExport(ROOT, listModules(ROOT)), []);
+});
+
+test('writes every JSON file in the D2 form', () => {
+  const jsonPaths = listFiles(ROOT, '.json');
+
+  assert.deepEqual(
+    jsonPaths.filter((path) => !isCanonicalJson(readFileSync(join(ROOT, path), 'utf8'))),
+    [],
+  );
 });
