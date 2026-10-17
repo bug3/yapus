@@ -57,3 +57,9 @@
 ## E29. Grant a component the least authority its task needs and deny the rest by default.
 
 ## E30. Leave these decisions to a person: architecture, authentication, data migration, the shape of a public interface, dependency and technology choice, root cause.
+
+## E31. Split a folder when its files form more than one group that changes together, and give each group a subfolder of its own.
+
+## E32. Leave at the top of a folder only its entry file, the file that wires its subfolders together, the files more than one subfolder uses and the files a tool requires there.
+
+## E33. Keep a collection, files of one kind with one file per case, flat in one folder, and name its files so that related cases sort together.
