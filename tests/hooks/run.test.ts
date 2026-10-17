@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../support/make-temp-dir.ts';
@@ -15,6 +15,7 @@ const RUN_SH = join(import.meta.dirname, '..', '..', 'hooks', 'run.sh');
 const STUB = 'stub';
 const SHELLCHECK_VERSION = '0.11.0';
 const BASH = getCommandPath('bash');
+const DIRNAME = getCommandPath('dirname');
 
 test('exits 0 and passes stdin through when the hook passes', (t) => {
   const sandbox = makeSandbox(
@@ -90,6 +91,54 @@ test('exits 2 when no hook has the name', (t) => {
   assert.match(result.stderr, /^yapus run\.sh: no hook at .*\/other\/main\.ts; fix the hook command\n$/);
 });
 
+test('exits 2 with an install line when node is missing', (t) => {
+  const sandbox = makeSandbox(t, '');
+  const env = makeEnvWithoutNode(sandbox);
+
+  const result = run(sandbox, STUB, { input: '', env, cwd: sandbox });
+
+  assert.deepEqual(
+    [result.status, result.stderr],
+    [2, 'yapus run.sh: node not found; install Node 24 or newer\n'],
+  );
+});
+
+test('exits 2 with an install line when node cannot report its version', (t) => {
+  const sandbox = makeSandbox(t, '');
+  const env = makeEnvWithNode(sandbox, '#!/bin/sh\nexit 1\n');
+
+  const result = run(sandbox, STUB, { input: '', env, cwd: sandbox });
+
+  assert.deepEqual(
+    [result.status, result.stderr],
+    [2, 'yapus run.sh: node did not report its version; install Node 24 or newer\n'],
+  );
+});
+
+test('exits 2 with an install line when node reports a version that is not a number', (t) => {
+  const sandbox = makeSandbox(t, '');
+  const env = makeEnvWithNode(sandbox, '#!/bin/sh\necho v24\n');
+
+  const result = run(sandbox, STUB, { input: '', env, cwd: sandbox });
+
+  assert.deepEqual(
+    [result.status, result.stderr],
+    [2, "yapus run.sh: node reported version 'v24'; install Node 24 or newer\n"],
+  );
+});
+
+test('exits 2 with an install line when node is older than 24', (t) => {
+  const sandbox = makeSandbox(t, '');
+  const env = makeEnvWithNode(sandbox, '#!/bin/sh\necho 22\n');
+
+  const result = run(sandbox, STUB, { input: '', env, cwd: sandbox });
+
+  assert.deepEqual(
+    [result.status, result.stderr],
+    [2, 'yapus run.sh: node 22 found; install Node 24 or newer\n'],
+  );
+});
+
 test('finds shellcheck at the pinned version', () => {
   const result = spawnSync('shellcheck', ['--version'], { encoding: 'utf8' });
 
@@ -128,4 +177,23 @@ function run(sandbox: string, hookName: string, { input, env, cwd }: RunOptions)
     [join(sandbox, 'run.sh'), hookName],
     { cwd, encoding: 'utf8', env, input },
   );
+}
+
+// An environment whose PATH holds dirname and a stub node script.
+function makeEnvWithNode(sandbox: string, nodeScript: string): NodeJS.ProcessEnv {
+  const env = makeEnvWithoutNode(sandbox);
+
+  writeFileSync(join(sandbox, 'bin', 'node'), nodeScript, { mode: 0o755 });
+
+  return env;
+}
+
+// An environment whose PATH holds dirname and no node.
+function makeEnvWithoutNode(sandbox: string): NodeJS.ProcessEnv {
+  const bin = join(sandbox, 'bin');
+
+  mkdirSync(bin);
+  symlinkSync(DIRNAME, join(bin, 'dirname'));
+
+  return { ...process.env, PATH: bin };
 }
