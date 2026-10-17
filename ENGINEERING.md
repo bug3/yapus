@@ -8,7 +8,7 @@
 
 ## E4. State a module's whole contract at its interface: inputs, outputs, failure behavior, side effects.
 
-## E5. Keep one behavior in one place; when you split it, leave callers one entry point.
+## E5. Keep the parts of one behavior together; when you split it, leave callers one entry point.
 
 ## E6. Tolerate duplication until the third use; when an abstraction stops fitting its callers, put its body back at them instead of adding a parameter.
 
@@ -20,15 +20,13 @@
 
 ## E10. Write no boolean parameter that selects between two behaviors; write two functions or a type with one case per behavior.
 
-## E11. Declare a closed set of cases in one place and handle it only through a construct the compiler checks for exhaustiveness.
+## E11. When the program itself states a closed set of cases, declare it in one place and handle it only through a construct the compiler checks for exhaustiveness.
 
 ## E12. Address things by stable machine identifiers; keep text for people apart from keys.
 
 ## E13. Never put a structural change and a behavioral change in one change.
 
-## E14. One change carries one intent and about 100 changed lines; split one that nears 150, the structural part first.
-
-## E15. Make an operation's effects on the world visible in its interface.
+## E14. One change carries one intent and about 100 changed lines; split one that nears 150, and when one part is structural, split that part out first.
 
 ## E16. Give every hard-to-reverse effect a reverse path the repository can run.
 
@@ -36,9 +34,9 @@
 
 ## E18. Test a behavior through the interface its callers use, one behavior per test, named for the action and its outcome.
 
-## E19. Write no loop, no conditional and no expected value that the code under test computes.
+## E19. In a test, write no loop, no conditional and no expected value that the code under test computes.
 
-## E20. Merge no change without a command that answers pass or fail, and accept its exit code and output, not a sentence, as the result.
+## E20. Put no change into the repository without a command that answers pass or fail, and accept its exit code and output, not a sentence, as the result.
 
 ## E21. Treat every new warning as a failing check.
 
@@ -54,7 +52,7 @@
 
 ## E27. Use what the repository already depends on; open no second way to do the same thing.
 
-## E28. Call libraries from the program's own composition root; adopt no framework that composes the program.
+## E28. Wire the program's parts together in one place in its own code; adopt no framework that wires the program.
 
 ## E29. Grant a component the least authority its task needs and deny the rest by default.
 
