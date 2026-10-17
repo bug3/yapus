@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { makeTempDir } from '../../helpers/make-temp-dir.ts';
+import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
 import { getFoldersOverLimit } from './get-folders-over-limit.ts';
 
 test('counts the files of a folder but not its subfolders', (t) => {
@@ -26,7 +26,7 @@ test('skips a collection past the limit', (t) => {
 // Three files and the subfolder docs/ at the root, two files in docs/;
 // docs/ comes before the root's files in a sorted listing.
 function makeTreeOfThreeAndTwo(t: TestContext): string {
-  const root = makeTempDir(t);
+  const root = makeTempRepo(t);
 
   mkdirSync(join(root, 'docs'));
   writeFileSync(join(root, 'x.ts'), '');

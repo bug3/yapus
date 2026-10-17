@@ -4,7 +4,7 @@ import { listFiles } from '../../helpers/list-files.ts';
 // Every folder under root that holds more than limit files, as
 // folder: count, sorted, the root as '.'. Subfolders do not count as
 // files. A folder whose path relative to root is in collections is
-// skipped; its subfolders are not. The listing skips .git and node_modules.
+// skipped; its subfolders are not. Only the files git keeps count.
 export function getFoldersOverLimit(
   root: string,
   limit: number,

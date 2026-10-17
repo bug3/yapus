@@ -1,7 +1,6 @@
-import { readdirSync } from 'node:fs';
-import { basename, join, relative } from 'node:path';
-
-const SKIPPED_DIRECTORIES: readonly string[] = ['.git', 'node_modules'];
+import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { basename, join } from 'node:path';
 
 // eslint.config.ts is named by ESLint; main.ts is every hook's entry, named
 // by hooks/run.sh, and runs on import.
@@ -11,24 +10,24 @@ export function listModules(root: string): string[] {
   return listFiles(root, '.ts').filter(isModule);
 }
 
+// The files git keeps under root, tracked or untracked but not ignored,
+// that are on disk, relative to root; root is in a git work tree.
 export function listFiles(root: string, extension: string): string[] {
-  return getFilePaths(root)
-    .map((path) => relative(root, path))
-    .filter((path) => path.endsWith(extension));
+  return getKeptPaths(root)
+    .filter((path) => path.endsWith(extension))
+    .filter((path) => existsSync(join(root, path)));
 }
 
 function isModule(path: string): boolean {
   return !path.endsWith('.test.ts') && !NOT_MODULES.includes(basename(path));
 }
 
-function getFilePaths(directory: string): string[] {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(directory, entry.name);
+function getKeptPaths(root: string): string[] {
+  const listing = execFileSync(
+    'git',
+    ['ls-files', '-z', '--cached', '--others', '--exclude-standard'],
+    { cwd: root, encoding: 'utf8' },
+  );
 
-    if (entry.isDirectory()) {
-      return SKIPPED_DIRECTORIES.includes(entry.name) ? [] : getFilePaths(path);
-    }
-
-    return [path];
-  });
+  return listing.split('\0').filter((path) => path !== '');
 }
