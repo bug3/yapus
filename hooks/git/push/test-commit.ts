@@ -2,6 +2,7 @@ import { spawn, spawnSync, type StdioOptions } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync, symlinkSync, writeSync } from 'node:fs';
 import { join } from 'node:path';
 import { formatMessage } from './format-message.ts';
+import { getInterruptedViolation } from './get-interrupted-violation.ts';
 
 // The children's output is diagnostics, so both streams go to stderr.
 const TO_STDERR: StdioOptions = ['ignore', 2, 2];
@@ -89,7 +90,7 @@ async function runNpmTest(tree: string, commitToTest: CommitToTest): Promise<Com
     }
 
     case 'interrupted':
-      return { violation: `the push test was interrupted on ${ shortSha }` };
+      return { violation: getInterruptedViolation(shortSha) };
   }
 }
 

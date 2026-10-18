@@ -1,4 +1,5 @@
 import { getChildEnv } from './get-child-env.ts';
+import { getInterruptedViolation } from './get-interrupted-violation.ts';
 import { getPushCommits } from './get-push-commits.ts';
 import { getToolViolation } from './get-tool-violation.ts';
 import { testCommit, type Limits } from './test-commit.ts';
@@ -14,7 +15,8 @@ export interface PushInput {
 }
 
 // The first reason to refuse the push, or undefined when npm test passes on
-// the commit each pushed ref points to.
+// the commit each pushed ref points to. A signal that came while no npm test
+// ran still refuses the push.
 export async function getPushViolation(
   { stdinText, env, repository, tempParent, signal }: PushInput,
 ): Promise<string | undefined> {
@@ -42,5 +44,5 @@ export async function getPushViolation(
     }
   }
 
-  return undefined;
+  return signal.aborted ? getInterruptedViolation(undefined) : undefined;
 }

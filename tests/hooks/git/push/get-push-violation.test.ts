@@ -7,6 +7,8 @@ import { getGitEnv } from '../../../helpers/run-git.ts';
 import { FAILING_TEST, makeNpmRepo, PASSING_TEST } from './make-npm-repo.ts';
 
 const REMOTE_SHA = '1111111111111111111111111111111111111111';
+const DELETION_LINE =
+  '(delete) 0000000000000000000000000000000000000000 refs/heads/old 1111111111111111111111111111111111111111\n';
 
 test('passes a push whose commit passes npm test', async (t) => {
   const { repository, sha } = makeNpmRepo(t, PASSING_TEST);
@@ -44,6 +46,16 @@ test('refuses a push when git is missing', async (t) => {
   assert.equal(
     await getPushViolation({ ...pushInput, env: { PATH: makeTempDir(t) } }),
     'git not found; install git 2.17 or newer',
+  );
+});
+
+test('refuses a push that only deletes when a signal came', async (t) => {
+  const { repository } = makeNpmRepo(t, PASSING_TEST);
+  const pushInput = makePushInput(t, repository, DELETION_LINE);
+
+  assert.equal(
+    await getPushViolation({ ...pushInput, signal: AbortSignal.abort() }),
+    'the push test was interrupted',
   );
 });
 
