@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getExitCode } from '../../../../hooks/dashes/output/get-exit-code.ts';
+import { getExitCode } from '../../../../../hooks/claude/dashes/output/get-exit-code.ts';
 
 test('lets the call through with no message', () => {
   assert.equal(getExitCode([]), 0);

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getFindings } from '../../../../hooks/dashes/findings/get-findings.ts';
-import type { ToolCall } from '../../../../hooks/dashes/input/parse-payload.ts';
+import { getFindings } from '../../../../../hooks/claude/dashes/findings/get-findings.ts';
+import type { ToolCall } from '../../../../../hooks/claude/dashes/input/parse-payload.ts';
 
 const MARKDOWN_PATH = '/r/a.md';
 const EN_DASH = String.fromCodePoint(0x2013);

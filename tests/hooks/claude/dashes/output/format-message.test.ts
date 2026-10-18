@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { formatMessage } from '../../../../hooks/dashes/output/format-message.ts';
+import { formatMessage } from '../../../../../hooks/claude/dashes/output/format-message.ts';
 
 const LINE_SEPARATOR = String.fromCodePoint(0x2028);
 const NEXT_LINE = String.fromCodePoint(0x85);

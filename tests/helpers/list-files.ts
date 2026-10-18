@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { basename, join } from 'node:path';
 
 // eslint.config.ts is named by ESLint; main.ts is every hook's entry, named
-// by hooks/run.sh, and runs on import.
+// by hooks/claude/run.sh, and runs on import.
 const NOT_MODULES: readonly string[] = ['eslint.config.ts', 'main.ts'];
 
 export function listModules(root: string): string[] {

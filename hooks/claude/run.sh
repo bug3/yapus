@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -u
 
-# Runs hooks/<name>/main.ts. Claude Code lets a tool call through on any
+# Runs hooks/claude/<name>/main.ts. Claude Code lets a tool call through on any
 # exit but 0 and 2, so every other exit of the hook becomes 2.
 
 readonly INSTALL_NODE='install Node 24 or newer'

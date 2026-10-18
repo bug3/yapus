@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { DASHES, getDashLines } from '../../../../hooks/dashes/findings/get-dash-lines.ts';
+import {
+  DASHES,
+  getDashLines,
+} from '../../../../../hooks/claude/dashes/findings/get-dash-lines.ts';
 
 const EN_DASH = String.fromCodePoint(0x2013);
 const EM_DASH = String.fromCodePoint(0x2014);

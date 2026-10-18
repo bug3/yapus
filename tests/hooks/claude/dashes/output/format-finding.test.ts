@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import type { Finding } from '../../../../hooks/dashes/findings/get-findings.ts';
-import { formatFinding } from '../../../../hooks/dashes/output/format-finding.ts';
+import type { Finding } from '../../../../../hooks/claude/dashes/findings/get-findings.ts';
+import { formatFinding } from '../../../../../hooks/claude/dashes/output/format-finding.ts';
 
 const LINE_SEPARATOR = String.fromCodePoint(0x2028);
 

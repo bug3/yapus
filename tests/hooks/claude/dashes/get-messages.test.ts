@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { getMessages } from '../../../hooks/dashes/get-messages.ts';
-import { makeTempDir } from '../../helpers/make-temp-dir.ts';
+import { getMessages } from '../../../../hooks/claude/dashes/get-messages.ts';
+import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 
 const MARKDOWN_PATH = '/r/a.md';
 const EN_DASH = String.fromCodePoint(0x2013);

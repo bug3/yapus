@@ -3,7 +3,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-const HOOKS = join(import.meta.dirname, '..', '..', '..', 'hooks');
+const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', 'hooks', 'claude');
 const MAIN = join(HOOKS, 'dashes', 'main.ts');
 const RUN_SH = join(HOOKS, 'run.sh');
 const SUBPROCESS_TIMEOUT_MS = 10000;

@@ -3,7 +3,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { makeTempDir } from '../helpers/make-temp-dir.ts';
+import { makeTempDir } from '../../helpers/make-temp-dir.ts';
 
 interface RunOptions {
   readonly input: string;
@@ -11,7 +11,7 @@ interface RunOptions {
   readonly cwd: string;
 }
 
-const RUN_SH = join(import.meta.dirname, '..', '..', 'hooks', 'run.sh');
+const RUN_SH = join(import.meta.dirname, '..', '..', '..', 'hooks', 'claude', 'run.sh');
 const STUB = 'stub';
 const SHELLCHECK_VERSION = '0.11.0';
 const SUBPROCESS_TIMEOUT_MS = 10000;

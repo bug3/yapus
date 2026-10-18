@@ -1,6 +1,6 @@
 import { join } from 'node:path';
-import { getDashLines } from '../../../hooks/dashes/findings/get-dash-lines.ts';
-import { isMarkdown } from '../../../hooks/dashes/findings/is-markdown.ts';
+import { getDashLines } from '../../../hooks/claude/dashes/findings/get-dash-lines.ts';
+import { isMarkdown } from '../../../hooks/claude/dashes/findings/is-markdown.ts';
 import { listFiles } from '../../helpers/list-files.ts';
 import { readUtf8 } from '../../helpers/read-utf8.ts';
 
