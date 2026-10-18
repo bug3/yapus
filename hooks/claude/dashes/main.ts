@@ -1,6 +1,5 @@
 import { writeSync } from 'node:fs';
-import { text } from 'node:stream/consumers';
-import { getMessages } from './get-messages.ts';
+import { getMessagesWithinLimit } from './get-messages-within-limit.ts';
 import { formatMessage } from './output/format-message.ts';
 import { getExitCode } from './output/get-exit-code.ts';
 import { getFirstLine } from './output/get-first-line.ts';
@@ -8,18 +7,8 @@ import { getFirstLine } from './output/get-first-line.ts';
 const LIMIT_SECONDS = 5;
 
 async function main(): Promise<void> {
-  setTimeout(() => {
-    stop([
-      formatMessage(
-        `no answer within ${ String(LIMIT_SECONDS) } seconds; the call is blocked, retry it`,
-      ),
-    ]);
-  }, LIMIT_SECONDS * 1000);
-
   try {
-    const stdinText = await text(process.stdin);
-
-    stop(await getMessages(stdinText));
+    stop(await getMessagesWithinLimit(process.stdin, LIMIT_SECONDS));
   } catch (error) {
     stop([formatMessage(`crashed: ${ getFirstLine(error) }; the call is blocked, fix the hook`)]);
   }

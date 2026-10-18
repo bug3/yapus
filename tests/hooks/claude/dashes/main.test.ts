@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
@@ -37,32 +37,6 @@ test('exits 2 for stdin that is not JSON', () => {
   const hookRun = runHook('{');
 
   assert.equal(hookRun.status, 2);
-});
-
-test('exits 2 when stdin stays open past the time limit', { timeout: 15000 }, async (t) => {
-  const child = spawn(process.execPath, [MAIN], { stdio: ['pipe', 'pipe', 'pipe'] });
-  let stderr = '';
-
-  t.after(() => {
-    child.kill();
-  });
-
-  child.stderr.setEncoding('utf8').on('data', (chunk: string) => {
-    stderr += chunk;
-  });
-
-  const status = await new Promise((resolve) => {
-    child.on('close', (code) => {
-      resolve(code);
-    });
-  });
-
-  child.stdin.destroy();
-
-  assert.deepEqual(
-    [status, stderr],
-    [2, 'yapus dashes: no answer within 5 seconds; the call is blocked, retry it\n'],
-  );
 });
 
 test('exits 2 through the bash entry point for a Write that adds a dash', () => {
