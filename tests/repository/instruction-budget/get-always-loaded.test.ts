@@ -68,6 +68,15 @@ test('counts a rule file with no paths head and not one with a head', (t) => {
   assert.deepEqual(getAlwaysLoadedRules(root), ['X-1']);
 });
 
+test('counts the injected policy after the loaded files', (t) => {
+  const root = makeTree(t, [
+    { path: 'CLAUDE.md', text: '## A-1. x\n' },
+    { path: 'hooks/claude/providens/policy/policy.md', text: '## ORCH-1. y\n' },
+  ]);
+
+  assert.deepEqual(getAlwaysLoadedRules(root), ['A-1', 'ORCH-1']);
+});
+
 test('names an imported file that carries a paths head', (t) => {
   const root = makeTree(t, [
     { path: 'CLAUDE.md', text: '@standards/A.md\n' },

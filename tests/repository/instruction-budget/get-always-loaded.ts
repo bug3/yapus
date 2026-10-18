@@ -1,8 +1,12 @@
 import { existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative } from 'node:path';
+import { POLICY_PATH } from '../../../hooks/claude/providens/policy/get-context.ts';
 import { listFiles } from '../../helpers/list-files.ts';
 import { readUtf8 } from '../../helpers/read-utf8.ts';
 
+const REPOSITORY = join(import.meta.dirname, '..', '..', '..');
+// What a SessionStart hook injects into every session, relative to the root.
+const INJECTED_FILES: readonly string[] = [relative(REPOSITORY, POLICY_PATH)];
 const ROOT_INSTRUCTIONS = 'CLAUDE.md';
 const RULES_DIR = '.claude/rules/';
 const STANDARDS = 'standards/';
@@ -24,7 +28,8 @@ export interface AlwaysLoaded {
 }
 
 // The files Claude Code loads in every session: CLAUDE.md with what it
-// imports, to four hops, and every rule file that has no paths head.
+// imports, to four hops, every rule file that has no paths head, and every
+// injected file on disk.
 export function getAlwaysLoaded(root: string): AlwaysLoaded {
   const files: string[] = [];
   const missing: string[] = [];
@@ -41,7 +46,7 @@ export function getAlwaysLoaded(root: string): AlwaysLoaded {
       .filter((target) => !files.includes(target));
   }
 
-  return { files: [...files, ...getUnscopedRuleFiles(root)], missing };
+  return { files: [...files, ...getUnscopedRuleFiles(root), ...getInjectedFiles(root)], missing };
 }
 
 // The rule ids of every always-loaded file, in load order.
@@ -89,6 +94,10 @@ function getUnscopedRuleFiles(root: string): string[] {
   return listFiles(root, '.md')
     .filter((path) => path.startsWith(RULES_DIR))
     .filter((path) => !hasPathsHead(root, path));
+}
+
+function getInjectedFiles(root: string): string[] {
+  return INJECTED_FILES.filter((file) => existsSync(join(root, file)));
 }
 
 function getRuleIds(root: string, file: string): string[] {
