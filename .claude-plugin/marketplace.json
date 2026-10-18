@@ -1,0 +1,12 @@
+{
+  "name": "yapus",
+  "owner": {
+    "name": "bug3"
+  },
+  "plugins": [
+    {
+      "name": "providens",
+      "source": "./plugins/providens"
+    }
+  ]
+}

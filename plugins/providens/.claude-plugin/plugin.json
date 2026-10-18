@@ -1,0 +1,9 @@
+{
+  "name": "providens",
+  "description": "An orchestrator that divides work among a fixed roster of subagents, with launch limits and a cap on what returns to the main session.",
+  "author": {
+    "name": "bug3"
+  },
+  "repository": "https://github.com/bug3/yapus",
+  "license": "MIT"
+}
