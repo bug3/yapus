@@ -59,9 +59,11 @@ export async function testCommit(commitToTest: CommitToTest): Promise<CommitTest
     // --force, because the node_modules link is an untracked file in it.
     const worktreeRemove = spawnSync('git', ['worktree', 'remove', '--force', tree], gitOptions);
 
-    // The result stands; the line tells the user what is left behind.
+    // The result stands; the line tells the user what is left behind. A
+    // second --force removes a locked worktree too.
     if (worktreeRemove.status !== 0) {
-      const detail = `could not remove the worktree ${ tree }; run git worktree prune`;
+      const removal = `git worktree remove --force --force ${ tree }`;
+      const detail = `could not remove the worktree ${ tree }; run ${ removal }`;
 
       writeSync(process.stderr.fd, `${ formatMessage(detail) }\n`);
     }

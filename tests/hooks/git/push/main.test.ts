@@ -110,7 +110,8 @@ test('exits 2 and removes the worktree on SIGINT', async (t) => {
 
   assert.deepEqual(await interruptMain(t, npmRepo, 'SIGINT'), {
     status: 2,
-    lastLine: `yapus push: the push test was interrupted on ${ npmRepo.sha.slice(0, 12) }`,
+    lastLine: `yapus push: the push test was interrupted on ${
+      npmRepo.sha.slice(0, 12) }; push again to test it`,
     worktrees: [realpathSync(npmRepo.repository)],
     tempEntries: [],
   });
@@ -121,7 +122,8 @@ test('exits 2 and removes the worktree on SIGTERM', async (t) => {
 
   assert.deepEqual(await interruptMain(t, npmRepo, 'SIGTERM'), {
     status: 2,
-    lastLine: `yapus push: the push test was interrupted on ${ npmRepo.sha.slice(0, 12) }`,
+    lastLine: `yapus push: the push test was interrupted on ${
+      npmRepo.sha.slice(0, 12) }; push again to test it`,
     worktrees: [realpathSync(npmRepo.repository)],
     tempEntries: [],
   });
@@ -132,7 +134,8 @@ test('exits 2 and removes the worktree on SIGHUP', async (t) => {
 
   assert.deepEqual(await interruptMain(t, npmRepo, 'SIGHUP'), {
     status: 2,
-    lastLine: `yapus push: the push test was interrupted on ${ npmRepo.sha.slice(0, 12) }`,
+    lastLine: `yapus push: the push test was interrupted on ${
+      npmRepo.sha.slice(0, 12) }; push again to test it`,
     worktrees: [realpathSync(npmRepo.repository)],
     tempEntries: [],
   });
@@ -150,7 +153,7 @@ test('writes a line when it cannot remove its worktree', (t) => {
   assert.deepEqual([pushRun.status, pushRun.tempEntries], [0, []]);
   assert.match(
     pushRun.stderr.split('\n').at(-2) ?? '',
-    /^yapus push: could not remove the worktree \S+\/yapus-push-\w+\/tree; run git worktree prune$/,
+    /^yapus push: could not remove the worktree (\S+\/yapus-push-\w+\/tree); run git worktree remove --force --force \1$/,
   );
 });
 

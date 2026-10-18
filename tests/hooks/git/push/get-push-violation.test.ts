@@ -55,7 +55,7 @@ test('refuses a push that only deletes when a signal came', async (t) => {
 
   assert.equal(
     await getPushViolation({ ...pushInput, signal: AbortSignal.abort() }),
-    'the push test was interrupted',
+    'the push test was interrupted; push again to test it',
   );
 });
 

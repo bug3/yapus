@@ -112,7 +112,10 @@ test('kills the whole npm test on an abort and leaves no worktree', async (t) =>
 
   assert.deepEqual([await commitRun, await isGone(pidFile), existsSync(sentinel)], [
     {
-      commitTest: { violation: `the push test was interrupted on ${ npmRepo.sha.slice(0, 12) }` },
+      commitTest: {
+        violation: `the push test was interrupted on ${
+          npmRepo.sha.slice(0, 12) }; push again to test it`,
+      },
       worktrees: [realpathSync(npmRepo.repository)],
       tempEntries: [],
     },
