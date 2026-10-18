@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { listFiles, listModules } from './list-files.ts';
+import { listAllFiles, listFiles, listModules } from './list-files.ts';
 import { makeTempRepo } from './make-temp-repo.ts';
 import { runGit } from './run-git.ts';
 
@@ -43,6 +43,14 @@ test('skips a tracked file deleted from disk', (t) => {
   rmSync(join(root, 'package.json'));
 
   assert.deepEqual(listFiles(root, '.json'), ['node_modules/pkg/package.json']);
+});
+
+test('skips a link to a directory', (t) => {
+  const root = makeTree(t);
+
+  symlinkSync('hooks', join(root, 'runtime'));
+
+  assert.equal(listAllFiles(root).includes('runtime'), false);
 });
 
 test('lists modules without tests, entries and tool-named files', (t) => {

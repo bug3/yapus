@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { statSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { runGit } from './run-git.ts';
 
@@ -15,9 +15,14 @@ export function listFiles(root: string, extension: string): string[] {
 }
 
 // The files git keeps under root, tracked or untracked but not ignored,
-// that are on disk, relative to root; root is in a git work tree.
+// that are files on disk, relative to root; root is in a git work tree. A
+// link counts as what it points to, so a link to a directory is left out.
 export function listAllFiles(root: string): string[] {
-  return getKeptPaths(root).filter((path) => existsSync(join(root, path)));
+  return getKeptPaths(root).filter((path) => isFileOnDisk(join(root, path)));
+}
+
+function isFileOnDisk(path: string): boolean {
+  return statSync(path, { throwIfNoEntry: false })?.isFile() === true;
 }
 
 function isModule(path: string): boolean {
