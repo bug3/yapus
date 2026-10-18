@@ -1,6 +1,6 @@
 # TypeScript
 
-## TS-5. Run a program as `.ts` on Node 24 or newer; add no step that emits JavaScript.
+## TS-5. Run a Node program as `.ts` on Node 24 or newer; add no step that emits JavaScript.
 
 ## TS-7. Build an array with `map`, `filter`, `find`, `some` or `reduce`, not with a loop that fills an outer variable; use a loop for side effects.
 

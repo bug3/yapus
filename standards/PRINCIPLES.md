@@ -8,7 +8,7 @@
 
 ## P-4. Hold every rule a program can check with a check, not a sentence.
 
-## P-5. One file, one idea.
+## P-5. Put one idea in a file and nothing else.
 
 ## P-6. Write nothing that holds only on one machine or for one person.
 

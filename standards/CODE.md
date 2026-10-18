@@ -6,7 +6,7 @@
 
 ## CODE-3. Return a failure the program expects, such as invalid input or a missing file, as a value; throw only on a defect in the program itself.
 
-## CODE-4. Exit 0 on success and 2 when the program fails, blocks or cannot judge; turn every uncaught error into exit 2 and use no other exit code.
+## CODE-4. In a command-line program, exit 0 on success and 2 when the program fails, blocks or cannot judge; turn every uncaught error into exit 2 and use no other exit code.
 
 ## CODE-5. Write only the program's result to stdout; write diagnostics, progress, errors and violations to stderr.
 
@@ -14,7 +14,7 @@
 
 ## CODE-7. Name every violation a check finds by its file and line, or by the input it concerns when it has no line.
 
-## CODE-8. Write a program to run with no person present: it asks no question, prints no color code and expects no terminal.
+## CODE-8. Write a command-line program to run with no person present: it asks no question, prints no color code and expects no terminal.
 
 ## CODE-9. Put a time limit on every wait; when it passes, stop the work it waited for and fail.
 
