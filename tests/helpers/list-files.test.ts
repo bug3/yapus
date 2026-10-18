@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { listFiles, listModules } from './list-files.ts';
 import { makeTempRepo } from './make-temp-repo.ts';
+import { runGit } from './run-git.ts';
 
 test('lists untracked files by extension, relative to the root', (t) => {
   const root = makeTree(t);
@@ -20,7 +20,7 @@ test('lists untracked files by extension, relative to the root', (t) => {
 test('lists tracked files beside untracked ones', (t) => {
   const root = makeTree(t);
 
-  execFileSync('git', ['add', 'package.json'], { cwd: root });
+  runGit(['add', 'package.json'], root);
 
   assert.deepEqual(listFiles(root, '.json').sort(), [
     'node_modules/pkg/package.json',
@@ -39,7 +39,7 @@ test('skips the files git ignores', (t) => {
 test('skips a tracked file deleted from disk', (t) => {
   const root = makeTree(t);
 
-  execFileSync('git', ['add', 'package.json'], { cwd: root });
+  runGit(['add', 'package.json'], root);
   rmSync(join(root, 'package.json'));
 
   assert.deepEqual(listFiles(root, '.json'), ['node_modules/pkg/package.json']);

@@ -1,13 +1,18 @@
-import { execFileSync } from 'node:child_process';
 import type { TestContext } from 'node:test';
 import { makeTempDir } from './make-temp-dir.ts';
+import { runGit } from './run-git.ts';
 
-// A fresh temporary directory holding an empty git repository, removed
-// when the test ends.
+const IDENTITY_NAME = 'yapus test';
+const IDENTITY_EMAIL = 'test@example.invalid';
+
+// A fresh temporary directory holding an empty git repository with a local
+// identity, removed when the test ends.
 export function makeTempRepo(t: TestContext): string {
   const tempRepo = makeTempDir(t);
 
-  execFileSync('git', ['init', '--quiet'], { cwd: tempRepo, stdio: 'ignore' });
+  runGit(['init', '--quiet'], tempRepo);
+  runGit(['config', 'user.name', IDENTITY_NAME], tempRepo);
+  runGit(['config', 'user.email', IDENTITY_EMAIL], tempRepo);
 
   return tempRepo;
 }

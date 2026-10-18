@@ -1,6 +1,6 @@
-import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { basename, join } from 'node:path';
+import { runGit } from './run-git.ts';
 
 // eslint.config.ts is named by ESLint; main.ts is every hook's entry, named
 // by hooks/claude/run.sh, and runs on import.
@@ -23,11 +23,7 @@ function isModule(path: string): boolean {
 }
 
 function getKeptPaths(root: string): string[] {
-  const listing = execFileSync(
-    'git',
-    ['ls-files', '-z', '--cached', '--others', '--exclude-standard'],
-    { cwd: root, encoding: 'utf8' },
-  );
+  const listing = runGit(['ls-files', '-z', '--cached', '--others', '--exclude-standard'], root);
 
   return listing.split('\0').filter((path) => path !== '');
 }
