@@ -147,7 +147,8 @@ test('writes a line when it cannot remove its worktree', (t) => {
   const pushRun = runMain(t, repository, makePushLine(sha));
   const lockedTree = listWorktrees(repository)[1] ?? '';
 
-  runGit(['worktree', 'remove', '--force', '--force', lockedTree], repository);
+  runGit(['worktree', 'unlock', lockedTree], repository);
+  runGit(['worktree', 'prune'], repository);
 
   assert.deepEqual(
     [pushRun.status, pushRun.tempEntries, listWorktrees(repository).length],
@@ -155,7 +156,7 @@ test('writes a line when it cannot remove its worktree', (t) => {
   );
   assert.match(
     pushRun.stderr.split('\n').at(-2) ?? '',
-    /^yapus push: could not remove the worktree (\S+\/yapus-push-\w+\/tree); run git worktree remove --force --force \1$/,
+    /^yapus push: could not remove the worktree (\S+\/yapus-push-\w+\/tree); run git worktree unlock \1 if it is locked, then git worktree prune$/,
   );
 });
 
