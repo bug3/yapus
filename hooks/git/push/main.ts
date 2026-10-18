@@ -7,7 +7,8 @@ import { readStdin } from './read-stdin.ts';
 
 const STDIN_LIMIT_SECONDS = 5;
 const INTERRUPTS: readonly NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGHUP'];
-const NO_STDIN = 'no push lines within 5 seconds; the push is blocked, retry it';
+const NO_STDIN = `no push lines within ${
+  String(STDIN_LIMIT_SECONDS) } seconds; the push is blocked, retry it`;
 
 async function main(): Promise<void> {
   try {
