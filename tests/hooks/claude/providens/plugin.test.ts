@@ -6,7 +6,7 @@ import { test } from 'node:test';
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const PLUGIN = join(ROOT, 'plugins', 'providens');
 
-test('registers the policy, the launch gate failing closed, and the roster contract', () => {
+test('registers the policy, the launch gate, the roster contract and the return cap', () => {
   const hooks: unknown = JSON.parse(readFileSync(join(PLUGIN, 'hooks', 'hooks.json'), 'utf8'));
 
   assert.deepEqual(hooks, {
@@ -44,6 +44,19 @@ test('registers the policy, the launch gate failing closed, and the roster contr
               type: 'command',
               command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/contract',
               timeout: 10,
+            },
+          ],
+        },
+      ],
+      SubagentStop: [
+        {
+          matcher: '^providens:',
+          hooks: [
+            {
+              type: 'command',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/return',
+              timeout: 10,
+              onFailure: 'block',
             },
           ],
         },
