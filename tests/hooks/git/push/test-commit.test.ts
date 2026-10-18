@@ -146,9 +146,13 @@ async function runTestCommit(
   tempEntries: string[];
 }> {
   const tempParent = makeTempDir(t);
+  // The hook's own TMPDIR is its temporary parent; npm keeps a compile cache
+  // in TMPDIR, which the tests check is left empty, so the cache is off.
   const env = {
     ...getGitEnv(process.env),
     HOME: makeTempDir(t),
+    TMPDIR: tempParent,
+    NODE_DISABLE_COMPILE_CACHE: '1',
     npm_config_update_notifier: 'false',
     ...extraEnv,
   };

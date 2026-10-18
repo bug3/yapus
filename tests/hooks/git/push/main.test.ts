@@ -142,7 +142,7 @@ test('writes a line when it cannot remove its worktree', (t) => {
   runGit(['worktree', 'unlock', lockedTree], repository);
   runGit(['worktree', 'prune'], repository);
 
-  assert.equal(pushRun.status, 0);
+  assert.deepEqual([pushRun.status, pushRun.tempEntries], [0, []]);
   assert.match(
     pushRun.stderr.split('\n').at(-2) ?? '',
     /^yapus push: could not remove the worktree \S+\/yapus-push-\w+\/tree; run git worktree prune$/,

@@ -132,7 +132,7 @@ function runRealGit(t: TestContext, { repository, args, extraEnv = {} }: GitRun)
   return spawnSync('git', args, {
     cwd: repository,
     encoding: 'utf8',
-    env: { ...getGitEnv(process.env), HOME: makeTempDir(t), ...extraEnv },
+    env: { ...getGitEnv(process.env), HOME: makeTempDir(t), TMPDIR: makeTempDir(t), ...extraEnv },
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
 }

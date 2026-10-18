@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readdirSync } from 'node:fs';
 import { type TestContext, test } from 'node:test';
 import { getPushViolation } from '../../../../hooks/git/push/get-push-violation.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
@@ -9,16 +10,21 @@ const REMOTE_SHA = '1111111111111111111111111111111111111111';
 
 test('passes a push whose commit passes npm test', async (t) => {
   const { repository, sha } = makeNpmRepo(t, PASSING_TEST);
+  const pushInput = makePushInput(t, repository, makePushLine(sha));
 
-  assert.equal(await getPushViolation(makePushInput(t, repository, makePushLine(sha))), undefined);
+  assert.deepEqual(
+    [await getPushViolation(pushInput), readdirSync(pushInput.tempParent)],
+    [undefined, []],
+  );
 });
 
 test('refuses a push whose commit fails npm test', async (t) => {
   const { repository, sha } = makeNpmRepo(t, FAILING_TEST);
+  const pushInput = makePushInput(t, repository, makePushLine(sha));
 
-  assert.equal(
-    await getPushViolation(makePushInput(t, repository, makePushLine(sha))),
-    `npm test failed on ${ sha.slice(0, 12) }; fix it, then push again`,
+  assert.deepEqual(
+    [await getPushViolation(pushInput), readdirSync(pushInput.tempParent)],
+    [`npm test failed on ${ sha.slice(0, 12) }; fix it, then push again`, []],
   );
 });
 
@@ -45,12 +51,22 @@ function makePushLine(sha: string): string {
   return `refs/heads/main ${ sha } refs/heads/main ${ REMOTE_SHA }\n`;
 }
 
+// The hook's own TMPDIR is its temporary parent; npm keeps a compile cache in
+// TMPDIR, which the tests check is left empty, so the cache is off.
 function makePushInput(t: TestContext, repository: string, stdinText: string) {
+  const tempParent = makeTempDir(t);
+
   return {
     stdinText,
-    env: { ...getGitEnv(process.env), HOME: makeTempDir(t), npm_config_update_notifier: 'false' },
+    env: {
+      ...getGitEnv(process.env),
+      HOME: makeTempDir(t),
+      TMPDIR: tempParent,
+      NODE_DISABLE_COMPILE_CACHE: '1',
+      npm_config_update_notifier: 'false',
+    },
     repository,
-    tempParent: makeTempDir(t),
+    tempParent,
     signal: new AbortController().signal,
   };
 }
