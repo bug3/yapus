@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { getSubject } from './get-subject.ts';
 import { getViolations, type Catalogs } from './get-violations.ts';
 import { formatMessage } from './output/format-message.ts';
+import { partForms } from './part-forms.ts';
 import { readCatalog, type Catalog, type CatalogViolation } from './read-catalog.ts';
 
 export interface HookInput {
@@ -49,9 +50,9 @@ async function readMessage(messagePath: string): Promise<string | undefined> {
 
 async function readCatalogs(catalogsPath: string): Promise<Catalogs | CatalogViolation[]> {
   const [types, scopes, verbs] = await Promise.all([
-    readCatalog(join(catalogsPath, 'types.json')),
-    readCatalog(join(catalogsPath, 'scopes.json')),
-    readCatalog(join(catalogsPath, 'verbs.json')),
+    readCatalog(join(catalogsPath, 'types.json'), partForms.type),
+    readCatalog(join(catalogsPath, 'scopes.json'), partForms.scope),
+    readCatalog(join(catalogsPath, 'verbs.json'), partForms.verb),
   ]);
   const isEveryCatalogRead = 'words' in types && 'words' in scopes && 'words' in verbs;
 

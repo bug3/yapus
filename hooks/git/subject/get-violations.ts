@@ -1,8 +1,11 @@
+import { partForms } from './part-forms.ts';
 import type { Catalog } from './read-catalog.ts';
 
 // git's autosquash prefixes, which may stack.
 const AUTOSQUASH_PREFIXES = /^(?:(?:fixup|squash|amend)! )*/;
-const FORM = /^([a-z]+)\(([a-z0-9-]+)\): ([a-z]+)(?: .+)?$/;
+const FORM = new RegExp(
+  `^(${ partForms.type })\\((${ partForms.scope })\\): (${ partForms.verb })(?: .+)?$`,
+);
 
 export interface Catalogs {
   readonly types: Catalog;

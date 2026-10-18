@@ -1,8 +1,5 @@
 import { readFile } from 'node:fs/promises';
 
-// The widest form a part of a subject takes: a scope's.
-const WORD = /^[a-z0-9-]+$/;
-
 export interface Catalog {
   readonly path: string;
   readonly words: readonly string[];
@@ -12,7 +9,10 @@ export interface CatalogViolation {
   readonly violation: string;
 }
 
-export async function readCatalog(path: string): Promise<Catalog | CatalogViolation> {
+export async function readCatalog(
+  path: string,
+  wordForm: string,
+): Promise<Catalog | CatalogViolation> {
   let catalogText: string;
 
   try {
@@ -29,17 +29,16 @@ export async function readCatalog(path: string): Promise<Catalog | CatalogViolat
     return makeViolation(path, 'is not JSON');
   }
 
-  return isWordList(words)
+  return isWordList(words, new RegExp(`^(?:${ wordForm })$`))
     ? { path, words }
     : makeViolation(path, 'is not a sorted array of distinct lowercase words');
 }
 
-function isWordList(words: unknown): words is string[] {
-  return Array.isArray(words) && words.every(isWord) && isSortedAndDistinct(words);
-}
+function isWordList(words: unknown, wordForm: RegExp): words is string[] {
+  const isWord = (word: unknown): word is string =>
+    typeof word === 'string' && wordForm.test(word);
 
-function isWord(word: unknown): word is string {
-  return typeof word === 'string' && WORD.test(word);
+  return Array.isArray(words) && words.every(isWord) && isSortedAndDistinct(words);
 }
 
 function isSortedAndDistinct(words: readonly string[]): boolean {
