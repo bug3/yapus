@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import {
   getReturnVerdict,
-} from '../../../../../hooks/claude/providens/return/get-return-verdict.ts';
+} from '../../../../../hooks/claude/tyler/return/get-return-verdict.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
 const FIELDS = { session_id: 's1', agent_type: 'providens:deacon' };

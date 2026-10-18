@@ -5,7 +5,7 @@ import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
 const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', '..', 'hooks');
-const MAIN = join(HOOKS, 'claude', 'providens', 'return', 'main.ts');
+const MAIN = join(HOOKS, 'claude', 'tyler', 'return', 'main.ts');
 const RUN_SH = join(HOOKS, 'run.sh');
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const FIELDS = { session_id: 's1', agent_type: 'providens:deacon' };
@@ -25,7 +25,7 @@ test('exits 2 and tells the subagent to shorten a first return over the cap', (t
 
 test('exits 0 through the bash entry point for a return within the cap', (t) => {
   const tempDir = makeTempDir(t);
-  const entryRun = spawnSync('bash', [RUN_SH, 'claude/providens/return'], {
+  const entryRun = spawnSync('bash', [RUN_SH, 'claude/tyler/return'], {
     cwd: tempDir,
     encoding: 'utf8',
     env: { ...process.env, HOME: tempDir, TMPDIR: tempDir, CLAUDE_PLUGIN_DATA: tempDir },

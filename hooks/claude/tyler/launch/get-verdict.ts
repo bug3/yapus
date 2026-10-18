@@ -1,6 +1,6 @@
 import { admitLaunch } from './admit-launch.ts';
 import { getRefusal } from './get-refusal.ts';
-import { logDecision } from '../log-decision.ts';
+import { logDecision } from '../../providens/log-decision.ts';
 import { parseLaunch } from './parse-launch.ts';
 
 export interface Input {

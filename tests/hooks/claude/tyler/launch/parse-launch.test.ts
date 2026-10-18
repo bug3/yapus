@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { parseLaunch } from '../../../../../hooks/claude/providens/launch/parse-launch.ts';
+import { parseLaunch } from '../../../../../hooks/claude/tyler/launch/parse-launch.ts';
 
 const MAIN_CALL = {
   session_id: 'abc-1',

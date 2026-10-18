@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { getVerdict } from '../../../../../hooks/claude/providens/launch/get-verdict.ts';
+import { getVerdict } from '../../../../../hooks/claude/tyler/launch/get-verdict.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
 const FIELDS = {

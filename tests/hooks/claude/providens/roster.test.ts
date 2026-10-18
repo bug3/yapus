@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { test } from 'node:test';
-import { ROSTER } from '../../../../hooks/claude/providens/launch/get-refusal.ts';
+import { ROSTER } from '../../../../hooks/claude/tyler/launch/get-refusal.ts';
 
 const AGENTS = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'providens', 'agents');
 

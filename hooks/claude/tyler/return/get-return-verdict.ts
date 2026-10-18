@@ -1,5 +1,5 @@
-import { RETURN_CAP_CHARACTERS } from '../contract/get-context.ts';
-import { logDecision } from '../log-decision.ts';
+import { RETURN_CAP_CHARACTERS } from '../../providens/contract/get-context.ts';
+import { logDecision } from '../../providens/log-decision.ts';
 import { parseStop } from './parse-stop.ts';
 
 export interface Input {

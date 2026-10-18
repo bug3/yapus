@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { admitLaunch } from '../../../../../hooks/claude/providens/launch/admit-launch.ts';
+import { admitLaunch } from '../../../../../hooks/claude/tyler/launch/admit-launch.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
 test('admits a launch and counts it in the session log', (t) => {

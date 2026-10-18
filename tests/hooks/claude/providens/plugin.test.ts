@@ -29,7 +29,7 @@ test('registers the policy, the launch gate, the roster contract and the return 
           hooks: [
             {
               type: 'command',
-              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/launch',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/launch',
               timeout: 10,
               onFailure: 'block',
             },
@@ -54,7 +54,7 @@ test('registers the policy, the launch gate, the roster contract and the return 
           hooks: [
             {
               type: 'command',
-              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/return',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/return',
               timeout: 10,
               onFailure: 'block',
             },
