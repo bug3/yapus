@@ -18,7 +18,7 @@ test('registers the dashes hook for exactly the tools it handles, failing closed
           hooks: [
             {
               type: 'command',
-              command: 'bash "${CLAUDE_PROJECT_DIR}/hooks/claude/run.sh" dashes',
+              command: 'bash "${CLAUDE_PROJECT_DIR}/hooks/run.sh" claude/dashes',
               timeout: 10,
               onFailure: 'block',
             },
@@ -31,7 +31,7 @@ test('registers the dashes hook for exactly the tools it handles, failing closed
 
 test('names a bash entry and a hook that exist', () => {
   const paths = [
-    join(ROOT, 'hooks', 'claude', 'run.sh'),
+    join(ROOT, 'hooks', 'run.sh'),
     join(ROOT, 'hooks', 'claude', 'dashes', 'main.ts'),
   ];
 

@@ -5,7 +5,7 @@ import { test } from 'node:test';
 
 const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', 'hooks', 'claude');
 const MAIN = join(HOOKS, 'dashes', 'main.ts');
-const RUN_SH = join(HOOKS, 'run.sh');
+const RUN_SH = join(import.meta.dirname, '..', '..', '..', '..', 'hooks', 'run.sh');
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const EM_DASH = String.fromCodePoint(0x2014);
 const DASH_WRITE = JSON.stringify({
@@ -40,7 +40,7 @@ test('exits 2 for stdin that is not JSON', () => {
 });
 
 test('exits 2 through the bash entry point for a Write that adds a dash', () => {
-  const entryRun = spawnSync('bash', [RUN_SH, 'dashes'], {
+  const entryRun = spawnSync('bash', [RUN_SH, 'claude/dashes'], {
     encoding: 'utf8',
     input: DASH_WRITE,
     timeout: SUBPROCESS_TIMEOUT_MS,

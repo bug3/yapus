@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PROJECT_DIR}/hooks/claude/run.sh\" dashes",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/hooks/run.sh\" claude/dashes",
             "timeout": 10,
             "onFailure": "block"
           }
