@@ -147,10 +147,12 @@ test('writes a line when it cannot remove its worktree', (t) => {
   const pushRun = runMain(t, repository, makePushLine(sha));
   const lockedTree = listWorktrees(repository)[1] ?? '';
 
-  runGit(['worktree', 'unlock', lockedTree], repository);
-  runGit(['worktree', 'prune'], repository);
+  runGit(['worktree', 'remove', '--force', '--force', lockedTree], repository);
 
-  assert.deepEqual([pushRun.status, pushRun.tempEntries], [0, []]);
+  assert.deepEqual(
+    [pushRun.status, pushRun.tempEntries, listWorktrees(repository).length],
+    [0, [], 1],
+  );
   assert.match(
     pushRun.stderr.split('\n').at(-2) ?? '',
     /^yapus push: could not remove the worktree (\S+\/yapus-push-\w+\/tree); run git worktree remove --force --force \1$/,
