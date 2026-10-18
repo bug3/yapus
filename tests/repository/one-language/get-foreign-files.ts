@@ -1,0 +1,24 @@
+import { basename, extname } from 'node:path';
+import { listAllFiles } from '../../helpers/list-files.ts';
+
+// The repository's language, and the formats its docs, data and tools use.
+const KEPT_EXTENSIONS: readonly string[] = ['.ts', '.md', '.json'];
+const KEPT_NAMES: readonly string[] = ['.gitignore'];
+// Bash only where a hook needs an entry that finds Node.
+const SHELL_ENTRIES: readonly string[] = [
+  'hooks/run.sh',
+  'hooks/git/commit-msg',
+  'hooks/git/pre-push',
+];
+
+// Every kept file under root in a language or format the repository does
+// not use.
+export function getForeignFiles(root: string): string[] {
+  return listAllFiles(root).filter((path) => !isKept(path));
+}
+
+function isKept(path: string): boolean {
+  return KEPT_EXTENSIONS.includes(extname(path))
+    || KEPT_NAMES.includes(basename(path))
+    || SHELL_ENTRIES.includes(path);
+}
