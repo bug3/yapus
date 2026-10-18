@@ -1,9 +1,10 @@
 import { basename, extname } from 'node:path';
 import { listAllFiles } from '../../helpers/list-files.ts';
 
-// The repository's language, and the formats its docs, data and tools use.
+// The repository's language, the formats its docs, data and tools use, and
+// its license.
 const KEPT_EXTENSIONS: readonly string[] = ['.ts', '.md', '.json'];
-const KEPT_NAMES: readonly string[] = ['.gitignore'];
+const KEPT_NAMES: readonly string[] = ['.gitignore', 'LICENSE'];
 // Bash only where a hook needs an entry that finds Node.
 const SHELL_ENTRIES: readonly string[] = [
   'hooks/run.sh',

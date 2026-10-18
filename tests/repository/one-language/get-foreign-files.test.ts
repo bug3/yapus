@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
 import { getForeignFiles } from './get-foreign-files.ts';
 
-test('finds nothing among TypeScript, markdown, JSON and the shell entries', (t) => {
+test('finds nothing among TypeScript, markdown, JSON, the license and the shell entries', (t) => {
   const root = makeTempRepo(t);
 
   mkdirSync(join(root, 'hooks'));
@@ -13,6 +13,7 @@ test('finds nothing among TypeScript, markdown, JSON and the shell entries', (t)
   writeFileSync(join(root, 'b.md'), '');
   writeFileSync(join(root, 'c.json'), '');
   writeFileSync(join(root, '.gitignore'), '');
+  writeFileSync(join(root, 'LICENSE'), '');
   writeFileSync(join(root, 'hooks', 'run.sh'), '');
 
   assert.deepEqual(getForeignFiles(root), []);
