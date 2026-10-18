@@ -1,15 +1,28 @@
 import assert from 'node:assert/strict';
-import { readdirSync, realpathSync, rmSync } from 'node:fs';
+import {
+  existsSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { testCommit, type CommitTest } from '../../../../hooks/git/push/test-commit.ts';
+import {
+  testCommit, type CommitTest, type Limits,
+} from '../../../../hooks/git/push/test-commit.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { getGitEnv } from '../../../helpers/run-git.ts';
 import { listWorktrees } from './list-worktrees.ts';
 import { FAILING_TEST, makeNpmRepo, type NpmRepo, PASSING_TEST } from './make-npm-repo.ts';
+import { waitUntil } from './wait-until.ts';
 
 const LIMITS = { gitMs: 10000, npmTestMs: 30000 };
 const MISSING_SHA = 'dddddddddddddddddddddddddddddddddddddddd';
+// Starts a sleeping grandchild that writes its pid to PID_FILE, then sleeps.
+const GRANDCHILD_TEST = 'sleep 30 & echo $! > "$PID_FILE"; sleep 30';
+const WAIT_MS = 10000;
+
+interface CommitRun {
+  readonly limits: Limits;
+  readonly extraEnv: NodeJS.ProcessEnv;
+}
 
 test('passes a commit whose npm test passes and leaves no worktree', async (t) => {
   const npmRepo = makeNpmRepo(t, PASSING_TEST);
@@ -55,7 +68,54 @@ test('refuses a sha the repository does not have and leaves no worktree', async 
   });
 });
 
-async function runTestCommit(t: TestContext, { repository, sha }: NpmRepo): Promise<{
+test('kills the whole npm test on its time limit and leaves no worktree', async (t) => {
+  const npmRepo = makeNpmRepo(t, GRANDCHILD_TEST);
+  const pidFile = join(makeTempDir(t), 'pid');
+  const sentinel = join(npmRepo.repository, 'node_modules', 'sentinel');
+  const limits = { gitMs: 10000, npmTestMs: 300 };
+
+  writeFileSync(sentinel, '');
+
+  const commitRun = await runTestCommit(t, npmRepo, {
+    limits, extraEnv: { PID_FILE: pidFile },
+  });
+
+  assert.deepEqual([commitRun, await isGone(pidFile), existsSync(sentinel)], [
+    {
+      commitTest: {
+        violation: `npm test gave no answer within 0.3 seconds on ${
+          npmRepo.sha.slice(0, 12) }; make it faster, then push again`,
+      },
+      worktrees: [realpathSync(npmRepo.repository)],
+      tempEntries: [],
+    },
+    true,
+    true,
+  ]);
+});
+
+// A killed process can linger as a zombie until its new parent reaps it.
+async function isGone(pidFile: string): Promise<boolean> {
+  const pid = Number(readFileSync(pidFile, 'utf8'));
+
+  return waitUntil(() => !isAlive(pid), WAIT_MS);
+}
+
+function isAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function runTestCommit(
+  t: TestContext,
+  { repository, sha }: NpmRepo,
+  { limits, extraEnv }: CommitRun = { limits: LIMITS, extraEnv: {} },
+): Promise<{
   commitTest: CommitTest;
   worktrees: string[];
   tempEntries: string[];
@@ -65,9 +125,10 @@ async function runTestCommit(t: TestContext, { repository, sha }: NpmRepo): Prom
     ...getGitEnv(process.env),
     HOME: makeTempDir(t),
     npm_config_update_notifier: 'false',
+    ...extraEnv,
   };
 
-  const commitTest = await testCommit({ repository, sha, env, tempParent, limits: LIMITS });
+  const commitTest = await testCommit({ repository, sha, env, tempParent, limits });
 
   return {
     commitTest,

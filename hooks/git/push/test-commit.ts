@@ -80,17 +80,19 @@ async function runNpmTest(tree: string, commitToTest: CommitToTest): Promise<Com
   }
 }
 
+// npm test runs in a process group of its own, so that a time limit kills
+// the processes its script starts as well as npm.
 function waitForNpmTest(
   tree: string,
   { env, limits }: CommitToTest,
 ): Promise<NpmTestEnd> {
-  const npmTest = spawn('npm', ['test'], { cwd: tree, env, stdio: TO_STDERR });
+  const npmTest = spawn('npm', ['test'], { cwd: tree, env, stdio: TO_STDERR, detached: true });
 
   return new Promise((resolve) => {
     let stopReason: NpmTestEnd | undefined;
     const timer = setTimeout(() => {
       stopReason = 'timedOut';
-      npmTest.kill();
+      killGroup(npmTest.pid);
     }, limits.npmTestMs);
     const settle = (npmTestEnd: NpmTestEnd): void => {
       clearTimeout(timer);
@@ -104,4 +106,17 @@ function waitForNpmTest(
       settle(code === 0 ? 'passed' : 'failed');
     });
   });
+}
+
+// The group can be gone already when npm ends as the limit passes.
+function killGroup(pid: number | undefined): void {
+  if (pid === undefined) {
+    return;
+  }
+
+  try {
+    process.kill(-pid, 'SIGKILL');
+  } catch {
+    // Nothing is left to kill.
+  }
 }
