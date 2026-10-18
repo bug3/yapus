@@ -1,61 +1,61 @@
 # Code
 
-## C1. Give a program one entry file that only calls its logic; keep the logic in modules a test can import without running the program.
+## CODE-1. Give a program one entry file that only calls its logic; keep the logic in modules a test can import without running the program.
 
-## C2. Read stdin, arguments and environment variables in one function that runs first, and nowhere else.
+## CODE-2. Read stdin, arguments and environment variables in one function that runs first, and nowhere else.
 
-## C3. Return a failure the program expects, such as invalid input or a missing file, as a value; throw only on a defect in the program itself.
+## CODE-3. Return a failure the program expects, such as invalid input or a missing file, as a value; throw only on a defect in the program itself.
 
-## C4. Exit 0 on success and 2 when the program fails, blocks or cannot judge; turn every uncaught error into exit 2 and use no other exit code.
+## CODE-4. Exit 0 on success and 2 when the program fails, blocks or cannot judge; turn every uncaught error into exit 2 and use no other exit code.
 
-## C5. Write only the program's result to stdout; write diagnostics, progress, errors and violations to stderr.
+## CODE-5. Write only the program's result to stdout; write diagnostics, progress, errors and violations to stderr.
 
-## C6. Write each failure message as one line that names the program, what failed and what to do next.
+## CODE-6. Write each failure message as one line that names the program, what failed and what to do next.
 
-## C7. Name every violation a check finds by its file and line, or by the input it concerns when it has no line.
+## CODE-7. Name every violation a check finds by its file and line, or by the input it concerns when it has no line.
 
-## C8. Write a program to run with no person present: it asks no question, prints no color code and expects no terminal.
+## CODE-8. Write a program to run with no person present: it asks no question, prints no color code and expects no terminal.
 
-## C9. Put a time limit on every wait; when it passes, stop the work it waited for and fail.
+## CODE-9. Put a time limit on every wait; when it passes, stop the work it waited for and fail.
 
-## C10. Give the same result on every run with the same input.
+## CODE-10. Give the same result on every run with the same input.
 
-## C11. Test that every case in a data file has exactly one handler and every handler a case; fail at run time on a case with no handler.
+## CODE-11. Test that every case in a data file has exactly one handler and every handler a case; fail at run time on a case with no handler.
 
-## C12. Give every check at least one input it must block and one it must pass, and keep both in the repository.
+## CODE-12. Give every check at least one input it must block and one it must pass, and keep both in the repository.
 
-## C13. Write tests that reach no network and write no file outside their own temporary directory.
+## CODE-13. Write tests that reach no network and write no file outside their own temporary directory.
 
-## C14. Comment only what the code cannot say: the reason for a branch, a workaround or an ordering; never restate the code.
+## CODE-14. Comment only what the code cannot say: the reason for a branch, a workaround or an ordering; never restate the code.
 
-## C15. Find a program's own files from the location of its own code, never from the working directory.
+## CODE-15. Find a program's own files from the location of its own code, never from the working directory.
 
-## C16. End the process only from the entry file; return from every other module.
+## CODE-16. End the process only from the entry file; return from every other module.
 
-## C17. At a program's start, check that every tool it needs is present at the version it needs.
+## CODE-17. At a program's start, check that every tool it needs is present at the version it needs.
 
-## C18. Separate two statements of different jobs, such as reading, building, checking, acting and returning, with one blank line, and keep the statements of one job together.
+## CODE-18. Separate two statements of different jobs, such as reading, building, checking, acting and returning, with one blank line, and keep the statements of one job together.
 
-## C19. Start a function name with a verb: `get` for one that finds or computes a value, `is`, `has`, `can` or `should` for one that returns a boolean, the verb of the change for one that converts, and a creating verb such as `make` for one that creates.
+## CODE-19. Start a function name with a verb: `get` for one that finds or computes a value, `is`, `has`, `can` or `should` for one that returns a boolean, the verb of the change for one that converts, and a creating verb such as `make` for one that creates.
 
-## C20. Name a value for what it holds, never for its type or with a generic word such as `data`, `value`, `item` or `result`, and repeat no word its container already says.
+## CODE-20. Name a value for what it holds, never for its type or with a generic word such as `data`, `value`, `item` or `result`, and repeat no word its container already says.
 
-## C21. Give a function one job, and write an entry function as a list of calls to named steps.
+## CODE-21. Give a function one job, and write an entry function as a list of calls to named steps.
 
-## C22. Order a file as imports, constants, exported functions, then the functions they call, every caller above what it calls.
+## CODE-22. Order a file as imports, constants, exported functions, then the functions they call, every caller above what it calls.
 
-## C23. Use a ternary only to pick a value, and a `switch` or a lookup object instead of an if and else-if chain over one value.
+## CODE-23. Use a ternary only to pick a value, and a `switch` or a lookup object instead of an if and else-if chain over one value.
 
-## C24. Name a condition that joins two or more tests, with a constant or a function.
+## CODE-24. Name a condition that joins two or more tests, with a constant or a function.
 
-## C25. When two branches of one function differ only in a value, compute the value once and write the rest once.
+## CODE-25. When two branches of one function differ only in a value, compute the value once and write the rest once.
 
-## C26. Give a literal used more than twice a named constant at the top of its file.
+## CODE-26. Give a literal used more than twice a named constant at the top of its file.
 
-## C27. Inline a variable used once, unless its name explains a condition, it holds an awaited value, it keeps a call out of a template literal or it separates the steps of a test.
+## CODE-27. Inline a variable used once, unless its name explains a condition, it holds an awaited value, it keeps a call out of a template literal or it separates the steps of a test.
 
-## C28. Read a file, a process or a request once per run and pass its result on.
+## CODE-28. Read a file, a process or a request once per run and pass its result on.
 
-## C29. Convert no value into the form it already has.
+## CODE-29. Convert no value into the form it already has.
 
-## C30. Wrap in `try` only code that can throw.
+## CODE-30. Wrap in `try` only code that can throw.
