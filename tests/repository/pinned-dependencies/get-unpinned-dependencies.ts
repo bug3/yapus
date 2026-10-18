@@ -28,7 +28,8 @@ function getUnpinned(field: string, dependencies: unknown): string[] {
     .map(([name, version]) => `${ field }.${ name }: ${ String(version) }`);
 }
 
-// The parsed file, or undefined when it is missing or not JSON.
+// The parsed file, or undefined when it is not UTF-8 text or not JSON; a
+// missing file throws, as readUtf8 does.
 function readJson(path: string): unknown {
   const text = readUtf8(path);
 
