@@ -15,6 +15,8 @@ const MAIN = join(ROOT, 'hooks', 'git', 'push', 'main.ts');
 const SUBPROCESS_TIMEOUT_MS = 60000;
 const WAIT_MS = 10000;
 const SLEEPING_TEST = 'sleep 30';
+// A locked worktree makes a single git worktree remove --force refuse.
+const LOCKING_TEST = 'git worktree lock "$PWD"';
 const LINE_SEPARATOR = String.fromCodePoint(0x2028);
 const DELETION_LINE =
   '(delete) 0000000000000000000000000000000000000000 refs/heads/old 1111111111111111111111111111111111111111\n';
@@ -128,6 +130,22 @@ test('exits 2 and removes the worktree when interrupted', async (t) => {
       [realpathSync(repository)],
       [],
     ],
+  );
+});
+
+test('writes a line when it cannot remove its worktree', (t) => {
+  const { repository, sha } = makeNpmRepo(t, LOCKING_TEST);
+
+  const pushRun = runMain(t, repository, makePushLine(sha));
+  const lockedTree = listWorktrees(repository)[1] ?? '';
+
+  runGit(['worktree', 'unlock', lockedTree], repository);
+  runGit(['worktree', 'prune'], repository);
+
+  assert.equal(pushRun.status, 0);
+  assert.match(
+    pushRun.stderr.split('\n').at(-2) ?? '',
+    /^yapus push: could not remove the worktree \S+\/yapus-push-\w+\/tree; run git worktree prune$/,
   );
 });
 

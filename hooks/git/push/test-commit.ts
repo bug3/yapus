@@ -1,6 +1,7 @@
 import { spawn, spawnSync, type StdioOptions } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, symlinkSync, writeSync } from 'node:fs';
 import { join } from 'node:path';
+import { formatMessage } from './format-message.ts';
 
 // The children's output is diagnostics, so both streams go to stderr (C5).
 const TO_STDERR: StdioOptions = ['ignore', 2, 2];
@@ -55,7 +56,15 @@ export async function testCommit(commitToTest: CommitToTest): Promise<CommitTest
     return await runNpmTest(tree, commitToTest);
   } finally {
     // --force, because the node_modules link is an untracked file in it.
-    spawnSync('git', ['worktree', 'remove', '--force', tree], gitOptions);
+    const worktreeRemove = spawnSync('git', ['worktree', 'remove', '--force', tree], gitOptions);
+
+    // The result stands; the line tells the user what is left behind.
+    if (worktreeRemove.status !== 0) {
+      const detail = `could not remove the worktree ${ tree }; run git worktree prune`;
+
+      writeSync(process.stderr.fd, `${ formatMessage(detail) }\n`);
+    }
+
     rmSync(tempDir, { recursive: true, force: true });
   }
 }
