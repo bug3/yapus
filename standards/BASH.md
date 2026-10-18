@@ -6,7 +6,7 @@
 
 ## B3. Check the status of every command whose failure changes what the script does next, `cd` included.
 
-## B4. Call external utilities only with the options POSIX defines.
+## B4. Call a utility POSIX defines only with the options POSIX defines for it.
 
 ## B5. Find a script's own directory by `cd -P` into the directory of `${BASH_SOURCE[0]}`.
 
