@@ -218,11 +218,18 @@ function makeSandbox(t: TestContext, stubSource: string): string {
   return sandbox;
 }
 
+// HOME and TMPDIR stay in the sandbox, the test's own directory.
 function run(sandbox: string, hookName: string, { input, env, cwd }: RunOptions) {
   return spawnSync(
     BASH,
     [join(sandbox, 'run.sh'), hookName],
-    { cwd, encoding: 'utf8', env, input, timeout: SUBPROCESS_TIMEOUT_MS },
+    {
+      cwd,
+      encoding: 'utf8',
+      env: { ...env, HOME: sandbox, TMPDIR: sandbox },
+      input,
+      timeout: SUBPROCESS_TIMEOUT_MS,
+    },
   );
 }
 

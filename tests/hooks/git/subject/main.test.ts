@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 
@@ -63,10 +63,12 @@ function writeMessage(t: TestContext, messageText: string): string {
 
 // GIT_EDITOR=":" is what git sets for a commit made without an editor.
 function runHook(messagePath: string) {
+  const tempDir = dirname(messagePath);
+
   return spawnSync(process.execPath, [MAIN, messagePath], {
     cwd: ROOT,
     encoding: 'utf8',
-    env: { GIT_EDITOR: ':' },
+    env: { GIT_EDITOR: ':', HOME: tempDir, TMPDIR: tempDir },
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
 }

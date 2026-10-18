@@ -64,14 +64,15 @@ test('passes shellcheck with no findings', () => {
 // The hook run as git runs it: from the repository root, with the path of
 // the message file.
 function runCommitMsg(t: TestContext, messageText: string, editor: string) {
-  const messageFile = join(makeTempDir(t), 'COMMIT_EDITMSG');
+  const tempDir = makeTempDir(t);
+  const messageFile = join(tempDir, 'COMMIT_EDITMSG');
 
   writeFileSync(messageFile, messageText);
 
   return spawnSync(BASH, [COMMIT_MSG, messageFile], {
     cwd: ROOT,
     encoding: 'utf8',
-    env: { ...process.env, GIT_EDITOR: editor },
+    env: { ...process.env, GIT_EDITOR: editor, HOME: tempDir, TMPDIR: tempDir },
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
 }
