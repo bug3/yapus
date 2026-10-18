@@ -1,4 +1,4 @@
-import { spawn, spawnSync, type StdioOptions } from 'node:child_process';
+import { spawn, spawnSync, type SpawnSyncOptions, type StdioOptions } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync, symlinkSync, writeSync } from 'node:fs';
 import { join } from 'node:path';
 import { formatMessage } from './format-message.ts';
@@ -40,6 +40,7 @@ export async function testCommit(commitToTest: CommitToTest): Promise<CommitTest
   const tempDir = mkdtempSync(join(tempParent, 'yapus-push-'));
   const tree = join(tempDir, 'tree');
   const gitOptions = { cwd: repository, env, stdio: TO_STDERR, timeout: limits.gitSeconds * 1000 };
+  let isWorktreeAdded = false;
 
   try {
     const worktreeAdd = spawnSync(
@@ -52,21 +53,14 @@ export async function testCommit(commitToTest: CommitToTest): Promise<CommitTest
       return { violation: 'git could not make the worktree; the push is blocked, retry it' };
     }
 
+    isWorktreeAdded = true;
     symlinkSync(nodeModules, join(tree, 'node_modules'));
 
     return await runNpmTest(tree, commitToTest);
   } finally {
-    // --force, because the node_modules link is an untracked file in it.
-    const worktreeRemove = spawnSync('git', ['worktree', 'remove', '--force', tree], gitOptions);
-
-    // The result stands; the line tells the user what is left behind. The
-    // directory goes below either way, so prune clears the entry once no lock
-    // holds it.
-    if (worktreeRemove.status !== 0) {
-      const cleanup = `git worktree unlock ${ tree } if it is locked, then git worktree prune`;
-      const detail = `could not remove the worktree ${ tree }; run ${ cleanup }`;
-
-      writeSync(process.stderr.fd, `${ formatMessage(detail) }\n`);
+    // A worktree git never added has nothing to remove and nothing to warn of.
+    if (isWorktreeAdded) {
+      removeWorktree(tree, gitOptions);
     }
 
     rmSync(tempDir, { recursive: true, force: true });
@@ -146,5 +140,20 @@ function killGroup(pid: number | undefined): void {
     process.kill(-pid, 'SIGKILL');
   } catch {
     // Nothing is left to kill.
+  }
+}
+
+// The test result stands; a failed removal only adds a line telling the user
+// what is left behind. The caller removes the directory either way, so prune
+// clears the entry once no lock holds it.
+function removeWorktree(tree: string, gitOptions: SpawnSyncOptions): void {
+  // --force, because the node_modules link is an untracked file in it.
+  const worktreeRemove = spawnSync('git', ['worktree', 'remove', '--force', tree], gitOptions);
+
+  if (worktreeRemove.status !== 0) {
+    const cleanup = `git worktree unlock ${ tree } if it is locked, then git worktree prune`;
+    const detail = `could not remove the worktree ${ tree }; run ${ cleanup }`;
+
+    writeSync(process.stderr.fd, `${ formatMessage(detail) }\n`);
   }
 }

@@ -141,6 +141,23 @@ test('exits 2 and removes the worktree on SIGHUP', async (t) => {
   });
 });
 
+test('removes no worktree for a sha the repository does not have', (t) => {
+  const { repository } = makeNpmRepo(t, PASSING_TEST);
+
+  const pushRun = runMain(t, repository, makePushLine('d'.repeat(40)));
+  const stderrLines = pushRun.stderr.split('\n');
+
+  assert.deepEqual(
+    [
+      pushRun.status,
+      stderrLines.at(-2),
+      stderrLines.some((line) => line.includes('could not remove the worktree')),
+      pushRun.tempEntries,
+    ],
+    [2, 'yapus push: git could not make the worktree; the push is blocked, retry it', false, []],
+  );
+});
+
 test('writes a line when it cannot remove its worktree', (t) => {
   const { repository, sha } = makeNpmRepo(t, LOCKING_TEST);
 
