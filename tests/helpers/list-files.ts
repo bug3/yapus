@@ -10,12 +10,14 @@ export function listModules(root: string): string[] {
   return listFiles(root, '.ts').filter(isModule);
 }
 
+export function listFiles(root: string, extension: string): string[] {
+  return listAllFiles(root).filter((path) => path.endsWith(extension));
+}
+
 // The files git keeps under root, tracked or untracked but not ignored,
 // that are on disk, relative to root; root is in a git work tree.
-export function listFiles(root: string, extension: string): string[] {
-  return getKeptPaths(root)
-    .filter((path) => path.endsWith(extension))
-    .filter((path) => existsSync(join(root, path)));
+export function listAllFiles(root: string): string[] {
+  return getKeptPaths(root).filter((path) => existsSync(join(root, path)));
 }
 
 function isModule(path: string): boolean {
