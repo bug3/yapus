@@ -5,6 +5,10 @@ import { test, type TestContext } from 'node:test';
 import { readCatalog } from '../../../../hooks/git/subject/read-catalog.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 
+const CATALOGS = join(
+  import.meta.dirname, '..', '..', '..', '..', 'hooks', 'git', 'subject', 'catalogs',
+);
+const READ_KEYS: readonly string[] = ['path', 'words'];
 const LIST_REFUSAL = 'is not a sorted array of distinct lowercase words';
 const BLOCK = 'the commit is blocked until the catalog is fixed';
 
@@ -64,6 +68,12 @@ test('refuses an unsorted list', async (t) => {
   assert.deepEqual(await readCatalog(path), {
     violation: `${ path } ${ LIST_REFUSAL }; ${ BLOCK }`,
   });
+});
+
+test('reads the three catalogs of the program without violation', async () => {
+  assert.deepEqual(Object.keys(await readCatalog(join(CATALOGS, 'types.json'))), READ_KEYS);
+  assert.deepEqual(Object.keys(await readCatalog(join(CATALOGS, 'scopes.json'))), READ_KEYS);
+  assert.deepEqual(Object.keys(await readCatalog(join(CATALOGS, 'verbs.json'))), READ_KEYS);
 });
 
 function writeCatalog(t: TestContext, catalogText: string): string {
