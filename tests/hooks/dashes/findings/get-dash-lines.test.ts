@@ -6,6 +6,8 @@ const EN_DASH = String.fromCodePoint(0x2013);
 const EM_DASH = String.fromCodePoint(0x2014);
 const FIGURE_DASH = String.fromCodePoint(0x2012);
 const FULLWIDTH_HYPHEN = String.fromCodePoint(0xff0d);
+const GARAY_HYPHEN = String.fromCodePoint(0x10d6e);
+const YEZIDI_HYPHENATION_MARK = String.fromCodePoint(0x10ead);
 
 test('lists 26 distinct code points', () => {
   assert.equal(new Set(DASHES).size, 26);
@@ -29,6 +31,12 @@ test('finds an en dash on its line', () => {
 
 test('finds a dash other than the em and en dash', () => {
   assert.deepEqual(getDashLines(`x${ FULLWIDTH_HYPHEN }y`), [{ line: 1, dashes: [0xff0d] }]);
+});
+
+test('finds a dash outside the basic multilingual plane', () => {
+  const lines = getDashLines(`a${ GARAY_HYPHEN }b${ YEZIDI_HYPHENATION_MARK }c`);
+
+  assert.deepEqual(lines, [{ line: 1, dashes: [0x10d6e, 0x10ead] }]);
 });
 
 test('lists each dash of a line once, in order of first appearance', () => {

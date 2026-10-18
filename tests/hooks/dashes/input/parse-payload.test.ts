@@ -21,10 +21,22 @@ test('parses a Write call', () => {
   });
 });
 
-test('parses an Edit call with replace_all', () => {
+test('parses an Edit call with replace_all true', () => {
   const stdinText = JSON.stringify({
     tool_name: 'Edit',
     tool_input: { file_path: FILE_PATH, old_string: 'x', new_string: 'y', replace_all: true },
+  });
+
+  assert.deepEqual(parsePayload(stdinText), {
+    kind: 'call',
+    call: { tool: 'Edit', filePath: FILE_PATH, oldString: 'x', newString: 'y' },
+  });
+});
+
+test('parses an Edit call with replace_all false', () => {
+  const stdinText = JSON.stringify({
+    tool_name: 'Edit',
+    tool_input: { file_path: FILE_PATH, old_string: 'x', new_string: 'y', replace_all: false },
   });
 
   assert.deepEqual(parsePayload(stdinText), {
