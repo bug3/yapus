@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getChildEnv } from '../../../../hooks/git/push/get-child-env.ts';
-import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
+import { getChildEnv } from '../../../hooks/shared/get-child-env.ts';
+import { makeTempDir } from '../../helpers/make-temp-dir.ts';
 
 const PATH = process.env.PATH ?? '';
 const LIMIT_SECONDS = 10;

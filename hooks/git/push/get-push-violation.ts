@@ -1,4 +1,4 @@
-import { getChildEnv } from './get-child-env.ts';
+import { getChildEnv } from '../../shared/get-child-env.ts';
 import { getInterruptedViolation } from './get-interrupted-violation.ts';
 import { getPushCommits } from './get-push-commits.ts';
 import { getToolViolation } from './get-tool-violation.ts';
