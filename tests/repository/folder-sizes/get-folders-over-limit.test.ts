@@ -23,6 +23,16 @@ test('skips a collection past the limit', (t) => {
   assert.deepEqual(getFoldersOverLimit(root, 1, ['docs']), ['.: 3 files']);
 });
 
+test('still caps a subfolder of a collection', (t) => {
+  const root = makeTreeOfThreeAndTwo(t);
+
+  mkdirSync(join(root, 'docs', 'sub'));
+  writeFileSync(join(root, 'docs', 'sub', 'f.md'), '');
+  writeFileSync(join(root, 'docs', 'sub', 'g.md'), '');
+
+  assert.deepEqual(getFoldersOverLimit(root, 1, ['docs']), ['.: 3 files', 'docs/sub: 2 files']);
+});
+
 // Three files and the subfolder docs/ at the root, two files in docs/;
 // docs/ comes before the root's files in a sorted listing.
 function makeTreeOfThreeAndTwo(t: TestContext): string {
