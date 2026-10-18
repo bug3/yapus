@@ -117,8 +117,11 @@ test('exits 2 and removes the worktree when interrupted', async (t) => {
   });
 
   pushRun.stdin.end(makePushLine(sha));
-  await waitUntil(() => listWorktrees(repository).length === 2, WAIT_MS);
+  const isTreeMade = await waitUntil(() => listWorktrees(repository).length === 2, WAIT_MS);
+
   pushRun.kill('SIGINT');
+  assert.ok(isTreeMade, 'the push test made no worktree within the wait');
+
   const status = await closing;
   const lastLine = (await stderrText).split('\n').at(-2);
 

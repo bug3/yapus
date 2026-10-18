@@ -105,8 +105,10 @@ test('kills the whole npm test on an abort and leaves no worktree', async (t) =>
     limits: LIMITS, signal: controller.signal, extraEnv: { PID_FILE: pidFile },
   });
 
-  await waitUntil(() => existsSync(pidFile), WAIT_MS);
+  const isPidWritten = await waitUntil(() => existsSync(pidFile), WAIT_MS);
+
   controller.abort();
+  assert.ok(isPidWritten, 'npm test wrote no grandchild pid file within the wait');
 
   assert.deepEqual([await commitRun, await isGone(pidFile), existsSync(sentinel)], [
     {
