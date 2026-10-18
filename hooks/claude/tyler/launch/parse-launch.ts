@@ -1,3 +1,5 @@
+import { isSafeId } from '../../../shared/is-safe-id.ts';
+
 export interface Launch {
   readonly sessionId: string;
   // Claude Code sends agent_id only from inside a subagent.
@@ -12,8 +14,6 @@ export type Parsed =
 
 type Fields = Readonly<Record<string, unknown>>;
 
-// The session id names a file, so it admits no path separator or dot.
-const SESSION_ID = /^[A-Za-z0-9-]{1,128}$/;
 // The Agent tool launches general-purpose when subagent_type is left out.
 const DEFAULT_TYPE = 'general-purpose';
 
@@ -41,7 +41,7 @@ export function parseLaunch(stdinText: string): Parsed {
     return makeFailure('tool_name is not Agent');
   }
 
-  if (typeof sessionId !== 'string' || !SESSION_ID.test(sessionId)) {
+  if (!isSafeId(sessionId)) {
     return makeFailure('session_id is not letters, digits and hyphens');
   }
 

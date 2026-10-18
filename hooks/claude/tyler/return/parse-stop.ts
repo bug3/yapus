@@ -1,3 +1,5 @@
+import { isSafeId } from '../../../shared/is-safe-id.ts';
+
 export interface Stop {
   readonly sessionId: string;
   readonly agentType: string;
@@ -12,10 +14,6 @@ export type Parsed =
   | { readonly kind: 'failure'; readonly reason: string };
 
 type Fields = Readonly<Record<string, unknown>>;
-
-// The session id names nothing on disk here, but the decision log keys on
-// it, so it is held to the launch hook's form.
-const SESSION_ID = /^[A-Za-z0-9-]{1,128}$/;
 
 export function parseStop(stdinText: string): Parsed {
   let payload: unknown;
@@ -37,7 +35,7 @@ export function parseStop(stdinText: string): Parsed {
     stop_hook_active: isRetry = false,
   } = payload;
 
-  if (typeof sessionId !== 'string' || !SESSION_ID.test(sessionId)) {
+  if (!isSafeId(sessionId)) {
     return makeFailure('session_id is not letters, digits and hyphens');
   }
 
