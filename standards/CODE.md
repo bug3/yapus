@@ -22,10 +22,6 @@
 
 ## CODE-11. Test that every case in a data file has exactly one handler and every handler a case; fail at run time on a case with no handler.
 
-## CODE-12. Give every check at least one input it must block and one it must pass, and keep both in the repository.
-
-## CODE-13. Write tests that reach no network and write no file outside their own temporary directory.
-
 ## CODE-14. Comment only what the code cannot say: the reason for a branch, a workaround or an ordering; never restate the code.
 
 ## CODE-15. Find a program's own files from the location of its own code, never from the working directory.

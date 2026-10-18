@@ -32,10 +32,6 @@
 
 ## ENG-17. Give every invariant a test, and watch that test fail once against the broken invariant before it passes.
 
-## ENG-18. Test a behavior through the interface its callers use, one behavior per test, named for the action and its outcome.
-
-## ENG-19. In a test, write no loop, no conditional and no expected value that the code under test computes.
-
 ## ENG-20. Put no change into the repository without a command that answers pass or fail, and accept its exit code and output, not a sentence, as the result.
 
 ## ENG-21. Treat every new warning as a failing check.
