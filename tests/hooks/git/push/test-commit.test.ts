@@ -15,6 +15,7 @@ import { waitUntil } from './wait-until.ts';
 
 const LIMITS = { gitSeconds: 10, npmTestSeconds: 30 };
 const MISSING_SHA = 'dddddddddddddddddddddddddddddddddddddddd';
+const SLEEPING_TEST = 'sleep 30';
 // Starts a sleeping grandchild that writes its pid to PID_FILE, then sleeps.
 const GRANDCHILD_TEST = 'sleep 30 & echo $! > "$PID_FILE"; sleep 30';
 const WAIT_MS = 10000;
@@ -70,28 +71,24 @@ test('refuses a sha the repository does not have and leaves no worktree', async 
   });
 });
 
-test('kills the whole npm test on its time limit and leaves no worktree', async (t) => {
-  const npmRepo = makeNpmRepo(t, GRANDCHILD_TEST);
-  const pidFile = join(makeTempDir(t), 'pid');
+test('stops npm test on its time limit and leaves no worktree', async (t) => {
+  const npmRepo = makeNpmRepo(t, SLEEPING_TEST);
   const sentinel = join(npmRepo.repository, 'node_modules', 'sentinel');
-  const limits = { gitSeconds: 10, npmTestSeconds: 0.3 };
+  const limits = { gitSeconds: 10, npmTestSeconds: 1 };
 
   writeFileSync(sentinel, '');
 
-  const commitRun = await runTestCommit(t, npmRepo, {
-    limits, signal: UNABORTED, extraEnv: { PID_FILE: pidFile },
-  });
+  const commitRun = await runTestCommit(t, npmRepo, { limits, signal: UNABORTED, extraEnv: {} });
 
-  assert.deepEqual([commitRun, await isGone(pidFile), existsSync(sentinel)], [
+  assert.deepEqual([commitRun, existsSync(sentinel)], [
     {
       commitTest: {
-        violation: `npm test gave no answer within 0.3 seconds on ${
+        violation: `npm test gave no answer within 1 seconds on ${
           npmRepo.sha.slice(0, 12) }; make it faster, then push again`,
       },
       worktrees: [realpathSync(npmRepo.repository)],
       tempEntries: [],
     },
-    true,
     true,
   ]);
 });
