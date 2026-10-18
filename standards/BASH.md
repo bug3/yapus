@@ -9,8 +9,6 @@ paths:
 
 ## BASH-1. Start every bash script with `#!/usr/bin/env bash` and write only syntax that bash 3.2 runs.
 
-## BASH-2. Make `set -u` the first command of every bash script, and leave `set -e` off.
-
 ## BASH-3. Check the status of every command whose failure changes what the script does next, `cd` included.
 
 ## BASH-4. Call a utility POSIX defines only with the options POSIX defines for it.
