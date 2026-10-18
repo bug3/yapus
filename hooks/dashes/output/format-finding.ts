@@ -1,6 +1,7 @@
 import { assertNever } from '../assert-never.ts';
 import type { Finding, Place } from '../findings/get-findings.ts';
 import { formatMessage } from './format-message.ts';
+import { getCodePointName } from './get-code-point-name.ts';
 
 export function formatFinding({ filePath, place, dashes }: Finding): string {
   const location = getLocation(filePath, place);
@@ -36,8 +37,4 @@ function isControlOrSeparator(codePoint: number): boolean {
   const isControl = codePoint < 0x20 || (codePoint >= 0x7f && codePoint <= 0x9f);
 
   return isControl || codePoint === 0x2028 || codePoint === 0x2029;
-}
-
-function getCodePointName(codePoint: number): string {
-  return `U+${ codePoint.toString(16).toUpperCase().padStart(4, '0') }`;
 }
