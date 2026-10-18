@@ -105,12 +105,14 @@ test('kills the whole npm test on an abort and leaves no worktree', async (t) =>
     limits: LIMITS, signal: controller.signal, extraEnv: { PID_FILE: pidFile },
   });
 
-  const isPidWritten = await waitUntil(() => existsSync(pidFile), WAIT_MS);
+  const isPidWritten = await waitUntil(() => readPid(pidFile) > 0, WAIT_MS);
 
   controller.abort();
-  assert.ok(isPidWritten, 'npm test wrote no grandchild pid file within the wait');
+  assert.ok(isPidWritten, 'npm test wrote no grandchild pid within the wait');
 
-  assert.deepEqual([await commitRun, await isGone(pidFile), existsSync(sentinel)], [
+  const grandchild = readPid(pidFile);
+
+  assert.deepEqual([await commitRun, existsSync(sentinel)], [
     {
       commitTest: {
         violation: `the push test was interrupted on ${
@@ -120,15 +122,21 @@ test('kills the whole npm test on an abort and leaves no worktree', async (t) =>
       tempEntries: [],
     },
     true,
-    true,
   ]);
+  // A killed process can linger as a zombie until its new parent reaps it.
+  assert.ok(
+    await waitUntil(() => !isAlive(grandchild), WAIT_MS),
+    `grandchild ${ String(grandchild) } was still alive after the wait`,
+  );
 });
 
-// A killed process can linger as a zombie until its new parent reaps it.
-async function isGone(pidFile: string): Promise<boolean> {
-  const pid = Number(readFileSync(pidFile, 'utf8'));
+// The pid in the file, or 0 while the file is missing or not yet written:
+// the shell creates the file before it writes the pid.
+function readPid(pidFile: string): number {
+  const pidText = existsSync(pidFile) ? readFileSync(pidFile, 'utf8') : '';
+  const pid = Number(pidText);
 
-  return waitUntil(() => !isAlive(pid), WAIT_MS);
+  return Number.isInteger(pid) && pid > 0 ? pid : 0;
 }
 
 function isAlive(pid: number): boolean {
