@@ -78,7 +78,21 @@ test('exits 2 when the hook name is not lowercase letters and digits', (t) => {
     [entryRun.status, entryRun.stderr],
     [
       2,
-      "yapus run.sh: hook name '../stub' is not lowercase letters and digits; fix the hook command\n",
+      'yapus run.sh: hook name ../stub is not lowercase letters and digits; fix the hook command\n',
+    ],
+  );
+});
+
+test('keeps the message on one line when the hook name holds a line feed', (t) => {
+  const sandbox = makeSandbox(t, '');
+
+  const entryRun = run(sandbox, 'bad\nname', { input: '', env: process.env, cwd: sandbox });
+
+  assert.deepEqual(
+    [entryRun.status, entryRun.stderr],
+    [
+      2,
+      "yapus run.sh: hook name $'bad\\nname' is not lowercase letters and digits; fix the hook command\n",
     ],
   );
 });
