@@ -231,7 +231,7 @@ export default defineConfig(
     },
   },
   {
-    files: ['hooks/*/*/main.ts'],
+    files: ['hooks/**/main.ts'],
     rules: {
       'no-restricted-properties': ['error', ...NUMBER_PARSING],
     },
