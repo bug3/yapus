@@ -8,6 +8,7 @@ import { makeTempDir } from '../../helpers/make-temp-dir.ts';
 const MARKDOWN_PATH = '/r/a.md';
 const EN_DASH = String.fromCodePoint(0x2013);
 const EM_DASH = String.fromCodePoint(0x2014);
+const LINE_SEPARATOR = String.fromCodePoint(0x2028);
 
 test('names the line of an em dash in a Write of markdown', async () => {
   const stdinText = JSON.stringify({
@@ -87,5 +88,13 @@ test('reports a tool other than Write and Edit', async () => {
 
   assert.deepEqual(await getMessages(stdinText), [
     'yapus dashes: cannot judge: tool_name "Bash" is not one of Write, Edit; the call is blocked until the payload is valid',
+  ]);
+});
+
+test('reports a tool name that holds a line separator on one line', async () => {
+  const stdinText = JSON.stringify({ tool_name: `A${ LINE_SEPARATOR }B`, tool_input: {} });
+
+  assert.deepEqual(await getMessages(stdinText), [
+    'yapus dashes: cannot judge: tool_name "A<U+2028>B" is not one of Write, Edit; the call is blocked until the payload is valid',
   ]);
 });
