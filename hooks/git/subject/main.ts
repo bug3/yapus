@@ -1,5 +1,6 @@
 import { writeSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { getFirstLine } from '../../shared/get-first-line.ts';
 import type { HookInput } from './get-messages.ts';
 import { getMessagesWithinLimit } from './get-messages-within-limit.ts';
 import { formatMessage } from './output/format-message.ts';
@@ -34,10 +35,6 @@ function stop(messages: readonly string[]): never {
   }
 
   process.exit(messages.length === 0 ? 0 : 2);
-}
-
-function getFirstLine(error: unknown): string {
-  return (error instanceof Error ? error.message : String(error)).split('\n')[0] ?? '';
 }
 
 await main();

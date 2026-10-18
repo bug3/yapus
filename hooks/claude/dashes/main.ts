@@ -1,8 +1,8 @@
 import { writeSync } from 'node:fs';
+import { getFirstLine } from '../../shared/get-first-line.ts';
 import { getMessagesWithinLimit } from './get-messages-within-limit.ts';
 import { formatMessage } from './output/format-message.ts';
 import { getExitCode } from './output/get-exit-code.ts';
-import { getFirstLine } from './output/get-first-line.ts';
 
 const LIMIT_SECONDS = 5;
 

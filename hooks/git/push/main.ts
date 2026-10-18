@@ -1,5 +1,6 @@
 import { writeSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { getFirstLine } from '../../shared/get-first-line.ts';
 import { getPushViolation, type PushInput } from './get-push-violation.ts';
 import { readStdin } from './read-stdin.ts';
 
@@ -33,10 +34,6 @@ function stop(violation: string | undefined): never {
   }
 
   process.exit(violation === undefined ? 0 : 2);
-}
-
-function getFirstLine(error: unknown): string {
-  return (error instanceof Error ? error.message : String(error)).split('\n')[0] ?? '';
 }
 
 await main();
