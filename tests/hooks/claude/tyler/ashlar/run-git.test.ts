@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
+import { writeFileSync } from 'node:fs';
 import { test } from 'node:test';
 import {
   failed,
@@ -9,6 +10,7 @@ import {
 } from '../../../../../hooks/claude/tyler/ashlar/run-git.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../../helpers/make-temp-repo.ts';
+import { runGit as runHelperGit } from '../../../../helpers/run-git.ts';
 
 test('returns the exit status and stdout of a zero exit', (t) => {
   const repo = makeTempRepo(t);
@@ -57,4 +59,16 @@ test('words a failure as the git command, a colon and the detail', () => {
     kind: 'failure',
     reason: 'git rev-parse HEAD: fatal: bad',
   });
+});
+
+test('returns output over one mebibyte whole', (t) => {
+  const repo = makeTempRepo(t);
+
+  writeFileSync(join(repo, 'big.txt'), 'x'.repeat(2 * 1024 * 1024));
+
+  const blob = runHelperGit(['hash-object', '-w', 'big.txt'], repo).trim();
+  const run = runGit(['cat-file', '-p', blob], { cwd: repo, env: process.env });
+
+  assert.ok(!isFailure(run));
+  assert.equal(run.stdout.length, 2 * 1024 * 1024);
 });

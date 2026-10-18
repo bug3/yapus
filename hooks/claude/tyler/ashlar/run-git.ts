@@ -19,6 +19,9 @@ export interface Place {
 
 export const LIMIT_SECONDS = 10;
 
+// A diff of a large change outgrows the 1 MiB default and would kill the run.
+const MAX_OUTPUT_BYTES = 64 * 1024 * 1024;
+
 // Runs git with args in the place, within the time limit. A run that ends
 // with an exit code, zero or not, comes back as a GitRun for the caller to
 // judge; a timeout, a spawn error or a kill by signal comes back as a failure
@@ -29,6 +32,7 @@ export function runGit(args: readonly string[], place: Place): GitRun | GitFailu
     env: place.env,
     encoding: 'utf8',
     timeout: LIMIT_SECONDS * 1000,
+    maxBuffer: MAX_OUTPUT_BYTES,
   });
 
   if (run.error !== undefined) {
