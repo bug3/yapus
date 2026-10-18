@@ -14,7 +14,7 @@ export interface PushInput {
 }
 
 // The first reason to refuse the push, or undefined when npm test passes on
-// every commit it sends.
+// the commit each pushed ref points to.
 export async function getPushViolation(
   { stdinText, env, repository, tempParent, signal }: PushInput,
 ): Promise<string | undefined> {

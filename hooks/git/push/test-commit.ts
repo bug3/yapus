@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, rmSync, symlinkSync, writeSync } from 'node:fs
 import { join } from 'node:path';
 import { formatMessage } from './format-message.ts';
 
-// The children's output is diagnostics, so both streams go to stderr (C5).
+// The children's output is diagnostics, so both streams go to stderr.
 const TO_STDERR: StdioOptions = ['ignore', 2, 2];
 const SHORT_SHA_LENGTH = 12;
 
