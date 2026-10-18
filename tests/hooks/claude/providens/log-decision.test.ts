@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { logDecision } from '../../../../../hooks/claude/providens/launch/log-decision.ts';
-import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
+import { logDecision } from '../../../../hooks/claude/providens/log-decision.ts';
+import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 
 const DECISION = {
   time: 't',
