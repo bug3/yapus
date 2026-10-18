@@ -6,12 +6,13 @@ import { testCommit, type CommitTest } from '../../../../hooks/git/push/test-com
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { getGitEnv } from '../../../helpers/run-git.ts';
 import { listWorktrees } from './list-worktrees.ts';
-import { makeNpmRepo, type NpmRepo } from './make-npm-repo.ts';
+import { FAILING_TEST, makeNpmRepo, type NpmRepo, PASSING_TEST } from './make-npm-repo.ts';
 
 const LIMITS = { gitMs: 10000, npmTestMs: 30000 };
+const MISSING_SHA = 'dddddddddddddddddddddddddddddddddddddddd';
 
 test('passes a commit whose npm test passes and leaves no worktree', (t) => {
-  const npmRepo = makeNpmRepo(t, 0);
+  const npmRepo = makeNpmRepo(t, PASSING_TEST);
 
   assert.deepEqual(runTestCommit(t, npmRepo), {
     commitTest: { passed: true },
@@ -21,7 +22,7 @@ test('passes a commit whose npm test passes and leaves no worktree', (t) => {
 });
 
 test('refuses a commit whose npm test fails and leaves no worktree', (t) => {
-  const npmRepo = makeNpmRepo(t, 1);
+  const npmRepo = makeNpmRepo(t, FAILING_TEST);
 
   assert.deepEqual(runTestCommit(t, npmRepo), {
     commitTest: {
@@ -33,13 +34,23 @@ test('refuses a commit whose npm test fails and leaves no worktree', (t) => {
 });
 
 test('refuses a repository without node_modules and leaves no worktree', (t) => {
-  const npmRepo = makeNpmRepo(t, 0);
+  const npmRepo = makeNpmRepo(t, PASSING_TEST);
 
   rmSync(join(npmRepo.repository, 'node_modules'), { recursive: true });
 
   assert.deepEqual(runTestCommit(t, npmRepo), {
     commitTest: { violation: 'no node_modules in the repository; run npm ci, then push again' },
     worktrees: [realpathSync(npmRepo.repository)],
+    tempEntries: [],
+  });
+});
+
+test('refuses a sha the repository does not have and leaves no worktree', (t) => {
+  const { repository } = makeNpmRepo(t, PASSING_TEST);
+
+  assert.deepEqual(runTestCommit(t, { repository, sha: MISSING_SHA }), {
+    commitTest: { violation: 'git could not make the worktree; the push is blocked, retry it' },
+    worktrees: [realpathSync(repository)],
     tempEntries: [],
   });
 });
