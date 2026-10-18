@@ -22,8 +22,6 @@
 
 ## ENG-11. When the program itself states a closed set of cases, declare it in one place and handle it only through a construct the compiler checks for exhaustiveness.
 
-## ENG-12. Address things by stable machine identifiers; keep text for people apart from keys.
-
 ## ENG-13. Never put a structural change and a behavioral change in one change.
 
 ## ENG-14. One change carries one intent and about 100 changed lines; split one that nears 150, and when one part is structural, split that part out first.
