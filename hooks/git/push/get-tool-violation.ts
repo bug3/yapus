@@ -7,8 +7,12 @@ const INSTALL_GIT = 'install git 2.17 or newer';
 
 // The first tool the push test needs that is missing or too old, or
 // undefined when every tool is there.
-export function getToolViolation(env: NodeJS.ProcessEnv, limitMs: number): string | undefined {
-  const gitVersion = spawnSync('git', ['--version'], { encoding: 'utf8', env, timeout: limitMs });
+export function getToolViolation(
+  env: NodeJS.ProcessEnv,
+  limitSeconds: number,
+): string | undefined {
+  const timeout = limitSeconds * 1000;
+  const gitVersion = spawnSync('git', ['--version'], { encoding: 'utf8', env, timeout });
 
   if (gitVersion.status !== 0) {
     return `git not found; ${ INSTALL_GIT }`;
@@ -20,7 +24,7 @@ export function getToolViolation(env: NodeJS.ProcessEnv, limitMs: number): strin
     return `git is older than 2.17; ${ INSTALL_GIT }`;
   }
 
-  const npmVersion = spawnSync('npm', ['--version'], { env, stdio: 'ignore', timeout: limitMs });
+  const npmVersion = spawnSync('npm', ['--version'], { env, stdio: 'ignore', timeout });
 
   return npmVersion.status === 0 ? undefined : 'npm not found; install Node 24 or newer with npm';
 }

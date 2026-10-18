@@ -13,7 +13,7 @@ import { listWorktrees } from './list-worktrees.ts';
 import { FAILING_TEST, makeNpmRepo, type NpmRepo, PASSING_TEST } from './make-npm-repo.ts';
 import { waitUntil } from './wait-until.ts';
 
-const LIMITS = { gitMs: 10000, npmTestMs: 30000 };
+const LIMITS = { gitSeconds: 10, npmTestSeconds: 30 };
 const MISSING_SHA = 'dddddddddddddddddddddddddddddddddddddddd';
 // Starts a sleeping grandchild that writes its pid to PID_FILE, then sleeps.
 const GRANDCHILD_TEST = 'sleep 30 & echo $! > "$PID_FILE"; sleep 30';
@@ -74,7 +74,7 @@ test('kills the whole npm test on its time limit and leaves no worktree', async 
   const npmRepo = makeNpmRepo(t, GRANDCHILD_TEST);
   const pidFile = join(makeTempDir(t), 'pid');
   const sentinel = join(npmRepo.repository, 'node_modules', 'sentinel');
-  const limits = { gitMs: 10000, npmTestMs: 300 };
+  const limits = { gitSeconds: 10, npmTestSeconds: 0.3 };
 
   writeFileSync(sentinel, '');
 

@@ -3,7 +3,7 @@ import { getPushCommits } from './get-push-commits.ts';
 import { getToolViolation } from './get-tool-violation.ts';
 import { testCommit, type Limits } from './test-commit.ts';
 
-const LIMITS: Limits = { gitMs: 30000, npmTestMs: 300000 };
+const LIMITS: Limits = { gitSeconds: 30, npmTestSeconds: 300 };
 
 export interface PushInput {
   readonly stdinText: string;
@@ -18,7 +18,7 @@ export interface PushInput {
 export async function getPushViolation(
   { stdinText, env, repository, tempParent, signal }: PushInput,
 ): Promise<string | undefined> {
-  const toolViolation = getToolViolation(env, LIMITS.gitMs);
+  const toolViolation = getToolViolation(env, LIMITS.gitSeconds);
 
   if (toolViolation !== undefined) {
     return toolViolation;
@@ -30,7 +30,7 @@ export async function getPushViolation(
     return pushCommits.violation;
   }
 
-  const childEnv = getChildEnv(env, repository, LIMITS.gitMs);
+  const childEnv = getChildEnv(env, repository, LIMITS.gitSeconds);
 
   for (const sha of pushCommits.commits) {
     const commitTest = await testCommit({

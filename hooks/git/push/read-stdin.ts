@@ -5,7 +5,7 @@ import { getWithinLimit } from '../../shared/get-within-limit.ts';
 // the limit.
 export async function readStdin(
   stdin: NodeJS.ReadableStream,
-  limitMs: number,
+  limitSeconds: number,
 ): Promise<string | undefined> {
-  return getWithinLimit(text(stdin), limitMs / 1000);
+  return getWithinLimit(text(stdin), limitSeconds);
 }

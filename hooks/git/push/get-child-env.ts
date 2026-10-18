@@ -7,13 +7,13 @@ import { execFileSync } from 'node:child_process';
 export function getChildEnv(
   env: NodeJS.ProcessEnv,
   repository: string,
-  limitMs: number,
+  limitSeconds: number,
 ): NodeJS.ProcessEnv {
   const localNames = execFileSync('git', ['rev-parse', '--local-env-vars'], {
     cwd: repository,
     encoding: 'utf8',
     env,
-    timeout: limitMs,
+    timeout: limitSeconds * 1000,
   }).split('\n');
 
   return Object.fromEntries(Object.entries(env).filter(([name]) => !localNames.includes(name)));

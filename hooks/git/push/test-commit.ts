@@ -8,8 +8,8 @@ const TO_STDERR: StdioOptions = ['ignore', 2, 2];
 const SHORT_SHA_LENGTH = 12;
 
 export interface Limits {
-  readonly gitMs: number;
-  readonly npmTestMs: number;
+  readonly gitSeconds: number;
+  readonly npmTestSeconds: number;
 }
 
 export interface CommitToTest {
@@ -38,7 +38,7 @@ export async function testCommit(commitToTest: CommitToTest): Promise<CommitTest
 
   const tempDir = mkdtempSync(join(tempParent, 'yapus-push-'));
   const tree = join(tempDir, 'tree');
-  const gitOptions = { cwd: repository, env, stdio: TO_STDERR, timeout: limits.gitMs };
+  const gitOptions = { cwd: repository, env, stdio: TO_STDERR, timeout: limits.gitSeconds * 1000 };
 
   try {
     const worktreeAdd = spawnSync(
@@ -82,7 +82,7 @@ async function runNpmTest(tree: string, commitToTest: CommitToTest): Promise<Com
       return { violation: `npm test failed on ${ shortSha }; fix it, then push again` };
 
     case 'timedOut': {
-      const limitSeconds = String(limits.npmTestMs / 1000);
+      const limitSeconds = String(limits.npmTestSeconds);
       const noAnswer = `npm test gave no answer within ${ limitSeconds } seconds`;
 
       return { violation: `${ noAnswer } on ${ shortSha }; make it faster, then push again` };
@@ -110,7 +110,7 @@ function waitForNpmTest(
     const onAbort = (): void => {
       stop('interrupted');
     };
-    const timer = setTimeout(stop, limits.npmTestMs, 'timedOut');
+    const timer = setTimeout(stop, limits.npmTestSeconds * 1000, 'timedOut');
     const settle = (npmTestEnd: NpmTestEnd): void => {
       clearTimeout(timer);
       signal.removeEventListener('abort', onAbort);

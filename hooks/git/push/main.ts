@@ -5,7 +5,7 @@ import { formatMessage } from './format-message.ts';
 import { getPushViolation, type PushInput } from './get-push-violation.ts';
 import { readStdin } from './read-stdin.ts';
 
-const STDIN_LIMIT_MS = 5000;
+const STDIN_LIMIT_SECONDS = 5;
 const NO_STDIN = 'no push lines within 5 seconds; the push is blocked, retry it';
 
 async function main(): Promise<void> {
@@ -22,7 +22,7 @@ async function main(): Promise<void> {
 // repository; tmpdir reads TMPDIR.
 async function readPushInput(): Promise<PushInput | undefined> {
   const signal = makeInterruptSignal();
-  const stdinText = await readStdin(process.stdin, STDIN_LIMIT_MS);
+  const stdinText = await readStdin(process.stdin, STDIN_LIMIT_SECONDS);
 
   return stdinText === undefined
     ? undefined
