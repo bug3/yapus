@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { partForms } from './part-forms.ts';
 
 export interface Catalog {
   readonly path: string;
@@ -11,7 +12,7 @@ export interface CatalogViolation {
 
 export async function readCatalog(
   path: string,
-  wordForm: string,
+  partName: keyof typeof partForms,
 ): Promise<Catalog | CatalogViolation> {
   let catalogText: string;
 
@@ -29,7 +30,7 @@ export async function readCatalog(
     return makeViolation(path, 'is not JSON');
   }
 
-  return isWordList(words, new RegExp(`^(?:${ wordForm })$`))
+  return isWordList(words, new RegExp(`^(?:${ partForms[partName] })$`))
     ? { path, words }
     : makeViolation(path, 'is not a sorted array of distinct lowercase words');
 }
