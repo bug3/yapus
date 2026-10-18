@@ -1,4 +1,4 @@
-import { spawnSync, type StdioOptions } from 'node:child_process';
+import { spawn, spawnSync, type StdioOptions } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -21,10 +21,12 @@ export interface CommitToTest {
 
 export type CommitTest = { readonly passed: true } | { readonly violation: string };
 
+type NpmTestEnd = 'passed' | 'failed' | 'timedOut';
+
 // npm test runs on the commit in a worktree of its own, so the user's working
 // tree and index stay as they are; the worktree borrows the repository's
 // node_modules, which git does not track.
-export function testCommit(commitToTest: CommitToTest): CommitTest {
+export async function testCommit(commitToTest: CommitToTest): Promise<CommitTest> {
   const { repository, sha, env, tempParent, limits } = commitToTest;
   const nodeModules = join(repository, 'node_modules');
 
@@ -49,7 +51,7 @@ export function testCommit(commitToTest: CommitToTest): CommitTest {
 
     symlinkSync(nodeModules, join(tree, 'node_modules'));
 
-    return runNpmTest(tree, commitToTest);
+    return await runNpmTest(tree, commitToTest);
   } finally {
     // --force, because the node_modules link is an untracked file in it.
     spawnSync('git', ['worktree', 'remove', '--force', tree], gitOptions);
@@ -57,25 +59,49 @@ export function testCommit(commitToTest: CommitToTest): CommitTest {
   }
 }
 
-function runNpmTest(tree: string, { sha, env, limits }: CommitToTest): CommitTest {
-  const npmTest = spawnSync('npm', ['test'], {
-    cwd: tree,
-    env,
-    stdio: TO_STDERR,
-    timeout: limits.npmTestMs,
-  });
+async function runNpmTest(tree: string, commitToTest: CommitToTest): Promise<CommitTest> {
+  const { sha, limits } = commitToTest;
   const shortSha = sha.slice(0, SHORT_SHA_LENGTH);
-  const isTimedOut = npmTest.error !== undefined && 'code' in npmTest.error
-    && npmTest.error.code === 'ETIMEDOUT';
+  const npmTestEnd = await waitForNpmTest(tree, commitToTest);
 
-  if (isTimedOut) {
-    const limitSeconds = String(limits.npmTestMs / 1000);
-    const noAnswer = `npm test gave no answer within ${ limitSeconds } seconds`;
+  switch (npmTestEnd) {
+    case 'passed':
+      return { passed: true };
 
-    return { violation: `${ noAnswer } on ${ shortSha }; make it faster, then push again` };
+    case 'failed':
+      return { violation: `npm test failed on ${ shortSha }; fix it, then push again` };
+
+    case 'timedOut': {
+      const limitSeconds = String(limits.npmTestMs / 1000);
+      const noAnswer = `npm test gave no answer within ${ limitSeconds } seconds`;
+
+      return { violation: `${ noAnswer } on ${ shortSha }; make it faster, then push again` };
+    }
   }
+}
 
-  return npmTest.status === 0
-    ? { passed: true }
-    : { violation: `npm test failed on ${ shortSha }; fix it, then push again` };
+function waitForNpmTest(
+  tree: string,
+  { env, limits }: CommitToTest,
+): Promise<NpmTestEnd> {
+  const npmTest = spawn('npm', ['test'], { cwd: tree, env, stdio: TO_STDERR });
+
+  return new Promise((resolve) => {
+    let stopReason: NpmTestEnd | undefined;
+    const timer = setTimeout(() => {
+      stopReason = 'timedOut';
+      npmTest.kill();
+    }, limits.npmTestMs);
+    const settle = (npmTestEnd: NpmTestEnd): void => {
+      clearTimeout(timer);
+      resolve(stopReason ?? npmTestEnd);
+    };
+
+    npmTest.once('error', () => {
+      settle('failed');
+    });
+    npmTest.once('close', (code) => {
+      settle(code === 0 ? 'passed' : 'failed');
+    });
+  });
 }

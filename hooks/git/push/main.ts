@@ -12,7 +12,7 @@ async function main(): Promise<void> {
   try {
     const pushInput = await readPushInput();
 
-    stop(pushInput === undefined ? NO_STDIN : getPushViolation(pushInput));
+    stop(pushInput === undefined ? NO_STDIN : await getPushViolation(pushInput));
   } catch (error) {
     stop(`crashed: ${ getFirstLine(error) }; the push is blocked, fix the hook`);
   }

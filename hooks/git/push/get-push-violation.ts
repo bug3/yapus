@@ -14,9 +14,9 @@ export interface PushInput {
 
 // The first reason to refuse the push, or undefined when npm test passes on
 // every commit it sends.
-export function getPushViolation(
+export async function getPushViolation(
   { stdinText, env, repository, tempParent }: PushInput,
-): string | undefined {
+): Promise<string | undefined> {
   const toolViolation = getToolViolation(env, LIMITS.gitMs);
 
   if (toolViolation !== undefined) {
@@ -32,7 +32,9 @@ export function getPushViolation(
   const childEnv = getChildEnv(env, repository, LIMITS.gitMs);
 
   for (const sha of pushCommits.commits) {
-    const commitTest = testCommit({ repository, sha, env: childEnv, tempParent, limits: LIMITS });
+    const commitTest = await testCommit({
+      repository, sha, env: childEnv, tempParent, limits: LIMITS,
+    });
 
     if ('violation' in commitTest) {
       return commitTest.violation;

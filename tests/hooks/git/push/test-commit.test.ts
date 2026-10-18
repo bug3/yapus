@@ -11,20 +11,20 @@ import { FAILING_TEST, makeNpmRepo, type NpmRepo, PASSING_TEST } from './make-np
 const LIMITS = { gitMs: 10000, npmTestMs: 30000 };
 const MISSING_SHA = 'dddddddddddddddddddddddddddddddddddddddd';
 
-test('passes a commit whose npm test passes and leaves no worktree', (t) => {
+test('passes a commit whose npm test passes and leaves no worktree', async (t) => {
   const npmRepo = makeNpmRepo(t, PASSING_TEST);
 
-  assert.deepEqual(runTestCommit(t, npmRepo), {
+  assert.deepEqual(await runTestCommit(t, npmRepo), {
     commitTest: { passed: true },
     worktrees: [realpathSync(npmRepo.repository)],
     tempEntries: [],
   });
 });
 
-test('refuses a commit whose npm test fails and leaves no worktree', (t) => {
+test('refuses a commit whose npm test fails and leaves no worktree', async (t) => {
   const npmRepo = makeNpmRepo(t, FAILING_TEST);
 
-  assert.deepEqual(runTestCommit(t, npmRepo), {
+  assert.deepEqual(await runTestCommit(t, npmRepo), {
     commitTest: {
       violation: `npm test failed on ${ npmRepo.sha.slice(0, 12) }; fix it, then push again`,
     },
@@ -33,33 +33,33 @@ test('refuses a commit whose npm test fails and leaves no worktree', (t) => {
   });
 });
 
-test('refuses a repository without node_modules and leaves no worktree', (t) => {
+test('refuses a repository without node_modules and leaves no worktree', async (t) => {
   const npmRepo = makeNpmRepo(t, PASSING_TEST);
 
   rmSync(join(npmRepo.repository, 'node_modules'), { recursive: true });
 
-  assert.deepEqual(runTestCommit(t, npmRepo), {
+  assert.deepEqual(await runTestCommit(t, npmRepo), {
     commitTest: { violation: 'no node_modules in the repository; run npm ci, then push again' },
     worktrees: [realpathSync(npmRepo.repository)],
     tempEntries: [],
   });
 });
 
-test('refuses a sha the repository does not have and leaves no worktree', (t) => {
+test('refuses a sha the repository does not have and leaves no worktree', async (t) => {
   const { repository } = makeNpmRepo(t, PASSING_TEST);
 
-  assert.deepEqual(runTestCommit(t, { repository, sha: MISSING_SHA }), {
+  assert.deepEqual(await runTestCommit(t, { repository, sha: MISSING_SHA }), {
     commitTest: { violation: 'git could not make the worktree; the push is blocked, retry it' },
     worktrees: [realpathSync(repository)],
     tempEntries: [],
   });
 });
 
-function runTestCommit(t: TestContext, { repository, sha }: NpmRepo): {
+async function runTestCommit(t: TestContext, { repository, sha }: NpmRepo): Promise<{
   commitTest: CommitTest;
   worktrees: string[];
   tempEntries: string[];
-} {
+}> {
   const tempParent = makeTempDir(t);
   const env = {
     ...getGitEnv(process.env),
@@ -67,7 +67,7 @@ function runTestCommit(t: TestContext, { repository, sha }: NpmRepo): {
     npm_config_update_notifier: 'false',
   };
 
-  const commitTest = testCommit({ repository, sha, env, tempParent, limits: LIMITS });
+  const commitTest = await testCommit({ repository, sha, env, tempParent, limits: LIMITS });
 
   return {
     commitTest,

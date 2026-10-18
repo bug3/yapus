@@ -7,36 +7,36 @@ import { FAILING_TEST, makeNpmRepo, PASSING_TEST } from './make-npm-repo.ts';
 
 const REMOTE_SHA = '1111111111111111111111111111111111111111';
 
-test('passes a push whose commit passes npm test', (t) => {
+test('passes a push whose commit passes npm test', async (t) => {
   const { repository, sha } = makeNpmRepo(t, PASSING_TEST);
 
-  assert.equal(getPushViolation(makePushInput(t, repository, makePushLine(sha))), undefined);
+  assert.equal(await getPushViolation(makePushInput(t, repository, makePushLine(sha))), undefined);
 });
 
-test('refuses a push whose commit fails npm test', (t) => {
+test('refuses a push whose commit fails npm test', async (t) => {
   const { repository, sha } = makeNpmRepo(t, FAILING_TEST);
 
   assert.equal(
-    getPushViolation(makePushInput(t, repository, makePushLine(sha))),
+    await getPushViolation(makePushInput(t, repository, makePushLine(sha))),
     `npm test failed on ${ sha.slice(0, 12) }; fix it, then push again`,
   );
 });
 
-test('refuses a malformed push line', (t) => {
+test('refuses a malformed push line', async (t) => {
   const { repository } = makeNpmRepo(t, PASSING_TEST);
 
   assert.equal(
-    getPushViolation(makePushInput(t, repository, 'refs/heads/main\n')),
+    await getPushViolation(makePushInput(t, repository, 'refs/heads/main\n')),
     'push line 1 is not "<local ref> <local sha> <remote ref> <remote sha>"; the push is blocked, retry it',
   );
 });
 
-test('refuses a push when git is missing', (t) => {
+test('refuses a push when git is missing', async (t) => {
   const { repository, sha } = makeNpmRepo(t, PASSING_TEST);
   const pushInput = makePushInput(t, repository, makePushLine(sha));
 
   assert.equal(
-    getPushViolation({ ...pushInput, env: { PATH: makeTempDir(t) } }),
+    await getPushViolation({ ...pushInput, env: { PATH: makeTempDir(t) } }),
     'git not found; install git 2.17 or newer',
   );
 });
