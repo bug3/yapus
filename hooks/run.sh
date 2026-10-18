@@ -2,8 +2,8 @@
 set -u
 
 # Runs hooks/<name>/main.ts, the name a path such as claude/dashes. Claude
-# Code lets a tool call through on any exit but 0 and 2, so every other exit
-# of the hook becomes 2.
+# Code lets a tool call through on any exit but 0 and 2, and git refuses on
+# any exit but 0, so every other exit of the hook becomes 2.
 
 readonly INSTALL_NODE='install Node 24 or newer'
 
@@ -58,4 +58,4 @@ case $status in
   2) exit 2 ;;
 esac
 
-fail "hook $name failed with exit $status; the call is blocked, fix the hook"
+fail "hook $name failed with exit $status; fix the hook"

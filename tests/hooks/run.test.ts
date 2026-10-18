@@ -47,7 +47,7 @@ test('exits 2 and names the exit when the hook throws', (t) => {
   assert.equal(entryRun.status, 2);
   assert.match(
     entryRun.stderr,
-    /yapus run\.sh: hook stub failed with exit 1; the call is blocked, fix the hook\n$/,
+    /yapus run\.sh: hook stub failed with exit 1; fix the hook\n$/,
   );
 });
 
@@ -59,7 +59,7 @@ test('exits 2 when the hook is killed', (t) => {
   assert.equal(entryRun.status, 2);
   assert.match(
     entryRun.stderr,
-    /yapus run\.sh: hook stub failed with exit 137; the call is blocked, fix the hook\n$/,
+    /yapus run\.sh: hook stub failed with exit 137; fix the hook\n$/,
   );
 });
 
