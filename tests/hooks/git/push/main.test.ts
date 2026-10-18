@@ -7,7 +7,9 @@ import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { getGitEnv, runGit } from '../../../helpers/run-git.ts';
 import { listWorktrees } from './list-worktrees.ts';
-import { CLEAN_ENV_TEST, FAILING_TEST, makeNpmRepo, PASSING_TEST } from './make-npm-repo.ts';
+import {
+  CLEAN_ENV_TEST, FAILING_TEST, makeNpmRepo, type NpmRepo, PASSING_TEST,
+} from './make-npm-repo.ts';
 import { waitUntil } from './wait-until.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
@@ -103,37 +105,37 @@ test('exits 2 with one line when the hook crashes on a line separator', (t) => {
   );
 });
 
-test('exits 2 and removes the worktree when interrupted', async (t) => {
-  const { repository, sha } = makeNpmRepo(t, SLEEPING_TEST);
-  const tempParent = makeTempDir(t);
-  const pushRun = spawn(process.execPath, [MAIN], {
-    cwd: repository,
-    env: makeMainEnv(t, repository, { TMPDIR: tempParent }),
-    timeout: SUBPROCESS_TIMEOUT_MS,
+test('exits 2 and removes the worktree on SIGINT', async (t) => {
+  const npmRepo = makeNpmRepo(t, SLEEPING_TEST);
+
+  assert.deepEqual(await interruptMain(t, npmRepo, 'SIGINT'), {
+    status: 2,
+    lastLine: `yapus push: the push test was interrupted on ${ npmRepo.sha.slice(0, 12) }`,
+    worktrees: [realpathSync(npmRepo.repository)],
+    tempEntries: [],
   });
-  const stderrText = text(pushRun.stderr);
-  const closing = new Promise<number | null>((resolve) => {
-    pushRun.once('close', resolve);
+});
+
+test('exits 2 and removes the worktree on SIGTERM', async (t) => {
+  const npmRepo = makeNpmRepo(t, SLEEPING_TEST);
+
+  assert.deepEqual(await interruptMain(t, npmRepo, 'SIGTERM'), {
+    status: 2,
+    lastLine: `yapus push: the push test was interrupted on ${ npmRepo.sha.slice(0, 12) }`,
+    worktrees: [realpathSync(npmRepo.repository)],
+    tempEntries: [],
   });
+});
 
-  pushRun.stdin.end(makePushLine(sha));
-  const isTreeMade = await waitUntil(() => listWorktrees(repository).length === 2, WAIT_MS);
+test('exits 2 and removes the worktree on SIGHUP', async (t) => {
+  const npmRepo = makeNpmRepo(t, SLEEPING_TEST);
 
-  pushRun.kill('SIGINT');
-  assert.ok(isTreeMade, 'the push test made no worktree within the wait');
-
-  const status = await closing;
-  const lastLine = (await stderrText).split('\n').at(-2);
-
-  assert.deepEqual(
-    [status, lastLine, listWorktrees(repository), readdirSync(tempParent)],
-    [
-      2,
-      `yapus push: the push test was interrupted on ${ sha.slice(0, 12) }`,
-      [realpathSync(repository)],
-      [],
-    ],
-  );
+  assert.deepEqual(await interruptMain(t, npmRepo, 'SIGHUP'), {
+    status: 2,
+    lastLine: `yapus push: the push test was interrupted on ${ npmRepo.sha.slice(0, 12) }`,
+    worktrees: [realpathSync(npmRepo.repository)],
+    tempEntries: [],
+  });
 });
 
 test('writes a line when it cannot remove its worktree', (t) => {
@@ -184,6 +186,38 @@ function runMainWithEnv(t: TestContext, { repository, stdinText, extraEnv }: Mai
     input: stdinText,
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
+}
+
+// The program sent the signal once npm test runs in its worktree, and what it
+// left behind.
+async function interruptMain(
+  t: TestContext,
+  { repository, sha }: NpmRepo,
+  signal: NodeJS.Signals,
+) {
+  const tempParent = makeTempDir(t);
+  const pushRun = spawn(process.execPath, [MAIN], {
+    cwd: repository,
+    env: makeMainEnv(t, repository, { TMPDIR: tempParent }),
+    timeout: SUBPROCESS_TIMEOUT_MS,
+  });
+  const stderrText = text(pushRun.stderr);
+  const closing = new Promise<number | null>((resolve) => {
+    pushRun.once('close', resolve);
+  });
+
+  pushRun.stdin.end(makePushLine(sha));
+  const isTreeMade = await waitUntil(() => listWorktrees(repository).length === 2, WAIT_MS);
+
+  pushRun.kill(signal);
+  assert.ok(isTreeMade, 'the push test made no worktree within the wait');
+
+  return {
+    status: await closing,
+    lastLine: (await stderrText).split('\n').at(-2),
+    worktrees: listWorktrees(repository),
+    tempEntries: readdirSync(tempParent),
+  };
 }
 
 function makeMainEnv(t: TestContext, repository: string, extraEnv: NodeJS.ProcessEnv) {

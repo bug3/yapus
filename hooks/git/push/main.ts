@@ -6,6 +6,7 @@ import { getPushViolation, type PushInput } from './get-push-violation.ts';
 import { readStdin } from './read-stdin.ts';
 
 const STDIN_LIMIT_SECONDS = 5;
+const INTERRUPTS: readonly NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGHUP'];
 const NO_STDIN = 'no push lines within 5 seconds; the push is blocked, retry it';
 
 async function main(): Promise<void> {
@@ -29,16 +30,19 @@ async function readPushInput(): Promise<PushInput | undefined> {
     : { stdinText, env: process.env, repository: process.cwd(), tempParent: tmpdir(), signal };
 }
 
-// Node would end at once on SIGINT or SIGTERM; the signal lets the push test
-// stop npm test and remove its worktree first.
+// Node would end at once on each of these; the signal lets the push test stop
+// npm test and remove its worktree first. npm test runs in a process group of
+// its own, so a terminal hangup reaches only node. Every signal stays caught,
+// so that a second one during the cleanup cannot end node either.
 function makeInterruptSignal(): AbortSignal {
   const controller = new AbortController();
   const abort = (): void => {
     controller.abort();
   };
 
-  process.once('SIGINT', abort);
-  process.once('SIGTERM', abort);
+  for (const interrupt of INTERRUPTS) {
+    process.on(interrupt, abort);
+  }
 
   return controller.signal;
 }
