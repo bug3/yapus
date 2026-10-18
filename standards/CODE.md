@@ -1,3 +1,11 @@
+---
+paths:
+  - "**/*.ts"
+  - "**/*.sh"
+  - "hooks/git/commit-msg"
+  - "hooks/git/pre-push"
+---
+
 # Code
 
 ## CODE-1. Give a program one entry file that only calls its logic; keep the logic in modules a test can import without running the program.

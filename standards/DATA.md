@@ -1,3 +1,8 @@
+---
+paths:
+  - "**/*.json"
+---
+
 # Data
 
 ## DATA-1. Use JSON for data a program reads; use another format only where the tool that reads the file requires it.

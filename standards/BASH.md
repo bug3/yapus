@@ -1,3 +1,10 @@
+---
+paths:
+  - "**/*.sh"
+  - "hooks/git/commit-msg"
+  - "hooks/git/pre-push"
+---
+
 # Bash
 
 ## BASH-1. Start every bash script with `#!/usr/bin/env bash` and write only syntax that bash 3.2 runs.

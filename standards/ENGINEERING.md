@@ -1,3 +1,11 @@
+---
+paths:
+  - "**/*.ts"
+  - "**/*.sh"
+  - "hooks/git/commit-msg"
+  - "hooks/git/pre-push"
+---
+
 # Engineering
 
 ## ENG-1. Split a file on a second reason to change, not on its line count.

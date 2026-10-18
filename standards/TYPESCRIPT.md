@@ -1,3 +1,8 @@
+---
+paths:
+  - "**/*.ts"
+---
+
 # TypeScript
 
 ## TS-5. Run a Node program as `.ts` on Node 24 or newer; add no step that emits JavaScript.

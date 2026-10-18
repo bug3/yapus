@@ -1,3 +1,9 @@
+---
+paths:
+  - "tests/repository/**"
+  - "package.json"
+---
+
 # Repository
 
 ## REPO-1. Before choosing a language, framework or platform, write the constraints it must meet: where it runs, what load it carries, who maintains it.

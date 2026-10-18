@@ -1,3 +1,9 @@
+---
+paths:
+  - "**/*.test.ts"
+  - "package.json"
+---
+
 # Tests
 
 ## TEST-1. Test a behavior through the interface its callers use, one behavior per test, named for the action and its outcome.

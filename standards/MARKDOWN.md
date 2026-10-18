@@ -1,3 +1,8 @@
+---
+paths:
+  - "**/*.md"
+---
+
 # Markdown
 
 ## MD-2. Write no sentence about the file itself.

@@ -1,3 +1,12 @@
+---
+paths:
+  - "**/CLAUDE.md"
+  - "**/AGENTS.md"
+  - ".claude/**/*.md"
+  - "**/SKILL.md"
+  - "standards/**"
+---
+
 # Instructions
 
 ## INST-1. Put in the always-loaded instructions only the rules every task needs.
