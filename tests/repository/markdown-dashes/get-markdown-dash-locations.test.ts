@@ -22,6 +22,14 @@ test('names the file and line of each dash in markdown', (t) => {
   assert.deepEqual(getMarkdownDashLocations(root).sort(), ['a.md:2', 'docs/b.MARKDOWN:1']);
 });
 
+test('names a markdown file that is not UTF-8 text', (t) => {
+  const root = makeTempRepo(t);
+
+  writeFileSync(join(root, 'a.md'), Buffer.from(`a ${ EM_DASH } b\n`, 'utf16le'));
+
+  assert.deepEqual(getMarkdownDashLocations(root), ['a.md: not UTF-8 text']);
+});
+
 function makeTreeWithDashes(t: TestContext): string {
   const root = makeTempRepo(t);
 
