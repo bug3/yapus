@@ -1,13 +1,13 @@
 # Bash
 
-## B1. Start every bash script with `#!/usr/bin/env bash` and write only syntax that bash 3.2 runs.
+## BASH-1. Start every bash script with `#!/usr/bin/env bash` and write only syntax that bash 3.2 runs.
 
-## B2. Make `set -u` the first command of every bash script, and leave `set -e` off.
+## BASH-2. Make `set -u` the first command of every bash script, and leave `set -e` off.
 
-## B3. Check the status of every command whose failure changes what the script does next, `cd` included.
+## BASH-3. Check the status of every command whose failure changes what the script does next, `cd` included.
 
-## B4. Call a utility POSIX defines only with the options POSIX defines for it.
+## BASH-4. Call a utility POSIX defines only with the options POSIX defines for it.
 
-## B5. Find a script's own directory by `cd -P` into the directory of `${BASH_SOURCE[0]}`.
+## BASH-5. Find a script's own directory by `cd -P` into the directory of `${BASH_SOURCE[0]}`.
 
-## B6. Run a command as a child, not with `exec`, when the script acts on its exit status.
+## BASH-6. Run a command as a child, not with `exec`, when the script acts on its exit status.
