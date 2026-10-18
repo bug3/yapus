@@ -36,16 +36,6 @@
 
 ## ENG-21. Treat every new warning as a failing check.
 
-## ENG-22. Before choosing a language, framework or platform, write the constraints it must meet: where it runs, what load it carries, who maintains it.
-
-## ENG-23. Choose a technology whose failure modes others have already written down.
-
-## ENG-24. Use a language whose types can make an illegal state unrepresentable and whose compiler checks a closed set for exhaustiveness.
-
-## ENG-25. Use one language in a repository; add a second only for work the first cannot express.
-
-## ENG-26. Add a dependency, direct or transitive, only for work you would not write and maintain yourself, and pin it to one version.
-
 ## ENG-27. Use what the repository already depends on; open no second way to do the same thing.
 
 ## ENG-28. Wire the program's parts together in one place in its own code; adopt no framework that wires the program.
@@ -53,9 +43,3 @@
 ## ENG-29. Grant a component the least authority its task needs and deny the rest by default.
 
 ## ENG-30. Leave these decisions to a person: architecture, authentication, data migration, the shape of a public interface, dependency and technology choice, root cause.
-
-## ENG-31. Split a folder when its files form more than one group that changes together, and give each group a subfolder of its own.
-
-## ENG-32. In a folder with subfolders, leave at the top only its entry file, the file that wires its subfolders together, the files more than one subfolder uses, the files a tool requires there and the file a reader opens first.
-
-## ENG-33. Keep a collection, files of one kind with one file per case, flat in one folder, and name its files so that related cases sort together.
