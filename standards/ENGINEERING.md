@@ -30,8 +30,6 @@ paths:
 
 ## ENG-17. Give every invariant a test, and watch that test fail once against the broken invariant before it passes.
 
-## ENG-21. Treat every new warning as a failing check.
-
 ## ENG-27. Use what the repository already depends on; open no second way to do the same thing.
 
 ## ENG-28. Wire the program's parts together in one place in its own code; adopt no framework that wires the program.
