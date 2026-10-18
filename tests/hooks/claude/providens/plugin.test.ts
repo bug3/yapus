@@ -6,7 +6,7 @@ import { test } from 'node:test';
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const PLUGIN = join(ROOT, 'plugins', 'providens');
 
-test('registers the policy at every session start and the contract for the roster', () => {
+test('registers the policy, the launch gate failing closed, and the roster contract', () => {
   const hooks: unknown = JSON.parse(readFileSync(join(PLUGIN, 'hooks', 'hooks.json'), 'utf8'));
 
   assert.deepEqual(hooks, {
@@ -19,6 +19,19 @@ test('registers the policy at every session start and the contract for the roste
               type: 'command',
               command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/policy',
               timeout: 10,
+            },
+          ],
+        },
+      ],
+      PreToolUse: [
+        {
+          matcher: 'Agent',
+          hooks: [
+            {
+              type: 'command',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/launch',
+              timeout: 10,
+              onFailure: 'block',
             },
           ],
         },
