@@ -11,6 +11,18 @@
           }
         ]
       }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "^providens:",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/providens/contract",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }

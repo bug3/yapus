@@ -6,7 +6,7 @@ import { test } from 'node:test';
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const PLUGIN = join(ROOT, 'plugins', 'providens');
 
-test('registers the policy hook at every session start, after compaction too', () => {
+test('registers the policy at every session start and the contract for the roster', () => {
   const hooks: unknown = JSON.parse(readFileSync(join(PLUGIN, 'hooks', 'hooks.json'), 'utf8'));
 
   assert.deepEqual(hooks, {
@@ -18,6 +18,18 @@ test('registers the policy hook at every session start, after compaction too', (
             {
               type: 'command',
               command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/policy',
+              timeout: 10,
+            },
+          ],
+        },
+      ],
+      SubagentStart: [
+        {
+          matcher: '^providens:',
+          hooks: [
+            {
+              type: 'command',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/contract',
               timeout: 10,
             },
           ],
