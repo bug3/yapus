@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -u
+
+# git runs this with the path of the commit message file; the subject check
+# judges the message, and a refusal stops the commit.
+
+if ! dir=$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd); then
+  printf '%s\n' 'yapus commit-msg: cannot find its own directory; reinstall yapus' >&2
+  exit 2
+fi
+
+bash "$dir/../run.sh" git/subject "$@"
