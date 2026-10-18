@@ -34,8 +34,6 @@ paths:
 
 ## CODE-15. Find a program's own files from the location of its own code, never from the working directory.
 
-## CODE-16. End the process only from the entry file; return from every other module.
-
 ## CODE-17. At a program's start, check that every tool it needs is present at the version it needs.
 
 ## CODE-18. Separate two statements of different jobs, such as reading, building, checking, acting and returning, with one blank line, and keep the statements of one job together.

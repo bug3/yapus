@@ -24,6 +24,18 @@ const NO_NULL = {
   message: 'Use undefined for absence.',
 } as const;
 
+const NUMBER_PARSING = [
+  { object: 'Number', property: 'parseInt', message: 'Convert with Number().' },
+  { object: 'Number', property: 'parseFloat', message: 'Convert with Number().' },
+] as const;
+
+// Only an entry file ends the process; every other module returns.
+const PROCESS_EXIT = {
+  object: 'process',
+  property: 'exit',
+  message: 'End the process only from the entry file.',
+} as const;
+
 const RESTRICTED_SYNTAX = [
   {
     selector: `Program > ${ DECLARED_FUNCTION_EXPRESSION }`,
@@ -194,11 +206,7 @@ export default defineConfig(
         },
       ],
       'no-restricted-globals': ['error', 'parseInt', 'parseFloat'],
-      'no-restricted-properties': [
-        'error',
-        { object: 'Number', property: 'parseInt', message: 'Convert with Number().' },
-        { object: 'Number', property: 'parseFloat', message: 'Convert with Number().' },
-      ],
+      'no-restricted-properties': ['error', ...NUMBER_PARSING, PROCESS_EXIT],
       'no-restricted-imports': [
         'error',
         {
@@ -220,6 +228,12 @@ export default defineConfig(
       'prefer-rest-params': 'error',
       'prefer-spread': 'error',
       'prefer-template': 'error',
+    },
+  },
+  {
+    files: ['hooks/*/*/main.ts'],
+    rules: {
+      'no-restricted-properties': ['error', ...NUMBER_PARSING],
     },
   },
   // ESLint's API names its keys, demands a default export and takes null to
