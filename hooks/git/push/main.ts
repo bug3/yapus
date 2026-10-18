@@ -1,6 +1,7 @@
 import { writeSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { getFirstLine } from '../../shared/get-first-line.ts';
+import { formatMessage } from './format-message.ts';
 import { getPushViolation, type PushInput } from './get-push-violation.ts';
 import { readStdin } from './read-stdin.ts';
 
@@ -30,7 +31,7 @@ async function readPushInput(): Promise<PushInput | undefined> {
 // writeSync, because process.exit can drop a pending write to a pipe.
 function stop(violation: string | undefined): never {
   if (violation !== undefined) {
-    writeSync(process.stderr.fd, `yapus push: ${ violation }\n`);
+    writeSync(process.stderr.fd, `${ formatMessage(violation) }\n`);
   }
 
   process.exit(violation === undefined ? 0 : 2);
