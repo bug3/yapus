@@ -4,6 +4,7 @@ paths:
   - "**/AGENTS.md"
   - ".claude/**/*.md"
   - "**/SKILL.md"
+  - "**/agents/*.md"
   - "standards/**"
 ---
 
