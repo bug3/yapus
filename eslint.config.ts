@@ -17,10 +17,12 @@ const LONE_STRING_LINE = '^\\s*([\'"`])(?:\\\\.|(?!\\1).)*\\1[,;)\\]]*$';
 const DECLARED_FUNCTION_EXPRESSION =
   'VariableDeclaration > VariableDeclarator > :matches(ArrowFunctionExpression, FunctionExpression)';
 
+const BARE_BUILTIN_PATTERN = `/^(?:${ BARE_BUILTINS.join('|').replaceAll('/', '\\/') })$/`;
+
 const NO_NULL = {
   selector: 'Literal[raw="null"]:not(BinaryExpression > Literal)',
   message: 'Use undefined for absence.',
-};
+} as const;
 
 const RESTRICTED_SYNTAX = [
   {
@@ -38,6 +40,10 @@ const RESTRICTED_SYNTAX = [
   {
     selector: 'CallExpression[callee.property.name="toString"][arguments.length=0]',
     message: 'Convert with String().',
+  },
+  {
+    selector: `ImportExpression[source.value=${ BARE_BUILTIN_PATTERN }]`,
+    message: 'Import a built-in module by its node: name.',
   },
   NO_NULL,
 ] as const;
@@ -122,12 +128,23 @@ export default defineConfig(
           format: ['camelCase', 'UPPER_CASE'],
         },
         {
+          selector: 'variable',
+          modifiers: ['const', 'global'],
+          types: ['number', 'string'],
+          format: ['UPPER_CASE'],
+        },
+        {
           selector: ['variable', 'parameter'],
           types: ['boolean'],
           format: ['PascalCase'],
           prefix: ['is', 'has', 'can', 'should'],
         },
         { selector: 'typeLike', format: ['PascalCase'] },
+        {
+          selector: 'interface',
+          format: ['PascalCase'],
+          custom: { regex: '^I[A-Z]', match: false },
+        },
         { selector: 'import', format: ['camelCase', 'PascalCase'] },
         // Keys of an outside API keep its spelling: tool_input, PATH, PreToolUse.
         {
@@ -145,6 +162,7 @@ export default defineConfig(
         },
       ],
       '@typescript-eslint/no-shadow': 'error',
+      '@typescript-eslint/no-unused-vars': ['error', { args: 'all' }],
       '@typescript-eslint/no-use-before-define': ['error', { functions: false }],
       '@typescript-eslint/prefer-destructuring': 'error',
       '@typescript-eslint/strict-boolean-expressions': [
@@ -155,6 +173,7 @@ export default defineConfig(
       'arrow-body-style': ['error', 'as-needed'],
       'curly': ['error', 'all'],
       'eqeqeq': ['error', 'always'],
+      'no-cond-assign': ['error', 'always'],
       'no-console': 'error',
       'no-else-return': ['error', { allowElseIf: false }],
       'no-eval': 'error',
@@ -175,6 +194,11 @@ export default defineConfig(
         },
       ],
       'no-restricted-globals': ['error', 'parseInt', 'parseFloat'],
+      'no-restricted-properties': [
+        'error',
+        { object: 'Number', property: 'parseInt', message: 'Convert with Number().' },
+        { object: 'Number', property: 'parseFloat', message: 'Convert with Number().' },
+      ],
       'no-restricted-imports': [
         'error',
         {
@@ -191,7 +215,10 @@ export default defineConfig(
       'no-var': 'error',
       'object-shorthand': ['error', 'always'],
       'one-var': ['error', 'never'],
+      'prefer-arrow-callback': 'error',
       'prefer-const': 'error',
+      'prefer-rest-params': 'error',
+      'prefer-spread': 'error',
       'prefer-template': 'error',
     },
   },

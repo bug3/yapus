@@ -6,11 +6,16 @@ export async function getModulesWithoutOwnExport(
   root: string,
   modulePaths: readonly string[],
 ): Promise<string[]> {
-  const hasOwnNameExports = await Promise.all(
-    modulePaths.map((modulePath) => hasOwnNameExport(join(root, modulePath))),
+  const checkedModules = await Promise.all(
+    modulePaths.map(async (modulePath) => ({
+      modulePath,
+      hasOwnExport: await hasOwnNameExport(join(root, modulePath)),
+    })),
   );
 
-  return modulePaths.filter((modulePath, index) => hasOwnNameExports[index] === false);
+  return checkedModules
+    .filter(({ hasOwnExport }) => !hasOwnExport)
+    .map(({ modulePath }) => modulePath);
 }
 
 async function hasOwnNameExport(modulePath: string): Promise<boolean> {
