@@ -105,26 +105,26 @@ function parseEdit(toolInput: ToolInput): Parsed {
   return { kind: 'call', call: { tool: 'Edit', filePath, oldString, newString } };
 }
 
-function isRecord(value: unknown): value is ToolInput {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+function isRecord(parsedJson: unknown): parsedJson is ToolInput {
+  return typeof parsedJson === 'object' && parsedJson !== null && !Array.isArray(parsedJson);
 }
 
-function isTool(value: unknown): value is Tool {
-  return typeof value === 'string' && Object.hasOwn(parsers, value);
+function isTool(toolName: unknown): toolName is Tool {
+  return typeof toolName === 'string' && Object.hasOwn(parsers, toolName);
 }
 
 // A lone surrogate could pair with one already in the file and form a dash
 // that no check of this text would see.
-function isText(value: unknown): value is string {
-  return typeof value === 'string' && value.isWellFormed();
+function isText(field: unknown): field is string {
+  return typeof field === 'string' && field.isWellFormed();
 }
 
-function describe(value: unknown): string {
-  return typeof value === 'string' ? JSON.stringify(value) : typeof value;
+function describe(toolName: unknown): string {
+  return typeof toolName === 'string' ? JSON.stringify(toolName) : typeof toolName;
 }
 
-function makeFieldFailure(field: string): ParseFailure {
-  return makeFailure(`tool_input.${ field } is not a well-formed string`);
+function makeFieldFailure(fieldName: string): ParseFailure {
+  return makeFailure(`tool_input.${ fieldName } is not a well-formed string`);
 }
 
 function makeFailure(reason: string): ParseFailure {

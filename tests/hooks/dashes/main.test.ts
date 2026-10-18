@@ -13,10 +13,10 @@ const DASH_WRITE = JSON.stringify({
 });
 
 test('exits 2 and writes the finding to stderr for a Write that adds a dash', () => {
-  const result = runHook(DASH_WRITE);
+  const hookRun = runHook(DASH_WRITE);
 
   assert.deepEqual(
-    [result.status, result.stdout, result.stderr],
+    [hookRun.status, hookRun.stdout, hookRun.stderr],
     [2, '', 'yapus dashes: /r/a.md:1: U+2014; use the ASCII hyphen\n'],
   );
 });
@@ -27,15 +27,15 @@ test('exits 0 with no output for a Write with only ASCII hyphens', () => {
     tool_input: { file_path: '/r/a.md', content: 'a - b\n' },
   });
 
-  const result = runHook(stdinText);
+  const hookRun = runHook(stdinText);
 
-  assert.deepEqual([result.status, result.stdout, result.stderr], [0, '', '']);
+  assert.deepEqual([hookRun.status, hookRun.stdout, hookRun.stderr], [0, '', '']);
 });
 
 test('exits 2 for stdin that is not JSON', () => {
-  const result = runHook('{');
+  const hookRun = runHook('{');
 
-  assert.equal(result.status, 2);
+  assert.equal(hookRun.status, 2);
 });
 
 test('exits 2 when stdin stays open past the time limit', { timeout: 15000 }, async () => {
@@ -61,10 +61,10 @@ test('exits 2 when stdin stays open past the time limit', { timeout: 15000 }, as
 });
 
 test('exits 2 through the bash entry point for a Write that adds a dash', () => {
-  const result = spawnSync('bash', [RUN_SH, 'dashes'], { encoding: 'utf8', input: DASH_WRITE });
+  const entryRun = spawnSync('bash', [RUN_SH, 'dashes'], { encoding: 'utf8', input: DASH_WRITE });
 
   assert.deepEqual(
-    [result.status, result.stderr],
+    [entryRun.status, entryRun.stderr],
     [2, 'yapus dashes: /r/a.md:1: U+2014; use the ASCII hyphen\n'],
   );
 });
