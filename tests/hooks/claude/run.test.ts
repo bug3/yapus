@@ -13,6 +13,8 @@ interface RunOptions {
 
 const RUN_SH = join(import.meta.dirname, '..', '..', '..', 'hooks', 'claude', 'run.sh');
 const STUB = 'stub';
+const NAME_RULE =
+  'is not segments of lowercase letters and digits joined by /; fix the hook command';
 const SHELLCHECK_VERSION = '0.11.0';
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const BASH = getCommandPath('bash');
@@ -69,17 +71,41 @@ test('finds its hook when started from another directory', (t) => {
   assert.deepEqual([entryRun.status, entryRun.stderr], [0, '']);
 });
 
-test('exits 2 when the hook name is not lowercase letters and digits', (t) => {
+test('runs the hook at a name of segments joined by a slash', (t) => {
+  const sandbox = makeSandbox(t, '');
+
+  mkdirSync(join(sandbox, 'group', STUB), { recursive: true });
+  writeFileSync(join(sandbox, 'group', STUB, 'main.ts'), "process.stdout.write('nested');\n");
+
+  const entryRun = run(sandbox, `group/${ STUB }`, { input: '', env: process.env, cwd: sandbox });
+
+  assert.deepEqual([entryRun.status, entryRun.stdout, entryRun.stderr], [0, 'nested', '']);
+});
+
+test('exits 2 when the hook name is not segments of lowercase letters and digits', (t) => {
   const sandbox = makeSandbox(t, '');
 
   const entryRun = run(sandbox, '../stub', { input: '', env: process.env, cwd: sandbox });
 
   assert.deepEqual(
     [entryRun.status, entryRun.stderr],
-    [
-      2,
-      'yapus run.sh: hook name ../stub is not lowercase letters and digits; fix the hook command\n',
-    ],
+    [2, `yapus run.sh: hook name ../stub ${ NAME_RULE }\n`],
+  );
+});
+
+test('exits 2 when the hook name has an empty segment or an outer slash', (t) => {
+  const sandbox = makeSandbox(t, '');
+  const names = ['group//stub', '/stub', 'stub/'];
+
+  const entryRuns = names.map((name) => run(sandbox, name, {
+    input: '',
+    env: process.env,
+    cwd: sandbox,
+  }));
+
+  assert.deepEqual(
+    entryRuns.map(({ status, stderr }) => [status, stderr]),
+    names.map((name) => [2, `yapus run.sh: hook name ${ name } ${ NAME_RULE }\n`]),
   );
 });
 
@@ -90,10 +116,7 @@ test('keeps the message on one line when the hook name holds a line feed', (t) =
 
   assert.deepEqual(
     [entryRun.status, entryRun.stderr],
-    [
-      2,
-      "yapus run.sh: hook name $'bad\\nname' is not lowercase letters and digits; fix the hook command\n",
-    ],
+    [2, `yapus run.sh: hook name $'bad\\nname' ${ NAME_RULE }\n`],
   );
 });
 

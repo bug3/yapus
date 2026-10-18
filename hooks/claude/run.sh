@@ -14,8 +14,8 @@ fail() {
 name=${1-}
 
 case $name in
-  '' | *[!a-z0-9]*)
-    fail "hook name $(printf '%q' "$name") is not lowercase letters and digits; fix the hook command"
+  '' | /* | */ | *//* | *[!a-z0-9/]*)
+    fail "hook name $(printf '%q' "$name") is not segments of lowercase letters and digits joined by /; fix the hook command"
     ;;
 esac
 
