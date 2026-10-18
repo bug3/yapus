@@ -11,7 +11,7 @@ const MAX_FILES_PER_FOLDER = 10;
 
 // Folders, relative to the root, that E33 keeps flat with one file per
 // case; no limit applies to them.
-const COLLECTIONS: readonly string[] = [];
+const COLLECTIONS: readonly string[] = ['standards'];
 
 test('holds at most the file limit in every folder but a collection', () => {
   assert.deepEqual(getFoldersOverLimit(ROOT, MAX_FILES_PER_FOLDER, COLLECTIONS), []);
