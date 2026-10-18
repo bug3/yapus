@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { realpathSync, statSync } from 'node:fs';
+import { readdirSync, realpathSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../helpers/make-temp-dir.ts';
@@ -23,8 +23,8 @@ test('lets a push through when npm test passes on its commit', (t) => {
   const pushRun = runPrePush(t, repository, makePushLine(sha));
 
   assert.deepEqual(
-    [pushRun.status, pushRun.stdout, listWorktrees(repository)],
-    [0, '', [realpathSync(repository)]],
+    [pushRun.status, pushRun.stdout, listWorktrees(repository), pushRun.tempEntries],
+    [0, '', [realpathSync(repository)], []],
   );
 });
 
@@ -34,11 +34,17 @@ test('refuses a push when npm test fails on its commit', (t) => {
   const pushRun = runPrePush(t, repository, makePushLine(sha));
 
   assert.deepEqual(
-    [pushRun.status, pushRun.stderr.split('\n').at(-2), listWorktrees(repository)],
+    [
+      pushRun.status,
+      pushRun.stderr.split('\n').at(-2),
+      listWorktrees(repository),
+      pushRun.tempEntries,
+    ],
     [
       2,
       `yapus push: npm test failed on ${ sha.slice(0, 12) }; fix it, then push again`,
       [realpathSync(repository)],
+      [],
     ],
   );
 });
@@ -61,17 +67,23 @@ function makePushLine(sha: string): string {
 }
 
 // The hook run as git runs it: from the repository root, with the remote name
-// and URL as arguments and the push lines on stdin.
+// and URL as arguments and the push lines on stdin, and what it left in its
+// own TMPDIR. npm keeps a compile cache in TMPDIR, so the cache is off.
 function runPrePush(t: TestContext, repository: string, stdinText: string) {
-  return spawnSync(BASH, [PRE_PUSH, 'origin', 'https://example.invalid/repo.git'], {
+  const tempParent = makeTempDir(t);
+  const pushRun = spawnSync(BASH, [PRE_PUSH, 'origin', 'https://example.invalid/repo.git'], {
     cwd: repository,
     encoding: 'utf8',
     env: {
       ...getGitEnv(process.env),
       HOME: makeTempDir(t),
+      TMPDIR: tempParent,
+      NODE_DISABLE_COMPILE_CACHE: '1',
       npm_config_update_notifier: 'false',
     },
     input: stdinText,
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
+
+  return { ...pushRun, tempEntries: readdirSync(tempParent) };
 }

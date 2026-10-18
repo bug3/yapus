@@ -25,8 +25,8 @@ test('exits 0 when npm test passes, without the outer repository variables', (t)
   const pushRun = runMain(t, repository, makePushLine(sha));
 
   assert.deepEqual(
-    [pushRun.status, pushRun.stdout, listWorktrees(repository)],
-    [0, '', [realpathSync(repository)]],
+    [pushRun.status, pushRun.stdout, listWorktrees(repository), pushRun.tempEntries],
+    [0, '', [realpathSync(repository)], []],
   );
 });
 
@@ -38,11 +38,20 @@ test('leaves the index and the working tree of the repository as they were', (t)
   runGit(['add', 'staged.md'], repository);
   const before = getRepositoryState(repository);
 
-  runMain(t, repository, makePushLine(sha));
+  const pushRun = runMain(t, repository, makePushLine(sha));
+  const violationLines = pushRun.stderr
+    .split('\n')
+    .filter((line) => line.startsWith('yapus push:'));
 
   assert.deepEqual(
-    [getRepositoryState(repository), listWorktrees(repository)],
-    [before, [realpathSync(repository)]],
+    [
+      pushRun.status,
+      violationLines,
+      getRepositoryState(repository),
+      listWorktrees(repository),
+      pushRun.tempEntries,
+    ],
+    [0, [], before, [realpathSync(repository)], []],
   );
 });
 
@@ -52,8 +61,8 @@ test('exits 0 without running npm test for a push that only deletes', (t) => {
   const pushRun = runMain(t, repository, DELETION_LINE);
 
   assert.deepEqual(
-    [pushRun.status, pushRun.stderr, listWorktrees(repository)],
-    [0, '', [realpathSync(repository)]],
+    [pushRun.status, pushRun.stderr, listWorktrees(repository), pushRun.tempEntries],
+    [0, '', [realpathSync(repository)], []],
   );
 });
 
@@ -63,11 +72,12 @@ test('exits 2 with one line for a malformed push line', (t) => {
   const pushRun = runMain(t, repository, 'refs/heads/main\n');
 
   assert.deepEqual(
-    [pushRun.status, pushRun.stderr, listWorktrees(repository)],
+    [pushRun.status, pushRun.stderr, listWorktrees(repository), pushRun.tempEntries],
     [
       2,
       'yapus push: push line 1 is not "<local ref> <local sha> <remote ref> <remote sha>"; the push is blocked, retry it\n',
       [realpathSync(repository)],
+      [],
     ],
   );
 });
@@ -136,9 +146,13 @@ interface MainRun {
 }
 
 // The program run as the hook runs it, at the work tree root, with the
-// variables an outer hook in a linked worktree could leave behind.
+// variables an outer hook in a linked worktree could leave behind, and what
+// it left in its own TMPDIR.
 function runMain(t: TestContext, repository: string, stdinText: string) {
-  return runMainWithEnv(t, { repository, stdinText, extraEnv: {} });
+  const tempParent = makeTempDir(t);
+  const pushRun = runMainWithEnv(t, { repository, stdinText, extraEnv: { TMPDIR: tempParent } });
+
+  return { ...pushRun, tempEntries: readdirSync(tempParent) };
 }
 
 function runMainWithEnv(t: TestContext, { repository, stdinText, extraEnv }: MainRun) {
