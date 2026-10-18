@@ -14,6 +14,7 @@ interface RunOptions {
 const RUN_SH = join(import.meta.dirname, '..', '..', 'hooks', 'run.sh');
 const STUB = 'stub';
 const SHELLCHECK_VERSION = '0.11.0';
+const SUBPROCESS_TIMEOUT_MS = 10000;
 const BASH = getCommandPath('bash');
 const DIRNAME = getCommandPath('dirname');
 
@@ -140,7 +141,10 @@ test('exits 2 with an install line when node is older than 24', (t) => {
 });
 
 test('finds shellcheck at the pinned version', () => {
-  const shellcheckRun = spawnSync('shellcheck', ['--version'], { encoding: 'utf8' });
+  const shellcheckRun = spawnSync('shellcheck', ['--version'], {
+    encoding: 'utf8',
+    timeout: SUBPROCESS_TIMEOUT_MS,
+  });
 
   assert.equal(shellcheckRun.error, undefined, `install shellcheck ${ SHELLCHECK_VERSION }`);
   assert.match(
@@ -151,13 +155,19 @@ test('finds shellcheck at the pinned version', () => {
 });
 
 test('passes shellcheck with no findings', () => {
-  const shellcheckRun = spawnSync('shellcheck', [RUN_SH], { encoding: 'utf8' });
+  const shellcheckRun = spawnSync('shellcheck', [RUN_SH], {
+    encoding: 'utf8',
+    timeout: SUBPROCESS_TIMEOUT_MS,
+  });
 
   assert.deepEqual([shellcheckRun.status, shellcheckRun.stdout], [0, '']);
 });
 
 function getCommandPath(command: string): string {
-  return execFileSync('/bin/sh', ['-c', `command -v ${ command }`], { encoding: 'utf8' }).trim();
+  return execFileSync('/bin/sh', ['-c', `command -v ${ command }`], {
+    encoding: 'utf8',
+    timeout: SUBPROCESS_TIMEOUT_MS,
+  }).trim();
 }
 
 // A temporary copy of run.sh beside one stub hook.
@@ -175,7 +185,7 @@ function run(sandbox: string, hookName: string, { input, env, cwd }: RunOptions)
   return spawnSync(
     BASH,
     [join(sandbox, 'run.sh'), hookName],
-    { cwd, encoding: 'utf8', env, input },
+    { cwd, encoding: 'utf8', env, input, timeout: SUBPROCESS_TIMEOUT_MS },
   );
 }
 
