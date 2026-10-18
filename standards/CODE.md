@@ -52,7 +52,7 @@
 
 ## C26. Give a literal used more than twice a named constant at the top of its file.
 
-## C27. Inline a variable used once, unless its name explains a condition, it holds an awaited value or it keeps a call out of a template literal.
+## C27. Inline a variable used once, unless its name explains a condition, it holds an awaited value, it keeps a call out of a template literal or it separates the steps of a test.
 
 ## C28. Read a file, a process or a request once per run and pass its result on.
 
