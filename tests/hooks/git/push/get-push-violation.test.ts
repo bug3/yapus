@@ -51,5 +51,6 @@ function makePushInput(t: TestContext, repository: string, stdinText: string) {
     env: { ...getGitEnv(process.env), HOME: makeTempDir(t), npm_config_update_notifier: 'false' },
     repository,
     tempParent: makeTempDir(t),
+    signal: new AbortController().signal,
   };
 }

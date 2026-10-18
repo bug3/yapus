@@ -1,16 +1,20 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { realpathSync, writeFileSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { readdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { text } from 'node:stream/consumers';
 import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { getGitEnv, runGit } from '../../../helpers/run-git.ts';
 import { listWorktrees } from './list-worktrees.ts';
 import { CLEAN_ENV_TEST, FAILING_TEST, makeNpmRepo, PASSING_TEST } from './make-npm-repo.ts';
+import { waitUntil } from './wait-until.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const MAIN = join(ROOT, 'hooks', 'git', 'push', 'main.ts');
 const SUBPROCESS_TIMEOUT_MS = 60000;
+const WAIT_MS = 10000;
+const SLEEPING_TEST = 'sleep 30';
 const LINE_SEPARATOR = String.fromCodePoint(0x2028);
 const DELETION_LINE =
   '(delete) 0000000000000000000000000000000000000000 refs/heads/old 1111111111111111111111111111111111111111\n';
@@ -87,6 +91,36 @@ test('exits 2 with one line when the hook crashes on a line separator', (t) => {
   );
 });
 
+test('exits 2 and removes the worktree when interrupted', async (t) => {
+  const { repository, sha } = makeNpmRepo(t, SLEEPING_TEST);
+  const tempParent = makeTempDir(t);
+  const pushRun = spawn(process.execPath, [MAIN], {
+    cwd: repository,
+    env: makeMainEnv(t, repository, { TMPDIR: tempParent }),
+    timeout: SUBPROCESS_TIMEOUT_MS,
+  });
+  const stderrText = text(pushRun.stderr);
+  const closing = new Promise<number | null>((resolve) => {
+    pushRun.once('close', resolve);
+  });
+
+  pushRun.stdin.end(makePushLine(sha));
+  await waitUntil(() => listWorktrees(repository).length === 2, WAIT_MS);
+  pushRun.kill('SIGINT');
+  const status = await closing;
+  const lastLine = (await stderrText).split('\n').at(-2);
+
+  assert.deepEqual(
+    [status, lastLine, listWorktrees(repository), readdirSync(tempParent)],
+    [
+      2,
+      `yapus push: the push test was interrupted on ${ sha.slice(0, 12) }`,
+      [realpathSync(repository)],
+      [],
+    ],
+  );
+});
+
 function makePushLine(sha: string): string {
   return `refs/heads/main ${ sha } refs/heads/main 1111111111111111111111111111111111111111\n`;
 }
@@ -108,20 +142,26 @@ function runMain(t: TestContext, repository: string, stdinText: string) {
 }
 
 function runMainWithEnv(t: TestContext, { repository, stdinText, extraEnv }: MainRun) {
-  const tempDir = makeTempDir(t);
-
   return spawnSync(process.execPath, [MAIN], {
     cwd: repository,
     encoding: 'utf8',
-    env: {
-      ...getGitEnv(process.env),
-      HOME: tempDir,
-      GIT_DIR: join(repository, '.git'),
-      GIT_INDEX_FILE: join(tempDir, 'index'),
-      npm_config_update_notifier: 'false',
-      ...extraEnv,
-    },
+    env: makeMainEnv(t, repository, extraEnv),
     input: stdinText,
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
+}
+
+function makeMainEnv(t: TestContext, repository: string, extraEnv: NodeJS.ProcessEnv) {
+  const tempDir = makeTempDir(t);
+
+  // npm keeps a compile cache in TMPDIR, which a test checks is left empty.
+  return {
+    ...getGitEnv(process.env),
+    HOME: tempDir,
+    GIT_DIR: join(repository, '.git'),
+    GIT_INDEX_FILE: join(tempDir, 'index'),
+    NODE_DISABLE_COMPILE_CACHE: '1',
+    npm_config_update_notifier: 'false',
+    ...extraEnv,
+  };
 }

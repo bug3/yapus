@@ -10,12 +10,13 @@ export interface PushInput {
   readonly env: NodeJS.ProcessEnv;
   readonly repository: string;
   readonly tempParent: string;
+  readonly signal: AbortSignal;
 }
 
 // The first reason to refuse the push, or undefined when npm test passes on
 // every commit it sends.
 export async function getPushViolation(
-  { stdinText, env, repository, tempParent }: PushInput,
+  { stdinText, env, repository, tempParent, signal }: PushInput,
 ): Promise<string | undefined> {
   const toolViolation = getToolViolation(env, LIMITS.gitMs);
 
@@ -33,7 +34,7 @@ export async function getPushViolation(
 
   for (const sha of pushCommits.commits) {
     const commitTest = await testCommit({
-      repository, sha, env: childEnv, tempParent, limits: LIMITS,
+      repository, sha, env: childEnv, tempParent, limits: LIMITS, signal,
     });
 
     if ('violation' in commitTest) {

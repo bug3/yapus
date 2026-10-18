@@ -21,11 +21,26 @@ async function main(): Promise<void> {
 // git runs the hook at the work tree root, so the working directory is the
 // repository; tmpdir reads TMPDIR.
 async function readPushInput(): Promise<PushInput | undefined> {
+  const signal = makeInterruptSignal();
   const stdinText = await readStdin(process.stdin, STDIN_LIMIT_MS);
 
   return stdinText === undefined
     ? undefined
-    : { stdinText, env: process.env, repository: process.cwd(), tempParent: tmpdir() };
+    : { stdinText, env: process.env, repository: process.cwd(), tempParent: tmpdir(), signal };
+}
+
+// Node would end at once on SIGINT or SIGTERM; the signal lets the push test
+// stop npm test and remove its worktree first.
+function makeInterruptSignal(): AbortSignal {
+  const controller = new AbortController();
+  const abort = (): void => {
+    controller.abort();
+  };
+
+  process.once('SIGINT', abort);
+  process.once('SIGTERM', abort);
+
+  return controller.signal;
 }
 
 // writeSync, because process.exit can drop a pending write to a pipe.

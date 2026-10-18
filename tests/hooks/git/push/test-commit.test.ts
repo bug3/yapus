@@ -18,9 +18,11 @@ const MISSING_SHA = 'dddddddddddddddddddddddddddddddddddddddd';
 // Starts a sleeping grandchild that writes its pid to PID_FILE, then sleeps.
 const GRANDCHILD_TEST = 'sleep 30 & echo $! > "$PID_FILE"; sleep 30';
 const WAIT_MS = 10000;
+const UNABORTED = new AbortController().signal;
 
 interface CommitRun {
   readonly limits: Limits;
+  readonly signal: AbortSignal;
   readonly extraEnv: NodeJS.ProcessEnv;
 }
 
@@ -77,7 +79,7 @@ test('kills the whole npm test on its time limit and leaves no worktree', async 
   writeFileSync(sentinel, '');
 
   const commitRun = await runTestCommit(t, npmRepo, {
-    limits, extraEnv: { PID_FILE: pidFile },
+    limits, signal: UNABORTED, extraEnv: { PID_FILE: pidFile },
   });
 
   assert.deepEqual([commitRun, await isGone(pidFile), existsSync(sentinel)], [
@@ -86,6 +88,32 @@ test('kills the whole npm test on its time limit and leaves no worktree', async 
         violation: `npm test gave no answer within 0.3 seconds on ${
           npmRepo.sha.slice(0, 12) }; make it faster, then push again`,
       },
+      worktrees: [realpathSync(npmRepo.repository)],
+      tempEntries: [],
+    },
+    true,
+    true,
+  ]);
+});
+
+test('kills the whole npm test on an abort and leaves no worktree', async (t) => {
+  const npmRepo = makeNpmRepo(t, GRANDCHILD_TEST);
+  const pidFile = join(makeTempDir(t), 'pid');
+  const sentinel = join(npmRepo.repository, 'node_modules', 'sentinel');
+  const controller = new AbortController();
+
+  writeFileSync(sentinel, '');
+
+  const commitRun = runTestCommit(t, npmRepo, {
+    limits: LIMITS, signal: controller.signal, extraEnv: { PID_FILE: pidFile },
+  });
+
+  await waitUntil(() => existsSync(pidFile), WAIT_MS);
+  controller.abort();
+
+  assert.deepEqual([await commitRun, await isGone(pidFile), existsSync(sentinel)], [
+    {
+      commitTest: { violation: `the push test was interrupted on ${ npmRepo.sha.slice(0, 12) }` },
       worktrees: [realpathSync(npmRepo.repository)],
       tempEntries: [],
     },
@@ -114,7 +142,7 @@ function isAlive(pid: number): boolean {
 async function runTestCommit(
   t: TestContext,
   { repository, sha }: NpmRepo,
-  { limits, extraEnv }: CommitRun = { limits: LIMITS, extraEnv: {} },
+  { limits, signal, extraEnv }: CommitRun = { limits: LIMITS, signal: UNABORTED, extraEnv: {} },
 ): Promise<{
   commitTest: CommitTest;
   worktrees: string[];
@@ -128,7 +156,7 @@ async function runTestCommit(
     ...extraEnv,
   };
 
-  const commitTest = await testCommit({ repository, sha, env, tempParent, limits });
+  const commitTest = await testCommit({ repository, sha, env, tempParent, limits, signal });
 
   return {
     commitTest,

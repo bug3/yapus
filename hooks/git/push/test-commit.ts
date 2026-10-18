@@ -17,11 +17,12 @@ export interface CommitToTest {
   readonly env: NodeJS.ProcessEnv;
   readonly tempParent: string;
   readonly limits: Limits;
+  readonly signal: AbortSignal;
 }
 
 export type CommitTest = { readonly passed: true } | { readonly violation: string };
 
-type NpmTestEnd = 'passed' | 'failed' | 'timedOut';
+type NpmTestEnd = 'passed' | 'failed' | 'timedOut' | 'interrupted';
 
 // npm test runs on the commit in a worktree of its own, so the user's working
 // tree and index stay as they are; the worktree borrows the repository's
@@ -77,27 +78,41 @@ async function runNpmTest(tree: string, commitToTest: CommitToTest): Promise<Com
 
       return { violation: `${ noAnswer } on ${ shortSha }; make it faster, then push again` };
     }
+
+    case 'interrupted':
+      return { violation: `the push test was interrupted on ${ shortSha }` };
   }
 }
 
-// npm test runs in a process group of its own, so that a time limit kills
-// the processes its script starts as well as npm.
+// npm test runs in a process group of its own, so that a time limit or an
+// interrupt kills the processes its script starts as well as npm.
 function waitForNpmTest(
   tree: string,
-  { env, limits }: CommitToTest,
+  { env, limits, signal }: CommitToTest,
 ): Promise<NpmTestEnd> {
   const npmTest = spawn('npm', ['test'], { cwd: tree, env, stdio: TO_STDERR, detached: true });
 
   return new Promise((resolve) => {
     let stopReason: NpmTestEnd | undefined;
-    const timer = setTimeout(() => {
-      stopReason = 'timedOut';
+    const stop = (reason: NpmTestEnd): void => {
+      stopReason ??= reason;
       killGroup(npmTest.pid);
-    }, limits.npmTestMs);
+    };
+    const onAbort = (): void => {
+      stop('interrupted');
+    };
+    const timer = setTimeout(stop, limits.npmTestMs, 'timedOut');
     const settle = (npmTestEnd: NpmTestEnd): void => {
       clearTimeout(timer);
+      signal.removeEventListener('abort', onAbort);
       resolve(stopReason ?? npmTestEnd);
     };
+
+    signal.addEventListener('abort', onAbort, { once: true });
+
+    if (signal.aborted) {
+      onAbort();
+    }
 
     npmTest.once('error', () => {
       settle('failed');
