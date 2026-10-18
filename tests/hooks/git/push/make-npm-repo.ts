@@ -8,6 +8,10 @@ export const PASSING_TEST = 'node -e "process.exit(0)"';
 
 export const FAILING_TEST = 'node -e "process.exit(1)"';
 
+// Fails when a variable that ties git to an outer repository reaches npm test.
+export const CLEAN_ENV_TEST =
+  'node -e "process.exit(process.env.GIT_DIR || process.env.GIT_INDEX_FILE ? 1 : 0)"';
+
 export interface NpmRepo {
   readonly repository: string;
   readonly sha: string;
