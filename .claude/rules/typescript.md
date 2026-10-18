@@ -1,0 +1,1 @@
+../../standards/TYPESCRIPT.md
