@@ -13,7 +13,7 @@ export type Seen =
 // The session's base and the working tree now, or none outside a repository.
 // A git failure comes back as a value with its instruction.
 export function seeRange(input: HookInput, place: Place, context: ReviewContext): Seen {
-  const snapshot = getSnapshot(input.cwd, context.env);
+  const snapshot = getSnapshot(place);
 
   if (snapshot.kind === 'none') {
     return { kind: 'none' };

@@ -1,8 +1,8 @@
-import { getChildEnv } from '../../../../shared/get-child-env.ts';
 import { getChange } from '../git/get-change.ts';
+import { getPlace } from '../git/get-place.ts';
 import { getRiskHits } from '../git/get-risk-hits.ts';
 import { getSnapshot } from '../git/get-snapshot.ts';
-import { isFailure, LIMIT_SECONDS, type Place, runGit } from '../git/run-git.ts';
+import { isFailure, type Place } from '../git/run-git.ts';
 import { getBase } from '../state/get-base.ts';
 import { getThreshold } from '../state/get-threshold.ts';
 import type { HookInput } from '../parse-hook-input.ts';
@@ -34,14 +34,15 @@ export function readGateState(
   env: NodeJS.ProcessEnv,
 ): GateRead {
   const { cwd, sessionId } = input;
-  const place = { cwd, env: getChildEnv(env, cwd, LIMIT_SECONDS) };
-  const version = runGit(['--version'], place);
+  const place = getPlace(cwd, env);
 
-  if (isFailure(version)) {
-    return { kind: 'failure', detail: 'git not found; install git' };
+  if ('kind' in place) {
+    return place.kind === 'no git'
+      ? { kind: 'failure', detail: place.detail }
+      : failure(place.reason);
   }
 
-  const found = getSnapshot(cwd, env);
+  const found = getSnapshot(place);
 
   if (found.kind === 'none') {
     return found;

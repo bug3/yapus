@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { isRecord } from '../../../../shared/is-record.ts';
 import type { Range } from '../git/get-change.ts';
 import { getStatePath } from './get-state-path.ts';
 import { ACCEPTANCES_SUFFIX } from './record-acceptance.ts';
@@ -22,12 +23,7 @@ export function isAccepted(dataDir: string, sessionId: string, range: Range): bo
 function isLineFor(line: string, range: Range): boolean {
   const parsed = parseLine(line);
 
-  return typeof parsed === 'object'
-    && parsed !== null
-    && 'base' in parsed
-    && 'tree' in parsed
-    && parsed.base === range.base
-    && parsed.tree === range.tree;
+  return isRecord(parsed) && parsed.base === range.base && parsed.tree === range.tree;
 }
 
 function parseLine(line: string): unknown {

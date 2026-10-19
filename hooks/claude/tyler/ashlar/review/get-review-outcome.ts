@@ -1,6 +1,4 @@
-import { getChildEnv } from '../../../../shared/get-child-env.ts';
-import { getFirstLine } from '../../../../shared/get-first-line.ts';
-import { isFailure, LIMIT_SECONDS, type Place, runGit } from '../git/run-git.ts';
+import { getPlace } from '../git/get-place.ts';
 import type { HookInput } from '../parse-hook-input.ts';
 import {
   failReview,
@@ -23,14 +21,10 @@ export function getReviewOutcome(input: HookInput, context: ReviewContext): Revi
     return failReview('agent_id is missing; fix the hook matcher');
   }
 
-  if (isFailure(runGit(['--version'], { cwd: input.cwd, env: context.env }))) {
-    return failReview('git not found; install git');
-  }
+  const place = getPlace(input.cwd, context.env);
 
-  const place = getPlace(input, context);
-
-  if (typeof place === 'string') {
-    return failReview(place);
+  if ('kind' in place) {
+    return failReview(place.kind === 'no git' ? place.detail : `${ place.reason }; ${ GIT_FIX }`);
   }
 
   const agentInput = { ...input, agentId };
@@ -42,13 +36,5 @@ export function getReviewOutcome(input: HookInput, context: ReviewContext): Revi
       return getStopOutcome(agentInput, place, context);
     default:
       return failReview(`unexpected event ${ input.event }; fix the hook matcher`);
-  }
-}
-
-function getPlace(input: HookInput, context: ReviewContext): Place | string {
-  try {
-    return { cwd: input.cwd, env: getChildEnv(context.env, input.cwd, LIMIT_SECONDS) };
-  } catch (error) {
-    return `git rev-parse --local-env-vars: ${ getFirstLine(error) }; ${ GIT_FIX }`;
   }
 }

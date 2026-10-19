@@ -9,73 +9,65 @@ import { getReviewOutcome } from './get-review-outcome.ts';
 const PROGRAM = 'providens review';
 const LIMIT_SECONDS = 5;
 
-interface Failure {
-  readonly detail: string;
-  readonly isRetry: boolean;
+interface Outcome {
+  readonly code: 0 | 2;
+  readonly detail?: string;
 }
 
 async function main(): Promise<void> {
   try {
+    const { env } = process;
     const stdinText = await getWithinLimit(text(process.stdin), LIMIT_SECONDS);
 
-    stop(getFailure(stdinText, process.env.CLAUDE_PLUGIN_DATA));
+    stop(decide(stdinText, env));
   } catch (error) {
-    stop({ detail: `crashed: ${ getFirstLine(error) }; fix the hook`, isRetry: false });
+    stop(sendBack(`crashed: ${ getFirstLine(error) }; fix the hook`));
   }
 }
 
-// What failed, or undefined after the review step passes.
-function getFailure(
-  stdinText: string | undefined,
-  dataDir: string | undefined,
-): Failure | undefined {
+function decide(stdinText: string | undefined, env: NodeJS.ProcessEnv): Outcome {
   if (stdinText === undefined) {
-    return { detail: `no input within ${ String(LIMIT_SECONDS) } seconds; retry`, isRetry: false };
+    return sendBack(`no input within ${ String(LIMIT_SECONDS) } seconds; retry`);
   }
 
   const parsed = parseHookInput(stdinText);
 
   if (parsed.kind === 'failure') {
-    return { detail: `${ parsed.reason }; fix the hook input`, isRetry: parsed.isRetry };
+    const failInput = parsed.isRetry ? letStop : sendBack;
+
+    return failInput(`${ parsed.reason }; fix the hook input`);
   }
 
   const { input } = parsed;
+  const fail = input.isRetry ? letStop : sendBack;
+  const dataDir = env.CLAUDE_PLUGIN_DATA;
 
   if (dataDir === undefined || dataDir === '') {
-    return {
-      detail: 'CLAUDE_PLUGIN_DATA is not set; reinstall the plugin',
-      isRetry: input.isRetry,
-    };
+    return fail('CLAUDE_PLUGIN_DATA is not set; reinstall the plugin');
   }
 
-  const outcome = getReviewOutcome(input, {
-    dataDir,
-    env: process.env,
-    time: new Date().toISOString(),
-  });
+  const outcome = getReviewOutcome(input, { dataDir, env, time: new Date().toISOString() });
 
-  return outcome.kind === 'pass' ? undefined : { detail: outcome.detail, isRetry: input.isRetry };
+  return outcome.kind === 'pass' ? { code: 0 } : fail(outcome.detail);
 }
 
-function stop(failure: Failure | undefined): never {
-  process.exit(write(failure));
+// At SubagentStop, 2 sends warden back once with the message.
+function sendBack(detail: string): Outcome {
+  return { code: 2, detail };
+}
+
+// Warden was already sent back once, so a second send-back could loop.
+function letStop(detail: string): Outcome {
+  return { code: 0, detail };
 }
 
 // writeSync, because process.exit can drop a pending write to a pipe.
-function write(failure: Failure | undefined): 0 | 2 {
-  if (failure === undefined) {
-    return 0;
+function stop(outcome: Outcome): never {
+  if (outcome.detail !== undefined) {
+    writeSync(process.stderr.fd, `${ formatMessage(PROGRAM, outcome.detail) }\n`);
   }
 
-  writeSync(process.stderr.fd, `${ formatMessage(PROGRAM, failure.detail) }\n`);
-
-  // Warden was already sent back once, so a second send-back could loop.
-  if (failure.isRetry) {
-    return 0;
-  }
-
-  // At SubagentStop, 2 sends warden back once with the message.
-  return 2;
+  process.exit(outcome.code);
 }
 
 await main();

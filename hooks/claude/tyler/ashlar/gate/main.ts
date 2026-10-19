@@ -16,50 +16,57 @@ interface Outcome {
 
 async function main(): Promise<void> {
   try {
+    const { env } = process;
     const stdinText = await getWithinLimit(text(process.stdin), LIMIT_SECONDS);
 
-    stop(decide(stdinText, process.env.CLAUDE_PLUGIN_DATA));
+    stop(decide(stdinText, env));
   } catch (error) {
-    stop(fail(`crashed: ${ getFirstLine(error) }; fix the hook`, false));
+    stop(sendBack(`crashed: ${ getFirstLine(error) }; fix the hook`));
   }
 }
 
-function decide(stdinText: string | undefined, dataDir: string | undefined): Outcome {
+function decide(stdinText: string | undefined, env: NodeJS.ProcessEnv): Outcome {
   if (stdinText === undefined) {
-    return fail(`no input within ${ String(LIMIT_SECONDS) } seconds; retry`, false);
+    return sendBack(`no input within ${ String(LIMIT_SECONDS) } seconds; retry`);
   }
 
   const parsed = parseHookInput(stdinText);
 
   if (parsed.kind === 'failure') {
-    return fail(`${ parsed.reason }; fix the hook input`, parsed.isRetry);
+    const failInput = parsed.isRetry ? letStop : sendBack;
+
+    return failInput(`${ parsed.reason }; fix the hook input`);
   }
+
+  const { input } = parsed;
+  const fail = input.isRetry ? letStop : sendBack;
+  const dataDir = env.CLAUDE_PLUGIN_DATA;
 
   if (dataDir === undefined || dataDir === '') {
-    return fail('CLAUDE_PLUGIN_DATA is not set; reinstall the plugin', parsed.input.isRetry);
+    return fail('CLAUDE_PLUGIN_DATA is not set; reinstall the plugin');
   }
 
-  const verdict = getGateVerdict(parsed.input, {
-    dataDir,
-    env: process.env,
-    time: new Date().toISOString(),
-  });
+  const verdict = getGateVerdict(input, { dataDir, env, time: new Date().toISOString() });
 
   switch (verdict.kind) {
     case 'pass':
       return { code: 0 };
     case 'review':
-      // Exit 2 at Stop sends the session back with the message.
-      return { code: 2, detail: verdict.detail };
+      return sendBack(verdict.detail);
     case 'failure':
-      return fail(verdict.detail, parsed.input.isRetry);
+      return fail(verdict.detail);
   }
 }
 
-// Exit 2 sends the session back; on the retry exit 0 lets it stop, as a hook
-// failure must not hold a session that was already sent back once.
-function fail(detail: string, isRetry: boolean): Outcome {
-  return { code: isRetry ? 0 : 2, detail };
+// Exit 2 at Stop sends the session back with the message.
+function sendBack(detail: string): Outcome {
+  return { code: 2, detail };
+}
+
+// On the retry a hook failure lets the session stop, as it must not hold a
+// session that was already sent back once.
+function letStop(detail: string): Outcome {
+  return { code: 0, detail };
 }
 
 // writeSync, because process.exit can drop a pending write to a pipe.

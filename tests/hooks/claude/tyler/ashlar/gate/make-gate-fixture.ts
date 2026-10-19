@@ -56,13 +56,13 @@ export function readReasons(dataDir: string): readonly string[] {
 // Stores the session's base as the repository's HEAD now, so a later commit
 // is measured from it, and gives the base with the working tree now.
 export function storeBase(fixture: Fixture): Range {
-  const snapshot = getSnapshot(fixture.repo, process.env);
+  const place = { cwd: fixture.repo, env: process.env };
+  const snapshot = getSnapshot(place);
 
   if (snapshot.kind !== 'snapshot') {
     throw new Error('the fixture is not a repository');
   }
 
-  const place = { cwd: fixture.repo, env: process.env };
   const key = { dataDir: fixture.dataDir, sessionId: SESSION, root: snapshot.snapshot.root };
   const base = getBase(place, key);
 
