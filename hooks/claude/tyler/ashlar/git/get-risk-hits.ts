@@ -42,7 +42,8 @@ export function getRiskHits(
 // The non-blank, trimmed lines of the globs file in the treeish; an absent file
 // gives none.
 function getGlobs(place: Place, treeish: string): readonly string[] | GitFailure {
-  const listing = getOutput(['ls-tree', treeish, '--', GLOBS_PATH], place);
+  // --full-tree reads GLOBS_PATH from the root even when place.cwd is deeper.
+  const listing = getOutput(['ls-tree', '--full-tree', treeish, '--', GLOBS_PATH], place);
 
   if (isFailure(listing)) {
     return listing;

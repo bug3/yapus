@@ -66,6 +66,21 @@ test('matches a migrations glob against a nested file', (t) => {
   ]);
 });
 
+test('matches a glob at the root when run from a subdirectory', (t) => {
+  const repo = makeCommittedRepo(t);
+
+  writeFile(repo, '.claude/ashlar-paths', 'secrets/**\n');
+  writeFile(repo, 'sub/c.txt', 'c\n');
+
+  const hits = getRiskHits(
+    placeOf(join(repo, 'sub')),
+    rangeToWorkingTree(repo),
+    ['secrets/key.txt'],
+  );
+
+  assert.deepEqual(hits, SECRET_HIT);
+});
+
 test('gives a failure for a bad treeish', (t) => {
   const repo = makeCommittedRepo(t);
   const hits = getRiskHits(placeOf(repo), { base: 'nowhere', tree: 'HEAD' }, ['a.txt']);
