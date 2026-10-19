@@ -1,3 +1,5 @@
+import { isRecord } from '../../../shared/is-record.ts';
+
 export const TOOLS = ['Write', 'Edit'] as const;
 
 export type Tool = (typeof TOOLS)[number];
@@ -103,10 +105,6 @@ function parseEdit(toolInput: ToolInput): Parsed {
   }
 
   return { kind: 'call', call: { tool: 'Edit', filePath, oldString, newString } };
-}
-
-function isRecord(parsedJson: unknown): parsedJson is ToolInput {
-  return typeof parsedJson === 'object' && parsedJson !== null && !Array.isArray(parsedJson);
 }
 
 function isTool(toolName: unknown): toolName is Tool {

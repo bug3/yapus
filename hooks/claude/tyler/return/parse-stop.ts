@@ -1,3 +1,4 @@
+import { isRecord } from '../../../shared/is-record.ts';
 import { isSafeId } from '../../../shared/is-safe-id.ts';
 
 export interface Stop {
@@ -12,8 +13,6 @@ export interface Stop {
 export type Parsed =
   | { readonly kind: 'stop'; readonly stop: Stop }
   | { readonly kind: 'failure'; readonly reason: string };
-
-type Fields = Readonly<Record<string, unknown>>;
 
 export function parseStop(stdinText: string): Parsed {
   let payload: unknown;
@@ -46,10 +45,6 @@ export function parseStop(stdinText: string): Parsed {
   }
 
   return { kind: 'stop', stop: { sessionId, agentType, message, isRetry } };
-}
-
-function isRecord(parsedJson: unknown): parsedJson is Fields {
-  return typeof parsedJson === 'object' && parsedJson !== null && !Array.isArray(parsedJson);
 }
 
 function makeFailure(reason: string): Parsed {

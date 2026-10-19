@@ -1,3 +1,4 @@
+import { isRecord } from '../../../shared/is-record.ts';
 import { isSafeId } from '../../../shared/is-safe-id.ts';
 
 export interface Launch {
@@ -11,8 +12,6 @@ export interface Launch {
 export type Parsed =
   | { readonly kind: 'launch'; readonly launch: Launch }
   | { readonly kind: 'failure'; readonly reason: string };
-
-type Fields = Readonly<Record<string, unknown>>;
 
 // The Agent tool launches general-purpose when subagent_type is left out.
 const DEFAULT_TYPE = 'general-purpose';
@@ -58,10 +57,6 @@ export function parseLaunch(stdinText: string): Parsed {
   const launch = { sessionId, isNested: agentId !== undefined, subagentType, description };
 
   return { kind: 'launch', launch };
-}
-
-function isRecord(parsedJson: unknown): parsedJson is Fields {
-  return typeof parsedJson === 'object' && parsedJson !== null && !Array.isArray(parsedJson);
 }
 
 function makeFailure(reason: string): Parsed {
