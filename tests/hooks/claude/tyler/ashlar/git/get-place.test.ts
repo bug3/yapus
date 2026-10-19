@@ -15,6 +15,14 @@ test('drops a GIT_DIR that would tie git to another repository', (t) => {
   assert.equal(place.env.GIT_DIR, undefined);
 });
 
+test('gives a place with the installed git', (t) => {
+  const dir = makeTempDir(t);
+
+  const place = getPlace(dir, process.env, NO_DEADLINE);
+
+  assert.equal('kind' in place, false, JSON.stringify(place));
+});
+
 test('gives no git with the install instruction when git does not start', (t) => {
   const dir = makeTempDir(t);
 
