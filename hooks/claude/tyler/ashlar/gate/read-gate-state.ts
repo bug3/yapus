@@ -1,19 +1,21 @@
+import { logDecision } from '../../../providens/log-decision.ts';
 import { getChange } from '../git/get-change.ts';
 import { getPlace } from '../git/get-place.ts';
 import { getRiskHits } from '../git/get-risk-hits.ts';
 import { getSnapshot } from '../git/get-snapshot.ts';
 import { isFailure, type Place } from '../git/run-git.ts';
-import { type Base, getBase } from '../state/get-base.ts';
+import { getBase, HEAD_FALLBACK_REASON } from '../state/get-base.ts';
 import { getThreshold } from '../state/get-threshold.ts';
 import type { HookInput } from '../parse-hook-input.ts';
 import type { Change, Range } from '../git/get-change.ts';
 import type { RiskHit } from '../git/get-risk-hits.ts';
 
-// What the gate reads with: the data directory, the hook's environment and
-// the epoch milliseconds by which every git call has ended.
+// What the gate reads with: the data directory, the hook's environment, the
+// time it logs and the epoch milliseconds by which every git call has ended.
 export interface GateSetting {
   readonly dataDir: string;
   readonly env: NodeJS.ProcessEnv;
+  readonly time: string;
   readonly deadline: number;
 }
 
@@ -21,7 +23,6 @@ export interface GateState {
   readonly kind: 'state';
   readonly place: Place;
   readonly range: Range;
-  readonly baseSource: Base['source'];
   readonly change: Change;
   readonly threshold: number;
   readonly hits: readonly RiskHit[];
@@ -32,11 +33,15 @@ export type GateRead =
   | { readonly kind: 'none' }
   | { readonly kind: 'failure'; readonly detail: string };
 
+export const GATE_HOOK = 'ashlar gate';
+
 const NEXT_STEP = 'check the repository and stop again';
 
 // The session's change and what decides whether it needs review. A directory
 // outside a work tree gives none; a git failure gives a failure with the
-// instruction to follow. It may throw on a file error; the caller catches.
+// instruction to follow. A base that fell back to HEAD is logged as soon as
+// it is found, before a later step can fail, as the next run finds it stored.
+// It may throw on a file error; the caller catches.
 export function readGateState(input: HookInput, setting: GateSetting): GateRead {
   const { cwd, sessionId } = input;
   const { dataDir } = setting;
@@ -65,6 +70,17 @@ export function readGateState(input: HookInput, setting: GateSetting): GateRead 
     return failure(base.reason);
   }
 
+  if (base.source === 'head') {
+    logDecision(dataDir, {
+      time: setting.time,
+      hook: GATE_HOOK,
+      sessionId,
+      subject: tree,
+      allowed: true,
+      reason: HEAD_FALLBACK_REASON,
+    });
+  }
+
   const range = { base: base.id, tree };
   const change = getChange(place, range);
 
@@ -84,15 +100,7 @@ export function readGateState(input: HookInput, setting: GateSetting): GateRead 
     return failure(hits.reason);
   }
 
-  return {
-    kind: 'state',
-    place,
-    range,
-    baseSource: base.source,
-    change,
-    threshold: threshold.lines,
-    hits,
-  };
+  return { kind: 'state', place, range, change, threshold: threshold.lines, hits };
 }
 
 function failure(reason: string): GateRead {

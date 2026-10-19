@@ -128,6 +128,15 @@ test('sends back a small change that touches a risk glob', (t) => {
   assert.equal(verdict.kind, 'review');
 });
 
+test('logs the fall back to HEAD even when the first stop fails', (t) => {
+  const fixture = makeGateFixture(t);
+
+  setThreshold(fixture.dataDir, 'many');
+  getGateVerdict(makeInput(fixture.repo), makeContext(fixture.dataDir));
+
+  assert.deepEqual(readReasons(fixture.dataDir), ['base fell back to HEAD now']);
+});
+
 test('fails when the threshold file holds no number', (t) => {
   const fixture = makeGateFixture(t);
 
