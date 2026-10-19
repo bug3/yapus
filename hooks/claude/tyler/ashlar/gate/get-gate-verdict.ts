@@ -3,6 +3,7 @@ import { logDecision } from '../../../providens/log-decision.ts';
 import { writeDiff } from '../git/write-diff.ts';
 import { isFailure } from '../git/run-git.ts';
 import type { HookInput } from '../parse-hook-input.ts';
+import { HEAD_FALLBACK_REASON } from '../state/get-base.ts';
 import { getDiffPath } from '../state/get-diff-path.ts';
 import { isAccepted } from '../state/is-accepted.ts';
 import { formatRequest } from './format-request.ts';
@@ -47,11 +48,6 @@ function decide(input: HookInput, context: GateContext): GateVerdict {
   }
 
   const { change, hits, place, range } = read;
-
-  if (change.lines <= read.threshold && hits.length === 0) {
-    return PASS;
-  }
-
   const log = (isAllowed: boolean, reason: string): void => {
     logDecision(dataDir, {
       time: context.time,
@@ -62,6 +58,14 @@ function decide(input: HookInput, context: GateContext): GateVerdict {
       reason,
     });
   };
+
+  if (read.baseSource === 'head') {
+    log(true, HEAD_FALLBACK_REASON);
+  }
+
+  if (change.lines <= read.threshold && hits.length === 0) {
+    return PASS;
+  }
 
   if (isAccepted(dataDir, sessionId, range)) {
     log(true, 'accepted review');

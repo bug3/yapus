@@ -3,7 +3,7 @@ import { getPlace } from '../git/get-place.ts';
 import { getRiskHits } from '../git/get-risk-hits.ts';
 import { getSnapshot } from '../git/get-snapshot.ts';
 import { isFailure, type Place } from '../git/run-git.ts';
-import { getBase } from '../state/get-base.ts';
+import { type Base, getBase } from '../state/get-base.ts';
 import { getThreshold } from '../state/get-threshold.ts';
 import type { HookInput } from '../parse-hook-input.ts';
 import type { Change, Range } from '../git/get-change.ts';
@@ -13,6 +13,7 @@ export interface GateState {
   readonly kind: 'state';
   readonly place: Place;
   readonly range: Range;
+  readonly baseSource: Base['source'];
   readonly change: Change;
   readonly threshold: number;
   readonly hits: readonly RiskHit[];
@@ -78,7 +79,15 @@ export function readGateState(
     return failure(hits.reason);
   }
 
-  return { kind: 'state', place, range, change, threshold: threshold.lines, hits };
+  return {
+    kind: 'state',
+    place,
+    range,
+    baseSource: base.source,
+    change,
+    threshold: threshold.lines,
+    hits,
+  };
 }
 
 function failure(reason: string): GateRead {

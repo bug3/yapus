@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import {
@@ -57,6 +58,31 @@ test('takes the earlier commit when a detached worktree made the later one', (t)
   runGitAt(['update-ref', `refs/heads/${ branch }`, second, first], repo, LATER_TIME);
 
   assert.equal(getReflogBase(getPlace(repo), { dataDir, sessionId: 's1', root: repo }), first);
+});
+
+test('takes the commit HEAD held at the start when HEAD is detached', (t) => {
+  const { repo, first } = makeDatedRepo(t);
+  const dataDir = makeTempDir(t);
+
+  recordStart(dataDir, 's1', START_TIME);
+  runGitAt(['switch', '--quiet', '--detach'], repo, SECOND_TIME);
+  commitAt(repo, 'b.txt', LATER_TIME);
+
+  assert.equal(getReflogBase(getPlace(repo), { dataDir, sessionId: 's1', root: repo }), first);
+});
+
+test('gives no answer when the branch reflog is empty', (t) => {
+  const { repo } = makeDatedRepo(t);
+  const dataDir = makeTempDir(t);
+  const branch = runGit(['symbolic-ref', '--short', 'HEAD'], repo).trim();
+
+  recordStart(dataDir, 's1', START_TIME);
+  writeFileSync(join(repo, '.git', 'logs', 'refs', 'heads', branch), '');
+
+  assert.equal(
+    getReflogBase(getPlace(repo), { dataDir, sessionId: 's1', root: repo }),
+    undefined,
+  );
 });
 
 test('gives no answer when the session has no start file', (t) => {

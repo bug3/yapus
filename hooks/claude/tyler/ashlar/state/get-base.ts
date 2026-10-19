@@ -14,6 +14,9 @@ export interface Base {
   readonly source: 'stored' | 'reflog' | 'head';
 }
 
+// The logged reason when the reflog gave no base and HEAD now stands in.
+export const HEAD_FALLBACK_REASON = 'base fell back to HEAD now';
+
 type Found = Pick<Base, 'id'> & { readonly source: 'reflog' | 'head' };
 
 const OBJECT_ID = /^[0-9a-f]{40,64}$/;

@@ -2,11 +2,11 @@ import { getSnapshot } from '../git/get-snapshot.ts';
 import type { Range } from '../git/get-change.ts';
 import { isFailure, type Place } from '../git/run-git.ts';
 import type { HookInput } from '../parse-hook-input.ts';
-import { getBase } from '../state/get-base.ts';
+import { type Base, getBase } from '../state/get-base.ts';
 import { GIT_FIX, type ReviewContext } from './fail-review.ts';
 
 export type Seen =
-  | { readonly kind: 'range'; readonly range: Range }
+  | { readonly kind: 'range'; readonly range: Range; readonly baseSource: Base['source'] }
   | { readonly kind: 'none' }
   | { readonly kind: 'failure'; readonly detail: string };
 
@@ -30,5 +30,5 @@ export function seeRange(input: HookInput, place: Place, context: ReviewContext)
     return { kind: 'failure', detail: `${ base.reason }; ${ GIT_FIX }` };
   }
 
-  return { kind: 'range', range: { base: base.id, tree } };
+  return { kind: 'range', range: { base: base.id, tree }, baseSource: base.source };
 }

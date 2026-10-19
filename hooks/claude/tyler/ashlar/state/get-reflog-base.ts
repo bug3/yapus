@@ -15,7 +15,7 @@ const DETACHED_REF = 'HEAD';
 
 // The commit the session's branch (or HEAD, when detached) held at the session's
 // recorded start, read from the reflog. undefined means the reflog gives no
-// answer: no usable start time, or no entry for that time.
+// answer: no usable start time, or no usable entry for that time.
 export function getReflogBase(place: Place, key: BaseKey): string | undefined | GitFailure {
   const start = readStart(key);
 
@@ -51,11 +51,8 @@ function findReflogId(place: Place, start: Date): string | undefined | GitFailur
     return run;
   }
 
-  if (run.status === 0) {
-    return run.stdout.trim();
-  }
-
-  return run.status === NO_ANSWER_STATUS ? undefined : failed(args, getFirstLine(run.stderr));
+  // Any other exit is no answer: an empty reflog exits 128, not 1.
+  return run.status === 0 ? run.stdout.trim() : undefined;
 }
 
 // The branch HEAD names, or HEAD itself when it is detached.
