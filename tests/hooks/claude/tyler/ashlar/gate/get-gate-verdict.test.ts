@@ -45,11 +45,24 @@ test('sends back a change over the threshold, writes the diff and logs it', (t) 
   const verdict = getGateVerdict(makeInput(fixture.repo), makeContext(fixture.dataDir));
 
   assert.equal(verdict.kind, 'review');
-  assert.equal(existsSync(join(fixture.dataDir, 'ashlar', 's1.diff')), true);
+  assert.equal(existsSync(join(fixture.repo, '.git', 'ashlar', 's1.diff')), true);
   assert.deepEqual(readReasons(fixture.dataDir), [
     'base fell back to HEAD now',
     'sent back for review',
   ]);
+});
+
+test('leaves the tree id unchanged when it writes the diff', (t) => {
+  const fixture = makeGateFixture(t);
+
+  setThreshold(fixture.dataDir, '1');
+  writeFileSync(join(fixture.repo, 'b.txt'), THREE_LINES);
+
+  const before = storeBase(fixture);
+
+  getGateVerdict(makeInput(fixture.repo), makeContext(fixture.dataDir));
+
+  assert.deepEqual(storeBase(fixture), before);
 });
 
 test('passes the same change on the retry and logs it', (t) => {

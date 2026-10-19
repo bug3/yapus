@@ -37,11 +37,11 @@ test('fails without an agent id', (t) => {
 });
 
 test('hands a SubagentStart to the start module', (t) => {
-  const dataDir = makeTempDir(t);
+  const repo = makeCommittedRepo(t);
 
-  getReviewOutcome(makeInput(makeCommittedRepo(t), 'SubagentStart'), makeContext(dataDir));
+  getReviewOutcome(makeInput(repo, 'SubagentStart'), makeContext(makeTempDir(t)));
 
-  assert.ok(existsSync(join(dataDir, 'ashlar', 's1.diff')));
+  assert.ok(existsSync(join(repo, '.git', 'ashlar', 's1.diff')));
 });
 
 test('hands a SubagentStop to the stop module', (t) => {

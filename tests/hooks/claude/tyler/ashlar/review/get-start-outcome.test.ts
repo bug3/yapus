@@ -43,7 +43,7 @@ test('writes the review record and the diff file at start', (t) => {
 
   assert.deepEqual(outcome, PASS);
   assert.ok(existsSync(getReviewPath(dataDir, 's1', 'agent-1')));
-  assert.match(readFileSync(join(dataDir, 'ashlar', 's1.diff'), 'utf8'), /^\+edited$/mu);
+  assert.match(readFileSync(join(repo, '.git', 'ashlar', 's1.diff'), 'utf8'), /^\+edited$/mu);
 });
 
 test('logs the fall back to HEAD once when the session has no start', (t) => {

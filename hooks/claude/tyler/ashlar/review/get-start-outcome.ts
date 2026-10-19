@@ -1,8 +1,8 @@
 import { logDecision } from '../../../providens/log-decision.ts';
 import { isFailure, type Place } from '../git/run-git.ts';
+import { getDiffPath } from '../git/get-diff-path.ts';
 import { writeDiff } from '../git/write-diff.ts';
 import { HEAD_FALLBACK_REASON } from '../state/get-base.ts';
-import { getDiffPath } from '../state/get-diff-path.ts';
 import {
   type AgentInput,
   failReview,
@@ -43,7 +43,12 @@ export function getStartOutcome(
     });
   }
 
-  const diffPath = getDiffPath(input.scratchpadDir, context.dataDir, input.sessionId);
+  const diffPath = getDiffPath(place, input.sessionId);
+
+  if (isFailure(diffPath)) {
+    return failReview(`${ diffPath.reason }; ${ GIT_FIX }`);
+  }
+
   const written = writeDiff(diffPath, place, seen.range);
 
   if (isFailure(written)) {

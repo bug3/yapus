@@ -1,9 +1,9 @@
 import { getFirstLine } from '../../../../shared/get-first-line.ts';
 import { logDecision } from '../../../providens/log-decision.ts';
+import { getDiffPath } from '../git/get-diff-path.ts';
 import { writeDiff } from '../git/write-diff.ts';
 import { isFailure } from '../git/run-git.ts';
 import type { HookInput } from '../parse-hook-input.ts';
-import { getDiffPath } from '../state/get-diff-path.ts';
 import { isAccepted } from '../state/is-accepted.ts';
 import { formatRequest } from './format-request.ts';
 import { GATE_HOOK, type GateSetting, readGateState } from './read-gate-state.ts';
@@ -72,11 +72,16 @@ function decide(input: HookInput, context: GateContext): GateVerdict {
     return PASS;
   }
 
-  const diffPath = getDiffPath(input.scratchpadDir, dataDir, sessionId);
+  const diffPath = getDiffPath(place, sessionId);
+
+  if (isFailure(diffPath)) {
+    return failGit(diffPath.reason);
+  }
+
   const written = writeDiff(diffPath, place, range);
 
   if (isFailure(written)) {
-    return { kind: 'failure', detail: `${ written.reason }; check the repository and stop again` };
+    return failGit(written.reason);
   }
 
   log(false, 'sent back for review');
@@ -91,4 +96,8 @@ function decide(input: HookInput, context: GateContext): GateVerdict {
       diffPath,
     }),
   };
+}
+
+function failGit(reason: string): GateVerdict {
+  return { kind: 'failure', detail: `${ reason }; check the repository and stop again` };
 }
