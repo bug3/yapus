@@ -54,6 +54,21 @@ test('writes the whole diff and leaves no temporary file', (t) => {
   assert.deepEqual(readdirSync(dir), ['change.diff']);
 });
 
+test('removes the temporary file when the rename fails', (t) => {
+  const repo = makeCommittedRepo(t);
+  const dir = makeTempDir(t);
+  const out = join(dir, 'change.diff');
+
+  // A non-empty directory at the target makes the rename fail.
+  mkdirSync(out);
+  writeFileSync(join(out, 'keep.txt'), 'keep\n');
+  writeFileSync(join(repo, 'a.txt'), 'changed\n');
+  commitAll(repo);
+
+  assert.throws(() => writeDiff(out, placeOf(repo), { base: 'HEAD~1', tree: 'HEAD' }));
+  assert.deepEqual(readdirSync(dir), ['change.diff']);
+});
+
 test('writes no color code when color.ui is always', (t) => {
   const repo = makeCommittedRepo(t);
   const out = join(makeTempDir(t), 'change.diff');
