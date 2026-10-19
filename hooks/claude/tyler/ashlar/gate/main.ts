@@ -6,7 +6,7 @@ import { getWithinLimit } from '../../../../shared/get-within-limit.ts';
 import { parseHookInput } from '../parse-hook-input.ts';
 import { getGateVerdict } from './get-gate-verdict.ts';
 
-const PROGRAM = 'providens review';
+const PROGRAM = 'providens review gate';
 const LIMIT_SECONDS = 5;
 // The hook's timeout is 60 s; every git call ends by 40 s after the start.
 const BUDGET_MS = 40_000;

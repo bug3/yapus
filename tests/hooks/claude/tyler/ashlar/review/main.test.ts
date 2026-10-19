@@ -55,7 +55,7 @@ test('exits 2 with the message on a failure', (t) => {
   const hookRun = runHook([process.execPath, MAIN], tempDir, makeStdin('Stop', tempDir));
 
   assert.equal(hookRun.status, 2);
-  assert.match(hookRun.stderr, /^yapus providens review: unexpected event Stop/u);
+  assert.match(hookRun.stderr, /^yapus providens review record: unexpected event Stop/u);
 });
 
 test('exits 0 on the same failure when the stop hook already ran', (t) => {

@@ -23,7 +23,7 @@ test('exits 2 with the message when CLAUDE_PLUGIN_DATA is missing', (t) => {
   const hookRun = runHook(makeTempDir(t), INPUT, undefined);
 
   assert.equal(hookRun.status, 2);
-  assert.match(hookRun.stderr, /^yapus providens review: CLAUDE_PLUGIN_DATA is not set/);
+  assert.match(hookRun.stderr, /^yapus providens review start: CLAUDE_PLUGIN_DATA is not set/);
 });
 
 test('exits 2 for an invalid stdin', (t) => {
@@ -31,7 +31,7 @@ test('exits 2 for an invalid stdin', (t) => {
   const hookRun = runHook(tempDir, 'not json', tempDir);
 
   assert.equal(hookRun.status, 2);
-  assert.match(hookRun.stderr, /^yapus providens review: stdin is not JSON/);
+  assert.match(hookRun.stderr, /^yapus providens review start: stdin is not JSON/);
 });
 
 test('notes the start through the bash entry point', (t) => {

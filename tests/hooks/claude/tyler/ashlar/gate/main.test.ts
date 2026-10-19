@@ -41,7 +41,7 @@ test('exits 2 with the request on stderr for a change that needs review', (t) =>
   const hookRun = runHook(makeTempDir(t), makeStdin(fixture.repo), fixture.dataDir);
 
   assert.equal(hookRun.status, 2);
-  assert.match(hookRun.stderr, /^yapus providens review: the change since [0-9a-f]{12} has 3 /);
+  assert.match(hookRun.stderr, /^yapus providens review gate: the change since [0-9a-f]{12} has 3 /);
 });
 
 test('exits 0 for a change that needs no review', (t) => {
@@ -59,7 +59,7 @@ test('exits 2 for a failure', (t) => {
   const hookRun = runHook(makeTempDir(t), makeStdin(fixture.repo), fixture.dataDir);
 
   assert.equal(hookRun.status, 2);
-  assert.match(hookRun.stderr, /^yapus providens review: .*holds no whole number/);
+  assert.match(hookRun.stderr, /^yapus providens review gate: .*holds no whole number/);
 });
 
 test('exits 0 with the message for a failure on the retry', (t) => {
@@ -70,14 +70,14 @@ test('exits 0 with the message for a failure on the retry', (t) => {
   const hookRun = runHook(makeTempDir(t), makeStdin(fixture.repo, true), fixture.dataDir);
 
   assert.equal(hookRun.status, 0);
-  assert.match(hookRun.stderr, /^yapus providens review: .*holds no whole number/);
+  assert.match(hookRun.stderr, /^yapus providens review gate: .*holds no whole number/);
 });
 
 test('exits 2 for an invalid stdin', (t) => {
   const hookRun = runHook(makeTempDir(t), 'not json', makeTempDir(t));
 
   assert.equal(hookRun.status, 2);
-  assert.match(hookRun.stderr, /^yapus providens review: stdin is not JSON/);
+  assert.match(hookRun.stderr, /^yapus providens review gate: stdin is not JSON/);
 });
 
 test('sends the session back through the bash entry point', (t) => {
@@ -96,7 +96,7 @@ test('sends the session back through the bash entry point', (t) => {
   });
 
   assert.equal(entryRun.status, 2);
-  assert.match(entryRun.stderr, /^yapus providens review: the change since /);
+  assert.match(entryRun.stderr, /^yapus providens review gate: the change since /);
 });
 
 test('exits 0 with the message for an invalid input on the retry', (t) => {
@@ -104,5 +104,5 @@ test('exits 0 with the message for an invalid input on the retry', (t) => {
   const hookRun = runHook(makeTempDir(t), stdinText, makeTempDir(t));
 
   assert.equal(hookRun.status, 0);
-  assert.match(hookRun.stderr, /^yapus providens review: session_id is not/);
+  assert.match(hookRun.stderr, /^yapus providens review gate: session_id is not/);
 });

@@ -6,7 +6,7 @@ import { getWithinLimit } from '../../../../shared/get-within-limit.ts';
 import { parseHookInput } from '../parse-hook-input.ts';
 import { recordStart } from '../state/record-start.ts';
 
-const PROGRAM = 'providens review';
+const PROGRAM = 'providens review start';
 const LIMIT_SECONDS = 5;
 
 async function main(): Promise<void> {
