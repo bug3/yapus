@@ -10,7 +10,6 @@ test('maps every field of a full payload', () => {
     agent_id: 'a1',
     last_assistant_message: 'DONE',
     stop_hook_active: true,
-    scratchpad_dir: '/scratch',
   }));
 
   assert.deepEqual(parsed, {
@@ -22,7 +21,6 @@ test('maps every field of a full payload', () => {
       agentId: 'a1',
       message: 'DONE',
       isRetry: true,
-      scratchpadDir: '/scratch',
     },
   });
 });
@@ -84,10 +82,4 @@ test('fails on a bad session_id with isRetry true when stop_hook_active is true'
   }));
 
   assert.equal(parsed.kind === 'failure' && parsed.isRetry, true);
-});
-
-test('leaves out an empty scratchpad_dir', () => {
-  const parsed = parseHookInput(JSON.stringify({ ...FIELDS, scratchpad_dir: '' }));
-
-  assert.equal(parsed.kind === 'input' && 'scratchpadDir' in parsed.input, false);
 });

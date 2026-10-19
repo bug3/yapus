@@ -11,7 +11,6 @@ export interface HookInput {
   // Claude Code sets stop_hook_active when a stop hook already sent the
   // session back once.
   readonly isRetry: boolean;
-  readonly scratchpadDir?: string;
 }
 
 export type ParsedInput =
@@ -38,7 +37,6 @@ export function parseHookInput(stdinText: string): ParsedInput {
     agent_id: agentId,
     last_assistant_message: message,
     stop_hook_active: isRetry = false,
-    scratchpad_dir: scratchpadDir,
   } = payload;
 
   const isRetryRequested = isRetry === true;
@@ -62,7 +60,6 @@ export function parseHookInput(stdinText: string): ParsedInput {
     ...(isFilled(agentId) && { agentId }),
     ...(typeof message === 'string' && { message }),
     isRetry,
-    ...(isFilled(scratchpadDir) && { scratchpadDir }),
   };
 
   return { kind: 'input', input };
