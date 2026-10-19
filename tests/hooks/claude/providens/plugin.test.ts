@@ -6,7 +6,7 @@ import { test } from 'node:test';
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const PLUGIN = join(ROOT, 'plugins', 'providens');
 
-test('registers the policy, the launch gate, the roster contract and the return cap', () => {
+test('registers every providens hook', () => {
   const hooks: unknown = JSON.parse(readFileSync(join(PLUGIN, 'hooks', 'hooks.json'), 'utf8'));
 
   assert.deepEqual(hooks, {
@@ -19,6 +19,16 @@ test('registers the policy, the launch gate, the roster contract and the return 
               type: 'command',
               command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/policy',
               timeout: 10,
+            },
+          ],
+        },
+        {
+          matcher: 'startup|resume|clear',
+          hooks: [
+            {
+              type: 'command',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/ashlar/start',
+              timeout: 60,
             },
           ],
         },
@@ -47,6 +57,16 @@ test('registers the policy, the launch gate, the roster contract and the return 
             },
           ],
         },
+        {
+          matcher: '^providens:warden$',
+          hooks: [
+            {
+              type: 'command',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/ashlar/review',
+              timeout: 60,
+            },
+          ],
+        },
       ],
       SubagentStop: [
         {
@@ -57,6 +77,27 @@ test('registers the policy, the launch gate, the roster contract and the return 
               command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/return',
               timeout: 10,
               onFailure: 'block',
+            },
+          ],
+        },
+        {
+          matcher: '^providens:warden$',
+          hooks: [
+            {
+              type: 'command',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/ashlar/review',
+              timeout: 60,
+            },
+          ],
+        },
+      ],
+      Stop: [
+        {
+          hooks: [
+            {
+              type: 'command',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/ashlar/gate',
+              timeout: 60,
             },
           ],
         },
