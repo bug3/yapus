@@ -7,10 +7,10 @@ import {
   getOutput,
   isFailure,
   runGit,
-} from '../../../../../hooks/claude/tyler/ashlar/run-git.ts';
-import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
-import { makeTempRepo } from '../../../../helpers/make-temp-repo.ts';
-import { runGit as runHelperGit } from '../../../../helpers/run-git.ts';
+} from '../../../../../../hooks/claude/tyler/ashlar/git/run-git.ts';
+import { makeTempDir } from '../../../../../helpers/make-temp-dir.ts';
+import { makeTempRepo } from '../../../../../helpers/make-temp-repo.ts';
+import { runGit as runHelperGit } from '../../../../../helpers/run-git.ts';
 
 test('returns the exit status and stdout of a zero exit', (t) => {
   const repo = makeTempRepo(t);

@@ -1,5 +1,5 @@
-import { getChildEnv } from '../../../shared/get-child-env.ts';
-import { getFirstLine } from '../../../shared/get-first-line.ts';
+import { getChildEnv } from '../../../../shared/get-child-env.ts';
+import { getFirstLine } from '../../../../shared/get-first-line.ts';
 import {
   failed,
   getOutput,

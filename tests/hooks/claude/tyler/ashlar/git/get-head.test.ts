@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getHead } from '../../../../../hooks/claude/tyler/ashlar/get-head.ts';
-import { makeCommittedRepo } from './make-committed-repo.ts';
-import { makeTempRepo } from '../../../../helpers/make-temp-repo.ts';
-import { runGit } from '../../../../helpers/run-git.ts';
+import { getHead } from '../../../../../../hooks/claude/tyler/ashlar/git/get-head.ts';
+import { makeCommittedRepo } from '../make-committed-repo.ts';
+import { makeTempRepo } from '../../../../../helpers/make-temp-repo.ts';
+import { runGit } from '../../../../../helpers/run-git.ts';
 
 test('takes the commit as head in a clean repository', (t) => {
   const repo = makeCommittedRepo(t);

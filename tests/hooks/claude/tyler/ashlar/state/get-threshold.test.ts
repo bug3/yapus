@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { getThreshold } from '../../../../../hooks/claude/tyler/ashlar/get-threshold.ts';
-import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
+import { getThreshold } from '../../../../../../hooks/claude/tyler/ashlar/state/get-threshold.ts';
+import { makeTempDir } from '../../../../../helpers/make-temp-dir.ts';
 
 test('gives 150 when the person wrote no file', (t) => {
   assert.deepEqual(getThreshold(makeTempDir(t)), { kind: 'threshold', lines: 150 });

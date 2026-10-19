@@ -5,10 +5,10 @@ import { test } from 'node:test';
 import {
   getSnapshot,
   type Snapshot,
-} from '../../../../../hooks/claude/tyler/ashlar/get-snapshot.ts';
-import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
-import { makeCommittedRepo } from './make-committed-repo.ts';
-import { runGit } from '../../../../helpers/run-git.ts';
+} from '../../../../../../hooks/claude/tyler/ashlar/git/get-snapshot.ts';
+import { makeTempDir } from '../../../../../helpers/make-temp-dir.ts';
+import { makeCommittedRepo } from '../make-committed-repo.ts';
+import { runGit } from '../../../../../helpers/run-git.ts';
 
 test('gives none for a directory outside any repository', (t) => {
   const dir = makeTempDir(t);

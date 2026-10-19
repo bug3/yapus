@@ -7,10 +7,10 @@ import {
   type Change,
   getChange,
   type Range,
-} from '../../../../../hooks/claude/tyler/ashlar/get-change.ts';
-import { isFailure, type Place } from '../../../../../hooks/claude/tyler/ashlar/run-git.ts';
-import { getGitEnv, runGit } from '../../../../helpers/run-git.ts';
-import { makeCommittedRepo } from './make-committed-repo.ts';
+} from '../../../../../../hooks/claude/tyler/ashlar/git/get-change.ts';
+import { isFailure, type Place } from '../../../../../../hooks/claude/tyler/ashlar/git/run-git.ts';
+import { getGitEnv, runGit } from '../../../../../helpers/run-git.ts';
+import { makeCommittedRepo } from '../make-committed-repo.ts';
 
 test('gives no files and no lines for an identical base and tree', (t) => {
   const repo = makeCommittedRepo(t);

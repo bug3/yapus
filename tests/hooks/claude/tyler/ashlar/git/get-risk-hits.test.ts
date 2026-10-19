@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
-import type { Range } from '../../../../../hooks/claude/tyler/ashlar/get-change.ts';
+import type { Range } from '../../../../../../hooks/claude/tyler/ashlar/git/get-change.ts';
 import {
   getRiskHits,
   type RiskHit,
-} from '../../../../../hooks/claude/tyler/ashlar/get-risk-hits.ts';
-import { isFailure, type Place } from '../../../../../hooks/claude/tyler/ashlar/run-git.ts';
-import { getGitEnv, runGit } from '../../../../helpers/run-git.ts';
-import { makeCommittedRepo } from './make-committed-repo.ts';
+} from '../../../../../../hooks/claude/tyler/ashlar/git/get-risk-hits.ts';
+import { isFailure, type Place } from '../../../../../../hooks/claude/tyler/ashlar/git/run-git.ts';
+import { getGitEnv, runGit } from '../../../../../helpers/run-git.ts';
+import { makeCommittedRepo } from '../make-committed-repo.ts';
 
 const SECRET_HIT: readonly RiskHit[] = [{ file: 'secrets/key.txt', glob: 'secrets/**' }];
 

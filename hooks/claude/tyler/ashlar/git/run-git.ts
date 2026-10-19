@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { getFirstLine } from '../../../shared/get-first-line.ts';
+import { getFirstLine } from '../../../../shared/get-first-line.ts';
 
 export interface GitFailure {
   readonly kind: 'failure';

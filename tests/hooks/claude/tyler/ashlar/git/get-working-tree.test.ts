@@ -2,10 +2,12 @@ import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { getWorkingTree } from '../../../../../hooks/claude/tyler/ashlar/get-working-tree.ts';
-import { isFailure } from '../../../../../hooks/claude/tyler/ashlar/run-git.ts';
-import { makeCommittedRepo } from './make-committed-repo.ts';
-import { runGit } from '../../../../helpers/run-git.ts';
+import {
+  getWorkingTree,
+} from '../../../../../../hooks/claude/tyler/ashlar/git/get-working-tree.ts';
+import { isFailure } from '../../../../../../hooks/claude/tyler/ashlar/git/run-git.ts';
+import { makeCommittedRepo } from '../make-committed-repo.ts';
+import { runGit } from '../../../../../helpers/run-git.ts';
 
 test('changes the tree for a modified tracked file', (t) => {
   const repo = makeCommittedRepo(t);

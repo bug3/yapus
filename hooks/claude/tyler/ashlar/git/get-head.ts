@@ -1,4 +1,4 @@
-import { getFirstLine } from '../../../shared/get-first-line.ts';
+import { getFirstLine } from '../../../../shared/get-first-line.ts';
 import { failed, getOutput, type GitFailure, isFailure, type Place, runGit } from './run-git.ts';
 
 const HEAD_ARGS = ['rev-parse', '--verify', '-q', 'HEAD^{commit}'] as const;

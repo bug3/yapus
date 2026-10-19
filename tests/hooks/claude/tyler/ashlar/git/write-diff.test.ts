@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { isFailure } from '../../../../../hooks/claude/tyler/ashlar/run-git.ts';
-import { writeDiff } from '../../../../../hooks/claude/tyler/ashlar/write-diff.ts';
-import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
-import { getGitEnv, runGit } from '../../../../helpers/run-git.ts';
-import { makeCommittedRepo } from './make-committed-repo.ts';
+import { isFailure } from '../../../../../../hooks/claude/tyler/ashlar/git/run-git.ts';
+import { writeDiff } from '../../../../../../hooks/claude/tyler/ashlar/git/write-diff.ts';
+import { makeTempDir } from '../../../../../helpers/make-temp-dir.ts';
+import { getGitEnv, runGit } from '../../../../../helpers/run-git.ts';
+import { makeCommittedRepo } from '../make-committed-repo.ts';
 
 test('writes the diff of the change to the file', (t) => {
   const repo = makeCommittedRepo(t);

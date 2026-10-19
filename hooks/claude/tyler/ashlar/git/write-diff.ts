@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { getFirstLine } from '../../../shared/get-first-line.ts';
+import { getFirstLine } from '../../../../shared/get-first-line.ts';
 import type { Range } from './get-change.ts';
 import { failed, type GitFailure, isFailure, type Place, runGit } from './run-git.ts';
 
