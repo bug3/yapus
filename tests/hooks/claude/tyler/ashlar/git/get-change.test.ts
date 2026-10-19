@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import {
@@ -84,7 +84,19 @@ test('gives a failure naming the git command for a bad id', (t) => {
   const change = getChange(placeOf(repo), { base: 'nowhere', tree: 'HEAD' });
 
   assert.ok(isFailure(change));
-  assert.match(change.reason, /^git diff --numstat -z --no-renames nowhere HEAD: /);
+  assert.match(change.reason, /^git diff --numstat -z --no-renames .* nowhere HEAD: /);
+});
+
+test('counts the whole repository from a subdirectory under diff.relative', (t) => {
+  const repo = makeCommittedRepo(t);
+
+  mkdirSync(join(repo, 'sub'));
+  runGit(['config', 'diff.relative', 'true'], repo);
+  writeFileSync(join(repo, 'a.txt'), 'b\n');
+
+  const change = getChange(placeOf(join(repo, 'sub')), rangeToWorkingTree(repo));
+
+  assert.deepEqual(change, { files: ['a.txt'], lines: 2 });
 });
 
 function changeOf(repo: string): Change {

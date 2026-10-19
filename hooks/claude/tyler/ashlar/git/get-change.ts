@@ -15,6 +15,17 @@ interface Entry {
   readonly lines: number;
 }
 
+// The diff settings every ashlar diff uses, so the person's git config
+// (external diff, textconv, color, diff.relative) cannot change what the
+// change counts or what the reviewer reads.
+export const DIFF_SETTINGS = [
+  '--no-renames',
+  '--no-ext-diff',
+  '--no-textconv',
+  '--no-color',
+  '--no-relative',
+] as const;
+
 // "<added>\t<removed>\t<path>", where a binary file has "-" for both counts.
 const RECORD = /^(\d+|-)\t(\d+|-)\t(.+)$/su;
 
@@ -23,7 +34,7 @@ const RECORD = /^(\d+|-)\t(\d+|-)\t(.+)$/su;
 // lines. The output is NUL-separated, so a path with a space, a tab or a
 // newline comes back exactly; a git failure comes back as a value.
 export function getChange(place: Place, range: Range): Change | GitFailure {
-  const args = ['diff', '--numstat', '-z', '--no-renames', range.base, range.tree];
+  const args = ['diff', '--numstat', '-z', ...DIFF_SETTINGS, range.base, range.tree];
   const output = getOutput(args, place);
 
   if (isFailure(output)) {
