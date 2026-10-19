@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { getFirstLine } from '../../../../shared/get-first-line.ts';
 import { DIFF_SETTINGS, type Range } from './get-change.ts';
@@ -19,8 +19,13 @@ export function writeDiff(path: string, place: Place, range: Range): true | GitF
     return failed(args, getFirstLine(run.stderr));
   }
 
+  // A rename within one directory is atomic, so a reader of path sees the old
+  // diff or the whole new one, never a part.
+  const tempPath = `${ path }.${ String(process.pid) }.tmp`;
+
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, run.stdout);
+  writeFileSync(tempPath, run.stdout);
+  renameSync(tempPath, path);
 
   return true;
 }

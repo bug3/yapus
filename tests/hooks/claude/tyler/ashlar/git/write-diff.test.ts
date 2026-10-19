@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { isFailure } from '../../../../../../hooks/claude/tyler/ashlar/git/run-git.ts';
@@ -38,6 +38,19 @@ test('gives a failure and writes no file for a bad id', (t) => {
   assert.ok(isFailure(written));
   assert.match(written.reason, /^git diff --no-renames .* nowhere HEAD: /);
   assert.ok(!existsSync(join(out, '..')));
+});
+
+test('writes the whole diff and leaves no temporary file', (t) => {
+  const repo = makeCommittedRepo(t);
+  const dir = makeTempDir(t);
+  const out = join(dir, 'change.diff');
+
+  writeFileSync(join(repo, 'a.txt'), 'changed\n');
+  commitAll(repo);
+  writeDiff(out, placeOf(repo), { base: 'HEAD~1', tree: 'HEAD' });
+
+  assert.equal(readFileSync(out, 'utf8'), runGit(['diff', 'HEAD~1', 'HEAD'], repo));
+  assert.deepEqual(readdirSync(dir), ['change.diff']);
 });
 
 test('writes no color code when color.ui is always', (t) => {
