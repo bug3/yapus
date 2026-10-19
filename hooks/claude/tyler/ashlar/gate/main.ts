@@ -8,6 +8,8 @@ import { getGateVerdict } from './get-gate-verdict.ts';
 
 const PROGRAM = 'providens review';
 const LIMIT_SECONDS = 5;
+// The hook's timeout is 60 s; every git call ends by 40 s after the start.
+const BUDGET_MS = 40_000;
 
 interface Outcome {
   readonly code: 0 | 2;
@@ -16,16 +18,21 @@ interface Outcome {
 
 async function main(): Promise<void> {
   try {
+    const deadline = Date.now() + BUDGET_MS;
     const { env } = process;
     const stdinText = await getWithinLimit(text(process.stdin), LIMIT_SECONDS);
 
-    stop(decide(stdinText, env));
+    stop(decide(stdinText, env, deadline));
   } catch (error) {
     stop(sendBack(`crashed: ${ getFirstLine(error) }; fix the hook`));
   }
 }
 
-function decide(stdinText: string | undefined, env: NodeJS.ProcessEnv): Outcome {
+function decide(
+  stdinText: string | undefined,
+  env: NodeJS.ProcessEnv,
+  deadline: number,
+): Outcome {
   if (stdinText === undefined) {
     return sendBack(`no input within ${ String(LIMIT_SECONDS) } seconds; retry`);
   }
@@ -46,7 +53,12 @@ function decide(stdinText: string | undefined, env: NodeJS.ProcessEnv): Outcome 
     return fail('CLAUDE_PLUGIN_DATA is not set; reinstall the plugin');
   }
 
-  const verdict = getGateVerdict(input, { dataDir, env, time: new Date().toISOString() });
+  const verdict = getGateVerdict(input, {
+    dataDir,
+    env,
+    time: new Date().toISOString(),
+    deadline,
+  });
 
   switch (verdict.kind) {
     case 'pass':

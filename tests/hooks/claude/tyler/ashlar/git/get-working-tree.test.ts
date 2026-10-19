@@ -61,7 +61,7 @@ function listTree(cwd: string, repo: string): string {
 }
 
 function takeTree(cwd: string, repo: string): string {
-  const tree = getWorkingTree(repo, { cwd, env: process.env });
+  const tree = getWorkingTree(repo, { cwd, env: process.env, deadline: Number.POSITIVE_INFINITY });
 
   assert.ok(!isFailure(tree), JSON.stringify(tree));
 

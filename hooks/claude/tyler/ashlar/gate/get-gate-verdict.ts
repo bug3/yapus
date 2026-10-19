@@ -7,11 +7,9 @@ import { HEAD_FALLBACK_REASON } from '../state/get-base.ts';
 import { getDiffPath } from '../state/get-diff-path.ts';
 import { isAccepted } from '../state/is-accepted.ts';
 import { formatRequest } from './format-request.ts';
-import { readGateState } from './read-gate-state.ts';
+import { type GateSetting, readGateState } from './read-gate-state.ts';
 
-export interface GateContext {
-  readonly dataDir: string;
-  readonly env: NodeJS.ProcessEnv;
+export interface GateContext extends GateSetting {
   readonly time: string;
 }
 
@@ -41,7 +39,7 @@ export function getGateVerdict(input: HookInput, context: GateContext): GateVerd
 function decide(input: HookInput, context: GateContext): GateVerdict {
   const { dataDir } = context;
   const { sessionId } = input;
-  const read = readGateState(input, dataDir, context.env);
+  const read = readGateState(input, context);
 
   if (read.kind !== 'state') {
     return read.kind === 'none' ? PASS : read;

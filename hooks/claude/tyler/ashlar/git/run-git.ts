@@ -15,6 +15,8 @@ export interface GitRun {
 export interface Place {
   readonly cwd: string;
   readonly env: NodeJS.ProcessEnv;
+  // Epoch milliseconds by which every git call of the hook run has ended.
+  readonly deadline: number;
 }
 
 export const LIMIT_SECONDS = 10;
@@ -22,16 +24,23 @@ export const LIMIT_SECONDS = 10;
 // A diff of a large change outgrows the 1 MiB default and would kill the run.
 const MAX_OUTPUT_BYTES = 64 * 1024 * 1024;
 
-// Runs git with args in the place, within the time limit. A run that ends
-// with an exit code, zero or not, comes back as a GitRun for the caller to
-// judge; a timeout, a spawn error or a kill by signal comes back as a failure
-// whose reason is "git <args>: <detail>".
+// Runs git with args in the place, within the time limit and what is left
+// of the place's deadline. A run that ends with an exit code, zero or not,
+// comes back as a GitRun for the caller to judge; a spent budget, a timeout,
+// a spawn error or a kill by signal comes back as a failure whose reason is
+// "git <args>: <detail>".
 export function runGit(args: readonly string[], place: Place): GitRun | GitFailure {
+  const timeout = Math.min(LIMIT_SECONDS * 1000, place.deadline - Date.now());
+
+  if (timeout <= 0) {
+    return failed(args, 'ran out of its time budget');
+  }
+
   const run = spawnSync('git', args, {
     cwd: place.cwd,
     env: place.env,
     encoding: 'utf8',
-    timeout: LIMIT_SECONDS * 1000,
+    timeout,
     maxBuffer: MAX_OUTPUT_BYTES,
   });
 

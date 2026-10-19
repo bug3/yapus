@@ -34,7 +34,12 @@ export function makeInput(cwd: string, isRetry = false): HookInput {
 }
 
 export function makeContext(dataDir: string): GateContext {
-  return { dataDir, env: process.env, time: '2026-10-19T10:00:00Z' };
+  return {
+    dataDir,
+    env: process.env,
+    time: '2026-10-19T10:00:00Z',
+    deadline: Number.POSITIVE_INFINITY,
+  };
 }
 
 export function setThreshold(dataDir: string, text: string): void {
@@ -56,7 +61,7 @@ export function readReasons(dataDir: string): readonly string[] {
 // Stores the session's base as the repository's HEAD now, so a later commit
 // is measured from it, and gives the base with the working tree now.
 export function storeBase(fixture: Fixture): Range {
-  const place = { cwd: fixture.repo, env: process.env };
+  const place = { cwd: fixture.repo, env: process.env, deadline: Number.POSITIVE_INFINITY };
   const snapshot = getSnapshot(place);
 
   if (snapshot.kind !== 'snapshot') {

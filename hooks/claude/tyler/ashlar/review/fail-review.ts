@@ -4,6 +4,8 @@ export interface ReviewContext {
   readonly dataDir: string;
   readonly env: NodeJS.ProcessEnv;
   readonly time: string;
+  // Epoch milliseconds by which every git call has ended.
+  readonly deadline: number;
 }
 
 export type ReviewOutcome =

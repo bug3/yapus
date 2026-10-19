@@ -21,7 +21,7 @@ export function getReviewOutcome(input: HookInput, context: ReviewContext): Revi
     return failReview('agent_id is missing; fix the hook matcher');
   }
 
-  const place = getPlace(input.cwd, context.env);
+  const place = getPlace(input.cwd, context.env, context.deadline);
 
   if ('kind' in place) {
     return failReview(place.kind === 'no git' ? place.detail : `${ place.reason }; ${ GIT_FIX }`);

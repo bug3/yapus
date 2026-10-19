@@ -9,6 +9,14 @@ import type { HookInput } from '../parse-hook-input.ts';
 import type { Change, Range } from '../git/get-change.ts';
 import type { RiskHit } from '../git/get-risk-hits.ts';
 
+// What the gate reads with: the data directory, the hook's environment and
+// the epoch milliseconds by which every git call has ended.
+export interface GateSetting {
+  readonly dataDir: string;
+  readonly env: NodeJS.ProcessEnv;
+  readonly deadline: number;
+}
+
 export interface GateState {
   readonly kind: 'state';
   readonly place: Place;
@@ -29,13 +37,10 @@ const NEXT_STEP = 'check the repository and stop again';
 // The session's change and what decides whether it needs review. A directory
 // outside a work tree gives none; a git failure gives a failure with the
 // instruction to follow. It may throw on a file error; the caller catches.
-export function readGateState(
-  input: HookInput,
-  dataDir: string,
-  env: NodeJS.ProcessEnv,
-): GateRead {
+export function readGateState(input: HookInput, setting: GateSetting): GateRead {
   const { cwd, sessionId } = input;
-  const place = getPlace(cwd, env);
+  const { dataDir } = setting;
+  const place = getPlace(cwd, setting.env, setting.deadline);
 
   if ('kind' in place) {
     return place.kind === 'no git'

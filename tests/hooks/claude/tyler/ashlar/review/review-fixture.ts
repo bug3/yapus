@@ -12,11 +12,11 @@ function makeInput(cwd: string, event: string, extra: Partial<AgentInput> = {}):
 }
 
 function makeContext(dataDir: string): ReviewContext {
-  return { dataDir, env: getGitEnv(process.env), time: TIME };
+  return { dataDir, env: getGitEnv(process.env), time: TIME, deadline: Number.POSITIVE_INFINITY };
 }
 
 function makePlace(cwd: string): Place {
-  return { cwd, env: getGitEnv(process.env) };
+  return { cwd, env: getGitEnv(process.env), deadline: Number.POSITIVE_INFINITY };
 }
 
 // The shared setup of the review tests: a hook input, its context and a git

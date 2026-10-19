@@ -26,7 +26,7 @@ export function getWorkingTree(root: string, place: Place): string | GitFailure 
       copyFileSync(realIndex, copy);
     }
 
-    const atRoot: Place = { cwd: root, env: { ...place.env, GIT_INDEX_FILE: copy } };
+    const atRoot: Place = { ...place, cwd: root, env: { ...place.env, GIT_INDEX_FILE: copy } };
     const added = getOutput(['add', '-A'], atRoot);
 
     return isFailure(added) ? added : getOutput(['write-tree'], atRoot);

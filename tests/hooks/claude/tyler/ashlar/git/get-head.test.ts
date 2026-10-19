@@ -9,7 +9,7 @@ test('takes the commit as head in a clean repository', (t) => {
   const repo = makeCommittedRepo(t);
 
   assert.equal(
-    getHead({ cwd: repo, env: process.env }),
+    getHead({ cwd: repo, env: process.env, deadline: Number.POSITIVE_INFINITY }),
     runGit(['rev-parse', 'HEAD'], repo).trim(),
   );
 });
@@ -18,7 +18,7 @@ test('takes the empty tree as head when HEAD is unborn', (t) => {
   const repo = makeTempRepo(t);
 
   assert.equal(
-    getHead({ cwd: repo, env: process.env }),
+    getHead({ cwd: repo, env: process.env, deadline: Number.POSITIVE_INFINITY }),
     runGit(['hash-object', '-t', 'tree', '/dev/null'], repo).trim(),
   );
 });

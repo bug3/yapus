@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import type { Place } from '../../../../../../hooks/claude/tyler/ashlar/git/run-git.ts';
 import { isFailure } from '../../../../../../hooks/claude/tyler/ashlar/git/run-git.ts';
 import { writeDiff } from '../../../../../../hooks/claude/tyler/ashlar/git/write-diff.ts';
 import { makeTempDir } from '../../../../../helpers/make-temp-dir.ts';
@@ -78,8 +79,8 @@ test('writes the whole repository from a subdirectory under diff.relative', (t) 
   assert.match(readFileSync(out, 'utf8'), /^\+changed$/mu);
 });
 
-function placeOf(cwd: string): { cwd: string; env: NodeJS.ProcessEnv } {
-  return { cwd, env: getGitEnv(process.env) };
+function placeOf(cwd: string): Place {
+  return { cwd, env: getGitEnv(process.env), deadline: Number.POSITIVE_INFINITY };
 }
 
 function commitAll(repo: string): void {

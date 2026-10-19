@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import type { Place } from '../../../../../../hooks/claude/tyler/ashlar/git/run-git.ts';
 import { getBase } from '../../../../../../hooks/claude/tyler/ashlar/state/get-base.ts';
 import { recordStart } from '../../../../../../hooks/claude/tyler/ashlar/state/record-start.ts';
 import { getGitEnv, runGit } from '../../../../../helpers/run-git.ts';
@@ -8,8 +9,8 @@ import { makeTempDir } from '../../../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../../../helpers/make-temp-repo.ts';
 import { commitAt, makeDatedRepo, SECOND_TIME, START_TIME } from './make-dated-repo.ts';
 
-function getPlace(repo: string): { cwd: string; env: NodeJS.ProcessEnv } {
-  return { cwd: repo, env: getGitEnv(process.env) };
+function getPlace(repo: string): Place {
+  return { cwd: repo, env: getGitEnv(process.env), deadline: Number.POSITIVE_INFINITY };
 }
 
 test('names the reflog as the source when it answers', (t) => {

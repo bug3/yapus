@@ -8,17 +8,21 @@ export interface NoGit {
   readonly detail: string;
 }
 
-// Where git runs for one hook run. It checks that git starts, then drops the
+// Where git runs for one hook run, until deadline. It checks that git starts, then drops the
 // variables that tie git to another repository, once per run. A git that does
 // not start gives NoGit; a failing variable lookup gives a failure.
-export function getPlace(cwd: string, env: NodeJS.ProcessEnv): Place | GitFailure | NoGit {
+export function getPlace(
+  cwd: string,
+  env: NodeJS.ProcessEnv,
+  deadline: number,
+): Place | GitFailure | NoGit {
   // The raw env is enough to see whether git starts at all.
-  if (isFailure(runGit(['--version'], { cwd, env }))) {
+  if (isFailure(runGit(['--version'], { cwd, env, deadline }))) {
     return { kind: 'no git', detail: 'git not found; install git' };
   }
 
   try {
-    return { cwd, env: getChildEnv(env, cwd, LIMIT_SECONDS) };
+    return { cwd, env: getChildEnv(env, cwd, LIMIT_SECONDS), deadline };
   } catch (error) {
     return { kind: 'failure', reason: `git rev-parse --local-env-vars: ${ getFirstLine(error) }` };
   }

@@ -55,5 +55,5 @@ function takeSnapshot(cwd: string): Snapshot {
 }
 
 function placeOf(cwd: string): Place {
-  return { cwd, env: getGitEnv(process.env) };
+  return { cwd, env: getGitEnv(process.env), deadline: Number.POSITIVE_INFINITY };
 }

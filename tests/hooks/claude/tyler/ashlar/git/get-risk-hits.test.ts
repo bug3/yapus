@@ -102,12 +102,12 @@ function writeFile(repo: string, path: string, content: string): void {
 }
 
 function placeOf(cwd: string): Place {
-  return { cwd, env: getGitEnv(process.env) };
+  return { cwd, env: getGitEnv(process.env), deadline: Number.POSITIVE_INFINITY };
 }
 
 function rangeToWorkingTree(repo: string): Range {
   const env = { ...getGitEnv(process.env), GIT_INDEX_FILE: join(repo, '.git', 'temporary-index') };
-  const place: Place = { cwd: repo, env };
+  const place: Place = { cwd: repo, env, deadline: Number.POSITIVE_INFINITY };
 
   runGitIn(['add', '-A'], place);
 

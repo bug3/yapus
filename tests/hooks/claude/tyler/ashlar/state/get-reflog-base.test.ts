@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import type { Place } from '../../../../../../hooks/claude/tyler/ashlar/git/run-git.ts';
 import {
   getReflogBase,
 } from '../../../../../../hooks/claude/tyler/ashlar/state/get-reflog-base.ts';
@@ -17,8 +18,8 @@ import {
   START_TIME,
 } from './make-dated-repo.ts';
 
-function getPlace(repo: string): { cwd: string; env: NodeJS.ProcessEnv } {
-  return { cwd: repo, env: getGitEnv(process.env) };
+function getPlace(repo: string): Place {
+  return { cwd: repo, env: getGitEnv(process.env), deadline: Number.POSITIVE_INFINITY };
 }
 
 test('takes the commit the branch held at the start, not a later one', (t) => {
