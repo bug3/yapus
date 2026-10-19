@@ -21,10 +21,11 @@ export type GateVerdict =
 const PASS: GateVerdict = { kind: 'pass' };
 
 // Whether the session may stop: a change under the threshold that touches no
-// risk glob passes unlogged; one that needs review passes when a review
-// accepted exactly this change, or on the second stop, and otherwise is sent
-// back once with the diff written for the reviewer. A git or file failure
-// comes back as a failure value.
+// risk glob passes and logs no decision; one that needs review passes when a
+// review accepted exactly this change, or on the second stop, and otherwise
+// is sent back once with the diff written for the reviewer. A session base
+// that fell back to HEAD is logged once, whatever the verdict. A git or file
+// failure comes back as a failure value.
 export function getGateVerdict(input: HookInput, context: GateContext): GateVerdict {
   try {
     return decide(input, context);
