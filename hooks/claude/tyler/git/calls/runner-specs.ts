@@ -18,7 +18,6 @@ const EVALUATORS: readonly string[] = ['eval'];
 const SOURCERS: readonly string[] = ['source', '.'];
 
 // Executors that also run a shell given among their words (`xargs sh -c '{}'`).
-const LAUNCHERS: readonly string[] = ['xargs', 'parallel', 'find', 'watch'];
 
 // Programs that run a command among their words; `nohup` is a wrapper instead.
 const EXECUTORS: readonly string[] = [
@@ -45,6 +44,5 @@ export const runnerSpecs = {
   shellValuedOptions: SHELL_VALUED_OPTIONS,
   sourcers: SOURCERS,
   evaluators: EVALUATORS,
-  launchers: LAUNCHERS,
   executors: EXECUTORS,
 };

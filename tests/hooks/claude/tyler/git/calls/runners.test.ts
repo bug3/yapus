@@ -81,6 +81,21 @@ test('refuses a dot command', () => {
   assert.deepEqual(callsOf('. env.sh'), unjudgeable(SCRIPT));
 });
 
+test('refuses any executor that is given a shell, an evaluator or a sourcer', () => {
+  assert.deepEqual(
+    callsOf("stdbuf -oL sh -c 'x'"),
+    unjudgeable('stdbuf runs a command the gate cannot read'),
+  );
+  assert.deepEqual(
+    callsOf('setsid eval x'),
+    unjudgeable('setsid runs a command the gate cannot read'),
+  );
+  assert.deepEqual(
+    callsOf('ssh host source x'),
+    unjudgeable('ssh runs a command the gate cannot read'),
+  );
+});
+
 test('refuses xargs that is given a shell', () => {
   assert.deepEqual(
     callsOf("xargs /bin/BASH -c '{}'"),
@@ -95,8 +110,11 @@ test('refuses find that is given a shell', () => {
   );
 });
 
-test('does not refuse ssh for a shell name among its words', () => {
-  assert.deepEqual(callsOf('ssh host bash'), NONE);
+test('refuses ssh that is given a shell', () => {
+  assert.deepEqual(
+    callsOf('ssh host bash'),
+    unjudgeable('ssh runs a command the gate cannot read'),
+  );
 });
 
 test('reads env -S as a command line', () => {

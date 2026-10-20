@@ -109,17 +109,23 @@ function readExecutor(
   words: readonly Word[],
   start: number,
 ): NoRun | Unreadable {
-  const isLauncher = runnerSpecs.launchers.includes(base);
   const isRisky = words
     .slice(start)
     .some(
       (word) =>
         word.isOpaque ||
         word.text.split(/\s+/).some(isGitWord) ||
-        (isLauncher && runnerSpecs.shells.includes(programName(word.text))),
+        isCommandRunner(programName(word.text)),
     );
 
   return isRisky
     ? { kind: 'unjudgeable', reason: `${ base } runs a command the gate cannot read` }
     : NO_RUN;
+}
+
+// A program among an executor's words that would run commands the gate never sees.
+function isCommandRunner(name: string): boolean {
+  const { shells, evaluators, sourcers } = runnerSpecs;
+
+  return [...shells, ...evaluators, ...sourcers].includes(name);
 }
