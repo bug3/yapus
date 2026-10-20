@@ -1,6 +1,8 @@
 import type { Call } from '../../calls/get-calls.ts';
 import { bypassCatalog } from './bypass-catalog.ts';
-import { type Arguments, hasFlag, readArguments } from '../read-arguments.ts';
+import { getUnreadableReason, isUnreadable } from '../get-unreadable-reason.ts';
+import { hasFlag, readArguments } from '../read-arguments.ts';
+import { getConfigRefusal } from './get-config-refusal.ts';
 import { getKeyRefusal } from './get-key-refusal.ts';
 import { readCommitArguments } from './read-commit-arguments.ts';
 
@@ -31,7 +33,7 @@ export function getBypassRefusal(call: Call): string | undefined {
   const subcommand = call.words[0]?.text ?? '';
 
   if (subcommand === 'config') {
-    return getConfigRefusal(call);
+    return getConfigRefusal(call.words.slice(1));
   }
 
   const reason = Object.entries(bypassCatalog.noVerifyReasons)
@@ -46,8 +48,7 @@ function getSubcommandRefusal(
   noVerifyReason: string,
 ): string | undefined {
   const rest = call.words.slice(1);
-  const opaqueReason =
-    `cannot judge \`git ${ subcommand }\` with an argument the gate cannot read`;
+  const opaqueReason = getUnreadableReason(`git ${ subcommand }`);
 
   if (subcommand === 'commit') {
     const args = readCommitArguments(rest);
@@ -65,43 +66,7 @@ function getSubcommandRefusal(
 
   const isOpaqueRefused = bypassCatalog.opaqueSubcommands.some((name) => name === subcommand);
 
-  return isOpaqueRefused && rest.some((word) => word.isOpaque) ? opaqueReason : undefined;
-}
-
-function getConfigRefusal(call: Call): string | undefined {
-  const rest = call.words.slice(1);
-
-  if (rest.some((word) => word.isOpaque)) {
-    return bypassCatalog.reasons.configWrite;
-  }
-
-  const texts = literalTexts(rest);
-  const args = readArguments(texts);
-
-  if (hasAnyFlag(args, bypassCatalog.configEditFlags) || removesCore(args)) {
-    return bypassCatalog.reasons.configWrite;
-  }
-
-  const isRead = hasAnyFlag(args, bypassCatalog.configReadFlags)
-    || bypassCatalog.configReadSubcommands.some((name) => name === texts[0]);
-
-  if (isRead) {
-    return undefined;
-  }
-
-  const [first, second] = args.operands;
-  const isKeyAfterSubcommand = bypassCatalog.configKeySubcommands.some((name) => name === first);
-
-  return getKeyRefusal((isKeyAfterSubcommand ? second : first) ?? '');
-}
-
-function removesCore(args: Arguments): boolean {
-  return hasAnyFlag(args, bypassCatalog.configSectionFlags)
-    && args.operands.some((operand) => operand.toLowerCase() === 'core');
-}
-
-function hasAnyFlag(args: Arguments, flags: readonly string[]): boolean {
-  return flags.some((flag) => hasFlag(args, flag));
+  return isOpaqueRefused && rest.some(isUnreadable) ? opaqueReason : undefined;
 }
 
 function literalTexts(words: Call['words']): string[] {

@@ -29,6 +29,10 @@ function withOpaque(call: Call): Call {
   return { ...call, words: [...call.words, { text: '$X', isOpaque: true, canSplit: true }] };
 }
 
+function withQuoted(call: Call): Call {
+  return { ...call, words: [...call.words, { text: '$X', isOpaque: true, canSplit: false }] };
+}
+
 function withConfig(call: Call, text: string): Call {
   return { ...call, configs: [{ text, isOpaque: false, canSplit: false }] };
 }
@@ -121,15 +125,16 @@ test('passes git commit -am', () => {
   assert.equal(getBypassRefusal(gitCall('commit', '-am', 'x')), undefined);
 });
 
-test('passes an opaque commit value and never reads it as a flag', () => {
-  assert.equal(getBypassRefusal(withOpaque(gitCall('commit', '-m'))), undefined);
-  assert.equal(getBypassRefusal(withOpaque(gitCall('commit', '-am'))), undefined);
-  assert.equal(getBypassRefusal(withOpaque(gitCall('commit', '--message'))), undefined);
+test('passes a quoted opaque commit value and never reads it as a flag', () => {
+  assert.equal(getBypassRefusal(withQuoted(gitCall('commit', '-m'))), undefined);
+  assert.equal(getBypassRefusal(withQuoted(gitCall('commit', '-am'))), undefined);
+  assert.equal(getBypassRefusal(withQuoted(gitCall('commit', '--message'))), undefined);
   assert.equal(getBypassRefusal(withOpaque(gitCall('push', 'origin'))), undefined);
 });
 
 test('refuses an opaque commit word that is not a value', () => {
-  const reason = 'cannot judge `git commit` with an argument the gate cannot read';
+  const reason = 'cannot judge `git commit` with an argument the gate cannot read'
+    + '; quote it if it is one word, and start it with neither - nor +';
 
   assert.equal(getBypassRefusal(withOpaque(gitCall('commit', '-a'))), reason);
   assert.equal(getBypassRefusal(withOpaque(gitCall('commit', '--', 'x'))), reason);
@@ -147,18 +152,36 @@ test('refuses an opaque commit word that is not a value', () => {
   );
 });
 
+test('refuses a commit value the shell may split, which can bring -n', () => {
+  assert.equal(
+    getBypassRefusal({
+      ...gitCall('commit'),
+      words: [
+        { text: 'commit', isOpaque: false, canSplit: false },
+        { text: '-m', isOpaque: false, canSplit: false },
+        { text: '$MSG', isOpaque: true, canSplit: true },
+      ],
+    }),
+    'cannot judge `git commit` with an argument the gate cannot read'
+    + '; quote it if it is one word, and start it with neither - nor +',
+  );
+});
+
 test('refuses git merge, am and rebase with an opaque argument', () => {
   assert.equal(
     getBypassRefusal(withOpaque(gitCall('merge'))),
-    'cannot judge `git merge` with an argument the gate cannot read',
+    'cannot judge `git merge` with an argument the gate cannot read'
+    + '; quote it if it is one word, and start it with neither - nor +',
   );
   assert.equal(
     getBypassRefusal(withOpaque(gitCall('am'))),
-    'cannot judge `git am` with an argument the gate cannot read',
+    'cannot judge `git am` with an argument the gate cannot read'
+    + '; quote it if it is one word, and start it with neither - nor +',
   );
   assert.equal(
     getBypassRefusal(withOpaque(gitCall('rebase', '-i'))),
-    'cannot judge `git rebase` with an argument the gate cannot read',
+    'cannot judge `git rebase` with an argument the gate cannot read'
+    + '; quote it if it is one word, and start it with neither - nor +',
   );
 });
 
@@ -214,24 +237,36 @@ test('refuses git config opening an editor', () => {
 test('refuses git config with an argument the gate cannot read', () => {
   assert.equal(
     getBypassRefusal(withOpaque(gitCall('config', 'user.name'))),
-    bypassCatalog.reasons.configWrite,
+    'cannot judge `git config` with an argument the gate cannot read'
+    + '; quote it if it is one word, and start it with neither - nor +',
   );
 });
 
-test('passes git config reads of core.hooksPath', () => {
-  assert.equal(getBypassRefusal(gitCall('config', '--get', 'core.hooksPath')), undefined);
-  assert.equal(getBypassRefusal(gitCall('config', '--get-all', 'core.hooksPath')), undefined);
+test('refuses any git config call that names core.hooksPath, reads included', () => {
+  assert.equal(
+    getBypassRefusal(gitCall('config', '--get', 'core.hooksPath')),
+    bypassCatalog.reasons.hooksPath,
+  );
+  assert.equal(
+    getBypassRefusal(gitCall('config', '-l', 'core.hooksPath')),
+    bypassCatalog.reasons.hooksPath,
+  );
+  assert.equal(
+    getBypassRefusal(gitCall('config', '--comment', 'pull.rebase', 'core.hooksPath', '/dev/null')),
+    bypassCatalog.reasons.hooksPath,
+  );
+});
+
+test('passes git config reads of the core section', () => {
   assert.equal(getBypassRefusal(gitCall('config', '--get-regexp', 'core')), undefined);
-  assert.equal(getBypassRefusal(gitCall('config', 'get', 'core.hooksPath')), undefined);
 });
 
 test('passes git config listings', () => {
   assert.equal(getBypassRefusal(gitCall('config', '--list')), undefined);
   assert.equal(getBypassRefusal(gitCall('config', '-l')), undefined);
-  assert.equal(getBypassRefusal(gitCall('config', '-l', 'core.hooksPath')), undefined);
   assert.equal(getBypassRefusal(gitCall('config', 'list')), undefined);
   assert.equal(
-    getBypassRefusal(gitCall('config', '--show-origin', '--get', 'core.hooksPath')),
+    getBypassRefusal(gitCall('config', '--show-origin', '--get', 'user.name')),
     undefined,
   );
 });
@@ -246,7 +281,6 @@ test('refuses git config of a key outside the allow-list', () => {
   assertUnsettable(gitCall('config', 'remote.origin.push', '+main'), 'remote.origin.push');
   assertUnsettable(gitCall('config', '--global', 'include.path', 'x'), 'include.path');
   assertUnsettable(gitCall('config', 'set', 'user.email', 'x'), 'user.email');
-  assertUnsettable(gitCall('config', '--remove-section', 'user'), 'user');
 });
 
 test('passes git config reads of a key outside the allow-list', () => {
@@ -256,7 +290,7 @@ test('passes git config reads of a key outside the allow-list', () => {
 
 test('passes a -c of each kind of allowed key', () => {
   assert.equal(getBypassRefusal(withConfig(gitCall('log'), 'color.ui=always')), undefined);
-  assert.equal(getBypassRefusal(withConfig(gitCall('diff'), 'core.pager=cat')), undefined);
+  assert.equal(getBypassRefusal(withConfig(gitCall('diff'), 'core.quotePath=off')), undefined);
   assert.equal(getBypassRefusal(withConfig(gitCall('diff'), 'DIFF.Renames=true')), undefined);
 });
 
@@ -359,4 +393,90 @@ test('passes git config reads of an alias', () => {
 
 test('ignores gh calls', () => {
   assert.equal(getBypassRefusal({ ...gitCall('commit', '--no-verify'), tool: 'gh' }), undefined);
+});
+
+test('refuses git config renaming or removing any section', () => {
+  assert.equal(
+    getBypassRefusal(gitCall('config', '--rename-section', 'color', 'core')),
+    bypassCatalog.reasons.configWrite,
+  );
+  assert.equal(
+    getBypassRefusal(gitCall('config', '--remove-section', 'user')),
+    bypassCatalog.reasons.configWrite,
+  );
+  assert.equal(
+    getBypassRefusal(gitCall('config', 'rename-section', 'color', 'core')),
+    bypassCatalog.reasons.configWrite,
+  );
+});
+
+test('refuses a pager key, which runs a program', () => {
+  assertUnsettable(withConfig(gitCall('log'), 'core.pager=x'), 'core.pager');
+  assertUnsettable(gitCall('config', 'pager.log', 'x'), 'pager.log');
+});
+
+test('reads the value of a git config option as no key', () => {
+  assert.equal(
+    getBypassRefusal(gitCall('config', '--comment', 'pull.rebase', 'alias.x', 'y')),
+    bypassCatalog.reasons.aliasConfig,
+  );
+  assert.equal(
+    getBypassRefusal(gitCall('config', '--comment', 'remote.x', 'pull.rebase', 'true')),
+    undefined,
+  );
+  assert.equal(getBypassRefusal(gitCall('config', '--file=x', 'pull.rebase', 'true')), undefined);
+});
+
+test('refuses git config with an unknown option', () => {
+  assert.equal(
+    getBypassRefusal(gitCall('config', '--bogus', 'pull.rebase', 'true')),
+    bypassCatalog.reasons.configWrite,
+  );
+  assert.equal(
+    getBypassRefusal(gitCall('config', '-x', 'pull.rebase', 'true')),
+    bypassCatalog.reasons.configWrite,
+  );
+});
+
+test('refuses git config with a quoted opaque option value or key', () => {
+  assert.equal(
+    getBypassRefusal({
+      ...gitCall('config'),
+      words: [
+        { text: 'config', isOpaque: false, canSplit: false },
+        { text: '--file', isOpaque: false, canSplit: false },
+        { text: '$F', isOpaque: true, canSplit: false },
+        { text: 'pull.rebase', isOpaque: false, canSplit: false },
+      ],
+    }),
+    bypassCatalog.reasons.configWrite,
+  );
+  assert.equal(getBypassRefusal(withQuoted(gitCall('config'))), bypassCatalog.reasons.configWrite);
+});
+
+test('passes git config with a quoted opaque value', () => {
+  assert.equal(getBypassRefusal(withQuoted(gitCall('config', 'pull.rebase'))), undefined);
+});
+
+test('refuses a git config write that names a denied key in any operand', () => {
+  assert.equal(
+    getBypassRefusal(gitCall('config', 'pull.rebase', 'true', 'alias.x')),
+    bypassCatalog.reasons.aliasConfig,
+  );
+});
+
+test('refuses a git config write with more than key, value and pattern', () => {
+  assert.equal(
+    getBypassRefusal(gitCall('config', 'pull.rebase', 'a', 'b', 'c')),
+    bypassCatalog.reasons.configWrite,
+  );
+});
+
+test('passes a quoted opaque commit word anywhere', () => {
+  assert.equal(getBypassRefusal(withQuoted(gitCall('commit', '-a'))), undefined);
+});
+
+test('passes git merge, am and rebase with a quoted opaque argument', () => {
+  assert.equal(getBypassRefusal(withQuoted(gitCall('merge'))), undefined);
+  assert.equal(getBypassRefusal(withQuoted(gitCall('rebase', '-i'))), undefined);
 });

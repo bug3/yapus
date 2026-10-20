@@ -1,10 +1,12 @@
 import type { Word } from '../../shell/split-commands.ts';
 import { bypassCatalog } from './bypass-catalog.ts';
 import type { Arguments } from '../read-arguments.ts';
+import { isUnreadable } from '../get-unreadable-reason.ts';
 
 // Like `readArguments`, but knows which `git commit` options take a value, so a
-// value (`-m -n`, `-mn`) is never read as a flag. An opaque word is a value only
-// right after a value-taking option; anywhere else it could be any option.
+// value (`-m -n`, `-mn`) is never read as a flag. A quoted opaque word is a value
+// anywhere; one the shell may split is a value only right after a value-taking
+// option, and anywhere else could be any option.
 export interface CommitArguments extends Arguments {
   readonly hasStrayOpaque: boolean;
 }
@@ -16,11 +18,15 @@ export function readCommitArguments(words: readonly Word[]): CommitArguments {
   let isValuePending = false;
   let hasStrayOpaque = false;
 
-  for (const { text, isOpaque } of words) {
+  for (const word of words) {
+    const { text } = word;
+
     if (isValuePending) {
+      // A value the shell may split (`-m $MSG`) can bring options of its own.
+      hasStrayOpaque = hasStrayOpaque || (word.isOpaque && word.canSplit);
       isValuePending = false;
-    } else if (isOpaque) {
-      hasStrayOpaque = true;
+    } else if (word.isOpaque) {
+      hasStrayOpaque = hasStrayOpaque || isUnreadable(word);
     } else if (isAfterDashes || !text.startsWith('-') || text === '-') {
       operands.push(text);
     } else if (text === '--') {

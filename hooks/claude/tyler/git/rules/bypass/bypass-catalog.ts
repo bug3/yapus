@@ -42,10 +42,14 @@ export const bypassCatalog = {
   hooksPathKey: 'core.hookspath',
   aliasKeyPrefix: 'alias.',
   cleanRequireForceKey: 'clean.requireforce',
+  // Keys that pull in another configuration file: `include.path` and
+  // `includeIf.<condition>.path`.
+  includeKey: 'include.path',
+  includeIfPrefix: 'includeif.',
+  includeIfSuffix: '.path',
   // The only keys the agent may set with `-c` or `git config`, compared in lower
   // case: whole keys, and the sections any key of which is allowed (`color.`).
   allowedConfigKeys: [
-    'core.pager',
     'core.quotepath',
     'core.autocrlf',
     'core.safecrlf',
@@ -62,14 +66,32 @@ export const bypassCatalog = {
     'diff.colormoved',
     'diff.algorithm',
   ],
-  allowedConfigPrefixes: ['pager.', 'color.', 'advice.', 'column.', 'i18n.', 'log.'],
+  allowedConfigPrefixes: ['color.', 'advice.', 'column.', 'i18n.', 'log.'],
   // Subcommands that put the key after them (`git config set key value`).
   configKeySubcommands: ['set', 'unset'],
   // Subcommands whose arguments the gate must read to judge them.
   opaqueSubcommands: ['merge', 'am', 'rebase'],
   configReadFlags: ['--get', '--get-all', '--get-regexp', '--list', '-l'],
   configReadSubcommands: ['get', 'list'],
-  configSectionFlags: ['--remove-section', '--rename-section'],
-  configEditFlags: ['-e', '--edit'],
+  // Options and subcommands refused whatever their operands: a section rename or
+  // removal, and an editor.
+  configRefusedFlags: ['--remove-section', '--rename-section', '-e', '--edit'],
+  configRefusedSubcommands: ['rename-section', 'remove-section', 'edit'],
+  // The options of `git config` on git 2.56 (`git config <subcommand> -h`), each
+  // matched whole or by an unambiguous prefix; any other option is refused. Those
+  // that take a value take the next word unless written with `=`.
+  configValueOptions: ['--file', '--blob', '--type', '--value', '--url', '--default', '--comment'],
+  configValueLetters: 'ft',
+  configFlagOptions: [
+    '--global', '--system', '--local', '--worktree', '--all', '--regexp', '--fixed-value',
+    '--null', '--name-only', '--show-origin', '--show-scope', '--show-names', '--bool',
+    '--int', '--bool-or-int', '--bool-or-str', '--path', '--expiry-date', '--includes',
+    '--append', '--get', '--get-all', '--get-regexp', '--get-urlmatch', '--replace-all',
+    '--add', '--unset', '--unset-all', '--rename-section', '--remove-section', '--list',
+    '--edit', '--get-color', '--get-colorbool',
+  ],
+  configFlagLetters: 'zle',
+  // A write takes at most `key value [value-pattern]`.
+  maxConfigWriteOperands: 3,
   environmentConfigPrefix: 'GIT_CONFIG',
 } as const;
