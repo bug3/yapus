@@ -104,6 +104,17 @@ test('refuses env --unset= of a GIT_CONFIG name', () => {
   assert.deepEqual(callsOf('env --unset=GIT_CONFIG_COUNT git commit'), CONFIG);
 });
 
+test('refuses an env assignment whose name is opaque', () => {
+  assert.deepEqual(
+    callsOf('env "$n=0" git commit'),
+    unjudgeable('a wrapper argument the gate cannot read', true),
+  );
+});
+
+test('refuses an env assignment whose name is opaque after another assignment', () => {
+  assert.deepEqual(callsOf('env A=1 "$n=0" git commit'), UNREADABLE_NAME);
+});
+
 test('refuses arch -d of a GIT_CONFIG variable before git', () => {
   assert.deepEqual(callsOf('arch -d GIT_CONFIG_COUNT git commit -m x'), CONFIG);
 });

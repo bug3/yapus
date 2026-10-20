@@ -46,6 +46,12 @@ const WRAPPER_ARGUMENT: Unreadable = {
   shouldAlwaysDeny: true,
 };
 
+const ASSIGNED_NAME: Unreadable = {
+  kind: 'unjudgeable',
+  reason: 'a variable name the gate cannot read',
+  shouldAlwaysDeny: true,
+};
+
 const SPLIT_TEXT: Unreadable = {
   kind: 'unjudgeable',
   reason: 'env -S text the gate cannot read',
@@ -169,6 +175,11 @@ function finishWrapper(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable 
 
     if (word === undefined || word.text.startsWith('-') || !word.text.includes('=')) {
       break;
+    }
+
+    // An opaque name may be any variable, a GIT_CONFIG* one among them.
+    if (word.isOpaque && !isAssignment(word)) {
+      return ASSIGNED_NAME;
     }
 
     cursor.assignments.push(assignedName(word.text));
