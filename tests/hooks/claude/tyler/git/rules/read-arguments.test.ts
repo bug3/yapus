@@ -1,9 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import {
-  readArguments,
-} from
-  '../../../../../../../hooks/claude/tyler/git/rules/destructive/read-arguments.ts';
+import { readArguments } from '../../../../../../hooks/claude/tyler/git/rules/read-arguments.ts';
 
 test('splits a short group into one flag per letter', () => {
   assert.deepEqual(readArguments(['-fd']).flags, new Set(['-f', '-d']));

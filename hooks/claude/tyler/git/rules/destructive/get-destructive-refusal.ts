@@ -1,6 +1,6 @@
 import type { Call } from '../../calls/get-calls.ts';
 import { destructiveCommands, type Matcher } from './destructive-commands.ts';
-import { readArguments } from './read-arguments.ts';
+import { readArguments } from '../read-arguments.ts';
 
 const MATCHERS: readonly Matcher[] = Object.values(destructiveCommands);
 

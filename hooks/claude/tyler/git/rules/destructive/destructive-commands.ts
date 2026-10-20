@@ -1,4 +1,4 @@
-import { hasFlag, type Arguments } from './read-arguments.ts';
+import { hasFlag, type Arguments } from '../read-arguments.ts';
 
 export type DestructiveId =
   | 'branchDelete'
