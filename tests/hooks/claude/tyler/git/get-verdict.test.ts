@@ -12,8 +12,30 @@ import {
   destructiveCommands,
 } from
   '../../../../../hooks/claude/tyler/git/rules/destructive/destructive-commands.ts';
+import { pushCatalog } from '../../../../../hooks/claude/tyler/git/rules/push/push-catalog.ts';
 
 const HOME = '/home/someone';
+
+test('denies a forced push in a compound line', () => {
+  assert.deepEqual(
+    getVerdict({ stdinText: bashCall('git add . && git push --force origin main'), home: HOME }),
+    { kind: 'deny', detail: pushCatalog.reasons.force },
+  );
+  assert.deepEqual(getVerdict({ stdinText: bashCall('git push origin +main'), home: HOME }), {
+    kind: 'deny',
+    detail: pushCatalog.reasons.forceRefspec,
+  });
+});
+
+test('allows a lease push that checks it includes the remote', () => {
+  assert.deepEqual(
+    getVerdict({
+      stdinText: bashCall('git push --force-with-lease --force-if-includes origin feat/x'),
+      home: HOME,
+    }),
+    { kind: 'allow' },
+  );
+});
 const RESET_REASON = destructiveCommands.resetHard.reason;
 
 test('allows a tool other than Bash', () => {

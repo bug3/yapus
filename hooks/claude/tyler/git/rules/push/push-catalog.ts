@@ -1,0 +1,70 @@
+const reasons = {
+  force: '`git push --force` overwrites the remote history; a person runs it',
+  lease: '`git push --force-with-lease` without `--force-if-includes`; a person runs it',
+  forceRefspec: '`git push` with a `+` refspec forces the update; a person runs it',
+  mirror: '`git push --mirror` overwrites and deletes remote refs; a person runs it',
+  delete: '`git push` that deletes a remote ref; a person runs it',
+  prune: '`git push --prune` deletes remote refs; a person runs it',
+  opaque: 'cannot judge `git push` with an argument the gate cannot read',
+} as const;
+
+export const pushCatalog = {
+  reasons,
+  // Every `git push` long option, the names a written prefix is resolved against.
+  longOptions: [
+    '--all',
+    '--branches',
+    '--mirror',
+    '--tags',
+    '--follow-tags',
+    '--atomic',
+    '--no-atomic',
+    '--dry-run',
+    '--porcelain',
+    '--delete',
+    '--prune',
+    '--force',
+    '--force-with-lease',
+    '--force-if-includes',
+    '--no-force-if-includes',
+    '--no-force-with-lease',
+    '--repo',
+    '--set-upstream',
+    '--thin',
+    '--no-thin',
+    '--quiet',
+    '--verbose',
+    '--progress',
+    '--recurse-submodules',
+    '--no-recurse-submodules',
+    '--verify',
+    '--no-verify',
+    '--push-option',
+    '--receive-pack',
+    '--exec',
+    '--signed',
+    '--no-signed',
+    '--ipv4',
+    '--ipv6',
+  ],
+  // Options whose value is the next word unless written with `=`. The others
+  // that accept a value (`--signed`, `--recurse-submodules`) only take it with `=`.
+  valueOptions: ['--push-option', '--repo', '--receive-pack', '--exec'],
+  valueLetters: 'o',
+  // An option that, written, replaces its opposite: the last of the two wins.
+  opposites: [
+    { name: '--force-if-includes', opposite: '--no-force-if-includes' },
+    { name: '--no-force-if-includes', opposite: '--force-if-includes' },
+  ],
+  // Options refused on their own, each with its short form where there is one.
+  refusedOptions: [
+    { names: ['--force', '-f'], reason: reasons.force },
+    { names: ['--mirror'], reason: reasons.mirror },
+    { names: ['--delete', '-d'], reason: reasons.delete },
+    { names: ['--prune'], reason: reasons.prune },
+  ],
+  leaseOption: '--force-with-lease',
+  includesOption: '--force-if-includes',
+  forcePrefix: '+',
+  deletePrefix: ':',
+} as const;

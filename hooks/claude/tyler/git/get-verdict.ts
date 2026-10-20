@@ -3,6 +3,7 @@ import { parsePayload } from './input/parse-payload.ts';
 import { mentionsGit } from './mentions-git.ts';
 import { getBypassRefusal } from './rules/bypass/get-bypass-refusal.ts';
 import { getDestructiveRefusal } from './rules/destructive/get-destructive-refusal.ts';
+import { getPushRefusal } from './rules/push/get-push-refusal.ts';
 import { splitCommands } from './shell/split-commands.ts';
 
 export interface Input {
@@ -25,7 +26,7 @@ export type Verdict = Allow | Deny;
 export type Rule = (call: Call) => string | undefined;
 
 // One rule per slice.
-export const RULES: readonly Rule[] = [getDestructiveRefusal, getBypassRefusal];
+export const RULES: readonly Rule[] = [getDestructiveRefusal, getBypassRefusal, getPushRefusal];
 
 const ALLOW: Allow = { kind: 'allow' };
 
