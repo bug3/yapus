@@ -184,9 +184,28 @@ test('does not call julia running a script file', () => {
   assert.deepEqual(callsOf('julia x.jl'), NONE);
 });
 
-test('refuses a versioned python with inline code', () => {
+test('refuses a versioned interpreter with inline code, by the name before its version', () => {
   assert.deepEqual(
     callsOf('python3.12 -c x'),
+    unjudgeable('python runs code the gate cannot read', false),
+  );
+  assert.deepEqual(
+    callsOf('perl5.34 -e x'),
+    unjudgeable('perl runs code the gate cannot read', false),
+  );
+  assert.deepEqual(
+    callsOf('node18 -e x'),
+    unjudgeable('node runs code the gate cannot read', false),
+  );
+  assert.deepEqual(
+    callsOf('pypy3 -c x'),
+    unjudgeable('pypy runs code the gate cannot read', false),
+  );
+});
+
+test('refuses an interpreter with no file, which reads stdin', () => {
+  assert.deepEqual(
+    callsOf("echo 'import os' | python3"),
     unjudgeable('python3 runs code the gate cannot read', false),
   );
 });
@@ -266,6 +285,13 @@ test('refuses an attached own inline option', () => {
   );
 });
 
-test('does not take an option whose leading letters hold no inline letter', () => {
-  assert.deepEqual(callsOf('python3 -W/ignore x.py'), NONE);
+test('refuses an inline letter after a value inside an option group', () => {
+  assert.deepEqual(
+    callsOf('python3 -W/ignore x.py'),
+    unjudgeable('python3 runs code the gate cannot read', false),
+  );
+});
+
+test('does not take an option group without an inline letter', () => {
+  assert.deepEqual(callsOf('python3 -u x.py'), NONE);
 });

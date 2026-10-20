@@ -173,10 +173,17 @@ test('refuses find -okdir', () => {
   );
 });
 
-test('refuses find with an opaque word, which may be an action', () => {
+test('refuses find with an opaque word, which may be an action, whatever the line says', () => {
   assert.deepEqual(
     callsOf('find . $ACTION'),
-    unjudgeable('find runs a command the gate cannot read', false),
+    unjudgeable('find runs a command the gate cannot read', true),
+  );
+});
+
+test('refuses a runner given an opaque word, whatever the line says', () => {
+  assert.deepEqual(
+    callsOf('xargs $CMD'),
+    unjudgeable('xargs runs a command the gate cannot read', true),
   );
 });
 

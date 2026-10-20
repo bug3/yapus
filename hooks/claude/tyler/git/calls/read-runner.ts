@@ -25,8 +25,6 @@ interface Run {
 type Handler = (run: Run) => Resplit | NoRun | Unreadable;
 
 const SHORT_GROUP = /^-[^-]/;
-// The letters a short option word starts with, before its first other character.
-const LEADING_LETTERS = /^-([A-Za-z]*)/;
 const SCRIPT_REASON = 'a shell reading a script or stdin the gate cannot read';
 const UNREADABLE_STRING = 'a shell string the gate cannot read';
 
@@ -47,10 +45,15 @@ export function readRunner(
   words: readonly Word[],
   start: number,
 ): Resplit | NoRun | Unreadable {
-  const name = runnerSpecs.versionedName.exec(base)?.[1] ?? base;
-  const group = runnerSpecs.runners.find((candidate) => candidate.names.includes(name));
+  const unversioned = runnerSpecs.versionedName.exec(base)?.[1] ?? base;
+  const group = findGroup(base) ?? findGroup(unversioned);
+  const name = findGroup(base) === undefined ? unversioned : base;
 
   return group === undefined ? NO_RUN : HANDLERS[group.kind]({ name, words, start });
+}
+
+function findGroup(name: string): (typeof runnerSpecs.runners)[number] | undefined {
+  return runnerSpecs.runners.find((candidate) => candidate.names.includes(name));
 }
 
 function readShell({ words, start }: Run): Resplit | NoRun | Unreadable {
@@ -120,11 +123,12 @@ function refuseScript(shouldAlwaysDeny: boolean): Unreadable {
   return { kind: 'unjudgeable', reason: SCRIPT_REASON, shouldAlwaysDeny };
 }
 
-function refuseRunner({ name }: Run): Unreadable {
+function refuseRunner({ name, words, start }: Run): Unreadable {
   return {
     kind: 'unjudgeable',
     reason: `${ name } runs a command the gate cannot read`,
-    shouldAlwaysDeny: false,
+    // An opaque word may be the program the runner starts.
+    shouldAlwaysDeny: words.slice(start).some((word) => word.isOpaque),
   };
 }
 
@@ -138,8 +142,9 @@ function readFinder(run: Run): NoRun | Unreadable {
 }
 
 // An interpreter runs inline code when a word is an inline option, a long one with an
-// attached value (`--eval=x`), or a short option word whose leading letters hold one of
-// theirs (`-c'x'`, `-lne`); an opaque word may be any. A script file is not read.
+// attached value (`--eval=x`), or a short option word that holds one of their letters
+// (`-c'x'`, `-lne`, `-W0c`); an opaque word may be any; with no file to run it reads
+// stdin. A script file is not read.
 function readInterpreter({ name, words, start }: Run): NoRun | Unreadable {
   const options = [
     ...runnerSpecs.inlineOptions,
@@ -157,8 +162,9 @@ function readInterpreter({ name, words, start }: Run): NoRun | Unreadable {
         options.some((option) => word.text.startsWith(`${ option }=`)) ||
         hasLetter(word.text, letters),
     );
+  const isReadingStdin = words.slice(start).every((word) => word.text.startsWith('-'));
 
-  return isInline
+  return isInline || isReadingStdin
     ? {
       kind: 'unjudgeable',
       reason: `${ name } runs code the gate cannot read`,
@@ -168,8 +174,7 @@ function readInterpreter({ name, words, start }: Run): NoRun | Unreadable {
     : NO_RUN;
 }
 
+// Option letters may follow a value inside a group (`-W0c`), so every letter counts.
 function hasLetter(text: string, letters: readonly string[]): boolean {
-  const leading = SHORT_GROUP.test(text) ? LEADING_LETTERS.exec(text)?.[1] ?? '' : '';
-
-  return letters.some((letter) => leading.includes(letter));
+  return SHORT_GROUP.test(text) && letters.some((letter) => text.slice(1).includes(letter));
 }

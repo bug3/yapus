@@ -73,12 +73,16 @@ const RUNNERS: readonly RunnerGroup[] = [
       'osascript',
       'rscript',
       'julia',
+      'pypy',
+      'jruby',
+      'ipython',
     ],
   },
 ];
 
-// A versioned interpreter name (`python3.12`) and the name it runs as.
-const VERSIONED_NAME = /^(python3)\.\d+$/;
+// A versioned program name (`python3.12`, `perl5.34`, `node18`) and the name before
+// its version; a reader uses that name only when it is a known runner.
+const VERSIONED_NAME = /^([a-z]+?)\d+(?:\.\d+)*$/;
 
 // Shell options that take the next word as their value.
 const SHELL_VALUED_OPTIONS: readonly string[] = [
