@@ -3,11 +3,15 @@ import { programName } from './program-name.ts';
 import { type WrapperSpec, wrapperSpecs } from './wrapper-specs.ts';
 
 // The words being read, which `env -S` replaces with the words of its string;
-// `appender` names a wrapper read so far that adds arguments from stdin.
+// `settings` holds the NAME=VALUE words of `assignments`, `unsets` the variables a wrapper
+// removes (`env -u`), and `appender` names a wrapper read so far that adds arguments
+// from stdin.
 export interface Cursor {
   words: readonly Word[];
   index: number;
   readonly assignments: string[];
+  readonly settings: Word[];
+  readonly unsets: string[];
   appender: string | undefined;
 }
 
@@ -61,6 +65,7 @@ export function readWrapper(cursor: Cursor): Reading | Unreadable {
 
   if (name !== undefined) {
     cursor.assignments.push(name);
+    cursor.settings.push(word);
     cursor.index += 1;
 
     return MOVED;
@@ -167,6 +172,7 @@ function finishWrapper(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable 
     }
 
     cursor.assignments.push(assignedName(word.text));
+    cursor.settings.push(word);
     cursor.index += 1;
   }
 
@@ -183,19 +189,35 @@ function finishWrapper(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable 
   return next?.isOpaque === true && !isAssignment(next) ? WRAPPER_ARGUMENT : MOVED;
 }
 
-// Records the variable an option at the cursor sets (`arch -e NAME=VALUE`); its value
-// word is literal by now.
+// Records the variable an option at the cursor sets (`arch -e NAME=VALUE`) or removes
+// (`env -u NAME`, `-uNAME`, `--unset=NAME`); its value word is literal by now.
 function readOptionVariables(cursor: Cursor, spec: WrapperSpec): void {
   const text = cursor.words[cursor.index]?.text ?? '';
   const next = cursor.words[cursor.index + 1];
 
   if (spec.assigning.includes(text) && next !== undefined) {
     cursor.assignments.push(assignedName(next.text));
+    cursor.settings.push(next);
+  }
+
+  for (const option of spec.unsetting) {
+    if (text === option) {
+      cursor.unsets.push(next?.text ?? '');
+    } else if (isAttached(text, option)) {
+      cursor.unsets.push(text.slice(option.length));
+    }
   }
 }
 
+// Whether a word holds a value attached to an option: `--name=` or a short `-x`.
+function isAttached(text: string, option: string): boolean {
+  const canAttach = option.endsWith('=') || !option.startsWith('--');
+
+  return canAttach && text.startsWith(option) && text.length > option.length;
+}
+
 // The variable a NAME=VALUE, NAME+=VALUE or NAME[index]=VALUE word sets.
-function assignedName(text: string): string {
+export function assignedName(text: string): string {
   return (text.split('=')[0] ?? '').replace(/[+[].*$/, '');
 }
 

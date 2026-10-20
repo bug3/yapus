@@ -52,6 +52,44 @@ test('denies git filter-branch', () => {
   assert.equal(verdictOf('git filter-branch --tree-filter x HEAD'), 'deny');
 });
 
+test('denies exported GIT_CONFIG variables before a git call', () => {
+  assert.equal(
+    verdictOf(
+      'export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath ' +
+        'GIT_CONFIG_VALUE_0=/dev/null; git commit -m x',
+    ),
+    'deny',
+  );
+});
+
+test('denies a standalone GIT_CONFIG assignment before a git call', () => {
+  assert.equal(verdictOf('GIT_CONFIG_VALUE_0=/dev/null; git commit -m x'), 'deny');
+});
+
+test('denies unset of a GIT_CONFIG variable before a git call', () => {
+  assert.equal(verdictOf('unset GIT_CONFIG_COUNT; git commit -m x'), 'deny');
+});
+
+test('denies env -u of a GIT_CONFIG variable on a git call', () => {
+  assert.equal(verdictOf('env -u GIT_CONFIG_COUNT git commit -m x'), 'deny');
+});
+
+test('allows GIT_EDITOR=true on git rebase --continue', () => {
+  assert.equal(verdictOf('GIT_EDITOR=true git rebase --continue'), 'allow');
+});
+
+test('allows GIT_PAGER=cat on git log', () => {
+  assert.equal(verdictOf('GIT_PAGER=cat git log'), 'allow');
+});
+
+test('allows PAGER=cat on git diff', () => {
+  assert.equal(verdictOf('PAGER=cat git diff'), 'allow');
+});
+
+test('denies GIT_SEQUENCE_EDITOR set to a program on git rebase', () => {
+  assert.equal(verdictOf("GIT_SEQUENCE_EDITOR='sed -i x' git rebase -i HEAD~2"), 'deny');
+});
+
 test('allows git grep with a glob after --', () => {
   assert.equal(verdictOf('git grep TODO -- *.ts'), 'allow');
 });

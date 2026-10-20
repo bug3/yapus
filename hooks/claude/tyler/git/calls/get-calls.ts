@@ -11,6 +11,8 @@ import type { GitRun } from './git-runs/make-runs.ts';
 import { readGitRuns } from './git-runs/read-git-runs.ts';
 import { isRunner, type Resplit, readRunner } from './read-runner.ts';
 import { type Cursor, readWrapper } from './read-wrapper.ts';
+import { readVariableProgram } from './variables/read-variable-program.ts';
+import { readVariables } from './variables/read-variables.ts';
 
 export interface Call {
   readonly tool: 'git' | 'gh';
@@ -124,11 +126,28 @@ function readNested(run: Nested, home: string | undefined, depth: number): Calls
   return collectCalls(split.items, home, depth + 1);
 }
 
+// Reads a command, then the variables its assignments and wrappers set or remove.
 function readCommand(
   item: CommandItem,
 ): CommandCall | NoCall | Resplit | CallsUnjudgeable {
-  const cursor: Cursor = { words: item.words, index: 0, assignments: [], appender: undefined };
+  const cursor: Cursor = {
+    words: item.words,
+    index: 0,
+    assignments: [],
+    settings: [],
+    unsets: [],
+    appender: undefined,
+  };
+  const found = readWords(cursor);
 
+  if (found.kind === 'unjudgeable') {
+    return found;
+  }
+
+  return readVariables(cursor, found.kind === 'call') ?? found;
+}
+
+function readWords(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnjudgeable {
   let hasWrapperAfterAppender = false;
 
   for (;;) {
@@ -179,7 +198,11 @@ function readProgram(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnju
   }
 
   if (!isGitWord(program.text)) {
-    return readRunner(base, words, cursor.index + 1);
+    const variables = readVariableProgram(base, words, cursor.index + 1);
+
+    return variables.kind === 'unjudgeable'
+      ? variables
+      : readRunner(base, words, cursor.index + 1);
   }
 
   if (base === 'gh') {

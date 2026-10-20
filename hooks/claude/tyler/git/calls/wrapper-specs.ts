@@ -13,6 +13,9 @@ export interface WrapperSpec {
   readonly hasAssignments: boolean;
   // Valued options whose value is a NAME=VALUE the program sets (`arch -e`).
   readonly assigning: readonly string[];
+  // Options whose value, the next word or attached (`-uNAME`, `--unset=NAME`), is a
+  // variable the program removes.
+  readonly unsetting: readonly string[];
   // Options after which the command runs nothing (`command -v`).
   readonly ends: readonly string[];
   // Options whose value is a string to split again (`env -S`): the value is the next
@@ -36,6 +39,7 @@ const NONE: WrapperSpec = {
   isShellWhenAlone: false,
   hasAssignments: false,
   assigning: [],
+  unsetting: [],
   ends: [],
   splitValued: [],
   splitAttached: [],
@@ -50,7 +54,8 @@ const WRAPPERS: readonly WrapperSpec[] = [
     hasAssignments: true,
     flags: ['-i', '-0', '--ignore-environment', '--null', '--'],
     valued: ['-u', '--unset', '-C', '--chdir'],
-    attached: ['--unset=', '--chdir='],
+    attached: ['--unset=', '--chdir=', '-u'],
+    unsetting: ['-u', '--unset', '--unset='],
     splitValued: ['-S', '--split-string'],
     splitAttached: ['-S', '--split-string='],
   },
