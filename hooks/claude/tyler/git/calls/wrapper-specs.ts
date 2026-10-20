@@ -6,11 +6,14 @@ export interface WrapperSpec {
   readonly attached: readonly string[];
   readonly hasDigitFlag: boolean;
   readonly extraWords: number;
+  // Whether NAME=VALUE words may follow the options before the program (`env`).
+  readonly hasAssignments: boolean;
   // Options after which the command runs nothing (`command -v`).
   readonly ends: readonly string[];
-  // Option prefixes the gate refuses to read, with the reason it gives.
-  readonly rejected: readonly string[];
-  readonly rejectedReason: string;
+  // Options whose value is a string to split again (`env -S`): the value is the next
+  // word, or is attached to the option name.
+  readonly splitValued: readonly string[];
+  readonly splitAttached: readonly string[];
 }
 
 const NONE: WrapperSpec = {
@@ -20,20 +23,22 @@ const NONE: WrapperSpec = {
   attached: [],
   hasDigitFlag: false,
   extraWords: 0,
+  hasAssignments: false,
   ends: [],
-  rejected: [],
-  rejectedReason: '',
+  splitValued: [],
+  splitAttached: [],
 };
 
 const WRAPPERS: readonly WrapperSpec[] = [
   {
     ...NONE,
     name: 'env',
+    hasAssignments: true,
     flags: ['-i', '-0', '--ignore-environment', '--null', '--'],
     valued: ['-u', '--unset', '-C', '--chdir'],
     attached: ['--unset=', '--chdir='],
-    rejected: ['-S', '--split-string'],
-    rejectedReason: 'env -S is not read yet',
+    splitValued: ['-S', '--split-string'],
+    splitAttached: ['-S', '--split-string='],
   },
   { ...NONE, name: 'command', flags: ['-p'], ends: ['-v', '-V'] },
   { ...NONE, name: 'exec', flags: ['-c', '-l'], valued: ['-a'] },
@@ -72,6 +77,7 @@ const RESERVED_WORDS: readonly string[] = [
   'until',
   'do',
   'time',
+  'coproc',
 ];
 
 // Options of a git invocation that come before the subcommand.
@@ -100,17 +106,9 @@ const GIT_FLAG_OPTIONS: readonly string[] = [
   '--no-advice',
 ];
 
-// Options whose value must be readable, because it can change what git runs.
-const GIT_CHECKED_OPTIONS: readonly string[] = [
-  '-C',
-  '-c',
-  '--config-env',
-];
-
 export const wrapperSpecs = {
   wrappers: WRAPPERS,
   reservedWords: RESERVED_WORDS,
   gitValuedOptions: GIT_VALUED_OPTIONS,
   gitFlagOptions: GIT_FLAG_OPTIONS,
-  gitCheckedOptions: GIT_CHECKED_OPTIONS,
 };

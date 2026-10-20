@@ -1,10 +1,17 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getCalls } from '../../../../../../hooks/claude/tyler/git/calls/get-calls.ts';
+import {
+  type Calls,
+  getCalls as getCallsAt,
+} from '../../../../../../hooks/claude/tyler/git/calls/get-calls.ts';
 import {
   type Item,
   splitCommands,
 } from '../../../../../../hooks/claude/tyler/git/shell/split-commands.ts';
+
+function getCalls(items: readonly Item[]): Calls {
+  return getCallsAt(items, undefined);
+}
 
 function words(...texts: readonly string[]): unknown[] {
   return texts.map((text) => ({ text, isOpaque: false }));
@@ -187,17 +194,17 @@ test('skips env long forms with values', () => {
   );
 });
 
-test('refuses env -S until a later slice reads it', () => {
+test('reads the string of env -S as a command line', () => {
   assert.deepEqual(
     getCalls([item('env', '-S', 'git status')]),
-    unjudgeable('env -S is not read yet'),
+    found('git', { words: words('status') }),
   );
 });
 
-test('refuses env --split-string', () => {
+test('reads the string of env --split-string=', () => {
   assert.deepEqual(
     getCalls([item('env', '--split-string=git status')]),
-    unjudgeable('env -S is not read yet'),
+    found('git', { words: words('status') }),
   );
 });
 
@@ -457,10 +464,10 @@ test('refuses an opaque value of git --config-env', () => {
   );
 });
 
-test('allows an opaque value of git --git-dir', () => {
+test('refuses an opaque value of git --git-dir', () => {
   assert.deepEqual(
     getCalls([opaqueItem('git', '--git-dir', '$G')]),
-    found('git', { words: [] }),
+    unjudgeable('a git option the gate cannot read'),
   );
 });
 

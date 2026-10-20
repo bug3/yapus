@@ -82,10 +82,8 @@ function readValue(
         isOpaque: words[index]?.isOpaque === true,
       };
 
-  if (
-    word === undefined ||
-    (word.isOpaque && wrapperSpecs.gitCheckedOptions.includes(name))
-  ) {
+  // An unquoted opaque value can expand to several words and hide the subcommand.
+  if (word === undefined || word.isOpaque) {
     return undefined;
   }
 
