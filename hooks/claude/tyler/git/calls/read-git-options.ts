@@ -94,8 +94,9 @@ function readValue(
         canSplit: words[index]?.canSplit === true,
       };
 
-  // An unquoted opaque value can expand to several words and hide the subcommand.
-  if (word === undefined || word.isOpaque) {
+  // An unquoted opaque value can expand to several words and hide the subcommand; a
+  // config value must be read for its key, so no opaque one is known.
+  if (word === undefined || (word.isOpaque && (word.canSplit || CONFIG_OPTIONS.includes(name)))) {
     return undefined;
   }
 

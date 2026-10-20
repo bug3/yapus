@@ -552,3 +552,38 @@ test('finds the calls of a split line through every wrapper', () => {
     ],
   });
 });
+
+test('reads a quoted opaque value of git -C as one word', () => {
+  assert.deepEqual(
+    getCalls(splitItems('git -C "$dir" log')),
+    found('git', { words: words('log') }),
+  );
+});
+
+test('reads a quoted substitution in the value of git -C as one word', () => {
+  assert.deepEqual(
+    getCalls(splitItems('git -C "$(pwd)/sub" status')),
+    found('git', { words: words('status') }),
+  );
+});
+
+test('refuses a splittable opaque value of git -C', () => {
+  assert.deepEqual(
+    getCalls(splitItems('git -C $dir log')),
+    unjudgeable('a git option the gate cannot read', true),
+  );
+});
+
+test('refuses a quoted opaque value of git -c, whose key must be read', () => {
+  assert.deepEqual(
+    getCalls(splitItems('git -c "$k" log')),
+    unjudgeable('a git option the gate cannot read', true),
+  );
+});
+
+test('refuses a quoted opaque value of git --config-env', () => {
+  assert.deepEqual(
+    getCalls(splitItems('git --config-env="$k" log')),
+    unjudgeable('a git option the gate cannot read', true),
+  );
+});
