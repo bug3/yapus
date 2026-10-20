@@ -476,6 +476,73 @@ test('passes a quoted opaque commit word anywhere', () => {
   assert.equal(getBypassRefusal(withQuoted(gitCall('commit', '-a'))), undefined);
 });
 
+test('refuses git clone -c with a key the agent may not set', () => {
+  assertUnsettable(gitCall('clone', '-c', 'core.pager=x', 'url'), 'core.pager');
+});
+
+test('refuses git clone -c core.hooksPath', () => {
+  assert.equal(
+    getBypassRefusal(gitCall('clone', '-c', 'core.hooksPath=/tmp/h', 'url')),
+    bypassCatalog.reasons.hooksPath,
+  );
+});
+
+test('refuses git clone with -c in a short group', () => {
+  assertUnsettable(gitCall('clone', '-qc', 'core.pager=x', 'url'), 'core.pager');
+});
+
+test('refuses git clone with -c attached to its key', () => {
+  assertUnsettable(gitCall('clone', '-ccore.pager=x', 'url'), 'core.pager');
+});
+
+test('refuses git clone --config cut to a prefix', () => {
+  assertUnsettable(gitCall('clone', '--conf=core.pager=x', 'url'), 'core.pager');
+});
+
+test('refuses git clone --config with its key in the next word', () => {
+  assertUnsettable(gitCall('clone', '--config', 'core.pager=x', 'url'), 'core.pager');
+});
+
+test('passes git clone -c with an allowed key', () => {
+  assert.equal(getBypassRefusal(gitCall('clone', '-c', 'core.autocrlf=input', 'url')), undefined);
+});
+
+test('reads no config from a short option whose value holds c', () => {
+  assert.equal(getBypassRefusal(gitCall('clone', '-bcore', 'url')), undefined);
+});
+
+test('refuses git clone -c with an opaque key', () => {
+  assert.equal(
+    getBypassRefusal({
+      ...gitCall('clone', '-c'),
+      words: [
+        ...gitCall('clone', '-c').words,
+        { text: '$K', isOpaque: true, canSplit: false },
+      ],
+    }),
+    'cannot judge `git clone` with an argument the gate cannot read; '
+      + 'quote it if it is one word, and start it with neither - nor +',
+  );
+});
+
+test('refuses git clone --template', () => {
+  assert.equal(
+    getBypassRefusal(gitCall('clone', '--template=/tmp/t', 'url')),
+    bypassCatalog.reasons.template,
+  );
+});
+
+test('refuses git init --template cut to a prefix', () => {
+  assert.equal(
+    getBypassRefusal(gitCall('init', '--templ', '/tmp/t')),
+    bypassCatalog.reasons.template,
+  );
+});
+
+test('passes git init without --template', () => {
+  assert.equal(getBypassRefusal(gitCall('init', '-q')), undefined);
+});
+
 test('passes git merge, am and rebase with a quoted opaque argument', () => {
   assert.equal(getBypassRefusal(withQuoted(gitCall('merge'))), undefined);
   assert.equal(getBypassRefusal(withQuoted(gitCall('rebase', '-i'))), undefined);

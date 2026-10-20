@@ -2,6 +2,7 @@ import type { Call } from '../../calls/get-calls.ts';
 import { bypassCatalog } from './bypass-catalog.ts';
 import { getUnreadableReason, isUnreadable } from '../get-unreadable-reason.ts';
 import { hasFlag, readArguments } from '../read-arguments.ts';
+import { getCloneRefusal } from './get-clone-refusal.ts';
 import { getConfigRefusal } from './get-config-refusal.ts';
 import { getKeyRefusal } from './get-key-refusal.ts';
 import { readCommitArguments } from './read-commit-arguments.ts';
@@ -34,6 +35,12 @@ export function getBypassRefusal(call: Call): string | undefined {
 
   if (subcommand === 'config') {
     return getConfigRefusal(call.words.slice(1));
+  }
+
+  const cloneReason = getCloneRefusal(subcommand, call.words.slice(1));
+
+  if (cloneReason !== undefined) {
+    return cloneReason;
   }
 
   const reason = Object.entries(bypassCatalog.noVerifyReasons)

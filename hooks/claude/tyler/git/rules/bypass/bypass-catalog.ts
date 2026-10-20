@@ -10,6 +10,7 @@ const reasons = {
   cleanRequireForceConfig:
     'setting `clean.requireForce` lets `git clean` delete without `-f`; a person does it',
   configEnvironment: '`GIT_CONFIG*` variables can skip the hooks yapus relies on',
+  template: 'a `--template` directory installs hooks the gate cannot read; a person runs it',
 } as const;
 
 export const bypassCatalog = {
@@ -94,4 +95,13 @@ export const bypassCatalog = {
   // A write takes at most `key value [value-pattern]`.
   maxConfigWriteOperands: 3,
   environmentConfigPrefix: 'GIT_CONFIG',
+  // Subcommands whose `--template`, whole or cut to a prefix, copies hooks in.
+  templateSubcommands: ['clone', 'init', 'init-db'],
+  templateOption: '--template',
+  // `git clone -c key=value` and `--config key=value` set config in the new repository:
+  // the long option, whole or cut to a prefix, the short letter, and the letters of the
+  // other short options that take a value.
+  cloneConfigOption: '--config',
+  cloneConfigLetter: 'c',
+  cloneValueLetters: 'obuj',
 } as const;
