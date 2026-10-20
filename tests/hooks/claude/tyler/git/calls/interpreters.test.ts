@@ -494,3 +494,21 @@ test('refuses a relative script path that reaches a /proc fd', () => {
 test('does not call a script whose name only holds dev', () => {
   assert.deepEqual(callsOf('node dev/stdin.js'), NONE);
 });
+
+test('refuses a climbing script path that reaches any device', () => {
+  assert.deepEqual(
+    callsOf('node ../../dev/tty'),
+    unjudgeable('node runs code the gate cannot read', false),
+  );
+});
+
+test('refuses a climbing script path that reaches a process file', () => {
+  assert.deepEqual(
+    callsOf('node ../../proc/1/environ'),
+    unjudgeable('node runs code the gate cannot read', false),
+  );
+});
+
+test('does not call a script under a dev folder that does not climb', () => {
+  assert.deepEqual(callsOf('node scripts/dev/build.js'), NONE);
+});

@@ -146,6 +146,10 @@ const STDIN_SEGMENTS: readonly RegExp[] = [
   /(?:^|\/)dev\/fd\//,
   /(?:^|\/)proc\/.*\/fd\//,
 ];
+// A path that climbs out of the working directory may reach the root, so any device or
+// process segment in it may be stdin, as under `/dev/` and `/proc/` (`../../dev/tty`).
+const CLIMBING_PREFIX = '../';
+const CLIMBING_STDIN_SEGMENT = /(?:^|\/)(?:dev|proc)\//;
 
 // Interpreter options that print information or run tests, so with no script the
 // interpreter does not read stdin; the short ones differ by family (`python3 -v` is
@@ -196,5 +200,7 @@ export const runnerSpecs = {
   ownStdinSubcommands: OWN_STDIN_SUBCOMMANDS,
   stdinPaths: STDIN_PATHS,
   stdinSegments: STDIN_SEGMENTS,
+  climbingPrefix: CLIMBING_PREFIX,
+  climbingStdinSegment: CLIMBING_STDIN_SEGMENT,
   stdinPrefixes: STDIN_PREFIXES,
 };

@@ -159,7 +159,9 @@ function isStdinPath(text: string): boolean {
 
   return runnerSpecs.stdinPaths.includes(path) ||
     runnerSpecs.stdinPrefixes.some((prefix) => path.startsWith(prefix)) ||
-    runnerSpecs.stdinSegments.some((segments) => segments.test(path));
+    runnerSpecs.stdinSegments.some((segments) => segments.test(path)) ||
+    (path.startsWith(runnerSpecs.climbingPrefix) &&
+      runnerSpecs.climbingStdinSegment.test(path));
 }
 
 function refuseScript(shouldAlwaysDeny: boolean): Unreadable {
