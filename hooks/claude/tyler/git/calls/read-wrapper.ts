@@ -37,6 +37,7 @@ export const PROGRAM: Reading = { kind: 'program' };
 // `NAME=`, `NAME+=` and `NAME[index]=`.
 const ASSIGNMENT = /^([A-Za-z_][A-Za-z0-9_]*)(?:\[[^\]]*\])?\+?=/;
 const DIGIT_FLAG = /^-\d+$/;
+const COUNT = /^\d+$/;
 // `env -S` gives these characters a meaning the gate does not read: escapes,
 // variables, quotes and comments.
 const SPLIT_SPECIAL = /[\\$'"#]/;
@@ -165,6 +166,14 @@ function skipOptions(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable {
 // check on the word where the program should start (an opaque extra word was refused
 // with the options).
 function finishWrapper(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable {
+  if (spec.isCounting && !COUNT.test(cursor.words[cursor.index]?.text ?? '')) {
+    return {
+      kind: 'unjudgeable',
+      reason: `a ${ spec.name } count the gate cannot read`,
+      shouldAlwaysDeny: true,
+    };
+  }
+
   cursor.index += spec.extraWords;
 
   if (spec.isAppending) {

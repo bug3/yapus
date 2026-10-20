@@ -302,6 +302,13 @@ test('reads the command after repeat and its count', () => {
   assert.deepEqual(callsOf('repeat 3 git push'), gitCall([], 'push'));
 });
 
+test('refuses a repeat count that is not digits, which zsh evaluates', () => {
+  assert.deepEqual(
+    callsOf("repeat 'a[$(id)]' git push"),
+    unjudgeable('a repeat count the gate cannot read', true),
+  );
+});
+
 test('refuses an opaque repeat count', () => {
   assert.deepEqual(callsOf('repeat $n git push'), UNREADABLE);
 });

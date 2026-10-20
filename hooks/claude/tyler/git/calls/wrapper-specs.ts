@@ -7,6 +7,9 @@ export interface WrapperSpec {
   readonly hasDigitFlag: boolean;
   // Fixed words between the options and the program (`timeout` DURATION).
   readonly extraWords: number;
+  // Whether the extra word is a count, which zsh evaluates as arithmetic (`repeat 3`),
+  // so only digits are read.
+  readonly isCounting: boolean;
   // Whether the program runs a shell when no command follows (`chroot NEWROOT`).
   readonly isShellWhenAlone: boolean;
   // Whether NAME=VALUE words may follow the options before the program (`env`).
@@ -41,6 +44,7 @@ const NONE: WrapperSpec = {
   attached: [],
   hasDigitFlag: false,
   extraWords: 0,
+  isCounting: false,
   isShellWhenAlone: false,
   hasAssignments: false,
   assigning: [],
@@ -179,7 +183,7 @@ const WRAPPERS: readonly WrapperSpec[] = [
   { ...NONE, name: '-' },
   { ...NONE, name: 'noglob' },
   { ...NONE, name: 'nocorrect' },
-  { ...NONE, name: 'repeat', extraWords: 1 },
+  { ...NONE, name: 'repeat', extraWords: 1, isCounting: true },
   // macOS `arch`; `-h` is read as a flag, so a command after it is still judged.
   {
     ...NONE,
