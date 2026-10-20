@@ -1,23 +1,39 @@
 import type { SplitFailure } from './split-commands.ts';
 
-interface WordRead {
+export type Tilde = 'none' | 'home' | 'user';
+
+export interface WordRead {
   readonly kind: 'word';
   readonly text: string;
   readonly isPresent: boolean;
+  readonly isPlain: boolean;
+  readonly tilde: Tilde;
   readonly end: number;
 }
 
-type Read = WordRead | SplitFailure;
+export type Read = WordRead | SplitFailure;
 
-const BLANKS = ' \t\n';
+const BOUNDARIES = ' \t\n&|;()<>';
 const DOUBLE_QUOTE_ESCAPABLE = '"\\$`';
 
+export function isWordBoundary(char: string): boolean {
+  return char === '' || BOUNDARIES.includes(char);
+}
+
+export function makeFailure(reason: string): SplitFailure {
+  return { kind: 'failure', reason };
+}
+
+// `isPlain` is true when no quote or backslash was used; `tilde` describes a
+// leading unquoted `~`.
 export function readWord(line: string, start: number): Read {
   let text = '';
   let isPresent = false;
+  let isPlain = true;
+  let dollarEnd = -1;
   let position = start;
 
-  while (position < line.length && !BLANKS.includes(line.charAt(position))) {
+  while (position < line.length && !isWordBoundary(line.charAt(position))) {
     const char = line.charAt(position);
 
     if (char === '\\') {
@@ -32,6 +48,7 @@ export function readWord(line: string, start: number): Read {
         isPresent = true;
       }
 
+      isPlain = false;
       position += 2;
     } else if (char === "'") {
       const close = line.indexOf("'", position + 1);
@@ -42,6 +59,7 @@ export function readWord(line: string, start: number): Read {
 
       text += line.slice(position + 1, close);
       isPresent = true;
+      isPlain = false;
       position = close + 1;
     } else if (char === '"') {
       const quoted = readDoubleQuoted(line, position + 1);
@@ -52,15 +70,34 @@ export function readWord(line: string, start: number): Read {
 
       text += quoted.text;
       isPresent = true;
+      isPlain = false;
       position = quoted.end;
     } else {
       text += char;
       isPresent = true;
       position += 1;
+
+      if (char === '$') {
+        dollarEnd = position;
+      }
     }
   }
 
-  return { kind: 'word', text, isPresent, end: position };
+  if (line.charAt(position) === '(' && dollarEnd === position) {
+    return makeFailure('substitution not supported yet');
+  }
+
+  return { kind: 'word', text, isPresent, isPlain, tilde: readTilde(line, start), end: position };
+}
+
+function readTilde(line: string, start: number): Tilde {
+  if (line.charAt(start) !== '~') {
+    return 'none';
+  }
+
+  const next = line.charAt(start + 1);
+
+  return next === '/' || isWordBoundary(next) ? 'home' : 'user';
 }
 
 // Reads from just after the opening quote; `end` is just after the closing one.
@@ -72,7 +109,14 @@ function readDoubleQuoted(line: string, start: number): Read {
     const char = line.charAt(position);
 
     if (char === '"') {
-      return { kind: 'word', text, isPresent: true, end: position + 1 };
+      return {
+        kind: 'word',
+        text,
+        isPresent: true,
+        isPlain: false,
+        tilde: 'none',
+        end: position + 1,
+      };
     }
 
     if (char === '\\') {
@@ -94,8 +138,4 @@ function readDoubleQuoted(line: string, start: number): Read {
   }
 
   return makeFailure('unterminated double quote');
-}
-
-function makeFailure(reason: string): SplitFailure {
-  return { kind: 'failure', reason };
 }
