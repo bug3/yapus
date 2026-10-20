@@ -164,7 +164,7 @@ function finishWrapper(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable 
       break;
     }
 
-    cursor.assignments.push((word.text.split('=')[0] ?? '').replace(/[+[].*$/, ''));
+    cursor.assignments.push(assignedName(word.text));
     cursor.index += 1;
   }
 
@@ -179,6 +179,11 @@ function finishWrapper(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable 
   }
 
   return next?.isOpaque === true && !isAssignment(next) ? WRAPPER_ARGUMENT : MOVED;
+}
+
+// The variable a NAME=VALUE, NAME+=VALUE or NAME[index]=VALUE word sets.
+function assignedName(text: string): string {
+  return (text.split('=')[0] ?? '').replace(/[+[].*$/, '');
 }
 
 function isAssignment(word: Word): boolean {
