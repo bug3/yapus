@@ -207,12 +207,119 @@ test('fails on a redirection followed by a redirection', () => {
   assert.deepEqual(splitCommands('a > >b', undefined), failure('redirection without a target'));
 });
 
-test('fails on a heredoc', () => {
-  assert.deepEqual(splitCommands('a <<EOF', undefined), failure('heredoc not supported yet'));
+function withBodies(texts: readonly string[], bodies: readonly string[]): unknown {
+  return {
+    kind: 'command',
+    words: texts.map((text) => ({ text, isOpaque: false })),
+    heredocs: bodies,
+  };
+}
+
+test('fails on a heredoc without a body', () => {
+  assert.deepEqual(splitCommands('a <<EOF', undefined), failure('unterminated heredoc'));
 });
 
-test('fails on a dash heredoc', () => {
-  assert.deepEqual(splitCommands('a <<-EOF', undefined), failure('heredoc not supported yet'));
+test('fails on a dash heredoc without a body', () => {
+  assert.deepEqual(splitCommands('a <<-EOF', undefined), failure('unterminated heredoc'));
+});
+
+test('fails on a heredoc without a delimiter', () => {
+  assert.deepEqual(splitCommands('a <<', undefined), failure('heredoc without a delimiter'));
+});
+
+test('fails on a heredoc whose delimiter line never comes', () => {
+  assert.deepEqual(splitCommands('a <<EOF\nx\nEOFS', undefined), failure('unterminated heredoc'));
+});
+
+test('reads a heredoc with a bare delimiter', () => {
+  assert.deepEqual(
+    splitCommands('cat <<EOF\nhi\nEOF', undefined),
+    items(withBodies(['cat'], ['hi'])),
+  );
+});
+
+test('reads a heredoc with a single-quoted delimiter', () => {
+  assert.deepEqual(
+    splitCommands("cat <<'EOF'\nhi\nEOF", undefined),
+    items(withBodies(['cat'], ['hi'])),
+  );
+});
+
+test('reads a heredoc with a double-quoted delimiter', () => {
+  assert.deepEqual(
+    splitCommands('cat <<"EOF"\nhi\nEOF', undefined),
+    items(withBodies(['cat'], ['hi'])),
+  );
+});
+
+test('reads a heredoc with a backslash delimiter', () => {
+  assert.deepEqual(
+    splitCommands('cat <<\\EOF\nhi\nEOF', undefined),
+    items(withBodies(['cat'], ['hi'])),
+  );
+});
+
+test('reads a heredoc with a partly quoted delimiter', () => {
+  assert.deepEqual(
+    splitCommands('cat <<E"OF"\nhi\nEOF', undefined),
+    items(withBodies(['cat'], ['hi'])),
+  );
+});
+
+test('reads a heredoc delimiter after a blank', () => {
+  assert.deepEqual(
+    splitCommands('cat << EOF\nhi\nEOF', undefined),
+    items(withBodies(['cat'], ['hi'])),
+  );
+});
+
+test('strips leading tabs of a dash heredoc body and delimiter', () => {
+  assert.deepEqual(
+    splitCommands('cat <<-EOF\n\t\ta\n\tb\n\t\tEOF', undefined),
+    items(withBodies(['cat'], ['a\nb'])),
+  );
+});
+
+test('keeps leading tabs of a plain heredoc body', () => {
+  assert.deepEqual(
+    splitCommands('cat <<EOF\n\ta\nEOF', undefined),
+    items(withBodies(['cat'], ['\ta'])),
+  );
+});
+
+test('reads two heredocs of one line in order', () => {
+  assert.deepEqual(
+    splitCommands('cat <<A <<B\none\nA\ntwo\nB', undefined),
+    items(withBodies(['cat'], ['one', 'two'])),
+  );
+});
+
+test('splits the rest of the heredoc line as usual', () => {
+  assert.deepEqual(
+    splitCommands('cat <<EOF | wc -l\nhi\nEOF', undefined),
+    items(withBodies(['cat'], ['hi']), item('wc', '-l')),
+  );
+});
+
+test('reads a heredoc body as raw text', () => {
+  assert.deepEqual(
+    splitCommands('cat <<EOF\n(a) \'b\' "c" # d; e\nEOF', undefined),
+    items(withBodies(['cat'], ['(a) \'b\' "c" # d; e'])),
+  );
+});
+
+test('reads an empty heredoc body', () => {
+  assert.deepEqual(
+    splitCommands('cat <<EOF\nEOF', undefined),
+    items(withBodies(['cat'], [''])),
+  );
+});
+
+test('continues with the line after a heredoc', () => {
+  assert.deepEqual(
+    splitCommands('cat <<EOF\nhi\nEOF\nb', undefined),
+    items(withBodies(['cat'], ['hi']), item('b')),
+  );
 });
 
 test('replaces a leading tilde alone with home', () => {

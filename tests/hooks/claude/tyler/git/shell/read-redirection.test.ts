@@ -36,9 +36,25 @@ test('reads digits before &> as no redirection', () => {
   assert.deepEqual(readRedirection('2&>f', 0), { kind: 'none' });
 });
 
-test('fails on a heredoc', () => {
+test('reads a heredoc delimiter', () => {
   assert.deepEqual(readRedirection('<<EOF', 0), {
+    kind: 'heredoc',
+    heredoc: { delimiter: 'EOF', isTabStripped: false },
+    end: 5,
+  });
+});
+
+test('reads a dash heredoc delimiter after a blank', () => {
+  assert.deepEqual(readRedirection('<<- "E F"', 0), {
+    kind: 'heredoc',
+    heredoc: { delimiter: 'E F', isTabStripped: true },
+    end: 9,
+  });
+});
+
+test('fails on a heredoc without a delimiter', () => {
+  assert.deepEqual(readRedirection('<< |', 0), {
     kind: 'failure',
-    reason: 'heredoc not supported yet',
+    reason: 'heredoc without a delimiter',
   });
 });

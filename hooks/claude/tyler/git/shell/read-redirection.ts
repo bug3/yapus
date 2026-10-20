@@ -1,3 +1,4 @@
+import type { Heredoc } from './read-heredoc.ts';
 import { isWordBoundary, makeFailure, readWord } from './read-word.ts';
 import type { SplitFailure } from './split-commands.ts';
 
@@ -12,7 +13,14 @@ export interface RedirectionRead {
   readonly end: number;
 }
 
-export type RedirectionResult = NoRedirection | RedirectionRead | SplitFailure;
+// `end` is just past the delimiter word; the body is read at the next newline.
+export interface HeredocRead {
+  readonly kind: 'heredoc';
+  readonly heredoc: Heredoc;
+  readonly end: number;
+}
+
+export type RedirectionResult = NoRedirection | RedirectionRead | HeredocRead | SplitFailure;
 
 // Longest operators first, so the first match is the longest.
 const OPERATORS = ['&>>', '<<<', '<<-', '>>', '>|', '<>', '&>', '>&', '<&', '<<', '<', '>'];
@@ -33,7 +41,7 @@ export function readRedirection(line: string, start: number): RedirectionResult 
   }
 
   if (HEREDOCS.includes(operator)) {
-    return makeFailure('heredoc not supported yet');
+    return readDelimiter(line, position + operator.length, operator === '<<-');
   }
 
   const after = position + operator.length;
@@ -54,4 +62,24 @@ export function readRedirection(line: string, start: number): RedirectionResult 
   }
 
   return { kind: 'redirection', hasTarget: target.isPresent, end: target.end };
+}
+
+function readDelimiter(line: string, start: number, isTabStripped: boolean): RedirectionResult {
+  let position = start;
+
+  while (line.charAt(position) === ' ' || line.charAt(position) === '\t') {
+    position += 1;
+  }
+
+  const word = readWord(line, position);
+
+  if (word.kind === 'failure') {
+    return word;
+  }
+
+  if (!word.isPresent) {
+    return makeFailure('heredoc without a delimiter');
+  }
+
+  return { kind: 'heredoc', heredoc: { delimiter: word.text, isTabStripped }, end: word.end };
 }

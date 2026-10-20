@@ -1,3 +1,4 @@
+import { type Heredoc, readHeredoc } from './read-heredoc.ts';
 import { readRedirection } from './read-redirection.ts';
 import { makeFailure, readWord } from './read-word.ts';
 
@@ -34,10 +35,17 @@ export interface SplitFailure {
 
 export type Split = SplitItems | SplitFailure;
 
+interface PendingHeredoc {
+  readonly heredoc: Heredoc;
+  readonly bodies: string[];
+}
+
 interface Builder {
   readonly home: string | undefined;
   readonly items: Item[];
   words: Word[];
+  heredocs: Heredoc[];
+  readonly pending: PendingHeredoc[];
   isAwaitingTarget: boolean;
   depth: number;
 }
@@ -46,7 +54,13 @@ interface Builder {
 const SEPARATORS = ['&&', '||', '|&', '&', '|', ';', '\n'];
 
 export function splitCommands(line: string, home: string | undefined): Split {
-  const builder: Builder = { home, items: [], words: [], isAwaitingTarget: false, depth: 0 };
+  const builder: Builder = { home, items: [],
+    words: [],
+    heredocs: [],
+    pending: [],
+    isAwaitingTarget: false,
+    depth: 0,
+  };
   let position = 0;
 
   while (position < line.length) {
@@ -63,6 +77,10 @@ export function splitCommands(line: string, home: string | undefined): Split {
 
   if (failure !== undefined) {
     return failure;
+  }
+
+  if (builder.pending.length > 0) {
+    return makeFailure('unterminated heredoc');
   }
 
   if (builder.depth > 0) {
@@ -100,6 +118,16 @@ function readStep(
     return redirection;
   }
 
+  if (redirection.kind === 'heredoc') {
+    if (builder.isAwaitingTarget) {
+      return makeFailure('redirection without a target');
+    }
+
+    builder.heredocs.push(redirection.heredoc);
+
+    return redirection.end;
+  }
+
   if (redirection.kind === 'redirection') {
     if (builder.isAwaitingTarget) {
       return makeFailure('redirection without a target');
@@ -113,7 +141,15 @@ function readStep(
   const separator = SEPARATORS.find((candidate) => line.startsWith(candidate, position));
 
   if (separator !== undefined) {
-    return endCommand(builder) ?? position + separator.length;
+    const failure = endCommand(builder);
+
+    if (failure !== undefined) {
+      return failure;
+    }
+
+    const end = position + separator.length;
+
+    return separator === '\n' ? readBodies(line, end, builder) : end;
   }
 
   if (char === '(' || char === ')') {
@@ -151,6 +187,24 @@ function readCommandWord(
   return read.end;
 }
 
+// Reads the bodies of the heredocs opened on the line just ended, in order.
+function readBodies(line: string, start: number, builder: Builder): number | SplitFailure {
+  let position = start;
+
+  for (const { heredoc, bodies } of builder.pending.splice(0)) {
+    const body = readHeredoc(line, position, heredoc);
+
+    if (body.kind === 'failure') {
+      return body;
+    }
+
+    bodies.push(body.text);
+    position = body.end;
+  }
+
+  return position;
+}
+
 function readScope(char: string, builder: Builder): SplitFailure | undefined {
   const failure = endCommand(builder);
 
@@ -180,8 +234,16 @@ function endCommand(builder: Builder): SplitFailure | undefined {
     return makeFailure('redirection without a target');
   }
 
+  const bodies: string[] = [];
+
+  for (const heredoc of builder.heredocs) {
+    builder.pending.push({ heredoc, bodies });
+  }
+
+  builder.heredocs = [];
+
   if (builder.words.length > 0) {
-    builder.items.push({ kind: 'command', words: builder.words, heredocs: [] });
+    builder.items.push({ kind: 'command', words: builder.words, heredocs: bodies });
     builder.words = [];
   }
 
