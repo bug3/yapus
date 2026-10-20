@@ -27,6 +27,12 @@ test('denies a forced push in a compound line', () => {
   });
 });
 
+test('denies a git command the gate does not know, which may be an alias', () => {
+  const verdict = getVerdict({ stdinText: bashCall('git nuke'), home: HOME });
+
+  assert.equal(verdict.kind, 'deny');
+});
+
 test('allows a lease push that checks it includes the remote', () => {
   assert.deepEqual(
     getVerdict({
