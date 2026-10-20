@@ -1,9 +1,8 @@
 import { type Call, getCalls } from './calls/get-calls.ts';
-import { isGitWord } from './calls/is-git-word.ts';
 import { parsePayload } from './input/parse-payload.ts';
 import { mentionsGit } from './mentions-git.ts';
 import { getDestructiveRefusal } from './rules/destructive/get-destructive-refusal.ts';
-import { type Item, splitCommands } from './shell/split-commands.ts';
+import { splitCommands } from './shell/split-commands.ts';
 
 export interface Input {
   readonly stdinText: string;
@@ -51,8 +50,9 @@ export function getVerdict(input: Input): Verdict {
 
   const found = getCalls(split.items, input.home);
 
+  // When the unread part could be the program itself, the text cannot clear it.
   if (found.kind === 'unjudgeable') {
-    return hasGitMention(command, split.items)
+    return found.shouldAlwaysDeny || mentionsGit(command)
       ? deny(`cannot judge a git or gh call: ${ found.reason }`)
       : ALLOW;
   }
@@ -72,11 +72,4 @@ export function getVerdict(input: Input): Verdict {
 
 function deny(detail: string): Deny {
   return { kind: 'deny', detail };
-}
-
-// Quotes can hide a git word from the raw text (`g''it`), so the split words
-// count too; the raw text already holds every heredoc body.
-function hasGitMention(command: string, items: readonly Item[]): boolean {
-  return mentionsGit(command) || items.some((item) => item.kind === 'command'
-    && item.words.some((word) => word.text.split(/\s+/u).some(isGitWord)));
 }

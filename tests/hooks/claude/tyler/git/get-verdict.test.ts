@@ -138,6 +138,13 @@ test('denies git stash clear inside a command substitution', () => {
   });
 });
 
+test('denies an opaque program even when the text does not mention git', () => {
+  assert.deepEqual(getVerdict({ stdinText: bashCall('$CMD push --force'), home: HOME }), {
+    kind: 'deny',
+    detail: 'cannot judge a git or gh call: a program name the gate cannot read',
+  });
+});
+
 function bashCall(command: string): string {
   return JSON.stringify({ tool_name: 'Bash', tool_input: { command }, cwd: '/tmp' });
 }

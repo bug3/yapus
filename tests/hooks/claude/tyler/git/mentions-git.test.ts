@@ -57,3 +57,14 @@ test('does not mention git in a host name', () => {
 test('does not mention git in text without it', () => {
   assert.equal(mentionsGit('ls -la'), false);
 });
+
+test('mentions git joined by a backslash or by quotes', () => {
+  assert.equal(mentionsGit('g\\it push'), true);
+  assert.equal(mentionsGit("g''it push"), true);
+  assert.equal(mentionsGit('"g"it push'), true);
+});
+
+test('mentions git inside a brace or beside a glob', () => {
+  assert.equal(mentionsGit('{git,push,--force}'), true);
+  assert.equal(mentionsGit('ls *git*'), true);
+});
