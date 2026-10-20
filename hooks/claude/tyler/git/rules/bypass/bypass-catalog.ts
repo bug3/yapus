@@ -74,6 +74,8 @@ export const bypassCatalog = {
   opaqueSubcommands: ['merge', 'am', 'rebase'],
   configReadFlags: ['--get', '--get-all', '--get-regexp', '--list', '-l'],
   configReadSubcommands: ['get', 'list'],
+  // Options that turn `git config key` from a read into a write.
+  configUnsetFlags: ['--unset', '--unset-all'],
   // Options and subcommands refused whatever their operands: a section rename or
   // removal, and an editor.
   configRefusedFlags: ['--remove-section', '--rename-section', '-e', '--edit'],

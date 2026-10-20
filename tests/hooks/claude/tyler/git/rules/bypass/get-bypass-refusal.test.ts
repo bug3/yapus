@@ -288,6 +288,16 @@ test('passes git config reads of a key outside the allow-list', () => {
   assert.equal(getBypassRefusal(gitCall('config', '-l')), undefined);
 });
 
+test('passes git config with a lone key, which reads it', () => {
+  assert.equal(getBypassRefusal(gitCall('config', 'user.name')), undefined);
+  assert.equal(getBypassRefusal(gitCall('config', '--global', 'user.email')), undefined);
+});
+
+test('refuses git config unsetting a lone key outside the allow-list', () => {
+  assertUnsettable(gitCall('config', '--unset', 'user.name'), 'user.name');
+  assertUnsettable(gitCall('config', '--unset-all', 'remote.origin.push'), 'remote.origin.push');
+});
+
 test('passes a -c of each kind of allowed key', () => {
   assert.equal(getBypassRefusal(withConfig(gitCall('log'), 'color.ui=always')), undefined);
   assert.equal(getBypassRefusal(withConfig(gitCall('diff'), 'core.quotePath=off')), undefined);

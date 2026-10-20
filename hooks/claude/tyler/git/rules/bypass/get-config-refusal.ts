@@ -28,7 +28,14 @@ export function getConfigRefusal(words: readonly Word[]): string | undefined {
     return reasons.configWrite;
   }
 
-  const isRead = bypassCatalog.configReadFlags.some((flag) => args.flags.has(flag))
+  // `git config key` with no value reads the key, unless an option unsets it;
+  // only when the gate reads every word.
+  const isLoneKey = args.operands.length === 1
+    && words.every((word) => !word.isOpaque)
+    && !bypassCatalog.configKeySubcommands.some((name) => name === subcommand)
+    && !bypassCatalog.configUnsetFlags.some((flag) => args.flags.has(flag));
+  const isRead = isLoneKey
+    || bypassCatalog.configReadFlags.some((flag) => args.flags.has(flag))
     || bypassCatalog.configReadSubcommands.some((name) => name === subcommand);
 
   if (isRead) {
