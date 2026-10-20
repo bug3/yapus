@@ -36,6 +36,30 @@ test('denies xcrun git clean -fdx', () => {
   assert.equal(verdictOf('xcrun git clean -fdx'), 'deny');
 });
 
+test('denies a forced push run by git rebase -x', () => {
+  assert.equal(verdictOf("git rebase -x 'git push --force' HEAD~1"), 'deny');
+});
+
+test('denies a hard reset run by git submodule foreach', () => {
+  assert.equal(verdictOf("git submodule foreach 'git reset --hard'"), 'deny');
+});
+
+test('denies a hard reset run by git bisect run', () => {
+  assert.equal(verdictOf('git bisect run git reset --hard'), 'deny');
+});
+
+test('denies git filter-branch', () => {
+  assert.equal(verdictOf('git filter-branch --tree-filter x HEAD'), 'deny');
+});
+
+test('allows git grep with a glob after --', () => {
+  assert.equal(verdictOf('git grep TODO -- *.ts'), 'allow');
+});
+
+test('denies git submodule foreach with an option that hides the command', () => {
+  assert.equal(verdictOf('git submodule foreach -x git push -f'), 'deny');
+});
+
 test('denies a wrapper after xargs with no program', () => {
   assert.equal(verdictOf('echo git push -f | xargs env'), 'deny');
 });

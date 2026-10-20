@@ -7,6 +7,8 @@ import {
 import { isGitWord } from './is-git-word.ts';
 import { programName } from './program-name.ts';
 import { readGitOptions } from './read-git-options.ts';
+import type { GitRun } from './git-runs/make-runs.ts';
+import { readGitRuns } from './git-runs/read-git-runs.ts';
 import { isRunner, type Resplit, readRunner } from './read-runner.ts';
 import { type Cursor, readWrapper } from './read-wrapper.ts';
 
@@ -35,6 +37,8 @@ export type Calls = CallsFound | CallsUnjudgeable;
 interface CommandCall {
   readonly kind: 'call';
   readonly call: Call;
+  // The commands the call runs itself (`git rebase -x CMD`).
+  readonly runs: readonly GitRun[];
 }
 
 interface NoCall {
@@ -72,8 +76,8 @@ function collectCalls(
       calls.push(found.call);
     }
 
-    if (found.kind === 'resplit') {
-      const nested = readNested(found, home, depth);
+    for (const run of runsOf(found)) {
+      const nested = readNested(run, home, depth);
 
       if (nested.kind === 'unjudgeable') {
         return nested;
@@ -86,15 +90,35 @@ function collectCalls(
   return { kind: 'calls', calls };
 }
 
-function readNested(resplit: Resplit, home: string | undefined, depth: number): Calls {
+// A string or words to read again as commands.
+type Nested = GitRun | Resplit;
+
+function runsOf(found: CommandCall | NoCall | Resplit): readonly Nested[] {
+  if (found.kind === 'call') {
+    return found.runs;
+  }
+
+  return found.kind === 'resplit' ? [found] : [];
+}
+
+function readNested(run: Nested, home: string | undefined, depth: number): Calls {
   if (depth >= MAX_DEPTH) {
     return { kind: 'unjudgeable', reason: 'commands nested too deep', shouldAlwaysDeny: false };
   }
 
-  const split = splitCommands(resplit.text, home);
+  if (run.kind === 'rerun') {
+    return collectCalls([{ kind: 'command', words: run.words, heredocs: [] }], home, depth + 1);
+  }
 
+  const split = splitCommands(run.text, home);
+
+  // A command git runs is the program itself, so one the gate cannot split is refused.
   if (split.kind === 'failure') {
-    return { kind: 'unjudgeable', reason: split.reason, shouldAlwaysDeny: false };
+    return {
+      kind: 'unjudgeable',
+      reason: split.reason,
+      shouldAlwaysDeny: run.kind === 'gitCommand',
+    };
   }
 
   return collectCalls(split.items, home, depth + 1);
@@ -166,7 +190,7 @@ function readProgram(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnju
       assignments,
     };
 
-    return { kind: 'call', call };
+    return { kind: 'call', call, runs: [] };
   }
 
   if (base.startsWith('git-')) {
@@ -182,7 +206,7 @@ function readProgram(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnju
       assignments,
     };
 
-    return { kind: 'call', call };
+    return readGitCall(call);
   }
 
   const options = readGitOptions(words, cursor.index + 1);
@@ -198,7 +222,7 @@ function readProgram(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnju
     assignments,
   };
 
-  return { kind: 'call', call };
+  return readGitCall(call);
 }
 
 function refuseAppender(appender: string): CallsUnjudgeable {
@@ -207,4 +231,11 @@ function refuseAppender(appender: string): CallsUnjudgeable {
     reason: `${ appender } appends arguments the gate cannot read`,
     shouldAlwaysDeny: false,
   };
+}
+
+// A git call with the commands it runs; it stays a call for the rules.
+function readGitCall(call: Call): CommandCall | CallsUnjudgeable {
+  const runs = readGitRuns(call.words);
+
+  return runs.kind === 'unjudgeable' ? runs : { kind: 'call', call, runs: runs.runs };
 }
