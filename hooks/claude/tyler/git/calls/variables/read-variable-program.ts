@@ -51,5 +51,5 @@ function refuseOperand(word: Word): Unreadable | undefined {
     return CONFIG_REFUSAL;
   }
 
-  return text.includes('=') ? refuseSetting(word, false) : undefined;
+  return text.includes('=') ? refuseSetting(word, undefined) : undefined;
 }

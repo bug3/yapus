@@ -144,7 +144,7 @@ function readCommand(
     return found;
   }
 
-  return readVariables(cursor, found.kind === 'call') ?? found;
+  return readVariables(cursor, found.kind === 'call' ? found.call : undefined) ?? found;
 }
 
 function readWords(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnjudgeable {

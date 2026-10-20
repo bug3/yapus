@@ -56,6 +56,10 @@ test('leaves a GIT_CONFIG assignment before git to the rules', () => {
   );
 });
 
+test('refuses a GIT_CONFIG assignment before gh, which the rules leave alone', () => {
+  assert.deepEqual(callsOf('GIT_CONFIG_COUNT=0 gh pr checkout 12'), CONFIG);
+});
+
 test('refuses a GIT_CONFIG assignment in a string split again', () => {
   assert.deepEqual(callsOf('eval GIT_CONFIG_COUNT=0'), CONFIG);
 });

@@ -1,4 +1,5 @@
 import type { Word } from '../../shell/split-commands.ts';
+import type { Call } from '../get-calls.ts';
 import { bypassCatalog } from '../../rules/bypass/bypass-catalog.ts';
 import { assignedName, type Unreadable } from '../read-wrapper.ts';
 import { variableSpecs } from './variable-specs.ts';
@@ -15,14 +16,14 @@ export function isConfigName(name: string): boolean {
   return name.startsWith(bypassCatalog.environmentConfigPrefix);
 }
 
-// The refusal for a NAME=VALUE word, or undefined. A GIT_CONFIG* one on a git call is left
-// to the rules, which read the call's assignments; a program variable passes only with a
-// literal harmless value.
-export function refuseSetting(word: Word, isCall: boolean): Unreadable | undefined {
+// The refusal for a NAME=VALUE word of `call`, the call the command makes if any, or
+// undefined. A GIT_CONFIG* one on a git call is left to the rules, which read the call's
+// assignments; a program variable passes only with a literal harmless value.
+export function refuseSetting(word: Word, call: Call | undefined): Unreadable | undefined {
   const name = assignedName(word.text);
 
   if (isConfigName(name)) {
-    return isCall ? undefined : CONFIG_REFUSAL;
+    return call?.tool === 'git' ? undefined : CONFIG_REFUSAL;
   }
 
   if (!variableSpecs.programVariables.includes(name)) {
