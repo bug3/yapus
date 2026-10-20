@@ -329,7 +329,18 @@ test('does not call xcrun --find', () => {
 });
 
 test('does not call xcrun --show-sdk-path', () => {
-  assert.deepEqual(callsOf('xcrun --show-sdk-path git'), NONE);
+  assert.deepEqual(callsOf('xcrun --show-sdk-path'), NONE);
+});
+
+test('reads the command after xcrun --find and -r', () => {
+  assert.deepEqual(
+    callsOf('xcrun --find x -r git push --force'),
+    gitCall([], 'push', '--force'),
+  );
+});
+
+test('reads the command after xcrun --show-sdk-path', () => {
+  assert.deepEqual(callsOf('xcrun --show-sdk-path git push'), gitCall([], 'push'));
 });
 
 test('refuses xargs followed by a wrapper with no program, read from stdin', () => {

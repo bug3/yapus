@@ -188,21 +188,27 @@ const WRAPPERS: readonly WrapperSpec[] = [
     assigning: ['-e'],
     unsetting: ['-d'],
   },
-  // macOS `xcrun`; `--find` and `--show-sdk-*` print a path and run nothing.
+  // macOS `xcrun`; with `--find` and `--show-sdk-*` it may still run the words after
+  // them, so they are judged as a command.
   {
     ...NONE,
     name: 'xcrun',
-    flags: ['-v', '--verbose', '-l', '--log', '-n', '--no-cache', '-r', '--run'],
-    valued: ['--sdk', '--toolchain'],
-    ends: [
-      '-f',
-      '--find',
+    flags: [
+      '-v',
+      '--verbose',
+      '-l',
+      '--log',
+      '-n',
+      '--no-cache',
+      '-r',
+      '--run',
       '--show-sdk-path',
       '--show-sdk-version',
       '--show-sdk-build-version',
       '--show-sdk-platform-path',
       '--show-sdk-platform-version',
     ],
+    valued: ['--sdk', '--toolchain', '-f', '--find'],
   },
 ];
 
