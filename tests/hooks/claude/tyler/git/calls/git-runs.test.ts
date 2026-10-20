@@ -53,12 +53,24 @@ test('refuses an opaque command of git rebase -x', () => {
   assert.deepEqual(callsOf('git rebase -x "x$c" HEAD'), UNREADABLE_COMMAND);
 });
 
-test('reads the joined words of git submodule foreach', () => {
+test('reads the words of git submodule foreach as a command and as a joined string', () => {
   assert.deepEqual(callsOf('git submodule foreach --recursive --quiet git reset --hard'), {
     kind: 'calls',
     calls: [
       call('submodule', 'foreach', '--recursive', '--quiet', 'git', 'reset', '--hard'),
       call('reset', '--hard'),
+      call('reset', '--hard'),
+    ],
+  });
+});
+
+test('reads a shell string run by git submodule foreach as argv', () => {
+  assert.deepEqual(callsOf("git submodule foreach bash -c 'git push -f'"), {
+    kind: 'calls',
+    calls: [
+      call('submodule', 'foreach', 'bash', '-c', 'git push -f'),
+      call('push', '-f'),
+      call(),
     ],
   });
 });
@@ -67,18 +79,33 @@ test('refuses an opaque word in the command of git submodule foreach', () => {
   assert.deepEqual(callsOf('git submodule foreach "x$c"'), UNREADABLE_COMMAND);
 });
 
-test('reads the words after git bisect run as a command', () => {
+test('reads the words after git bisect run as a command and as a joined string', () => {
   assert.deepEqual(callsOf('git bisect run git reset --hard'), {
     kind: 'calls',
-    calls: [call('bisect', 'run', 'git', 'reset', '--hard'), call('reset', '--hard')],
+    calls: [
+      call('bisect', 'run', 'git', 'reset', '--hard'),
+      call('reset', '--hard'),
+      call('reset', '--hard'),
+    ],
+  });
+});
+
+test('reads one quoted word after git bisect run as a shell string', () => {
+  assert.deepEqual(callsOf("git bisect run 'git reset --hard'"), {
+    kind: 'calls',
+    calls: [call('bisect', 'run', 'git reset --hard'), call('reset', '--hard')],
+  });
+});
+
+test('reads the joined words of git bisect run as a shell string', () => {
+  assert.deepEqual(callsOf("git bisect run echo 'x; git reset --hard'"), {
+    kind: 'calls',
+    calls: [call('bisect', 'run', 'echo', 'x; git reset --hard'), call('reset', '--hard')],
   });
 });
 
 test('refuses an opaque program after git bisect run', () => {
-  assert.deepEqual(
-    callsOf('git bisect run "x$c"'),
-    unjudgeable('a program name the gate cannot read', true),
-  );
+  assert.deepEqual(callsOf('git bisect run "x$c"'), UNREADABLE_COMMAND);
 });
 
 test('reads the command of git difftool --extcmd=', () => {
@@ -287,7 +314,7 @@ test('refuses a git submodule foreach option it does not know', () => {
 test('reads the command of git submodule foreach after -q and --', () => {
   assert.deepEqual(callsOf('git submodule -q foreach -q -- git a'), {
     kind: 'calls',
-    calls: [call('submodule', '-q', 'foreach', '-q', '--', 'git', 'a'), call('a')],
+    calls: [call('submodule', '-q', 'foreach', '-q', '--', 'git', 'a'), call('a'), call('a')],
   });
 });
 

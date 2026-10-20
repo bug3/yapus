@@ -39,3 +39,24 @@ export function makeRuns(commands: readonly Word[]): GitRuns | Unreadable {
     runs: commands.map((command) => ({ kind: 'gitCommand', text: command.text })),
   };
 }
+
+// The command git runs from words (`git bisect run CMD ARGS`): one word runs through
+// the shell and several may run as argv, so the words are read both ways, as a command
+// and joined with spaces as a shell string.
+export function makeWordRuns(words: readonly Word[]): GitRuns | Unreadable {
+  if (words.length === 0) {
+    return NO_RUNS;
+  }
+
+  const joined = makeRuns([
+    {
+      text: words.map((word) => word.text).join(' '),
+      isOpaque: words.some((word) => word.isOpaque),
+      canSplit: false,
+    },
+  ]);
+
+  return joined.kind === 'unjudgeable'
+    ? joined
+    : { kind: 'runs', runs: [{ kind: 'rerun', words }, ...joined.runs] };
+}

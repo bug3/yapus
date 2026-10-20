@@ -129,3 +129,19 @@ test('allows bun run of a script before a git call', () => {
 test('denies bash reading a normalised stdin path before a git call', () => {
   assert.equal(verdictOf('bash //dev//stdin; git status'), 'deny');
 });
+
+test('denies a forced push in a shell string run as argv by git submodule foreach', () => {
+  assert.equal(verdictOf("git submodule foreach bash -c 'git push -f'"), 'deny');
+});
+
+test('denies a forced push in one word run by git submodule foreach', () => {
+  assert.equal(verdictOf("git submodule foreach 'git push --force'"), 'deny');
+});
+
+test('denies a hard reset in one word run by git bisect run', () => {
+  assert.equal(verdictOf("git bisect run 'git reset --hard'"), 'deny');
+});
+
+test('denies a hard reset in the joined words of git bisect run', () => {
+  assert.equal(verdictOf("git bisect run echo 'x; git reset --hard'"), 'deny');
+});

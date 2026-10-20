@@ -1,7 +1,7 @@
 import type { Word } from '../../shell/split-commands.ts';
 import type { Unreadable } from '../read-wrapper.ts';
 import { gitRunnerSpecs } from './git-runner-specs.ts';
-import { type GitRuns, makeRuns, NO_RUNS } from './make-runs.ts';
+import { type GitRuns, makeWordRuns, NO_RUNS } from './make-runs.ts';
 
 const FOREACH_OPTION: Unreadable = {
   kind: 'unjudgeable',
@@ -9,8 +9,7 @@ const FOREACH_OPTION: Unreadable = {
   shouldAlwaysDeny: true,
 };
 
-// `git submodule [OPTIONS] foreach [--recursive] [--quiet] [--] CMD...` runs its words
-// joined with a space.
+// `git submodule [OPTIONS] foreach [--recursive] [--quiet] [--] CMD...` runs its words.
 export function readSubmodule(words: readonly Word[]): GitRuns | Unreadable {
   let index = 1;
 
@@ -44,17 +43,5 @@ export function readSubmodule(words: readonly Word[]): GitRuns | Unreadable {
     index += 1;
   }
 
-  const command = words.slice(index);
-
-  if (command.length === 0) {
-    return NO_RUNS;
-  }
-
-  return makeRuns([
-    {
-      text: command.map((word) => word.text).join(' '),
-      isOpaque: command.some((word) => word.isOpaque),
-      canSplit: false,
-    },
-  ]);
+  return makeWordRuns(words.slice(index));
 }
