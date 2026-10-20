@@ -1,8 +1,16 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getVerdict } from '../../../../../hooks/claude/tyler/git/get-verdict.ts';
+import {
+  getVerdict,
+} from
+  '../../../../../hooks/claude/tyler/git/get-verdict.ts';
+import {
+  destructiveCommands,
+} from
+  '../../../../../hooks/claude/tyler/git/rules/destructive/destructive-commands.ts';
 
 const HOME = '/home/someone';
+const RESET_REASON = destructiveCommands.resetHard.reason;
 
 test('allows a tool other than Bash', () => {
   const stdinText = JSON.stringify({ tool_name: 'Read', tool_input: {} });
@@ -73,9 +81,60 @@ test('allows a plain git status', () => {
   });
 });
 
-test('allows git reset --hard while no rule exists', () => {
-  assert.deepEqual(getVerdict({ stdinText: bashCall('git reset --hard'), home: HOME }), {
+test('allows git checkout -- file', () => {
+  assert.deepEqual(getVerdict({ stdinText: bashCall('git checkout -- file'), home: HOME }), {
     kind: 'allow',
+  });
+});
+
+test('denies git reset --hard', () => {
+  assert.deepEqual(getVerdict({ stdinText: bashCall('git reset --hard'), home: HOME }), {
+    kind: 'deny',
+    detail: RESET_REASON,
+  });
+});
+
+test('denies git reset --hard in an if condition', () => {
+  const stdinText = bashCall('if git reset --hard; then :; fi');
+
+  assert.deepEqual(getVerdict({ stdinText, home: HOME }), { kind: 'deny', detail: RESET_REASON });
+});
+
+test('denies a negated git reset --hard', () => {
+  assert.deepEqual(getVerdict({ stdinText: bashCall('! git reset --hard'), home: HOME }), {
+    kind: 'deny',
+    detail: RESET_REASON,
+  });
+});
+
+test('denies git branch -D in a for body', () => {
+  const stdinText = bashCall('for b in x; do git branch -D x; done');
+
+  assert.deepEqual(getVerdict({ stdinText, home: HOME }), {
+    kind: 'deny',
+    detail: destructiveCommands.branchDelete.reason,
+  });
+});
+
+test('denies git clean -f behind env -C', () => {
+  assert.deepEqual(getVerdict({ stdinText: bashCall('env -C /tmp git clean -f'), home: HOME }), {
+    kind: 'deny',
+    detail: destructiveCommands.cleanForce.reason,
+  });
+});
+
+test('denies git reset --hard inside bash -lc', () => {
+  const stdinText = bashCall("bash -lc 'git reset --hard'");
+
+  assert.deepEqual(getVerdict({ stdinText, home: HOME }), { kind: 'deny', detail: RESET_REASON });
+});
+
+test('denies git stash clear inside a command substitution', () => {
+  const stdinText = bashCall('echo "$(git stash clear)"');
+
+  assert.deepEqual(getVerdict({ stdinText, home: HOME }), {
+    kind: 'deny',
+    detail: destructiveCommands.stashClear.reason,
   });
 });
 
