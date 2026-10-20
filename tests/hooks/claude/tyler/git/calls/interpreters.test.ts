@@ -210,6 +210,17 @@ test('refuses an interpreter with no file, which reads stdin', () => {
   );
 });
 
+test('refuses an interpreter whose only operand is an option value, which reads stdin', () => {
+  assert.deepEqual(
+    callsOf("echo 'import os' | python3 -W ignore"),
+    unjudgeable('python3 runs code the gate cannot read', false),
+  );
+});
+
+test('does not take an option value for a script, nor refuse a script after it', () => {
+  assert.deepEqual(callsOf('python3 -W ignore x.py'), NONE);
+});
+
 test('refuses an interpreter reading stdin', () => {
   assert.deepEqual(
     callsOf('python3 - <x'),

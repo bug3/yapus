@@ -162,9 +162,8 @@ function readInterpreter({ name, words, start }: Run): NoRun | Unreadable {
         options.some((option) => word.text.startsWith(`${ option }=`)) ||
         hasLetter(word.text, letters),
     );
-  const isReadingStdin = words.slice(start).every((word) => word.text.startsWith('-'));
 
-  return isInline || isReadingStdin
+  return isInline || !hasScript(words, start)
     ? {
       kind: 'unjudgeable',
       reason: `${ name } runs code the gate cannot read`,
@@ -172,6 +171,24 @@ function readInterpreter({ name, words, start }: Run): NoRun | Unreadable {
       shouldAlwaysDeny: words.slice(start).some((word) => word.isOpaque),
     }
     : NO_RUN;
+}
+
+// Whether a word names a file to run: the first word that is not an option and not
+// the value of an option that takes one.
+function hasScript(words: readonly Word[], start: number): boolean {
+  for (let index = start; index < words.length; index += 1) {
+    const text = words[index]?.text ?? '';
+
+    if (!text.startsWith('-')) {
+      return true;
+    }
+
+    if (runnerSpecs.interpreterValuedOptions.includes(text)) {
+      index += 1;
+    }
+  }
+
+  return false;
 }
 
 // Option letters may follow a value inside a group (`-W0c`), so every letter counts.

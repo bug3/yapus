@@ -118,6 +118,24 @@ const OWN_INLINE_OPTIONS: Readonly<Partial<Record<string, readonly string[]>>> =
   php: ['-r', '-B', '-R'],
 };
 
+// Interpreter options whose value is the next word, so that word is not a script file
+// (`python3 -W ignore` still reads stdin).
+const INTERPRETER_VALUED_OPTIONS: readonly string[] = [
+  '-W',
+  '-X',
+  '-Q',
+  '-I',
+  '-M',
+  '-C',
+  '-d',
+  '-z',
+  '--require',
+  '--import',
+  '--loader',
+  '--conditions',
+  '--input-type',
+];
+
 export const runnerSpecs = {
   runners: RUNNERS,
   versionedName: VERSIONED_NAME,
@@ -125,4 +143,5 @@ export const runnerSpecs = {
   findActions: FIND_ACTIONS,
   inlineOptions: INLINE_OPTIONS,
   ownInlineOptions: OWN_INLINE_OPTIONS,
+  interpreterValuedOptions: INTERPRETER_VALUED_OPTIONS,
 };
