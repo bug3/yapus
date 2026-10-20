@@ -176,6 +176,7 @@ const WRAPPERS: readonly WrapperSpec[] = [
     isAppending: true,
   },
   // zsh precommand modifiers and `repeat COUNT`.
+  { ...NONE, name: '-' },
   { ...NONE, name: 'noglob' },
   { ...NONE, name: 'nocorrect' },
   { ...NONE, name: 'repeat', extraWords: 1 },

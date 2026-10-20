@@ -290,6 +290,10 @@ test('reads the command after noglob', () => {
   assert.deepEqual(callsOf('noglob git push'), gitCall([], 'push'));
 });
 
+test('reads the command after the zsh - precommand modifier', () => {
+  assert.deepEqual(callsOf('- git push --force'), gitCall([], 'push', '--force'));
+});
+
 test('reads the command after nocorrect', () => {
   assert.deepEqual(callsOf('nocorrect git push'), gitCall([], 'push'));
 });
