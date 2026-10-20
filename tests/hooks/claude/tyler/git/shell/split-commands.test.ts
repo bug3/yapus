@@ -64,8 +64,13 @@ test('fails on case after a leading keyword', () => {
   assert.deepEqual(splitCommands('until x; do case y in', undefined), failure('case statement'));
 });
 
-test('reads case after the first word as a plain word', () => {
-  assert.deepEqual(splitCommands('echo case', undefined), command('echo', 'case'));
+test('fails on a plain case word wherever it stands', () => {
+  assert.deepEqual(splitCommands('time -p case x in', undefined), failure('case statement'));
+  assert.deepEqual(splitCommands('echo case', undefined), failure('case statement'));
+});
+
+test('reads a quoted case as a plain word', () => {
+  assert.deepEqual(splitCommands("echo 'case'", undefined), command('echo', 'case'));
 });
 
 test('keeps quoted operators literal', () => {
