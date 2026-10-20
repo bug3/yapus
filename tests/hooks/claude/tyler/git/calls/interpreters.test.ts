@@ -117,6 +117,20 @@ test('refuses deno with inline code', () => {
   );
 });
 
+test('refuses deno eval after an option', () => {
+  assert.deepEqual(
+    callsOf('deno -q eval x'),
+    unjudgeable('deno runs code the gate cannot read', false),
+  );
+});
+
+test('refuses bun exec, which runs a shell string', () => {
+  assert.deepEqual(
+    callsOf("bun exec 'git push -f'"),
+    unjudgeable('bun runs code the gate cannot read', false),
+  );
+});
+
 test('does not call deno running a script file', () => {
   assert.deepEqual(callsOf('deno run x.ts'), NONE);
 });

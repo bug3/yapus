@@ -166,7 +166,7 @@ const OWN_NO_STDIN_OPTIONS: Readonly<Partial<Record<string, readonly string[]>>>
 };
 
 // Interpreter subcommands followed by the script operand (`deno run x.ts`), and those
-// that read stdin (`deno repl`).
+// that read stdin or run a string (`deno repl`, `bun exec`).
 const OWN_SCRIPT_SUBCOMMANDS: Readonly<Partial<Record<string, readonly string[]>>> = {
   deno: ['run', 'x', 'task'],
   bun: ['run', 'x', 'task'],
@@ -174,7 +174,8 @@ const OWN_SCRIPT_SUBCOMMANDS: Readonly<Partial<Record<string, readonly string[]>
 
 const OWN_STDIN_SUBCOMMANDS: Readonly<Partial<Record<string, readonly string[]>>> = {
   deno: ['repl'],
-  bun: ['repl'],
+  // `bun exec` runs a shell string.
+  bun: ['repl', 'exec'],
 };
 
 // A word of short options, one letter each, possibly with a value attached (`-xCMD`).
