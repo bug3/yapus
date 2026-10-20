@@ -182,9 +182,14 @@ function finishWrapper(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable 
       break;
     }
 
-    // An opaque name may be any variable, a GIT_CONFIG* one among them.
+    // An opaque name may be any variable, a GIT_CONFIG* one among them; the program gets
+    // its words split, so an opaque value it may split may hold more assignments.
     if (word.isOpaque && !isAssignment(word)) {
       return ASSIGNED_NAME;
+    }
+
+    if (word.isOpaque && word.canSplit) {
+      return WRAPPER_ARGUMENT;
     }
 
     cursor.assignments.push(assignedName(word.text));
@@ -202,7 +207,9 @@ function finishWrapper(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable 
     };
   }
 
-  return next?.isOpaque === true && !isAssignment(next) ? WRAPPER_ARGUMENT : MOVED;
+  const isUnreadable = next?.isOpaque === true && (next.canSplit || !isAssignment(next));
+
+  return isUnreadable ? WRAPPER_ARGUMENT : MOVED;
 }
 
 // Records the variable an option at the cursor sets (`arch -e NAME=VALUE`) or removes

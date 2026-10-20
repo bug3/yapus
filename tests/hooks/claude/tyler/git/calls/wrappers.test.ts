@@ -82,7 +82,19 @@ test('refuses an opaque program word after env assignments', () => {
 });
 
 test('allows an assignment with an opaque value after a wrapper', () => {
-  assert.deepEqual(callsOf('nohup A=$X git push'), gitCall(['A'], 'push'));
+  assert.deepEqual(callsOf('nohup A="$X" git push'), gitCall(['A'], 'push'));
+});
+
+test('refuses an assignment with a splittable value after a wrapper', () => {
+  assert.deepEqual(callsOf('nohup A=$X git push'), UNREADABLE);
+});
+
+test('refuses an env assignment with a splittable value', () => {
+  assert.deepEqual(callsOf('env A=$X git commit -m x'), UNREADABLE);
+});
+
+test('reads an env assignment with a quoted opaque value', () => {
+  assert.deepEqual(callsOf('env A="$X" git status'), gitCall(['A'], 'status'));
 });
 
 test('records an append assignment', () => {
@@ -98,7 +110,7 @@ test('records an env assignment whose name is not a plain name', () => {
 });
 
 test('records an env append assignment by its name', () => {
-  assert.deepEqual(callsOf('env A+=x B[1]=y git push'), gitCall(['A', 'B'], 'push'));
+  assert.deepEqual(callsOf("env A+=x 'B[1]=y' git push"), gitCall(['A', 'B'], 'push'));
 });
 
 test('refuses an env word with an opaque name before the equals sign', () => {
