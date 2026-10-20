@@ -12,6 +12,7 @@ import { readGitRuns } from './git-runs/read-git-runs.ts';
 import { isRunner, type Resplit, readRunner } from './read-runner.ts';
 import { type Cursor, readWrapper } from './read-wrapper.ts';
 import { readVariableProgram } from './variables/read-variable-program.ts';
+import { findArithmeticItems, refuseArithmetic } from './variables/refuse-arithmetic.ts';
 import { readVariables } from './variables/read-variables.ts';
 
 export interface Call {
@@ -72,13 +73,15 @@ function collectCalls(
   depth: number,
 ): Calls {
   const calls: Call[] = [];
+  const isArithmetic = findArithmeticItems(items);
 
-  for (const item of items) {
+  for (const [index, item] of items.entries()) {
     if (item.kind !== 'command') {
       continue;
     }
 
-    const found = readCommand(item);
+    const found = refuseArithmetic(item.words, isArithmetic[index] === true)
+      ?? readCommand(item);
 
     if (found.kind === 'unjudgeable') {
       return found;
