@@ -141,6 +141,8 @@ function skipOptions(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable {
       return WRAPPER_ARGUMENT;
     }
 
+    readOptionVariables(cursor, spec);
+
     cursor.index += step;
   }
 
@@ -179,6 +181,17 @@ function finishWrapper(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable 
   }
 
   return next?.isOpaque === true && !isAssignment(next) ? WRAPPER_ARGUMENT : MOVED;
+}
+
+// Records the variable an option at the cursor sets (`arch -e NAME=VALUE`); its value
+// word is literal by now.
+function readOptionVariables(cursor: Cursor, spec: WrapperSpec): void {
+  const text = cursor.words[cursor.index]?.text ?? '';
+  const next = cursor.words[cursor.index + 1];
+
+  if (spec.assigning.includes(text) && next !== undefined) {
+    cursor.assignments.push(assignedName(next.text));
+  }
 }
 
 // The variable a NAME=VALUE, NAME+=VALUE or NAME[index]=VALUE word sets.

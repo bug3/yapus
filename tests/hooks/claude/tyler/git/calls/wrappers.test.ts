@@ -273,3 +273,49 @@ test('refuses an xargs option it does not know', () => {
     unjudgeable('xargs option the gate cannot read', false),
   );
 });
+
+test('reads the command after noglob', () => {
+  assert.deepEqual(callsOf('noglob git push'), gitCall([], 'push'));
+});
+
+test('reads the command after nocorrect', () => {
+  assert.deepEqual(callsOf('nocorrect git push'), gitCall([], 'push'));
+});
+
+test('reads the command after repeat and its count', () => {
+  assert.deepEqual(callsOf('repeat 3 git push'), gitCall([], 'push'));
+});
+
+test('refuses an opaque repeat count', () => {
+  assert.deepEqual(callsOf('repeat $n git push'), UNREADABLE);
+});
+
+test('reads the command after arch and its options', () => {
+  assert.deepEqual(
+    callsOf('arch -arm64 -d B -arch x86_64 git push'),
+    gitCall([], 'push'),
+  );
+});
+
+test('records the variable that arch -e sets', () => {
+  assert.deepEqual(
+    callsOf('arch -e GIT_CONFIG_COUNT=1 git push'),
+    gitCall(['GIT_CONFIG_COUNT'], 'push'),
+  );
+});
+
+test('refuses an opaque value of arch -e', () => {
+  assert.deepEqual(callsOf('arch -e "$v" git push'), UNREADABLE);
+});
+
+test('reads the command after xcrun and its options', () => {
+  assert.deepEqual(callsOf('xcrun --sdk macosx -v git push'), gitCall([], 'push'));
+});
+
+test('does not call xcrun --find', () => {
+  assert.deepEqual(callsOf('xcrun --find git'), NONE);
+});
+
+test('does not call xcrun --show-sdk-path', () => {
+  assert.deepEqual(callsOf('xcrun --show-sdk-path git'), NONE);
+});

@@ -11,6 +11,8 @@ export interface WrapperSpec {
   readonly isShellWhenAlone: boolean;
   // Whether NAME=VALUE words may follow the options before the program (`env`).
   readonly hasAssignments: boolean;
+  // Valued options whose value is a NAME=VALUE the program sets (`arch -e`).
+  readonly assigning: readonly string[];
   // Options after which the command runs nothing (`command -v`).
   readonly ends: readonly string[];
   // Options whose value is a string to split again (`env -S`): the value is the next
@@ -33,6 +35,7 @@ const NONE: WrapperSpec = {
   extraWords: 0,
   isShellWhenAlone: false,
   hasAssignments: false,
+  assigning: [],
   ends: [],
   splitValued: [],
   splitAttached: [],
@@ -156,6 +159,34 @@ const WRAPPERS: readonly WrapperSpec[] = [
     ],
     replacing: ['-I', '-i', '-J', '--replace'],
     isAppending: true,
+  },
+  // zsh precommand modifiers and `repeat COUNT`.
+  { ...NONE, name: 'noglob' },
+  { ...NONE, name: 'nocorrect' },
+  { ...NONE, name: 'repeat', extraWords: 1 },
+  // macOS `arch`; `-h` is read as a flag, so a command after it is still judged.
+  {
+    ...NONE,
+    name: 'arch',
+    flags: ['-arm64', '-x86_64', '-arm64e', '-i386', '-32', '-64', '-h'],
+    valued: ['-arch', '-e', '-d'],
+    assigning: ['-e'],
+  },
+  // macOS `xcrun`; `--find` and `--show-sdk-*` print a path and run nothing.
+  {
+    ...NONE,
+    name: 'xcrun',
+    flags: ['-v', '--verbose', '-l', '--log', '-n', '--no-cache', '-r', '--run'],
+    valued: ['--sdk', '--toolchain'],
+    ends: [
+      '-f',
+      '--find',
+      '--show-sdk-path',
+      '--show-sdk-version',
+      '--show-sdk-build-version',
+      '--show-sdk-platform-path',
+      '--show-sdk-platform-version',
+    ],
   },
 ];
 
