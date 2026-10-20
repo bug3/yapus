@@ -176,6 +176,7 @@ const WRAPPERS: readonly WrapperSpec[] = [
     flags: ['-arm64', '-x86_64', '-arm64e', '-i386', '-32', '-64', '-h'],
     valued: ['-arch', '-e', '-d'],
     assigning: ['-e'],
+    unsetting: ['-d'],
   },
   // macOS `xcrun`; `--find` and `--show-sdk-*` print a path and run nothing.
   {

@@ -100,6 +100,10 @@ test('refuses env --unset= of a GIT_CONFIG name', () => {
   assert.deepEqual(callsOf('env --unset=GIT_CONFIG_COUNT git commit'), CONFIG);
 });
 
+test('refuses arch -d of a GIT_CONFIG variable before git', () => {
+  assert.deepEqual(callsOf('arch -d GIT_CONFIG_COUNT git commit -m x'), CONFIG);
+});
+
 test('does not call an export of another variable', () => {
   assert.deepEqual(callsOf('export GIT_AUTHOR_NAME=x'), NONE);
 });
