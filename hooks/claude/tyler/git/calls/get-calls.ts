@@ -137,6 +137,7 @@ function readCommand(
     settings: [],
     unsets: [],
     appender: undefined,
+    clearer: undefined,
   };
   const found = readWords(cursor);
 
@@ -195,6 +196,16 @@ function readProgram(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnju
   // Arguments from stdin may turn a git call or a runner into anything.
   if (cursor.appender !== undefined && (isGitWord(program.text) || isRunner(base))) {
     return refuseAppender(cursor.appender);
+  }
+
+  // Without the GIT_CONFIG* variables git runs with no hooks at all, and so does a git
+  // call inside a runner, which the line's git mention decides.
+  if (cursor.clearer !== undefined && (isGitWord(program.text) || isRunner(base))) {
+    return {
+      kind: 'unjudgeable',
+      reason: `${ cursor.clearer } drops the git config the hooks rely on`,
+      shouldAlwaysDeny: isGitWord(program.text),
+    };
   }
 
   if (!isGitWord(program.text)) {

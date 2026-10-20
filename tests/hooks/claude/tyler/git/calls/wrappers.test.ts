@@ -46,11 +46,11 @@ const APPENDS = {
 };
 
 test('treats a path to env as a wrapper', () => {
-  assert.deepEqual(callsOf('/usr/bin/env -i git push'), gitCall([], 'push'));
+  assert.deepEqual(callsOf('/usr/bin/env A=1 git push'), gitCall(['A'], 'push'));
 });
 
 test('treats a wrapper in upper case as a wrapper', () => {
-  assert.deepEqual(callsOf('SUDO git push'), gitCall([], 'push'));
+  assert.deepEqual(callsOf('NOHUP git push'), gitCall([], 'push'));
 });
 
 test('refuses an opaque value of nice -n', () => {
@@ -82,7 +82,7 @@ test('refuses an opaque program word after env assignments', () => {
 });
 
 test('allows an assignment with an opaque value after a wrapper', () => {
-  assert.deepEqual(callsOf('sudo A=$X git push'), gitCall(['A'], 'push'));
+  assert.deepEqual(callsOf('nohup A=$X git push'), gitCall(['A'], 'push'));
 });
 
 test('records an append assignment', () => {

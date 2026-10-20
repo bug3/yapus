@@ -126,7 +126,7 @@ test('refuses an executor by its path in upper case', () => {
 
 test('refuses an executor behind a wrapper', () => {
   assert.deepEqual(
-    callsOf('sudo parallel ls'),
+    callsOf('nohup parallel ls'),
     unjudgeable('parallel runs a command the gate cannot read', false),
   );
 });

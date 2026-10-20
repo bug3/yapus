@@ -4,8 +4,8 @@ import { type WrapperSpec, wrapperSpecs } from './wrapper-specs.ts';
 
 // The words being read, which `env -S` replaces with the words of its string;
 // `settings` holds the NAME=VALUE words of `assignments`, `unsets` the variables a wrapper
-// removes (`env -u`), and `appender` names a wrapper read so far that adds arguments
-// from stdin.
+// removes (`env -u`), `appender` names a wrapper read so far that adds arguments from
+// stdin, and `clearer` one that empties the environment (`env -i`, `sudo`).
 export interface Cursor {
   words: readonly Word[];
   index: number;
@@ -13,6 +13,7 @@ export interface Cursor {
   readonly settings: Word[];
   readonly unsets: string[];
   appender: string | undefined;
+  clearer: string | undefined;
 }
 
 export interface Reading {
@@ -170,6 +171,10 @@ function finishWrapper(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable 
     cursor.appender = spec.name;
   }
 
+  if (spec.isClearing) {
+    cursor.clearer = spec.name;
+  }
+
   while (spec.hasAssignments) {
     const word = cursor.words[cursor.index];
 
@@ -201,10 +206,15 @@ function finishWrapper(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable 
 }
 
 // Records the variable an option at the cursor sets (`arch -e NAME=VALUE`) or removes
-// (`env -u NAME`, `-uNAME`, `--unset=NAME`); its value word is literal by now.
+// (`env -u NAME`, `-uNAME`, `--unset=NAME`), or that it empties the environment
+// (`env -i`); its value word is literal by now.
 function readOptionVariables(cursor: Cursor, spec: WrapperSpec): void {
   const text = cursor.words[cursor.index]?.text ?? '';
   const next = cursor.words[cursor.index + 1];
+
+  if (spec.clearing.includes(text)) {
+    cursor.clearer = spec.name;
+  }
 
   if (spec.assigning.includes(text) && next !== undefined) {
     cursor.assignments.push(assignedName(next.text));

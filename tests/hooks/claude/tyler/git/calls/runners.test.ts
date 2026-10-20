@@ -198,7 +198,7 @@ test('refuses an opaque program word in a shell string', () => {
 });
 
 test('reads env options and assignments in the env -S string', () => {
-  assert.deepEqual(callsOf("env -S '-i A=1 git push'"), {
+  assert.deepEqual(callsOf("env -S '-0 A=1 git push'"), {
     kind: 'calls',
     calls: [
       {

@@ -130,6 +130,18 @@ test('denies bash reading a normalised stdin path before a git call', () => {
   assert.equal(verdictOf('bash //dev//stdin; git status'), 'deny');
 });
 
+test('denies sudo before a git call', () => {
+  assert.equal(verdictOf('sudo git commit -m x'), 'deny');
+});
+
+test('denies sudo before a shell that runs git', () => {
+  assert.equal(verdictOf("sudo bash -c 'git commit -m x'"), 'deny');
+});
+
+test('allows sudo before a runner on a line that does not mention git', () => {
+  assert.equal(verdictOf('sudo find /tmp -name x'), 'allow');
+});
+
 test('denies a forced push in a shell string run as argv by git submodule foreach', () => {
   assert.equal(verdictOf("git submodule foreach bash -c 'git push -f'"), 'deny');
 });

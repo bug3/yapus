@@ -16,6 +16,11 @@ export interface WrapperSpec {
   // Options whose value, the next word or attached (`-uNAME`, `--unset=NAME`), is a
   // variable the program removes.
   readonly unsetting: readonly string[];
+  // Options that start the program with an empty environment (`env -i`), and whether
+  // the program always resets it (`sudo`); either drops the GIT_CONFIG* variables the
+  // hooks reach git through.
+  readonly clearing: readonly string[];
+  readonly isClearing: boolean;
   // Options after which the command runs nothing (`command -v`).
   readonly ends: readonly string[];
   // Options whose value is a string to split again (`env -S`): the value is the next
@@ -40,6 +45,8 @@ const NONE: WrapperSpec = {
   hasAssignments: false,
   assigning: [],
   unsetting: [],
+  clearing: [],
+  isClearing: false,
   ends: [],
   splitValued: [],
   splitAttached: [],
@@ -52,15 +59,16 @@ const WRAPPERS: readonly WrapperSpec[] = [
     ...NONE,
     name: 'env',
     hasAssignments: true,
-    flags: ['-i', '-0', '--ignore-environment', '--null', '--'],
+    flags: ['-i', '-0', '--ignore-environment', '--null', '--', '-'],
     valued: ['-u', '--unset', '-C', '--chdir'],
     attached: ['--unset=', '--chdir=', '-u'],
     unsetting: ['-u', '--unset', '--unset='],
+    clearing: ['-i', '--ignore-environment', '-'],
     splitValued: ['-S', '--split-string'],
     splitAttached: ['-S', '--split-string='],
   },
   { ...NONE, name: 'command', flags: ['-p'], ends: ['-v', '-V'] },
-  { ...NONE, name: 'exec', flags: ['-c', '-l'], valued: ['-a'] },
+  { ...NONE, name: 'exec', flags: ['-c', '-l'], valued: ['-a'], clearing: ['-c'] },
   { ...NONE, name: 'nohup' },
   {
     ...NONE,
@@ -83,6 +91,8 @@ const WRAPPERS: readonly WrapperSpec[] = [
     flags: ['-E', '-H', '-n', '--'],
     valued: ['-u'],
     attached: ['--user='],
+    // `env_reset` drops the environment whatever the options.
+    isClearing: true,
   },
   {
     ...NONE,

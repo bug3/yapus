@@ -196,7 +196,6 @@ test('skips env options and records its assignments', () => {
     getCalls([
       item(
         'env',
-        '-i',
         '-0',
         '--null',
         '-u',
@@ -219,7 +218,6 @@ test('skips env long forms with values', () => {
     getCalls([
       item(
         'env',
-        '--ignore-environment',
         '--unset',
         'N',
         '--chdir',
@@ -230,6 +228,38 @@ test('skips env long forms with values', () => {
     ]),
     found('git', {}),
   );
+});
+
+test('refuses env -i before git, which drops the git config', () => {
+  assert.deepEqual(
+    getCalls([item('env', '-i', '-0', 'git')]),
+    unjudgeable('env drops the git config the hooks rely on', true),
+  );
+});
+
+test('refuses env --ignore-environment before git', () => {
+  assert.deepEqual(
+    getCalls([item('env', '--ignore-environment', 'git')]),
+    unjudgeable('env drops the git config the hooks rely on', true),
+  );
+});
+
+test('refuses env with a bare - before git', () => {
+  assert.deepEqual(
+    getCalls([item('env', '-', 'git')]),
+    unjudgeable('env drops the git config the hooks rely on', true),
+  );
+});
+
+test('refuses env -i before a runner, whose git calls drop the git config', () => {
+  assert.deepEqual(
+    getCalls([item('env', '-i', 'bash', '-c', 'git commit')]),
+    unjudgeable('env drops the git config the hooks rely on', false),
+  );
+});
+
+test('does not call env -i before a program that is not git', () => {
+  assert.deepEqual(getCalls([item('env', '-i', 'make')]), none());
 });
 
 test('reads the string of env -S as a command line', () => {
@@ -268,10 +298,14 @@ test('skips command and its -p option', () => {
   );
 });
 
-test('skips exec with -a NAME, -c and -l', () => {
+test('skips exec with -a NAME and -l', () => {
+  assert.deepEqual(getCalls([item('exec', '-a', 'n', '-l', 'git')]), found('git', {}));
+});
+
+test('refuses exec -c before git, which drops the git config', () => {
   assert.deepEqual(
     getCalls([item('exec', '-a', 'n', '-c', '-l', 'git')]),
-    found('git', {}),
+    unjudgeable('exec drops the git config the hooks rely on', true),
   );
 });
 
@@ -331,13 +365,17 @@ test('skips timeout long options with values', () => {
   );
 });
 
-test('skips sudo options', () => {
+test('skips sudo options, then refuses git, whose git config sudo drops', () => {
   assert.deepEqual(
     getCalls([
       item('sudo', '-E', '-H', '-n', '-u', 'u', '--user=v', '--', 'git'),
     ]),
-    found('git', {}),
+    unjudgeable('sudo drops the git config the hooks rely on', true),
   );
+});
+
+test('does not call sudo before a program that is not git', () => {
+  assert.deepEqual(getCalls([item('sudo', 'make')]), none());
 });
 
 test('refuses a sudo option it does not know', () => {
@@ -532,7 +570,7 @@ test('makes the first unjudgeable command decide the result', () => {
 
 test('finds the calls of a split line through every wrapper', () => {
   const line =
-    'if git push --force; then sudo -u x env -i A=1 nice -n 5 timeout -s KILL 10 /usr/bin/git -C d -c k=v --no-pager reset --hard; fi';
+    'if git push --force; then env -u x A=1 nice -n 5 timeout -s KILL 10 /usr/bin/git -C d -c k=v --no-pager reset --hard; fi';
 
   assert.deepEqual(getCalls(splitItems(line)), {
     kind: 'calls',
