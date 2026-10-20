@@ -12,7 +12,7 @@ test('parses a Bash call', () => {
     cwd: CWD,
   });
 
-  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'git status', cwd: CWD });
+  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'git status' });
 });
 
 test('parses a Bash call and ignores the other fields', () => {
@@ -28,7 +28,7 @@ test('parses a Bash call and ignores the other fields', () => {
     session_id: 'abc',
   });
 
-  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'git status', cwd: CWD });
+  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'git status' });
 });
 
 test('returns other for a tool that is not Bash', () => {
@@ -81,37 +81,18 @@ test('fails on a command that holds a lone surrogate', () => {
   });
 });
 
-test('fails on a Bash call without a cwd', () => {
+test('parses a Bash call without a cwd', () => {
   const stdinText = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'ls' } });
 
-  assert.deepEqual(parsePayload(stdinText), {
-    kind: 'failure',
-    reason: 'cwd is not an absolute path',
-  });
+  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'ls' });
 });
 
-test('fails on a relative cwd', () => {
+test('parses a Bash call with a relative cwd', () => {
   const stdinText = JSON.stringify({
     tool_name: 'Bash',
     tool_input: { command: 'ls' },
     cwd: 'repo',
   });
 
-  assert.deepEqual(parsePayload(stdinText), {
-    kind: 'failure',
-    reason: 'cwd is not an absolute path',
-  });
-});
-
-test('fails on a cwd that holds a lone surrogate', () => {
-  const stdinText = JSON.stringify({
-    tool_name: 'Bash',
-    tool_input: { command: 'ls' },
-    cwd: `/repo${ LONE_SURROGATE }`,
-  });
-
-  assert.deepEqual(parsePayload(stdinText), {
-    kind: 'failure',
-    reason: 'cwd is not an absolute path',
-  });
+  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'ls' });
 });

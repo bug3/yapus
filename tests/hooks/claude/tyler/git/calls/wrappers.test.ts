@@ -19,7 +19,7 @@ function gitCall(assignments: readonly string[], ...texts: readonly string[]): u
     calls: [
       {
         tool: 'git',
-        words: texts.map((text) => ({ text, isOpaque: false })),
+        words: texts.map((text) => ({ text, isOpaque: false, canSplit: false })),
         configs: [],
         assignments,
       },
@@ -38,6 +38,12 @@ const UNREADABLE = {
 };
 
 const NONE = { kind: 'calls', calls: [] };
+
+const APPENDS = {
+  kind: 'unjudgeable',
+  reason: 'xargs appends arguments the gate cannot read',
+  shouldAlwaysDeny: false,
+};
 
 test('treats a path to env as a wrapper', () => {
   assert.deepEqual(callsOf('/usr/bin/env -i git push'), gitCall([], 'push'));
@@ -210,5 +216,60 @@ test('refuses chroot without a command, which runs a shell', () => {
   assert.deepEqual(
     callsOf('chroot /x'),
     unjudgeable('chroot runs a shell the gate cannot read', false),
+  );
+});
+
+test('reads the command after xargs', () => {
+  assert.deepEqual(
+    callsOf('git diff --name-only | xargs wc -l'),
+    gitCall([], 'diff', '--name-only'),
+  );
+});
+
+test('refuses git behind xargs, which appends arguments', () => {
+  assert.deepEqual(callsOf('xargs git branch -D'), APPENDS);
+});
+
+test('refuses git behind a wrapper behind xargs', () => {
+  assert.deepEqual(callsOf('xargs sudo git push'), APPENDS);
+});
+
+test('refuses a runner behind xargs', () => {
+  assert.deepEqual(callsOf('xargs bash'), APPENDS);
+});
+
+test('skips xargs flags and valued options', () => {
+  assert.deepEqual(callsOf('xargs -0 -r -t -n 1 -P 4 -d x -a f bash'), APPENDS);
+});
+
+test('skips xargs attached and long valued options', () => {
+  assert.deepEqual(
+    callsOf('xargs -n1 -L2 --max-args=1 --max-procs=2 --delimiter=x --eof=y bash'),
+    APPENDS,
+  );
+});
+
+test('refuses xargs that replaces arguments', () => {
+  assert.deepEqual(
+    callsOf('xargs -I{} git push -f {}'),
+    unjudgeable('xargs replaces arguments the gate cannot read', false),
+  );
+});
+
+test('refuses xargs --replace', () => {
+  assert.deepEqual(
+    callsOf('xargs --replace git push'),
+    unjudgeable('xargs replaces arguments the gate cannot read', false),
+  );
+});
+
+test('does not call xargs without a command, which runs echo', () => {
+  assert.deepEqual(callsOf('xargs -0'), NONE);
+});
+
+test('refuses an xargs option it does not know', () => {
+  assert.deepEqual(
+    callsOf('xargs -q git push'),
+    unjudgeable('xargs option the gate cannot read', false),
   );
 });

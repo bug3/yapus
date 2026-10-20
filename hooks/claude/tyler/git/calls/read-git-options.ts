@@ -34,6 +34,10 @@ export function readGitOptions(
         : { kind: 'options', words: words.slice(index), configs };
     }
 
+    if (isInformation(word.text)) {
+      return { kind: 'options', words: [], configs };
+    }
+
     if (wrapperSpecs.gitFlagOptions.includes(word.text)) {
       index += 1;
       continue;
@@ -52,6 +56,12 @@ export function readGitOptions(
 
     index += value.length;
   }
+}
+
+// `git --version` and its like print and exit; the words after them are not a subcommand.
+function isInformation(text: string): boolean {
+  return wrapperSpecs.gitInformationOptions.some((option) =>
+    option.endsWith('=') ? text.startsWith(option) : text === option);
 }
 
 interface OptionValue {
@@ -81,6 +91,7 @@ function readValue(
       : {
         text: text.slice(name.length + 1),
         isOpaque: words[index]?.isOpaque === true,
+        canSplit: words[index]?.canSplit === true,
       };
 
   // An unquoted opaque value can expand to several words and hide the subcommand.

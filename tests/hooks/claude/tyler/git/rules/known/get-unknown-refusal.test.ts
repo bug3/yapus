@@ -8,7 +8,7 @@ import {
 function gitCall(...texts: readonly string[]): Call {
   return {
     tool: 'git',
-    words: texts.map((text) => ({ text, isOpaque: false })),
+    words: texts.map((text) => ({ text, isOpaque: false, canSplit: false })),
     configs: [],
     assignments: [],
   };

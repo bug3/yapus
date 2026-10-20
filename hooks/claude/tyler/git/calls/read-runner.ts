@@ -52,13 +52,23 @@ export function readRunner(
   return group === undefined ? NO_RUN : HANDLERS[group.kind]({ name, words, start });
 }
 
+// Whether a lower-cased program name is a program that may run another command.
+export function isRunner(base: string): boolean {
+  const unversioned = runnerSpecs.versionedName.exec(base)?.[1] ?? base;
+
+  return (findGroup(base) ?? findGroup(unversioned)) !== undefined;
+}
+
 function findGroup(name: string): (typeof runnerSpecs.runners)[number] | undefined {
   return runnerSpecs.runners.find((candidate) => candidate.names.includes(name));
 }
 
+// Without `-c`, a shell runs a script file, which the gate does not read, or reads
+// stdin (`-s`, or no operand).
 function readShell({ words, start }: Run): Resplit | NoRun | Unreadable {
   let index = start;
   let hasCommandString = false;
+  let isReadingStdin = false;
 
   for (;;) {
     const word = words[index];
@@ -77,17 +87,24 @@ function readShell({ words, start }: Run): Resplit | NoRun | Unreadable {
     }
 
     if (runnerSpecs.shellValuedOptions.includes(word.text)) {
+      // An opaque value may expand to more words, `-c` and a command line among them.
+      if (words[index + 1]?.isOpaque === true) {
+        return refuseScript(true);
+      }
+
       index += 2;
       continue;
     }
 
-    hasCommandString ||= SHORT_GROUP.test(word.text) && word.text.includes('c');
+    const isShortGroup = SHORT_GROUP.test(word.text);
+
+    hasCommandString ||= isShortGroup && word.text.includes('c');
+    isReadingStdin ||= isShortGroup && word.text.includes('s');
     index += 1;
   }
 
   if (!hasCommandString) {
-    // An opaque word may expand to `-c` and a command line.
-    return refuseScript(words.slice(start).some((word) => word.isOpaque));
+    return readScript(words[index], isReadingStdin);
   }
 
   const command = words[index];
@@ -115,8 +132,30 @@ function readEvaluator({ words, start }: Run): Resplit | Unreadable {
   return { kind: 'resplit', text: rest.map((word) => word.text).join(' ') };
 }
 
-function readSourcer({ words, start }: Run): Unreadable {
-  return refuseScript(words.slice(start).some((word) => word.isOpaque));
+// The file a sourcer runs is not read; the words after it are its arguments.
+function readSourcer({ words, start }: Run): NoRun | Unreadable {
+  const operand = words[start]?.text === '--' ? start + 1 : start;
+
+  return readScript(words[operand], false);
+}
+
+// A literal script file is not read, the same limit as running `./script` directly; an
+// opaque one may be `-c` and a command line, and with none the program reads stdin.
+function readScript(script: Word | undefined, isReadingStdin: boolean): NoRun | Unreadable {
+  if (script === undefined || isReadingStdin) {
+    return refuseScript(false);
+  }
+
+  if (script.isOpaque) {
+    return refuseScript(true);
+  }
+
+  return isStdinPath(script.text) ? refuseScript(false) : NO_RUN;
+}
+
+function isStdinPath(text: string): boolean {
+  return runnerSpecs.stdinPaths.includes(text) ||
+    runnerSpecs.stdinPrefixes.some((prefix) => text.startsWith(prefix));
 }
 
 function refuseScript(shouldAlwaysDeny: boolean): Unreadable {
@@ -141,10 +180,12 @@ function readFinder(run: Run): NoRun | Unreadable {
   return isRunning ? refuseRunner(run) : NO_RUN;
 }
 
-// An interpreter runs inline code when a word is an inline option, a long one with an
-// attached value (`--eval=x`), or a short option word that holds one of their letters
-// (`-c'x'`, `-lne`, `-W0c`); an opaque word may be any; with no file to run it reads
-// stdin. A script file is not read.
+// An interpreter runs inline code when one of its own options, before the script, is an
+// inline option, a long one with an attached value (`--eval=x`), or a short option word
+// that holds one of their letters (`-c'x'`, `-lne`, `-W0c`); an opaque option may be
+// any. The script (or the module after `-m`) is not read, nor are the words after it,
+// its arguments. With no script, or a script that names stdin, the interpreter reads stdin,
+// unless every option prints information or runs tests.
 function readInterpreter({ name, words, start }: Run): NoRun | Unreadable {
   const options = [
     ...runnerSpecs.inlineOptions,
@@ -153,42 +194,50 @@ function readInterpreter({ name, words, start }: Run): NoRun | Unreadable {
   const letters = options
     .filter((option) => SHORT_GROUP.test(option))
     .map((option) => option.charAt(1));
-  const isInline = words
-    .slice(start)
-    .some(
-      (word) =>
-        word.isOpaque ||
-        options.includes(word.text) ||
-        options.some((option) => word.text.startsWith(`${ option }=`)) ||
-        hasLetter(word.text, letters),
-    );
+  const refusal = (shouldAlwaysDeny: boolean): Unreadable => ({
+    kind: 'unjudgeable',
+    reason: `${ name } runs code the gate cannot read`,
+    shouldAlwaysDeny,
+  });
 
-  return isInline || !hasScript(words, start)
-    ? {
-      kind: 'unjudgeable',
-      reason: `${ name } runs code the gate cannot read`,
-      // An opaque word may expand to an inline option and code.
-      shouldAlwaysDeny: words.slice(start).some((word) => word.isOpaque),
-    }
-    : NO_RUN;
-}
+  let hasOption = false;
+  let hasStdinOption = false;
 
-// Whether a word names a file to run: the first word that is not an option and not
-// the value of an option that takes one.
-function hasScript(words: readonly Word[], start: number): boolean {
   for (let index = start; index < words.length; index += 1) {
-    const text = words[index]?.text ?? '';
+    const word = words[index];
+    const text = word?.text ?? '';
+
+    // An opaque word may expand to an inline option and code.
+    if (word?.isOpaque === true) {
+      return refusal(true);
+    }
+
+    const isInline =
+      options.includes(text) ||
+      options.some((option) => text.startsWith(`${ option }=`)) ||
+      hasLetter(text, letters);
+
+    if (isInline) {
+      return refusal(false);
+    }
 
     if (!text.startsWith('-')) {
-      return true;
+      return isStdinPath(text) ? refusal(false) : NO_RUN;
     }
 
+    hasOption = true;
+    hasStdinOption ||= !runnerSpecs.interpreterNoStdinOptions.includes(text);
+
     if (runnerSpecs.interpreterValuedOptions.includes(text)) {
+      if (words[index + 1]?.isOpaque === true) {
+        return refusal(true);
+      }
+
       index += 1;
     }
   }
 
-  return false;
+  return !hasOption || hasStdinOption ? refusal(false) : NO_RUN;
 }
 
 // Option letters may follow a value inside a group (`-W0c`), so every letter counts.

@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { splitCommands } from '../../../../../../hooks/claude/tyler/git/shell/split-commands.ts';
-import { command, failure, item, items, opaqueCommand, withBodies } from './items.ts';
+import {
+  command,
+  commandOf,
+  failure,
+  item,
+  items,
+  whole,
+  withBodies,
+} from './items.ts';
 
 test('yields no items for an empty line', () => {
   assert.deepEqual(splitCommands('', undefined), { kind: 'items', items: [] });
@@ -294,11 +302,11 @@ test('replaces a leading tilde before a slash with home', () => {
 });
 
 test('marks a leading tilde opaque when home is unknown', () => {
-  assert.deepEqual(splitCommands('~/x', undefined), opaqueCommand('~/x'));
+  assert.deepEqual(splitCommands('~/x', undefined), commandOf(whole('~/x')));
 });
 
 test('marks ~name opaque', () => {
-  assert.deepEqual(splitCommands('~bob/x', '/h'), opaqueCommand('~bob/x'));
+  assert.deepEqual(splitCommands('~bob/x', '/h'), commandOf(whole('~bob/x')));
 });
 
 test('keeps a quoted tilde literal', () => {

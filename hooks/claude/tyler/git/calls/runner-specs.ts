@@ -35,7 +35,6 @@ const RUNNERS: readonly RunnerGroup[] = [
   {
     kind: 'executor',
     names: [
-      'xargs',
       'parallel',
       'watch',
       'ssh',
@@ -136,6 +135,21 @@ const INTERPRETER_VALUED_OPTIONS: readonly string[] = [
   '--input-type',
 ];
 
+// Script operands that name stdin.
+const STDIN_PATHS: readonly string[] = ['-', '/dev/stdin'];
+const STDIN_PREFIXES: readonly string[] = ['/dev/fd/', '/proc/self/fd/'];
+
+// Interpreter options that print information or run tests, so with no script the
+// interpreter does not read stdin.
+const INTERPRETER_NO_STDIN_OPTIONS: readonly string[] = [
+  '--version',
+  '-V',
+  '-v',
+  '--help',
+  '-h',
+  '--test',
+];
+
 export const runnerSpecs = {
   runners: RUNNERS,
   versionedName: VERSIONED_NAME,
@@ -144,4 +158,7 @@ export const runnerSpecs = {
   inlineOptions: INLINE_OPTIONS,
   ownInlineOptions: OWN_INLINE_OPTIONS,
   interpreterValuedOptions: INTERPRETER_VALUED_OPTIONS,
+  interpreterNoStdinOptions: INTERPRETER_NO_STDIN_OPTIONS,
+  stdinPaths: STDIN_PATHS,
+  stdinPrefixes: STDIN_PREFIXES,
 };

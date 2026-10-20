@@ -13,7 +13,7 @@ import {
 function gitCall(...texts: readonly string[]): Call {
   return {
     tool: 'git',
-    words: texts.map((text) => ({ text, isOpaque: false })),
+    words: texts.map((text) => ({ text, isOpaque: false, canSplit: false })),
     configs: [],
     assignments: [],
   };
@@ -22,7 +22,7 @@ function gitCall(...texts: readonly string[]): Call {
 function opaqueCall(...texts: readonly string[]): Call {
   const call = gitCall(...texts);
 
-  return { ...call, words: [...call.words, { text: '$X', isOpaque: true }] };
+  return { ...call, words: [...call.words, { text: '$X', isOpaque: true, canSplit: true }] };
 }
 
 function ghCall(...texts: readonly string[]): Call {
@@ -423,8 +423,8 @@ test('refuses gh alias set but allows gh alias list', () => {
 const OPAQUE_GH = 'cannot judge `gh` with an argument the gate cannot read';
 
 test('refuses a gh call whose first or second word is opaque', () => {
-  const opaque = { text: '$X', isOpaque: true };
-  const plain = { text: 'repo', isOpaque: false };
+  const opaque = { text: '$X', isOpaque: true, canSplit: true };
+  const plain = { text: 'repo', isOpaque: false, canSplit: false };
 
   assert.equal(getDestructiveRefusal({ ...ghCall(), words: [opaque] }), OPAQUE_GH);
   assert.equal(getDestructiveRefusal({ ...ghCall(), words: [plain, opaque] }), OPAQUE_GH);

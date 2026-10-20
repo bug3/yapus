@@ -1,17 +1,20 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { splitCommands } from '../../../../../../hooks/claude/tyler/git/shell/split-commands.ts';
-import { CLOSE, failure, item, items, OPEN } from './items.ts';
+import type { Word } from '../../../../../../hooks/claude/tyler/git/shell/split-commands.ts';
+import { CLOSE, failure, item, items, OPEN, opaque, plain, whole } from './items.ts';
 
-function opaqueItem(plain: string, opaqueText: string): unknown {
-  return {
-    kind: 'command',
-    words: [
-      { text: plain, isOpaque: false },
-      { text: opaqueText, isOpaque: true },
-    ],
-    heredocs: [],
-  };
+function itemOf(text: string, word: Word): unknown {
+  return { kind: 'command', words: [plain(text), word], heredocs: [] };
+}
+
+function opaqueItem(text: string, opaqueText: string): unknown {
+  return itemOf(text, opaque(opaqueText));
+}
+
+// A command whose second word is an expansion the shell keeps whole.
+function wholeItem(text: string, opaqueText: string): unknown {
+  return itemOf(text, whole(opaqueText));
 }
 
 test('splits the inside of $( and emits it before the command', () => {
@@ -24,7 +27,7 @@ test('splits the inside of $( and emits it before the command', () => {
 test('splits a $( inside double quotes', () => {
   assert.deepEqual(
     splitCommands('a "$(b)"', undefined),
-    items(OPEN, item('b'), CLOSE, opaqueItem('a', '$(b)')),
+    items(OPEN, item('b'), CLOSE, wholeItem('a', '$(b)')),
   );
 });
 
@@ -44,19 +47,20 @@ test('keeps heredocs and parentheses inside $( apart from the closing one', () =
       OPEN,
       {
         kind: 'command',
-        words: [{ text: 'cat', isOpaque: false }],
+        words: [{ text: 'cat', isOpaque: false, canSplit: false }],
         heredocs: ['fix(x): y (M10)\n\nbody with ) and ('],
       },
       CLOSE,
       {
         kind: 'command',
         words: [
-          { text: 'git', isOpaque: false },
-          { text: 'commit', isOpaque: false },
-          { text: '-m', isOpaque: false },
+          { text: 'git', isOpaque: false, canSplit: false },
+          { text: 'commit', isOpaque: false, canSplit: false },
+          { text: '-m', isOpaque: false, canSplit: false },
           {
             text: "$(cat <<'EOF'\nfix(x): y (M10)\n\nbody with ) and (\nEOF\n)",
             isOpaque: true,
+            canSplit: false,
           },
         ],
         heredocs: [],
@@ -93,7 +97,7 @@ test('splits the inside of backticks', () => {
 test('splits backticks inside double quotes', () => {
   assert.deepEqual(
     splitCommands('a "`b`"', undefined),
-    items(OPEN, item('b'), CLOSE, opaqueItem('a', '`b`')),
+    items(OPEN, item('b'), CLOSE, wholeItem('a', '`b`')),
   );
 });
 
@@ -134,7 +138,7 @@ test('unescapes a double quote inside backticks inside double quotes', () => {
       OPEN,
       item('git', 'push', '--force'),
       CLOSE,
-      opaqueItem('echo', '`git push \\"--force\\"`'),
+      wholeItem('echo', '`git push \\"--force\\"`'),
     ),
   );
 });
@@ -149,9 +153,9 @@ test('splits a process substitution with <(', () => {
     items(OPEN, item('git', 'show', 'x'), CLOSE, {
       kind: 'command',
       words: [
-        { text: 'diff', isOpaque: false },
-        { text: '<(git show x)', isOpaque: true },
-        { text: 'y', isOpaque: false },
+        { text: 'diff', isOpaque: false, canSplit: false },
+        { text: '<(git show x)', isOpaque: true, canSplit: true },
+        { text: 'y', isOpaque: false, canSplit: false },
       ],
       heredocs: [],
     }),
@@ -213,7 +217,15 @@ test('marks a ${name} word opaque with no extra items', () => {
 });
 
 test('marks a quoted $name word opaque with no extra items', () => {
-  assert.deepEqual(splitCommands('a "$b"', undefined), items(opaqueItem('a', '$b')));
+  assert.deepEqual(splitCommands('a "$b"', undefined), items(wholeItem('a', '$b')));
+});
+
+test('lets a word split when one of its expansions is unquoted', () => {
+  assert.deepEqual(splitCommands('a $b"$c"', undefined), items(opaqueItem('a', '$b$c')));
+});
+
+test('lets a word split when its unquoted expansion follows a quoted one', () => {
+  assert.deepEqual(splitCommands('a "$b"$c', undefined), items(opaqueItem('a', '$b$c')));
 });
 
 test('marks a positional parameter opaque', () => {
@@ -230,9 +242,9 @@ test('reads ${...} to its matching brace past a quoted brace', () => {
     items({
       kind: 'command',
       words: [
-        { text: 'a', isOpaque: false },
-        { text: '${b:-"}"}', isOpaque: true },
-        { text: 'c', isOpaque: false },
+        { text: 'a', isOpaque: false, canSplit: false },
+        { text: '${b:-"}"}', isOpaque: true, canSplit: true },
+        { text: 'c', isOpaque: false, canSplit: false },
       ],
       heredocs: [],
     }),
@@ -272,16 +284,16 @@ test('marks a $\'...\' word opaque and ends it at an unescaped quote', () => {
   assert.deepEqual(splitCommands("a $'b\\'c' d", undefined), items({
     kind: 'command',
     words: [
-      { text: 'a', isOpaque: false },
-      { text: "$'b\\'c'", isOpaque: true },
-      { text: 'd', isOpaque: false },
+      { text: 'a', isOpaque: false, canSplit: false },
+      { text: "$'b\\'c'", isOpaque: true, canSplit: false },
+      { text: 'd', isOpaque: false, canSplit: false },
     ],
     heredocs: [],
   }));
 });
 
 test('marks a $"..." word opaque', () => {
-  assert.deepEqual(splitCommands('a $"b c"', undefined), items(opaqueItem('a', 'b c')));
+  assert.deepEqual(splitCommands('a $"b c"', undefined), items(wholeItem('a', 'b c')));
 });
 
 test('keeps a single-quoted $( literal', () => {

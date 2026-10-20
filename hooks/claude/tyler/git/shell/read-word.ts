@@ -6,13 +6,15 @@ export type Tilde = 'none' | 'home' | 'user';
 
 // `items` are the commands of the substitutions in the word, to run before it;
 // `isOpaque` is true when the word holds an expansion of any kind, a glob or brace
-// pattern, or a leading zsh `=`.
+// pattern, or a leading zsh `=`; `canSplit` is true when the shell may split it into
+// several words or glob it: an expansion outside double quotes, a glob or a brace pattern.
 export interface WordRead {
   readonly kind: 'word';
   readonly text: string;
   readonly isPresent: boolean;
   readonly isPlain: boolean;
   readonly isOpaque: boolean;
+  readonly canSplit: boolean;
   readonly items: readonly Item[];
   readonly tilde: Tilde;
   readonly end: number;
@@ -25,6 +27,7 @@ interface Accumulator {
   isPresent: boolean;
   isPlain: boolean;
   isOpaque: boolean;
+  canSplit: boolean;
   isInDoubleQuotes: boolean;
   // The unquoted characters of the word, with QUOTED_PART for each quoted part or expansion.
   pattern: string;
@@ -36,8 +39,8 @@ const BOUNDARIES = ' \t\n&|;()<>';
 const DOUBLE_QUOTE_ESCAPABLE = '"\\$`';
 const QUOTED_PART = ' ';
 const GLOB = /[*?[]/;
-// A brace that encloses a comma or `..`; wider than bash's own match, never narrower.
-const BRACE_EXPANSION = /\{.*(?:,|\.\.).*\}/;
+// The test command and its closing word, which are not glob patterns.
+const TEST_BRACKETS = ['[', '[[', ']', ']]'];
 // zsh replaces a word that starts with `=` by the path of the command after it.
 const EQUALS_EXPANSION = /^=./;
 
@@ -53,6 +56,7 @@ export function readWord(line: string, start: number, context: Context): Read {
     isPresent: false,
     isPlain: true,
     isOpaque: false,
+    canSplit: false,
     isInDoubleQuotes: false,
     pattern: '',
     items: [],
@@ -84,15 +88,34 @@ export function readWord(line: string, start: number, context: Context): Read {
     text: word.text,
     isPresent: word.isPresent,
     isPlain: word.isPlain,
-    isOpaque: word.isOpaque || isExpandedPattern(word.pattern),
+    isOpaque: word.isOpaque || isEqualsExpansion(word.pattern) || isSplitPattern(word.pattern),
+    canSplit: word.canSplit || isSplitPattern(word.pattern),
     items: word.items,
     tilde: readTilde(line, start),
     end: position,
   };
 }
 
-function isExpandedPattern(pattern: string): boolean {
-  return GLOB.test(pattern) || BRACE_EXPANSION.test(pattern) || EQUALS_EXPANSION.test(pattern);
+function isEqualsExpansion(pattern: string): boolean {
+  return EQUALS_EXPANSION.test(pattern);
+}
+
+function isSplitPattern(pattern: string): boolean {
+  return (GLOB.test(pattern) && !TEST_BRACKETS.includes(pattern)) || isBraceExpansion(pattern);
+}
+
+// A `{` before a `,` or `..` before a `}`; wider than bash's own match, never narrower.
+function isBraceExpansion(pattern: string): boolean {
+  const open = pattern.indexOf('{');
+  const close = pattern.lastIndexOf('}');
+
+  if (open === -1 || close < open) {
+    return false;
+  }
+
+  const inside = pattern.slice(open + 1, close);
+
+  return inside.includes(',') || inside.includes('..');
 }
 
 function isProcessSubstitution(line: string, position: number): boolean {
@@ -221,6 +244,7 @@ function readExpansionInto(
 
   word.text += line.slice(position, expansion.end);
   word.isOpaque = true;
+  word.canSplit ||= !word.isInDoubleQuotes;
   word.items.push(...expansion.items);
 
   return expansion.end;

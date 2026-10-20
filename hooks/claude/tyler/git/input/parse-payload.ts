@@ -1,10 +1,8 @@
-import { isAbsolute } from 'node:path';
 import { isRecord } from '../../../../shared/is-record.ts';
 
 export interface PayloadCall {
   readonly kind: 'call';
   readonly command: string;
-  readonly cwd: string;
 }
 
 export interface PayloadOther {
@@ -31,7 +29,7 @@ export function parsePayload(stdinText: string): Payload {
     return makeFailure('stdin is not a JSON object');
   }
 
-  const { tool_name: toolName, tool_input: toolInput, cwd } = payload;
+  const { tool_name: toolName, tool_input: toolInput } = payload;
 
   if (typeof toolName !== 'string') {
     return makeFailure('tool_name is not a string');
@@ -51,11 +49,7 @@ export function parsePayload(stdinText: string): Payload {
     return makeFailure('tool_input.command is not text');
   }
 
-  if (!isText(cwd) || !isAbsolute(cwd)) {
-    return makeFailure('cwd is not an absolute path');
-  }
-
-  return { kind: 'call', command, cwd };
+  return { kind: 'call', command };
 }
 
 // A lone surrogate could pair with one next to it and form text that no

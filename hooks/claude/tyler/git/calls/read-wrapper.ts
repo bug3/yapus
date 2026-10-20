@@ -2,11 +2,13 @@ import type { Word } from '../shell/split-commands.ts';
 import { programName } from './program-name.ts';
 import { type WrapperSpec, wrapperSpecs } from './wrapper-specs.ts';
 
-// The words being read, which `env -S` replaces with the words of its string.
+// The words being read, which `env -S` replaces with the words of its string;
+// `appender` names a wrapper read so far that adds arguments from stdin.
 export interface Cursor {
   words: readonly Word[];
   index: number;
   readonly assignments: string[];
+  appender: string | undefined;
 }
 
 export interface Reading {
@@ -107,6 +109,14 @@ function skipOptions(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable {
       return ENDED;
     }
 
+    if (spec.replacing.some((prefix) => word.text.startsWith(prefix))) {
+      return {
+        kind: 'unjudgeable',
+        reason: `${ spec.name } replaces arguments the gate cannot read`,
+        shouldAlwaysDeny: false,
+      };
+    }
+
     const split = readSplit(cursor, spec);
 
     if (split === 'unjudgeable') {
@@ -142,6 +152,10 @@ function skipOptions(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable {
 // with the options).
 function finishWrapper(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable {
   cursor.index += spec.extraWords;
+
+  if (spec.isAppending) {
+    cursor.appender = spec.name;
+  }
 
   while (spec.hasAssignments) {
     const word = cursor.words[cursor.index];
@@ -200,7 +214,7 @@ function readSplit(cursor: Cursor, spec: WrapperSpec): 'read' | 'none' | 'unjudg
   const parts = string.text.split(/\s+/).filter((part) => part !== '');
 
   cursor.words = [
-    ...parts.map((part) => ({ text: part, isOpaque: false })),
+    ...parts.map((part) => ({ text: part, isOpaque: false, canSplit: false })),
     ...words.slice(index + (isValued ? 2 : 1)),
   ];
   cursor.index = 0;

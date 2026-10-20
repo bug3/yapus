@@ -7,7 +7,7 @@ import {
 import { isGitWord } from './is-git-word.ts';
 import { programName } from './program-name.ts';
 import { readGitOptions } from './read-git-options.ts';
-import { type Resplit, readRunner } from './read-runner.ts';
+import { isRunner, type Resplit, readRunner } from './read-runner.ts';
 import { type Cursor, readWrapper } from './read-wrapper.ts';
 
 export interface Call {
@@ -103,7 +103,7 @@ function readNested(resplit: Resplit, home: string | undefined, depth: number): 
 function readCommand(
   item: CommandItem,
 ): CommandCall | NoCall | Resplit | CallsUnjudgeable {
-  const cursor: Cursor = { words: item.words, index: 0, assignments: [] };
+  const cursor: Cursor = { words: item.words, index: 0, assignments: [], appender: undefined };
 
   for (;;) {
     const reading = readWrapper(cursor);
@@ -141,6 +141,15 @@ function readProgram(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnju
   const base = programName(program.text);
   const { assignments } = cursor;
 
+  // Arguments from stdin may turn a git call or a runner into anything.
+  if (cursor.appender !== undefined && (isGitWord(program.text) || isRunner(base))) {
+    return {
+      kind: 'unjudgeable',
+      reason: `${ cursor.appender } appends arguments the gate cannot read`,
+      shouldAlwaysDeny: false,
+    };
+  }
+
   if (!isGitWord(program.text)) {
     return readRunner(base, words, cursor.index + 1);
   }
@@ -157,7 +166,11 @@ function readProgram(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnju
   }
 
   if (base.startsWith('git-')) {
-    const subcommand: Word = { text: base.slice('git-'.length), isOpaque: false };
+    const subcommand: Word = {
+      text: base.slice('git-'.length),
+      isOpaque: false,
+      canSplit: false,
+    };
     const call: Call = {
       tool: 'git',
       words: [subcommand, ...words.slice(cursor.index + 1)],

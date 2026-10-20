@@ -19,6 +19,20 @@ function unjudgeable(reason: string, shouldAlwaysDeny: boolean): unknown {
 
 const NONE = { kind: 'calls', calls: [] };
 
+function gitCall(...texts: readonly string[]): unknown {
+  return {
+    kind: 'calls',
+    calls: [
+      {
+        tool: 'git',
+        words: texts.map((text) => ({ text, isOpaque: false, canSplit: false })),
+        configs: [],
+        assignments: [],
+      },
+    ],
+  };
+}
+
 test('refuses python with inline code', () => {
   assert.deepEqual(
     callsOf('python -c x'),
@@ -217,6 +231,31 @@ test('refuses an interpreter whose only operand is an option value, which reads 
   );
 });
 
+test('refuses an interpreter given an option that does not stop it reading stdin', () => {
+  assert.deepEqual(
+    callsOf('python3 -u'),
+    unjudgeable('python3 runs code the gate cannot read', false),
+  );
+});
+
+test('refuses an interpreter given an information option and another option', () => {
+  assert.deepEqual(
+    callsOf('python3 -h -u'),
+    unjudgeable('python3 runs code the gate cannot read', false),
+  );
+});
+
+test('refuses an interpreter whose script names stdin', () => {
+  assert.deepEqual(
+    callsOf('python3 /dev/stdin'),
+    unjudgeable('python3 runs code the gate cannot read', false),
+  );
+});
+
+test('does not call an interpreter given only information options', () => {
+  assert.deepEqual(callsOf('python3 -V -h'), NONE);
+});
+
 test('does not take an option value for a script, nor refuse a script after it', () => {
   assert.deepEqual(callsOf('python3 -W ignore x.py'), NONE);
 });
@@ -228,11 +267,8 @@ test('refuses an interpreter reading stdin', () => {
   );
 });
 
-test('refuses an inline option after the script name', () => {
-  assert.deepEqual(
-    callsOf('ruby x.rb -x'),
-    unjudgeable('ruby runs code the gate cannot read', false),
-  );
+test('does not judge an inline option after the script name, an argument of the script', () => {
+  assert.deepEqual(callsOf('ruby x.rb -x'), NONE);
 });
 
 test('refuses an inline letter in a short option group', () => {
@@ -305,4 +341,38 @@ test('refuses an inline letter after a value inside an option group', () => {
 
 test('does not take an option group without an inline letter', () => {
   assert.deepEqual(callsOf('python3 -u x.py'), NONE);
+});
+
+test('takes the module of -m as the script and does not judge its arguments', () => {
+  assert.deepEqual(callsOf('python3 -m pytest -x && git status'), gitCall('status'));
+});
+
+test('does not judge the arguments of a script', () => {
+  assert.deepEqual(callsOf('node server.js -p 3000; git status'), gitCall('status'));
+});
+
+test('does not call node given only options', () => {
+  assert.deepEqual(callsOf('node --test && git status'), gitCall('status'));
+});
+
+test('does not call python3 --version', () => {
+  assert.deepEqual(callsOf('python3 --version; git log'), gitCall('log'));
+});
+
+test('refuses an interpreter given no word, which reads stdin', () => {
+  assert.deepEqual(
+    callsOf('echo x | python3'),
+    unjudgeable('python3 runs code the gate cannot read', false),
+  );
+});
+
+test('refuses an opaque option value before the script, whatever the line says', () => {
+  assert.deepEqual(
+    callsOf('python3 -W $X x.py'),
+    unjudgeable('python3 runs code the gate cannot read', true),
+  );
+});
+
+test('does not judge an opaque argument of the script', () => {
+  assert.deepEqual(callsOf('python3 x.py $X'), NONE);
 });

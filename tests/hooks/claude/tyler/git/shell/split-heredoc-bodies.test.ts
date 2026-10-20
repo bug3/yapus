@@ -108,7 +108,10 @@ test('puts the substitutions of two heredocs before their commands in order', ()
 test('reads a braced expansion with a quoted default as one opaque word', () => {
   assert.deepEqual(splitCommands('echo "${x:-y}"', undefined), items({
     kind: 'command',
-    words: [{ text: 'echo', isOpaque: false }, { text: '${x:-y}', isOpaque: true }],
+    words: [
+      { text: 'echo', isOpaque: false, canSplit: false },
+      { text: '${x:-y}', isOpaque: true, canSplit: false },
+    ],
     heredocs: [],
   }));
 });

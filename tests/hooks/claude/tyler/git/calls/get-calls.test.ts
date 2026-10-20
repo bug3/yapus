@@ -14,13 +14,13 @@ function getCalls(items: readonly Item[]): Calls {
 }
 
 function words(...texts: readonly string[]): unknown[] {
-  return texts.map((text) => ({ text, isOpaque: false }));
+  return texts.map((text) => ({ text, isOpaque: false, canSplit: false }));
 }
 
 function item(...texts: readonly string[]): Item {
   return {
     kind: 'command',
-    words: [...texts].map((text) => ({ text, isOpaque: false })),
+    words: [...texts].map((text) => ({ text, isOpaque: false, canSplit: false })),
     heredocs: [],
   };
 }
@@ -40,7 +40,11 @@ function opaqueItem(...texts: readonly string[]): Item {
 
   return {
     kind: 'command',
-    words: texts.map((text, index) => ({ text, isOpaque: index === last })),
+    words: texts.map((text, index) => ({
+      text,
+      isOpaque: index === last,
+      canSplit: index === last,
+    })),
     heredocs: [],
   };
 }
@@ -79,6 +83,40 @@ test('finds a gh call with every word after gh', () => {
 
 test('finds git with no subcommand as a call with empty words', () => {
   assert.deepEqual(getCalls([item('git')]), found('git', {}));
+});
+
+test('finds git --version as a call with empty words', () => {
+  assert.deepEqual(getCalls([item('git', '--version')]), found('git', {}));
+});
+
+test('finds git -v as a call with empty words', () => {
+  assert.deepEqual(getCalls([item('git', '-v')]), found('git', {}));
+});
+
+test('finds git --help with a topic as a call with empty words', () => {
+  assert.deepEqual(getCalls([item('git', '--help', 'push')]), found('git', {}));
+});
+
+test('finds git -h as a call with empty words', () => {
+  assert.deepEqual(getCalls([item('git', '-h')]), found('git', {}));
+});
+
+test('finds the git path options as calls with empty words', () => {
+  assert.deepEqual(getCalls([item('git', '--exec-path')]), found('git', {}));
+  assert.deepEqual(getCalls([item('git', '--html-path')]), found('git', {}));
+  assert.deepEqual(getCalls([item('git', '--man-path')]), found('git', {}));
+  assert.deepEqual(getCalls([item('git', '--info-path')]), found('git', {}));
+});
+
+test('finds git --list-cmds= as a call with empty words', () => {
+  assert.deepEqual(getCalls([item('git', '--list-cmds=main')]), found('git', {}));
+});
+
+test('refuses git --exec-path with a value', () => {
+  assert.deepEqual(
+    getCalls([item('git', '--exec-path=/x', 'status')]),
+    unjudgeable('a git option the gate cannot read', true),
+  );
 });
 
 test('finds a call through a quoted literal program word', () => {
@@ -144,8 +182,8 @@ test('records an assignment whose value is opaque', () => {
   const opaque: Item = {
     kind: 'command',
     words: [
-      { text: 'A=$X', isOpaque: true },
-      { text: 'git', isOpaque: false },
+      { text: 'A=$X', isOpaque: true, canSplit: true },
+      { text: 'git', isOpaque: false, canSplit: false },
     ],
     heredocs: [],
   };

@@ -16,7 +16,7 @@ test('reads $( up to just past its closing paren', () => {
     kind: 'substitution',
     items: [
       { kind: 'open' },
-      { kind: 'command', words: [{ text: 'ab', isOpaque: false }], heredocs: [] },
+      { kind: 'command', words: [{ text: 'ab', isOpaque: false, canSplit: false }], heredocs: [] },
       { kind: 'close' },
     ],
     end: 5,
@@ -28,7 +28,7 @@ test('reads backticks up to just past the closing one', () => {
     kind: 'substitution',
     items: [
       { kind: 'open' },
-      { kind: 'command', words: [{ text: 'ab', isOpaque: false }], heredocs: [] },
+      { kind: 'command', words: [{ text: 'ab', isOpaque: false, canSplit: false }], heredocs: [] },
       { kind: 'close' },
     ],
     end: 4,

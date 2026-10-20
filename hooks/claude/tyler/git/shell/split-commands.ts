@@ -3,9 +3,11 @@ import { type Heredoc, readHeredoc } from './read-heredoc.ts';
 import { readRedirection } from './read-redirection.ts';
 import { readWord } from './read-word.ts';
 
+// `canSplit` is true when the shell may split the word into several words or glob it.
 export interface Word {
   readonly text: string;
   readonly isOpaque: boolean;
+  readonly canSplit: boolean;
 }
 
 export interface CommandItem {
@@ -237,9 +239,13 @@ function readCommandWord(
   } else if (read.isPlain && (read.text === '{' || read.text === '}')) {
     return endCommand(builder) ?? read.end;
   } else if (read.tilde === 'home' && builder.context.home !== undefined && !read.isOpaque) {
-    builder.words.push({ text: builder.context.home + read.text.slice(1), isOpaque: false });
+    const text = builder.context.home + read.text.slice(1);
+
+    builder.words.push({ text, isOpaque: false, canSplit: false });
   } else {
-    builder.words.push({ text: read.text, isOpaque: read.isOpaque || read.tilde !== 'none' });
+    const isOpaque = read.isOpaque || read.tilde !== 'none';
+
+    builder.words.push({ text: read.text, isOpaque, canSplit: read.canSplit });
   }
 
   return read.end;

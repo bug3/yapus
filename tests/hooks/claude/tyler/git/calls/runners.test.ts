@@ -19,7 +19,7 @@ function gitCall(...texts: readonly string[]): unknown {
     calls: [
       {
         tool: 'git',
-        words: texts.map((text) => ({ text, isOpaque: false })),
+        words: texts.map((text) => ({ text, isOpaque: false, canSplit: false })),
         configs: [],
         assignments: [],
       },
@@ -32,6 +32,8 @@ function unjudgeable(reason: string, shouldAlwaysDeny: boolean): unknown {
 }
 
 const SCRIPT = 'a shell reading a script or stdin the gate cannot read';
+
+const NONE = { kind: 'calls', calls: [] };
 const SPLIT_TEXT = 'env -S text the gate cannot read';
 
 test('reads the string of bash -c', () => {
@@ -57,16 +59,16 @@ test('refuses a shell string that does not split', () => {
   assert.deepEqual(callsOf("sh -c 'git push)'"), unjudgeable('unmatched )', false));
 });
 
-test('refuses a shell that runs a script file by its path', () => {
-  assert.deepEqual(callsOf('bash ./build.sh'), unjudgeable(SCRIPT, false));
+test('does not call a shell that runs a script file by its path', () => {
+  assert.deepEqual(callsOf('bash ./build.sh'), NONE);
 });
 
 test('refuses a shell given an opaque word, whatever the line says', () => {
   assert.deepEqual(callsOf('bash $ARGS'), unjudgeable(SCRIPT, true));
 });
 
-test('refuses a shell that runs a script file', () => {
-  assert.deepEqual(callsOf('zsh script.sh'), unjudgeable(SCRIPT, false));
+test('does not call a shell that runs a script file', () => {
+  assert.deepEqual(callsOf('zsh script.sh'), NONE);
 });
 
 test('refuses a shell that reads a pipe', () => {
@@ -81,12 +83,12 @@ test('refuses a shell that reads a redirection', () => {
   assert.deepEqual(callsOf('sh < x'), unjudgeable(SCRIPT, false));
 });
 
-test('refuses source', () => {
-  assert.deepEqual(callsOf('source env.sh'), unjudgeable(SCRIPT, false));
+test('does not call source with a literal file', () => {
+  assert.deepEqual(callsOf('source env.sh'), NONE);
 });
 
-test('refuses a dot command', () => {
-  assert.deepEqual(callsOf('. env.sh'), unjudgeable(SCRIPT, false));
+test('does not call a dot command with a literal file', () => {
+  assert.deepEqual(callsOf('. env.sh'), NONE);
 });
 
 test('reads env -S as a command line', () => {
@@ -201,7 +203,7 @@ test('reads env options and assignments in the env -S string', () => {
     calls: [
       {
         tool: 'git',
-        words: [{ text: 'push', isOpaque: false }],
+        words: [{ text: 'push', isOpaque: false, canSplit: false }],
         configs: [],
         assignments: ['A'],
       },
@@ -234,4 +236,52 @@ test('refuses an opaque program word after the env -S string', () => {
     callsOf("env -S 'A=1' $X push"),
     unjudgeable('a wrapper argument the gate cannot read', true),
   );
+});
+
+test('finds the git call after a shell that runs a script file', () => {
+  assert.deepEqual(callsOf('bash ./build.sh && git status'), gitCall('status'));
+});
+
+test('refuses a shell whose script operand is opaque, whatever the line says', () => {
+  assert.deepEqual(callsOf('bash $SCRIPT'), unjudgeable(SCRIPT, true));
+});
+
+test('refuses a shell that reads stdin by -s despite an operand', () => {
+  assert.deepEqual(callsOf('bash -s x'), unjudgeable(SCRIPT, false));
+});
+
+test('refuses a shell whose option value is opaque, whatever the line says', () => {
+  assert.deepEqual(callsOf('bash -o $X x.sh'), unjudgeable(SCRIPT, true));
+});
+
+test('finds the git call after source with a literal file', () => {
+  assert.deepEqual(callsOf('source .venv/bin/activate && git status'), gitCall('status'));
+});
+
+test('refuses source of an opaque file, whatever the line says', () => {
+  assert.deepEqual(callsOf('source "$X"'), unjudgeable(SCRIPT, true));
+});
+
+test('refuses source of an opaque file after --', () => {
+  assert.deepEqual(callsOf('source -- $X'), unjudgeable(SCRIPT, true));
+});
+
+test('refuses a shell whose script is /dev/stdin', () => {
+  assert.deepEqual(callsOf('bash /dev/stdin'), unjudgeable(SCRIPT, false));
+});
+
+test('refuses source of a /proc/self/fd file', () => {
+  assert.deepEqual(callsOf('source /proc/self/fd/0'), unjudgeable(SCRIPT, false));
+});
+
+test('refuses a dot command of a /dev/fd file', () => {
+  assert.deepEqual(callsOf('. /dev/fd/3'), unjudgeable(SCRIPT, false));
+});
+
+test('refuses a shell whose script operand is -', () => {
+  assert.deepEqual(callsOf('bash -- -'), unjudgeable(SCRIPT, false));
+});
+
+test('refuses source without a file', () => {
+  assert.deepEqual(callsOf('source'), unjudgeable(SCRIPT, false));
 });

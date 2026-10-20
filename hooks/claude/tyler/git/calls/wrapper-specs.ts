@@ -17,6 +17,11 @@ export interface WrapperSpec {
   // word, or is attached to the option name.
   readonly splitValued: readonly string[];
   readonly splitAttached: readonly string[];
+  // Option prefixes after which the program replaces a placeholder in its arguments
+  // (`xargs -I {}`), so the command it runs is not its words.
+  readonly replacing: readonly string[];
+  // Whether the program adds arguments read from stdin to the command (`xargs`).
+  readonly isAppending: boolean;
 }
 
 const NONE: WrapperSpec = {
@@ -31,6 +36,8 @@ const NONE: WrapperSpec = {
   ends: [],
   splitValued: [],
   splitAttached: [],
+  replacing: [],
+  isAppending: false,
 };
 
 const WRAPPERS: readonly WrapperSpec[] = [
@@ -115,6 +122,41 @@ const WRAPPERS: readonly WrapperSpec[] = [
     extraWords: 1,
     isShellWhenAlone: true,
   },
+  // With no command after its options, `xargs` runs `echo`.
+  {
+    ...NONE,
+    name: 'xargs',
+    flags: [
+      '-0',
+      '--null',
+      '-r',
+      '--no-run-if-empty',
+      '-t',
+      '--verbose',
+      '-p',
+      '--interactive',
+      '-x',
+      '--exit',
+    ],
+    valued: ['-n', '-L', '-P', '-s', '-d', '-E', '-a'],
+    attached: [
+      '-n',
+      '-L',
+      '-P',
+      '-s',
+      '-d',
+      '-E',
+      '-a',
+      '--max-args=',
+      '--max-lines=',
+      '--max-procs=',
+      '--delimiter=',
+      '--arg-file=',
+      '--eof=',
+    ],
+    replacing: ['-I', '-i', '-J', '--replace'],
+    isAppending: true,
+  },
 ];
 
 const RESERVED_WORDS: readonly string[] = [
@@ -140,6 +182,20 @@ const GIT_VALUED_OPTIONS: readonly string[] = [
   '--super-prefix',
 ];
 
+// Options of a git invocation that print information and run no subcommand; one that
+// ends in `=` matches any value.
+const GIT_INFORMATION_OPTIONS: readonly string[] = [
+  '--version',
+  '-v',
+  '--help',
+  '-h',
+  '--exec-path',
+  '--html-path',
+  '--man-path',
+  '--info-path',
+  '--list-cmds=',
+];
+
 const GIT_FLAG_OPTIONS: readonly string[] = [
   '--no-pager',
   '-P',
@@ -160,4 +216,5 @@ export const wrapperSpecs = {
   reservedWords: RESERVED_WORDS,
   gitValuedOptions: GIT_VALUED_OPTIONS,
   gitFlagOptions: GIT_FLAG_OPTIONS,
+  gitInformationOptions: GIT_INFORMATION_OPTIONS,
 };

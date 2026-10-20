@@ -112,7 +112,7 @@ test('reads a substitution of an unquoted body', () => {
     text: '$(x)',
     items: [
       { kind: 'open' },
-      { kind: 'command', words: [{ text: 'x', isOpaque: false }], heredocs: [] },
+      { kind: 'command', words: [{ text: 'x', isOpaque: false, canSplit: false }], heredocs: [] },
       { kind: 'close' },
     ],
     end: 8,
@@ -134,7 +134,7 @@ test('reads a backtick substitution of an unquoted body', () => {
     text: '`x`',
     items: [
       { kind: 'open' },
-      { kind: 'command', words: [{ text: 'x', isOpaque: false }], heredocs: [] },
+      { kind: 'command', words: [{ text: 'x', isOpaque: false, canSplit: false }], heredocs: [] },
       { kind: 'close' },
     ],
     end: 7,

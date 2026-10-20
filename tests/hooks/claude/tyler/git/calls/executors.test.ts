@@ -19,13 +19,6 @@ function unjudgeable(reason: string, shouldAlwaysDeny: boolean): unknown {
 
 const NONE = { kind: 'calls', calls: [] };
 
-test('refuses xargs whatever its words', () => {
-  assert.deepEqual(
-    callsOf('xargs wc -l'),
-    unjudgeable('xargs runs a command the gate cannot read', false),
-  );
-});
-
 test('refuses parallel whatever its words', () => {
   assert.deepEqual(
     callsOf('parallel echo ::: a'),
@@ -126,22 +119,22 @@ test('refuses batch whatever its words', () => {
 
 test('refuses an executor by its path in upper case', () => {
   assert.deepEqual(
-    callsOf('/usr/bin/XARGS ls'),
-    unjudgeable('xargs runs a command the gate cannot read', false),
+    callsOf('/usr/bin/PARALLEL ls'),
+    unjudgeable('parallel runs a command the gate cannot read', false),
   );
 });
 
 test('refuses an executor behind a wrapper', () => {
   assert.deepEqual(
-    callsOf('sudo xargs ls'),
-    unjudgeable('xargs runs a command the gate cannot read', false),
+    callsOf('sudo parallel ls'),
+    unjudgeable('parallel runs a command the gate cannot read', false),
   );
 });
 
-test('refuses a line whose git call feeds xargs', () => {
+test('refuses a line whose git call feeds parallel', () => {
   assert.deepEqual(
-    callsOf('git ls-files | xargs wc -l'),
-    unjudgeable('xargs runs a command the gate cannot read', false),
+    callsOf('git ls-files | parallel wc -l'),
+    unjudgeable('parallel runs a command the gate cannot read', false),
   );
 });
 
@@ -182,8 +175,8 @@ test('refuses find with an opaque word, which may be an action, whatever the lin
 
 test('refuses a runner given an opaque word, whatever the line says', () => {
   assert.deepEqual(
-    callsOf('xargs $CMD'),
-    unjudgeable('xargs runs a command the gate cannot read', true),
+    callsOf('parallel $CMD'),
+    unjudgeable('parallel runs a command the gate cannot read', true),
   );
 });
 

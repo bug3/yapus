@@ -7,11 +7,17 @@ export const OPEN = { kind: 'open' };
 export const CLOSE = { kind: 'close' };
 
 export function plain(text: string): Word {
-  return { text, isOpaque: false };
+  return { text, isOpaque: false, canSplit: false };
 }
 
+// An opaque word the shell may split into several words.
 export function opaque(text: string): Word {
-  return { text, isOpaque: true };
+  return { text, isOpaque: true, canSplit: true };
+}
+
+// An opaque word the shell keeps as one word, such as an expansion in double quotes.
+export function whole(text: string): Word {
+  return { text, isOpaque: true, canSplit: false };
 }
 
 export function items(...list: readonly unknown[]): unknown {
@@ -38,9 +44,4 @@ export function command(...texts: readonly string[]): unknown {
 // A result of one command made of the given words.
 export function commandOf(...words: readonly Word[]): unknown {
   return items({ kind: 'command', words, heredocs: [] });
-}
-
-// A result of one command made of one opaque word.
-export function opaqueCommand(text: string): unknown {
-  return commandOf(opaque(text));
 }

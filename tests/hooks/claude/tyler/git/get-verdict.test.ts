@@ -16,6 +16,8 @@ import { pushCatalog } from '../../../../../hooks/claude/tyler/git/rules/push/pu
 
 const HOME = '/home/someone';
 
+const ALLOW = { kind: 'allow' };
+
 test('denies a forced push in a compound line', () => {
   assert.deepEqual(
     getVerdict({ stdinText: bashCall('git add . && git push --force origin main'), home: HOME }),
@@ -79,14 +81,16 @@ test('denies a call it cannot judge when the text mentions git', () => {
 });
 
 test('denies a call it cannot judge when quotes hide git from the raw text', () => {
-  assert.deepEqual(getVerdict({ stdinText: bashCall("xargs sh -c 'g''it push'"), home: HOME }), {
+  const stdinText = bashCall("parallel sh -c 'g''it push'");
+
+  assert.deepEqual(getVerdict({ stdinText, home: HOME }), {
     kind: 'deny',
-    detail: 'cannot judge a git or gh call: xargs runs a command the gate cannot read',
+    detail: 'cannot judge a git or gh call: parallel runs a command the gate cannot read',
   });
 });
 
 test('denies a call it cannot judge when only a comment mentions git', () => {
-  assert.deepEqual(getVerdict({ stdinText: bashCall('bash ./build.sh # git'), home: HOME }), {
+  assert.deepEqual(getVerdict({ stdinText: bashCall('bash # git'), home: HOME }), {
     kind: 'deny',
     detail: 'cannot judge a git or gh call: '
       + 'a shell reading a script or stdin the gate cannot read',
@@ -102,7 +106,7 @@ test('denies a call it cannot judge when a heredoc body mentions git', () => {
 });
 
 test('allows a call it cannot judge when the text does not mention git', () => {
-  assert.deepEqual(getVerdict({ stdinText: bashCall('bash ./build.sh'), home: HOME }), {
+  assert.deepEqual(getVerdict({ stdinText: bashCall('echo x | python3'), home: HOME }), {
     kind: 'allow',
   });
 });
@@ -199,6 +203,87 @@ test('allows a commit whose message only reads like a skip', () => {
     getVerdict({ stdinText: bashCall('git commit -m "--no-verify"'), home: HOME }),
     { kind: 'allow' },
   );
+});
+
+test('allows a test command before a git-free command', () => {
+  assert.deepEqual(
+    getVerdict({ stdinText: bashCall('[ -f package.json ] && npm test'), home: HOME }),
+    { kind: 'allow' },
+  );
+  assert.deepEqual(
+    getVerdict({ stdinText: bashCall('if [ -n "$x" ]; then echo y; fi'), home: HOME }),
+    { kind: 'allow' },
+  );
+});
+
+test('allows the git information options', () => {
+  assert.deepEqual(getVerdict({ stdinText: bashCall('git --version'), home: HOME }), ALLOW);
+  assert.deepEqual(getVerdict({ stdinText: bashCall('git --help'), home: HOME }), ALLOW);
+});
+
+test('allows a git command line that feeds xargs', () => {
+  const stdinText = bashCall('git diff --name-only | xargs wc -l');
+
+  assert.deepEqual(getVerdict({ stdinText, home: HOME }), ALLOW);
+});
+
+test('allows a git status after a script run by a shell or by source', () => {
+  const shell = bashCall('bash ./build.sh && git status');
+  const source = bashCall('source .venv/bin/activate && git status');
+
+  assert.deepEqual(getVerdict({ stdinText: shell, home: HOME }), ALLOW);
+  assert.deepEqual(getVerdict({ stdinText: source, home: HOME }), ALLOW);
+});
+
+test('allows git after an interpreter running a script or only options', () => {
+  const module = bashCall('python3 -m pytest -x && git status');
+  const script = bashCall('node server.js -p 3000; git status');
+  const options = bashCall('node --test && git status');
+  const version = bashCall('python3 --version; git log');
+
+  assert.deepEqual(getVerdict({ stdinText: module, home: HOME }), ALLOW);
+  assert.deepEqual(getVerdict({ stdinText: script, home: HOME }), ALLOW);
+  assert.deepEqual(getVerdict({ stdinText: options, home: HOME }), ALLOW);
+  assert.deepEqual(getVerdict({ stdinText: version, home: HOME }), ALLOW);
+});
+
+test('denies xargs that replaces arguments of a git call', () => {
+  assert.deepEqual(getVerdict({ stdinText: bashCall('xargs -I{} git push -f {}'), home: HOME }), {
+    kind: 'deny',
+    detail: 'cannot judge a git or gh call: xargs replaces arguments the gate cannot read',
+  });
+});
+
+test('denies a shell reading git from stdin', () => {
+  assert.deepEqual(getVerdict({ stdinText: bashCall("echo 'git push' | bash"), home: HOME }), {
+    kind: 'deny',
+    detail: 'cannot judge a git or gh call: '
+      + 'a shell reading a script or stdin the gate cannot read',
+  });
+});
+
+test('denies an interpreter reading stdin on a line that mentions git', () => {
+  assert.deepEqual(
+    getVerdict({ stdinText: bashCall('echo x | python3; git status'), home: HOME }),
+    {
+      kind: 'deny',
+      detail: 'cannot judge a git or gh call: python3 runs code the gate cannot read',
+    },
+  );
+});
+
+test('denies an opaque script of source or a shell', () => {
+  const detail = 'cannot judge a git or gh call: '
+    + 'a shell reading a script or stdin the gate cannot read';
+
+  assert.deepEqual(getVerdict({ stdinText: bashCall('source "$X"'), home: HOME }), {
+    kind: 'deny',
+    detail,
+  });
+  assert.deepEqual(getVerdict({ stdinText: bashCall('bash $SCRIPT'), home: HOME }), {
+    kind: 'deny',
+    detail,
+  });
 });
 
 function bashCall(command: string): string {

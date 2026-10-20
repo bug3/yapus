@@ -13,14 +13,14 @@ const { reasons } = pushCatalog;
 function gitCall(...texts: readonly string[]): Call {
   return {
     tool: 'git',
-    words: texts.map((text) => ({ text, isOpaque: false })),
+    words: texts.map((text) => ({ text, isOpaque: false, canSplit: false })),
     configs: [],
     assignments: [],
   };
 }
 
 function withOpaque(call: Call): Call {
-  return { ...call, words: [...call.words, { text: '$X', isOpaque: true }] };
+  return { ...call, words: [...call.words, { text: '$X', isOpaque: true, canSplit: true }] };
 }
 
 test('refuses --force and -f, alone, in a group and next to a lease', () => {

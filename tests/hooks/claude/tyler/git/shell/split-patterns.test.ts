@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { splitCommands } from '../../../../../../hooks/claude/tyler/git/shell/split-commands.ts';
-import { commandOf, failure, opaque, plain } from './items.ts';
+import { commandOf, failure, opaque, plain, whole } from './items.ts';
 
 test('marks a brace list opaque', () => {
   assert.deepEqual(
@@ -64,6 +64,32 @@ test('keeps quoted and escaped glob characters plain', () => {
   );
 });
 
+test('keeps the test command brackets plain', () => {
+  assert.deepEqual(
+    splitCommands('[ -f x ]', undefined),
+    commandOf(plain('['), plain('-f'), plain('x'), plain(']')),
+  );
+});
+
+test('keeps the double test command brackets plain', () => {
+  assert.deepEqual(
+    splitCommands('[[ -n x ]]', undefined),
+    commandOf(plain('[['), plain('-n'), plain('x'), plain(']]')),
+  );
+});
+
+test('marks a word that starts with a bracket and more opaque', () => {
+  assert.deepEqual(splitCommands('[a', undefined), commandOf(opaque('[a')));
+});
+
+test('reads a long word of braces and commas quickly', () => {
+  const started = performance.now();
+
+  splitCommands('{,'.repeat(10_000), undefined);
+
+  assert.ok(performance.now() - started < 100);
+});
+
 test('fails on a zsh glob group inside a word', () => {
   assert.deepEqual(splitCommands('/usr/bin/g(i)t', undefined), failure('zsh glob group'));
 });
@@ -75,14 +101,14 @@ test('fails on zsh glob qualifiers after a star', () => {
 test('marks a word that starts with = and a letter opaque', () => {
   assert.deepEqual(
     splitCommands('=git push', undefined),
-    commandOf(opaque('=git'), plain('push')),
+    commandOf(whole('=git'), plain('push')),
   );
 });
 
 test('marks a word that starts with = and a quote opaque', () => {
   assert.deepEqual(
     splitCommands('="git" push', undefined),
-    commandOf(opaque('=git'), plain('push')),
+    commandOf(whole('=git'), plain('push')),
   );
 });
 

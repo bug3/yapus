@@ -12,7 +12,7 @@ import {
 function gitCall(...texts: readonly string[]): Call {
   return {
     tool: 'git',
-    words: texts.map((text) => ({ text, isOpaque: false })),
+    words: texts.map((text) => ({ text, isOpaque: false, canSplit: false })),
     configs: [],
     assignments: [],
   };
@@ -26,11 +26,11 @@ function assertUnsettable(call: Call, key: string): void {
 }
 
 function withOpaque(call: Call): Call {
-  return { ...call, words: [...call.words, { text: '$X', isOpaque: true }] };
+  return { ...call, words: [...call.words, { text: '$X', isOpaque: true, canSplit: true }] };
 }
 
 function withConfig(call: Call, text: string): Call {
-  return { ...call, configs: [{ text, isOpaque: false }] };
+  return { ...call, configs: [{ text, isOpaque: false, canSplit: false }] };
 }
 
 function withAssignment(call: Call, name: string): Call {
@@ -137,10 +137,10 @@ test('refuses an opaque commit word that is not a value', () => {
     getBypassRefusal({
       ...gitCall('commit'),
       words: [
-        { text: 'commit', isOpaque: false },
-        { text: '$ARGS', isOpaque: true },
-        { text: '-m', isOpaque: false },
-        { text: 'x', isOpaque: false },
+        { text: 'commit', isOpaque: false, canSplit: false },
+        { text: '$ARGS', isOpaque: true, canSplit: true },
+        { text: '-m', isOpaque: false, canSplit: false },
+        { text: 'x', isOpaque: false, canSplit: false },
       ],
     }),
     reason,
