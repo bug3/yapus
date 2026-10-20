@@ -139,6 +139,13 @@ const INTERPRETER_VALUED_OPTIONS: readonly string[] = [
 // file may be stdin.
 const STDIN_PATHS: readonly string[] = ['-'];
 const STDIN_PREFIXES: readonly string[] = ['/dev/', '/proc/'];
+// Segment sequences that name stdin from any working directory (`../../dev/stdin`,
+// `../proc/self/fd/0`).
+const STDIN_SEGMENTS: readonly RegExp[] = [
+  /(?:^|\/)dev\/stdin(?:\/|$)/,
+  /(?:^|\/)dev\/fd\//,
+  /(?:^|\/)proc\/.*\/fd\//,
+];
 
 // Interpreter options that print information or run tests, so with no script the
 // interpreter does not read stdin; the short ones differ by family (`python3 -v` is
@@ -187,5 +194,6 @@ export const runnerSpecs = {
   ownScriptSubcommands: OWN_SCRIPT_SUBCOMMANDS,
   ownStdinSubcommands: OWN_STDIN_SUBCOMMANDS,
   stdinPaths: STDIN_PATHS,
+  stdinSegments: STDIN_SEGMENTS,
   stdinPrefixes: STDIN_PREFIXES,
 };

@@ -455,3 +455,28 @@ test('refuses deno repl, which reads stdin', () => {
 test('does not call bun run of a script', () => {
   assert.deepEqual(callsOf('bun run build && git status'), gitCall('status'));
 });
+
+test('refuses a relative script path that reaches /dev/stdin', () => {
+  assert.deepEqual(
+    callsOf('node ../../dev/stdin'),
+    unjudgeable('node runs code the gate cannot read', false),
+  );
+});
+
+test('refuses a relative script path that reaches /dev/fd', () => {
+  assert.deepEqual(
+    callsOf('node ../../dev/fd/0'),
+    unjudgeable('node runs code the gate cannot read', false),
+  );
+});
+
+test('refuses a relative script path that reaches a /proc fd', () => {
+  assert.deepEqual(
+    callsOf('perl ../../proc/self/fd/0'),
+    unjudgeable('perl runs code the gate cannot read', false),
+  );
+});
+
+test('does not call a script whose name only holds dev', () => {
+  assert.deepEqual(callsOf('node dev/stdin.js'), NONE);
+});

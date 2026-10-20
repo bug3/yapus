@@ -158,7 +158,8 @@ function isStdinPath(text: string): boolean {
   const path = posix.normalize(text);
 
   return runnerSpecs.stdinPaths.includes(path) ||
-    runnerSpecs.stdinPrefixes.some((prefix) => path.startsWith(prefix));
+    runnerSpecs.stdinPrefixes.some((prefix) => path.startsWith(prefix)) ||
+    runnerSpecs.stdinSegments.some((segments) => segments.test(path));
 }
 
 function refuseScript(shouldAlwaysDeny: boolean): Unreadable {
