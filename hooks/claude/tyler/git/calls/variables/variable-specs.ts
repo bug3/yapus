@@ -51,6 +51,10 @@ const ARITHMETIC_OPERATORS: readonly string[] = ['-eq', '-ne', '-lt', '-le', '-g
 // A word that runs a command when the shell evaluates it as arithmetic.
 const EVALUATED = /\$\(|`|\$\{/;
 
+// A literal subscript holding one: arithmetic evaluates a variable's value again, so
+// `x='a[$(cmd)]'; (( x ))` runs cmd with no substitution in the arithmetic word.
+const DEFERRED_SUBSCRIPT = /\[.*(?:\$\(|`|\$\{)/;
+
 export const variableSpecs = {
   variablePrograms: VARIABLE_PROGRAMS,
   programVariables: PROGRAM_VARIABLES,
@@ -65,4 +69,5 @@ export const variableSpecs = {
   testCommand: TEST_COMMAND,
   arithmeticOperators: ARITHMETIC_OPERATORS,
   evaluated: EVALUATED,
+  deferredSubscript: DEFERRED_SUBSCRIPT,
 };

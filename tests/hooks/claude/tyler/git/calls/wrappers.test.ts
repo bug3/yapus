@@ -304,7 +304,7 @@ test('reads the command after repeat and its count', () => {
 
 test('refuses a repeat count that is not digits, which zsh evaluates', () => {
   assert.deepEqual(
-    callsOf("repeat 'a[$(id)]' git push"),
+    callsOf("repeat 'x+1' git push"),
     unjudgeable('a repeat count the gate cannot read', true),
   );
 });

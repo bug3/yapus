@@ -8,6 +8,12 @@ const EVALUATED_WORD: Unreadable = {
   shouldAlwaysDeny: true,
 };
 
+const DEFERRED_WORD: Unreadable = {
+  kind: 'unjudgeable',
+  reason: 'a subscript holding a substitution the shell may evaluate later',
+  shouldAlwaysDeny: true,
+};
+
 // Whether each item stands inside `(( ))` or `$(( ))`, which the splitter gives as two
 // opens in a row; a subshell inside a subshell reads the same and is refused alike.
 export function findArithmeticItems(items: readonly Item[]): boolean[] {
@@ -39,7 +45,14 @@ export function refuseArithmetic(
   const isEvaluated = readArithmeticWords(words, isInArithmetic)
     .some((word) => variableSpecs.evaluated.test(word.text));
 
-  return isEvaluated ? EVALUATED_WORD : undefined;
+  if (isEvaluated) {
+    return EVALUATED_WORD;
+  }
+
+  const isDeferred = words.some((word) =>
+    !word.isOpaque && variableSpecs.deferredSubscript.test(word.text));
+
+  return isDeferred ? DEFERRED_WORD : undefined;
 }
 
 function readArithmeticWords(words: readonly Word[], isInArithmetic: boolean): readonly Word[] {

@@ -61,6 +61,26 @@ test('refuses a substitution in a declare -i operand', () => {
   assert.deepEqual(callsOf('declare -ri x="a[$(id)]"'), EVALUATED);
 });
 
+test('refuses a literal subscript that holds a substitution, evaluated later', () => {
+  assert.deepEqual(callsOf("x='a[$(git push -f)]'; (( x ))"), {
+    kind: 'unjudgeable',
+    reason: 'a subscript holding a substitution the shell may evaluate later',
+    shouldAlwaysDeny: true,
+  });
+});
+
+test('does not call a quoted word whose subscript substitution runs now', () => {
+  assert.deepEqual(callsOf('echo "a[$(date)]"'), NONE);
+});
+
+test('does not call a literal word with a substitution and no bracket before it', () => {
+  assert.deepEqual(callsOf("echo '$(id) [x]'"), NONE);
+});
+
+test('does not call a literal word with a bracket and no substitution', () => {
+  assert.deepEqual(callsOf("echo 'a[1] $x'"), NONE);
+});
+
 test('does not call declare without -i whose value holds a substitution', () => {
   assert.deepEqual(callsOf('declare x="$(id)"'), NONE);
 });
