@@ -49,6 +49,16 @@ interface NoCall {
 
 const NO_CALL: NoCall = { kind: 'none' };
 
+// A runner behind a wrapper that empties the environment (`env -i bash -c CMD`): its
+// string is read before the wrapper is refused.
+interface ClearedRun {
+  readonly kind: 'cleared';
+  readonly clearer: string;
+  readonly run: Resplit;
+}
+
+type Found = CommandCall | NoCall | Resplit | ClearedRun;
+
 // How many times a string may be split again inside another one.
 const MAX_DEPTH = 2;
 
@@ -78,6 +88,8 @@ function collectCalls(
       calls.push(found.call);
     }
 
+    const nestedCalls: Call[] = [];
+
     for (const run of runsOf(found)) {
       const nested = readNested(run, home, depth);
 
@@ -85,8 +97,15 @@ function collectCalls(
         return nested;
       }
 
-      calls.push(...nested.calls);
+      nestedCalls.push(...nested.calls);
     }
+
+    // The git calls of a runner behind `env -i` run without the git config.
+    if (found.kind === 'cleared') {
+      return refuseClearer(found.clearer, nestedCalls.length > 0);
+    }
+
+    calls.push(...nestedCalls);
   }
 
   return { kind: 'calls', calls };
@@ -95,9 +114,13 @@ function collectCalls(
 // A string or words to read again as commands.
 type Nested = GitRun | Resplit;
 
-function runsOf(found: CommandCall | NoCall | Resplit): readonly Nested[] {
+function runsOf(found: Found): readonly Nested[] {
   if (found.kind === 'call') {
     return found.runs;
+  }
+
+  if (found.kind === 'cleared') {
+    return [found.run];
   }
 
   return found.kind === 'resplit' ? [found] : [];
@@ -129,7 +152,7 @@ function readNested(run: Nested, home: string | undefined, depth: number): Calls
 // Reads a command, then the variables its assignments and wrappers set or remove.
 function readCommand(
   item: CommandItem,
-): CommandCall | NoCall | Resplit | CallsUnjudgeable {
+): Found | CallsUnjudgeable {
   const cursor: Cursor = {
     words: item.words,
     index: 0,
@@ -148,7 +171,7 @@ function readCommand(
   return readVariables(cursor, found.kind === 'call' ? found.call : undefined) ?? found;
 }
 
-function readWords(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnjudgeable {
+function readWords(cursor: Cursor): Found | CallsUnjudgeable {
   let hasWrapperAfterAppender = false;
 
   for (;;) {
@@ -174,7 +197,7 @@ function readWords(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnjudg
   }
 }
 
-function readProgram(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnjudgeable {
+function readProgram(cursor: Cursor): Found | CallsUnjudgeable {
   const { words } = cursor;
   const program = words[cursor.index];
 
@@ -199,13 +222,21 @@ function readProgram(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnju
   }
 
   // Without the GIT_CONFIG* variables git runs with no hooks at all, and so does a git
-  // call inside a runner, which the line's git mention decides.
-  if (cursor.clearer !== undefined && (isGitWord(program.text) || isRunner(base))) {
-    return {
-      kind: 'unjudgeable',
-      reason: `${ cursor.clearer } drops the git config the hooks rely on`,
-      shouldAlwaysDeny: isGitWord(program.text),
-    };
+  // call inside a runner, which is read first.
+  if (cursor.clearer !== undefined && isGitWord(program.text)) {
+    return refuseClearer(cursor.clearer, true);
+  }
+
+  if (cursor.clearer !== undefined && isRunner(base)) {
+    const run = readRunner(base, words, cursor.index + 1);
+
+    if (run.kind === 'unjudgeable') {
+      return run;
+    }
+
+    return run.kind === 'none'
+      ? refuseClearer(cursor.clearer, false)
+      : { kind: 'cleared', clearer: cursor.clearer, run };
   }
 
   if (!isGitWord(program.text)) {
@@ -257,6 +288,14 @@ function readProgram(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnju
   };
 
   return readGitCall(call);
+}
+
+function refuseClearer(clearer: string, shouldAlwaysDeny: boolean): CallsUnjudgeable {
+  return {
+    kind: 'unjudgeable',
+    reason: `${ clearer } drops the git config the hooks rely on`,
+    shouldAlwaysDeny,
+  };
 }
 
 function refuseAppender(appender: string): CallsUnjudgeable {

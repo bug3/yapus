@@ -138,6 +138,14 @@ test('denies sudo before a shell that runs git', () => {
   assert.equal(verdictOf("sudo bash -c 'git commit -m x'"), 'deny');
 });
 
+test('denies env -i before a shell string the gate cannot read', () => {
+  assert.equal(verdictOf('env -i bash -c "$X"'), 'deny');
+});
+
+test('denies env -i before a shell that runs git status', () => {
+  assert.equal(verdictOf("env -i bash -c 'git status'"), 'deny');
+});
+
 test('allows sudo before a runner on a line that does not mention git', () => {
   assert.equal(verdictOf('sudo find /tmp -name x'), 'allow');
 });

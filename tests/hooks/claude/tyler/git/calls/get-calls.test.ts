@@ -254,7 +254,21 @@ test('refuses env with a bare - before git', () => {
 test('refuses env -i before a runner, whose git calls drop the git config', () => {
   assert.deepEqual(
     getCalls([item('env', '-i', 'bash', '-c', 'git commit')]),
+    unjudgeable('env drops the git config the hooks rely on', true),
+  );
+});
+
+test('refuses env -i before a runner with no git call only when the line mentions git', () => {
+  assert.deepEqual(
+    getCalls([item('env', '-i', 'bash', '-c', 'make')]),
     unjudgeable('env drops the git config the hooks rely on', false),
+  );
+});
+
+test('keeps the refusal of a runner behind env -i', () => {
+  assert.deepEqual(
+    getCalls(splitItems('env -i bash -c "$X"')),
+    unjudgeable('a shell string the gate cannot read', true),
   );
 });
 
