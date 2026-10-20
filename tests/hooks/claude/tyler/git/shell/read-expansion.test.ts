@@ -35,3 +35,17 @@ test('reports none for a dollar before a blank', () => {
 test('fails on a ${ with no closing brace', () => {
   assert.deepEqual(readExpansion('${a', 0, CONTEXT), { kind: 'failure', reason: 'unclosed ${' });
 });
+
+test('fails on a substitution in a single-quoted part of a braced expansion', () => {
+  assert.deepEqual(readExpansion("${x:-'$(y)'}", 0, CONTEXT), {
+    kind: 'failure',
+    reason: 'substitution inside ${...}',
+  });
+});
+
+test('fails on a backtick in a single-quoted part of a braced expansion', () => {
+  assert.deepEqual(readExpansion("${x:-'`y`'}", 0, CONTEXT), {
+    kind: 'failure',
+    reason: 'substitution inside ${...}',
+  });
+});

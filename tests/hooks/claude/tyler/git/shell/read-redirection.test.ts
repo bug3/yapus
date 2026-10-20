@@ -44,7 +44,7 @@ test('reads digits before &> as no redirection', () => {
 test('reads a heredoc delimiter', () => {
   assert.deepEqual(readRedirection('<<EOF', 0, CONTEXT), {
     kind: 'heredoc',
-    heredoc: { delimiter: 'EOF', isTabStripped: false },
+    heredoc: { delimiter: 'EOF', isTabStripped: false, isQuoted: false },
     end: 5,
   });
 });
@@ -52,8 +52,30 @@ test('reads a heredoc delimiter', () => {
 test('reads a dash heredoc delimiter after a blank', () => {
   assert.deepEqual(readRedirection('<<- "E F"', 0, CONTEXT), {
     kind: 'heredoc',
-    heredoc: { delimiter: 'E F', isTabStripped: true },
+    heredoc: { delimiter: 'E F', isTabStripped: true, isQuoted: true },
     end: 9,
+  });
+});
+
+test('marks a backslash heredoc delimiter as quoted', () => {
+  assert.deepEqual(readRedirection('<<E\\OF', 0, CONTEXT), {
+    kind: 'heredoc',
+    heredoc: { delimiter: 'EOF', isTabStripped: false, isQuoted: true },
+    end: 6,
+  });
+});
+
+test('fails on an ANSI-C quoted heredoc delimiter', () => {
+  assert.deepEqual(readRedirection("<<$'EOF'", 0, CONTEXT), {
+    kind: 'failure',
+    reason: 'heredoc delimiter the gate cannot read',
+  });
+});
+
+test('fails on a heredoc delimiter that holds a parameter', () => {
+  assert.deepEqual(readRedirection('<<"$X"', 0, CONTEXT), {
+    kind: 'failure',
+    reason: 'heredoc delimiter the gate cannot read',
   });
 });
 

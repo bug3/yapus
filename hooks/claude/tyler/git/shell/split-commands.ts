@@ -39,6 +39,7 @@ export type Split = SplitItems | SplitFailure;
 interface PendingHeredoc {
   readonly heredoc: Heredoc;
   readonly bodies: string[];
+  readonly index: number;
 }
 
 export interface Region {
@@ -237,17 +238,25 @@ function readCommandWord(
 
 // Reads the bodies of the heredocs opened on the line just ended, in order.
 function readBodies(line: string, start: number, builder: Builder): number | SplitFailure {
+  const inserts: { readonly index: number; readonly items: readonly Item[] }[] = [];
   let position = start;
 
-  for (const { heredoc, bodies } of builder.pending.splice(0)) {
-    const body = readHeredoc(line, position, heredoc);
+  for (const { heredoc, bodies, index } of builder.pending.splice(0)) {
+    const body = readHeredoc(line, position, { heredoc, context: builder.context });
 
     if (body.kind === 'failure') {
       return body;
     }
 
     bodies.push(body.text);
+    inserts.push({ index, items: body.items });
     position = body.end;
+  }
+
+  // Substitution commands run before the command that holds the heredoc; insert from
+  // the back so that earlier indexes stay valid.
+  for (const { index, items } of inserts.reverse()) {
+    builder.items.splice(index, 0, ...items);
   }
 
   return position;
@@ -285,7 +294,7 @@ function endCommand(builder: Builder): SplitFailure | undefined {
   const bodies: string[] = [];
 
   for (const heredoc of builder.heredocs) {
-    builder.pending.push({ heredoc, bodies });
+    builder.pending.push({ heredoc, bodies, index: builder.items.length });
   }
 
   builder.heredocs = [];

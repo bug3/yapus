@@ -56,6 +56,13 @@ function readBraced(line: string, start: number): number | SplitFailure {
         return makeFailure('unclosed ${');
       }
 
+      // Bash may treat these quotes as literal, so a substitution in them can run.
+      const quoted = line.slice(position + 1, close);
+
+      if (quoted.includes('`') || quoted.includes('$(')) {
+        return makeFailure('substitution inside ${...}');
+      }
+
       position = close + 1;
     } else if (char === '}' && !isInDouble) {
       return position + 1;

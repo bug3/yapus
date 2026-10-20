@@ -105,9 +105,18 @@ function readDelimiter(
     return makeFailure('heredoc without a delimiter');
   }
 
+  // Bash decodes or expands an opaque delimiter, so its source text is not the delimiter.
+  if (word.isOpaque) {
+    return makeFailure('heredoc delimiter the gate cannot read');
+  }
+
   return {
     kind: 'heredoc',
-    heredoc: { delimiter: word.text, isTabStripped: options.isTabStripped },
+    heredoc: {
+      delimiter: word.text,
+      isTabStripped: options.isTabStripped,
+      isQuoted: /['"\\]/.test(line.slice(position, word.end)),
+    },
     end: word.end,
   };
 }
