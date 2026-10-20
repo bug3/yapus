@@ -1,10 +1,12 @@
 import { makeFailure } from './read-word.ts';
 import { type Item, type SplitFailure, splitRegion } from './split-commands.ts';
 
-// `level` counts the substitutions that enclose the text being read.
+// `level` counts the substitutions that enclose the text being read;
+// `isInDoubleQuotes` is true when that text is inside double quotes.
 export interface Context {
   readonly home: string | undefined;
   readonly level: number;
+  readonly isInDoubleQuotes?: boolean;
 }
 
 // `items` are the commands inside, wrapped in an open and a close; `end` is just past it.
@@ -23,6 +25,7 @@ export type SubstitutionResult = SubstitutionRead | NoSubstitution | SplitFailur
 const MAX_LEVEL = 3;
 const PAREN_OPENERS = ['$(', '<(', '>('];
 const BACKTICK_ESCAPABLE = '`\\$';
+const QUOTED_BACKTICK_ESCAPABLE = '`\\$"';
 
 // Reads `$(...)`, `<(...)`, `>(...)` or a backtick pair that starts at `start`.
 export function readSubstitution(
@@ -58,6 +61,9 @@ function readParen(line: string, start: number, context: Context): SubstitutionR
 }
 
 function readBacktick(line: string, start: number, context: Context): SubstitutionResult {
+  const escapable = context.isInDoubleQuotes === true
+    ? QUOTED_BACKTICK_ESCAPABLE
+    : BACKTICK_ESCAPABLE;
   let inside = '';
   let position = start + 1;
 
@@ -68,7 +74,7 @@ function readBacktick(line: string, start: number, context: Context): Substituti
 
     const next = line.charAt(position + 1);
 
-    if (line.charAt(position) === '\\' && next !== '' && BACKTICK_ESCAPABLE.includes(next)) {
+    if (line.charAt(position) === '\\' && next !== '' && escapable.includes(next)) {
       inside += next;
       position += 2;
     } else {

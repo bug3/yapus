@@ -145,6 +145,18 @@ test('splits a substitution nested in backticks after unescaping', () => {
   );
 });
 
+test('unescapes a double quote inside backticks inside double quotes', () => {
+  assert.deepEqual(
+    splitCommands('echo "`git push \\"--force\\"`"', undefined),
+    items(
+      OPEN,
+      item('git', 'push', '--force'),
+      CLOSE,
+      opaqueItem('echo', '`git push \\"--force\\"`'),
+    ),
+  );
+});
+
 test('fails on an unclosed backtick', () => {
   assert.deepEqual(splitCommands('a `b', undefined), failure('unclosed backtick'));
 });
@@ -256,6 +268,13 @@ test('fails on a backtick inside ${...}', () => {
   assert.deepEqual(
     splitCommands('a ${b:-`c`}', undefined),
     failure('substitution inside ${...}'),
+  );
+});
+
+test('fails on a case statement that would close a substitution early', () => {
+  assert.deepEqual(
+    splitCommands('echo "$(case x in x) git push origin main --force; esac)"', undefined),
+    failure('case statement'),
   );
 });
 

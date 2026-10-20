@@ -5,7 +5,8 @@ import type { Item, SplitFailure } from './split-commands.ts';
 export type Tilde = 'none' | 'home' | 'user';
 
 // `items` are the commands of the substitutions in the word, to run before it;
-// `isOpaque` is true when the word holds an expansion of any kind.
+// `isOpaque` is true when the word holds an expansion of any kind, a glob or brace
+// pattern, or a leading zsh `=`.
 export interface WordRead {
   readonly kind: 'word';
   readonly text: string;
@@ -24,12 +25,21 @@ interface Accumulator {
   isPresent: boolean;
   isPlain: boolean;
   isOpaque: boolean;
+  isInDoubleQuotes: boolean;
+  // The unquoted characters of the word, with QUOTED_PART for each quoted part or expansion.
+  pattern: string;
   readonly items: Item[];
   readonly context: Context;
 }
 
 const BOUNDARIES = ' \t\n&|;()<>';
 const DOUBLE_QUOTE_ESCAPABLE = '"\\$`';
+const QUOTED_PART = ' ';
+const GLOB = /[*?[]/;
+// A brace that encloses a comma or `..`; wider than bash's own match, never narrower.
+const BRACE_EXPANSION = /\{.*(?:,|\.\.).*\}/;
+// zsh replaces a word that starts with `=` by the path of the command after it.
+const EQUALS_EXPANSION = /^=./;
 
 export function isWordBoundary(char: string): boolean {
   return char === '' || BOUNDARIES.includes(char);
@@ -47,12 +57,19 @@ export function readWord(line: string, start: number, context: Context): Read {
     isPresent: false,
     isPlain: true,
     isOpaque: false,
+    isInDoubleQuotes: false,
+    pattern: '',
     items: [],
     context,
   };
   let position = start;
 
   while (position < line.length) {
+    // zsh reads `(` inside a word as a glob group, whose qualifiers can run a command.
+    if (line.charAt(position) === '(' && word.isPresent) {
+      return makeFailure('zsh glob group');
+    }
+
     if (isWordBoundary(line.charAt(position)) && !isProcessSubstitution(line, position)) {
       break;
     }
@@ -71,11 +88,15 @@ export function readWord(line: string, start: number, context: Context): Read {
     text: word.text,
     isPresent: word.isPresent,
     isPlain: word.isPlain,
-    isOpaque: word.isOpaque,
+    isOpaque: word.isOpaque || isExpandedPattern(word.pattern),
     items: word.items,
     tilde: readTilde(line, start),
     end: position,
   };
+}
+
+function isExpandedPattern(pattern: string): boolean {
+  return GLOB.test(pattern) || BRACE_EXPANSION.test(pattern) || EQUALS_EXPANSION.test(pattern);
 }
 
 function isProcessSubstitution(line: string, position: number): boolean {
@@ -105,6 +126,7 @@ function readPart(line: string, position: number, word: Accumulator): number | S
 
     if (next !== '\n') {
       word.text += next;
+      word.pattern += QUOTED_PART;
       word.isPresent = true;
     }
 
@@ -121,6 +143,7 @@ function readPart(line: string, position: number, word: Accumulator): number | S
     }
 
     word.text += line.slice(position + 1, close);
+    word.pattern += QUOTED_PART;
     word.isPresent = true;
     word.isPlain = false;
 
@@ -130,11 +153,14 @@ function readPart(line: string, position: number, word: Accumulator): number | S
   if (char === '"') {
     word.isPresent = true;
     word.isPlain = false;
+    word.pattern += QUOTED_PART;
 
     return readDoubleQuoted(line, position + 1, word);
   }
 
   if (char === '$' && next === "'") {
+    word.pattern += QUOTED_PART;
+
     return readAnsiC(line, position, word);
   }
 
@@ -144,7 +170,14 @@ function readPart(line: string, position: number, word: Accumulator): number | S
     return position + 1;
   }
 
-  return readExpansionInto(line, position, word);
+  const step = readExpansionInto(line, position, word);
+
+  // A step of one character is a literal one; a longer step is an expansion.
+  if (typeof step === 'number') {
+    word.pattern += step === position + 1 ? char : QUOTED_PART;
+  }
+
+  return step;
 }
 
 // Reads `$'...'`, which ends at the first `'` that no backslash escapes.
@@ -173,7 +206,10 @@ function readExpansionInto(
   position: number,
   word: Accumulator,
 ): number | SplitFailure {
-  const expansion = readExpansion(line, position, word.context);
+  const expansion = readExpansion(line, position, {
+    ...word.context,
+    isInDoubleQuotes: word.isInDoubleQuotes,
+  });
 
   word.isPresent = true;
 
@@ -202,11 +238,15 @@ function readDoubleQuoted(
 ): number | SplitFailure {
   let position = start;
 
+  word.isInDoubleQuotes = true;
+
   while (position < line.length) {
     const char = line.charAt(position);
     const next = line.charAt(position + 1);
 
     if (char === '"') {
+      word.isInDoubleQuotes = false;
+
       return position + 1;
     }
 

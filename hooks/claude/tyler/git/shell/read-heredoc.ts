@@ -60,7 +60,8 @@ export function readHeredoc(line: string, start: number, reading: HeredocReading
   return makeFailure('unterminated heredoc');
 }
 
-// Joins continued lines unless the delimiter is quoted; undefined when input ends inside one.
+// Joins continued lines unless the delimiter is quoted, then strips leading tabs once
+// from the joined line, as bash does; undefined when input ends inside one.
 function readLogicalLine(line: string, start: number, heredoc: Heredoc): LogicalLine | undefined {
   let text = '';
   let position = start;
@@ -68,11 +69,15 @@ function readLogicalLine(line: string, start: number, heredoc: Heredoc): Logical
   for (;;) {
     const found = line.indexOf('\n', position);
     const lineEnd = found === -1 ? line.length : found;
-    const raw = line.slice(position, lineEnd);
-    const piece = heredoc.isTabStripped ? raw.replace(/^\t+/, '') : raw;
+    const piece = line.slice(position, lineEnd);
 
     if (heredoc.isQuoted || !ODD_BACKSLASHES.test(piece)) {
-      return { text: text + piece, end: Math.min(lineEnd + 1, line.length) };
+      const joined = text + piece;
+
+      return {
+        text: heredoc.isTabStripped ? joined.replace(/^\t+/, '') : joined,
+        end: Math.min(lineEnd + 1, line.length),
+      };
     }
 
     if (found === -1) {

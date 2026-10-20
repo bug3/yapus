@@ -28,6 +28,28 @@ test('reads ${...} to its matching brace', () => {
   });
 });
 
+test('reads ${...} nested three deep', () => {
+  assert.deepEqual(readExpansion('${a:-${b:-${c}}}', 0, CONTEXT), {
+    kind: 'substitution',
+    items: [],
+    end: 16,
+  });
+});
+
+test('fails on ${...} nested four deep', () => {
+  assert.deepEqual(readExpansion('${a:-${b:-${c:-${d}}}}', 0, CONTEXT), {
+    kind: 'failure',
+    reason: 'expansions nested too deep',
+  });
+});
+
+test('fails on ten thousand nested ${ without throwing', () => {
+  assert.deepEqual(readExpansion('${'.repeat(10_000), 0, CONTEXT), {
+    kind: 'failure',
+    reason: 'expansions nested too deep',
+  });
+});
+
 test('reports none for a dollar before a blank', () => {
   assert.deepEqual(readExpansion('$ a', 0, CONTEXT), { kind: 'none' });
 });

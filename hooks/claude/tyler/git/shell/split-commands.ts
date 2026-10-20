@@ -64,6 +64,11 @@ interface Builder {
   depth: number;
 }
 
+// Words a shell reads before a command word, so `then case` starts a `case`.
+const LEADING_KEYWORDS = [
+  '!', 'if', 'then', 'elif', 'else', 'while', 'until', 'do', 'time', 'coproc',
+];
+
 // Longest first; `;;` and redirections are tried before these.
 const SEPARATORS = ['&&', '||', '|&', '&', '|', ';', '\n'];
 
@@ -225,6 +230,9 @@ function readCommandWord(
 
   if (builder.isAwaitingTarget) {
     builder.isAwaitingTarget = false;
+  } else if (read.isPlain && read.text === 'case' && isCommandStart(builder.words)) {
+    // A pattern's `)` would close an enclosing `$(` early.
+    return makeFailure('case statement');
   } else if (read.isPlain && (read.text === '{' || read.text === '}')) {
     return endCommand(builder) ?? read.end;
   } else if (read.tilde === 'home' && builder.context.home !== undefined && !read.isOpaque) {
@@ -305,4 +313,8 @@ function endCommand(builder: Builder): SplitFailure | undefined {
   }
 
   return undefined;
+}
+
+function isCommandStart(words: readonly Word[]): boolean {
+  return words.every((word) => !word.isOpaque && LEADING_KEYWORDS.includes(word.text));
 }

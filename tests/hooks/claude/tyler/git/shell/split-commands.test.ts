@@ -90,6 +90,19 @@ test('fails on ;; as a case statement', () => {
   assert.deepEqual(splitCommands('a ;; b', undefined), failure('case statement'));
 });
 
+test('fails on case after a leading keyword', () => {
+  assert.deepEqual(
+    splitCommands('echo "$(if true; then case x in x) git push --force; esac; fi)"', undefined),
+    failure('case statement'),
+  );
+  assert.deepEqual(splitCommands('! case x in', undefined), failure('case statement'));
+  assert.deepEqual(splitCommands('until x; do case y in', undefined), failure('case statement'));
+});
+
+test('reads case after the first word as a plain word', () => {
+  assert.deepEqual(splitCommands('echo case', undefined), command('echo', 'case'));
+});
+
 test('keeps quoted operators literal', () => {
   assert.deepEqual(splitCommands('"a;b" \'&&\' c\\|d', undefined), command('a;b', '&&', 'c|d'));
 });

@@ -3,6 +3,7 @@ import { makeFailure } from './read-word.ts';
 import type { SplitFailure } from './split-commands.ts';
 
 const PARAMETER = /^(?:[A-Za-z_][A-Za-z0-9_]*|[0-9@*#?$!-])/;
+const MAX_BRACED_DEPTH = 3;
 
 // Reads a substitution or a parameter expansion that starts at `start`; a
 // parameter expansion is a substitution read with no items.
@@ -14,7 +15,7 @@ export function readExpansion(line: string, start: number, context: Context): Su
   }
 
   if (line.charAt(start + 1) === '{') {
-    const end = readBraced(line, start + 2);
+    const end = readBraced(line, start + 2, 1);
 
     return typeof end === 'number' ? { kind: 'substitution', items: [], end } : end;
   }
@@ -28,8 +29,13 @@ export function readExpansion(line: string, start: number, context: Context): Su
   return { kind: 'substitution', items: [], end: start + 1 + parameter[0].length };
 }
 
-// Reads from just after `${`; the result is just past the matching `}`.
-function readBraced(line: string, start: number): number | SplitFailure {
+// Reads from just after `${`, which is the `depth`th nested one; the result is just past
+// the matching `}`.
+function readBraced(line: string, start: number, depth: number): number | SplitFailure {
+  if (depth > MAX_BRACED_DEPTH) {
+    return makeFailure('expansions nested too deep');
+  }
+
   let isInDouble = false;
   let position = start;
 
@@ -42,7 +48,7 @@ function readBraced(line: string, start: number): number | SplitFailure {
     }
 
     if (char === '$' && next === '{') {
-      const end = readBraced(line, position + 2);
+      const end = readBraced(line, position + 2, depth + 1);
 
       if (typeof end !== 'number') {
         return end;

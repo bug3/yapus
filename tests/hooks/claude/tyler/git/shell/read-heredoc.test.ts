@@ -90,10 +90,10 @@ test('does not join a line ending in an even number of backslashes', () => {
   });
 });
 
-test('strips tabs from each physical line before joining', () => {
+test('strips tabs once from the joined line', () => {
   assert.deepEqual(readHeredoc('\tx\\\n\t\ty\n\tEOF', 0, STRIPPED), {
     kind: 'body',
-    text: 'xy',
+    text: 'x\t\ty',
     items: [],
     end: 12,
   });

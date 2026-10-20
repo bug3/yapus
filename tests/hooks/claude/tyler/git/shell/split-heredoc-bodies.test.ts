@@ -71,10 +71,14 @@ test('does not join lines ending in an even number of backslashes', () => {
   );
 });
 
-test('joins tab-indented continued lines of a dash heredoc', () => {
+test('keeps the inner tabs of a continued dash heredoc line in the delimiter test', () => {
   assert.deepEqual(
-    splitCommands('cat <<-EOF\n\tE\\\n\t\tOF\n\tgit status', undefined),
-    items(command(['cat'], ['']), command(['git', 'status'], [])),
+    splitCommands("cat <<-EOF\n\tE\\\n\t\tOF\ncat <<'Y'\nEOF\ngit push --force\nY", undefined),
+    items(
+      command(['cat'], ["E\t\tOF\ncat <<'Y'"]),
+      command(['git', 'push', '--force'], []),
+      command(['Y'], []),
+    ),
   );
 });
 
@@ -90,6 +94,13 @@ test('fails on an unclosed substitution in a body', () => {
     kind: 'failure',
     reason: 'unclosed $(',
   });
+});
+
+test('fails on a case statement in a substitution of an unquoted body', () => {
+  assert.deepEqual(
+    splitCommands('cat <<EOF\n$(case x in x) git push origin main --force; esac)\nEOF', undefined),
+    { kind: 'failure', reason: 'case statement' },
+  );
 });
 
 test('puts the substitutions of two heredocs before their commands in order', () => {
@@ -139,6 +150,34 @@ test('fails on a heredoc delimiter written as an ANSI-C string', () => {
 
 test('fails on a heredoc delimiter that holds a parameter', () => {
   assert.deepEqual(splitCommands('cat <<"$X"\nx\n$X', undefined), {
+    kind: 'failure',
+    reason: 'heredoc delimiter the gate cannot read',
+  });
+});
+
+test('fails on a heredoc delimiter that holds a $"..." string', () => {
+  assert.deepEqual(splitCommands('cat <<$"EOF"\nx\nEOF', undefined), {
+    kind: 'failure',
+    reason: 'heredoc delimiter the gate cannot read',
+  });
+});
+
+test('fails on a heredoc delimiter that holds a substitution', () => {
+  assert.deepEqual(splitCommands('cat <<$(x)\nx\nEOF', undefined), {
+    kind: 'failure',
+    reason: 'heredoc delimiter the gate cannot read',
+  });
+});
+
+test('fails on a heredoc delimiter that holds a backtick substitution', () => {
+  assert.deepEqual(splitCommands('cat <<`x`\nx\nEOF', undefined), {
+    kind: 'failure',
+    reason: 'heredoc delimiter the gate cannot read',
+  });
+});
+
+test('fails on a heredoc delimiter that holds a braced parameter', () => {
+  assert.deepEqual(splitCommands('cat <<${x}\nx\nEOF', undefined), {
     kind: 'failure',
     reason: 'heredoc delimiter the gate cannot read',
   });
