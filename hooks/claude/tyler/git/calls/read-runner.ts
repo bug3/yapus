@@ -25,7 +25,7 @@ interface Run {
 
 type Handler = (run: Run) => Resplit | NoRun | Unreadable;
 
-const SHORT_GROUP = /^-[^-]/;
+const SHORT_GROUP = runnerSpecs.shortGroup;
 const SCRIPT_REASON = 'a shell reading a script or stdin the gate cannot read';
 const UNREADABLE_STRING = 'a shell string the gate cannot read';
 

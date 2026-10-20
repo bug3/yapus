@@ -170,8 +170,12 @@ const OWN_STDIN_SUBCOMMANDS: Readonly<Partial<Record<string, readonly string[]>>
   bun: ['repl'],
 };
 
+// A word of short options, one letter each, possibly with a value attached (`-xCMD`).
+const SHORT_GROUP = /^-[^-]/;
+
 export const runnerSpecs = {
   runners: RUNNERS,
+  shortGroup: SHORT_GROUP,
   versionedName: VERSIONED_NAME,
   shellValuedOptions: SHELL_VALUED_OPTIONS,
   findActions: FIND_ACTIONS,
