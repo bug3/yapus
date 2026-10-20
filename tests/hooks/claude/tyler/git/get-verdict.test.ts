@@ -5,6 +5,10 @@ import {
 } from
   '../../../../../hooks/claude/tyler/git/get-verdict.ts';
 import {
+  bypassCatalog,
+} from
+  '../../../../../hooks/claude/tyler/git/rules/bypass/bypass-catalog.ts';
+import {
   destructiveCommands,
 } from
   '../../../../../hooks/claude/tyler/git/rules/destructive/destructive-commands.ts';
@@ -143,6 +147,30 @@ test('denies an opaque program even when the text does not mention git', () => {
     kind: 'deny',
     detail: 'cannot judge a git or gh call: a program name the gate cannot read',
   });
+});
+
+test('denies the ways to skip the git hooks', () => {
+  const { reasons } = bypassCatalog;
+
+  assert.deepEqual(getVerdict({ stdinText: bashCall('git commit -n -m x'), home: HOME }), {
+    kind: 'deny',
+    detail: reasons.noVerifyCommit,
+  });
+  assert.deepEqual(
+    getVerdict({ stdinText: bashCall('git -c core.hooksPath=/dev/null push'), home: HOME }),
+    { kind: 'deny', detail: reasons.hooksPath },
+  );
+  assert.deepEqual(
+    getVerdict({ stdinText: bashCall('GIT_CONFIG_COUNT=1 git push'), home: HOME }),
+    { kind: 'deny', detail: reasons.configEnvironment },
+  );
+});
+
+test('allows a commit whose message only reads like a skip', () => {
+  assert.deepEqual(
+    getVerdict({ stdinText: bashCall('git commit -m "--no-verify"'), home: HOME }),
+    { kind: 'allow' },
+  );
 });
 
 function bashCall(command: string): string {

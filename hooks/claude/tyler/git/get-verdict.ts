@@ -1,6 +1,7 @@
 import { type Call, getCalls } from './calls/get-calls.ts';
 import { parsePayload } from './input/parse-payload.ts';
 import { mentionsGit } from './mentions-git.ts';
+import { getBypassRefusal } from './rules/bypass/get-bypass-refusal.ts';
 import { getDestructiveRefusal } from './rules/destructive/get-destructive-refusal.ts';
 import { splitCommands } from './shell/split-commands.ts';
 
@@ -24,7 +25,7 @@ export type Verdict = Allow | Deny;
 export type Rule = (call: Call) => string | undefined;
 
 // One rule per slice.
-export const RULES: readonly Rule[] = [getDestructiveRefusal];
+export const RULES: readonly Rule[] = [getDestructiveRefusal, getBypassRefusal];
 
 const ALLOW: Allow = { kind: 'allow' };
 
