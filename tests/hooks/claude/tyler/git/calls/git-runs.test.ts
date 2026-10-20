@@ -351,6 +351,10 @@ test('refuses a splittable word after a -- that is the value of git grep -e', ()
   assert.deepEqual(callsOf('git grep -e -- $x'), SPLIT_ARGUMENT);
 });
 
+test('refuses a splittable word after a -- that follows a quoted opaque word', () => {
+  assert.deepEqual(callsOf('git grep "$X" -- $y'), SPLIT_ARGUMENT);
+});
+
 test('refuses a splittable word after a -- that is the value of git fetch -o', () => {
   assert.deepEqual(callsOf('git fetch -o -- $x'), SPLIT_ARGUMENT);
 });
