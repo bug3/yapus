@@ -105,15 +105,23 @@ function readCommand(
 ): CommandCall | NoCall | Resplit | CallsUnjudgeable {
   const cursor: Cursor = { words: item.words, index: 0, assignments: [], appender: undefined };
 
+  let hasWrapperAfterAppender = false;
+
   for (;;) {
+    const { appender } = cursor;
     const reading = readWrapper(cursor);
 
     if (reading.kind === 'unjudgeable') {
       return reading;
     }
 
+    hasWrapperAfterAppender ||= reading.kind === 'moved' && appender !== undefined;
+
+    // A wrapper after `xargs` with no program after it runs a program read from stdin.
     if (reading.kind === 'ended') {
-      return NO_CALL;
+      return appender !== undefined && hasWrapperAfterAppender
+        ? refuseAppender(appender)
+        : NO_CALL;
     }
 
     if (reading.kind === 'program') {
@@ -143,11 +151,7 @@ function readProgram(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnju
 
   // Arguments from stdin may turn a git call or a runner into anything.
   if (cursor.appender !== undefined && (isGitWord(program.text) || isRunner(base))) {
-    return {
-      kind: 'unjudgeable',
-      reason: `${ cursor.appender } appends arguments the gate cannot read`,
-      shouldAlwaysDeny: false,
-    };
+    return refuseAppender(cursor.appender);
   }
 
   if (!isGitWord(program.text)) {
@@ -195,4 +199,12 @@ function readProgram(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnju
   };
 
   return { kind: 'call', call };
+}
+
+function refuseAppender(appender: string): CallsUnjudgeable {
+  return {
+    kind: 'unjudgeable',
+    reason: `${ appender } appends arguments the gate cannot read`,
+    shouldAlwaysDeny: false,
+  };
 }

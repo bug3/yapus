@@ -35,3 +35,35 @@ test('denies arch -arm64 git push -f', () => {
 test('denies xcrun git clean -fdx', () => {
   assert.equal(verdictOf('xcrun git clean -fdx'), 'deny');
 });
+
+test('denies a wrapper after xargs with no program', () => {
+  assert.equal(verdictOf('echo git push -f | xargs env'), 'deny');
+});
+
+test('allows node --test before a git call', () => {
+  assert.equal(verdictOf('node --test && git status'), 'allow');
+});
+
+test('allows node -v before a git call', () => {
+  assert.equal(verdictOf('node -v && git status'), 'allow');
+});
+
+test('allows python3 --version before a git call', () => {
+  assert.equal(verdictOf('python3 --version; git log'), 'allow');
+});
+
+test('denies python3 -v reading stdin before a git call', () => {
+  assert.equal(verdictOf('echo x | python3 -v; git status'), 'deny');
+});
+
+test('denies deno run reading stdin before a git call', () => {
+  assert.equal(verdictOf('echo x | deno run -; git status'), 'deny');
+});
+
+test('allows bun run of a script before a git call', () => {
+  assert.equal(verdictOf('bun run build && git status'), 'allow');
+});
+
+test('denies bash reading a normalised stdin path before a git call', () => {
+  assert.equal(verdictOf('bash //dev//stdin; git status'), 'deny');
+});

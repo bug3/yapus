@@ -319,3 +319,15 @@ test('does not call xcrun --find', () => {
 test('does not call xcrun --show-sdk-path', () => {
   assert.deepEqual(callsOf('xcrun --show-sdk-path git'), NONE);
 });
+
+test('refuses xargs followed by a wrapper with no program, read from stdin', () => {
+  assert.deepEqual(callsOf('echo git push -f | xargs env'), APPENDS);
+});
+
+test('refuses xargs followed by a wrapper with options and no program', () => {
+  assert.deepEqual(callsOf('echo git push -f | xargs nice -n 5'), APPENDS);
+});
+
+test('does not call xargs with nothing after its options, which runs echo', () => {
+  assert.deepEqual(callsOf('echo git push -f | xargs -0'), NONE);
+});

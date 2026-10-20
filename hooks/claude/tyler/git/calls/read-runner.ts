@@ -1,3 +1,4 @@
+import { posix } from 'node:path';
 import type { Word } from '../shell/split-commands.ts';
 import type { Unreadable } from './read-wrapper.ts';
 import { type RunnerKind, runnerSpecs } from './runner-specs.ts';
@@ -154,8 +155,10 @@ function readScript(script: Word | undefined, isReadingStdin: boolean): NoRun | 
 }
 
 function isStdinPath(text: string): boolean {
-  return runnerSpecs.stdinPaths.includes(text) ||
-    runnerSpecs.stdinPrefixes.some((prefix) => text.startsWith(prefix));
+  const path = posix.normalize(text);
+
+  return runnerSpecs.stdinPaths.includes(path) ||
+    runnerSpecs.stdinPrefixes.some((prefix) => path.startsWith(prefix));
 }
 
 function refuseScript(shouldAlwaysDeny: boolean): Unreadable {
@@ -191,6 +194,10 @@ function readInterpreter({ name, words, start }: Run): NoRun | Unreadable {
     ...runnerSpecs.inlineOptions,
     ...(runnerSpecs.ownInlineOptions[name] ?? []),
   ];
+  const noStdinOptions = [
+    ...runnerSpecs.interpreterNoStdinOptions,
+    ...(runnerSpecs.ownNoStdinOptions[name] ?? []),
+  ];
   const letters = options
     .filter((option) => SHORT_GROUP.test(option))
     .map((option) => option.charAt(1));
@@ -202,6 +209,7 @@ function readInterpreter({ name, words, start }: Run): NoRun | Unreadable {
 
   let hasOption = false;
   let hasStdinOption = false;
+  let hasSubcommand = false;
 
   for (let index = start; index < words.length; index += 1) {
     const word = words[index];
@@ -222,11 +230,18 @@ function readInterpreter({ name, words, start }: Run): NoRun | Unreadable {
     }
 
     if (!text.startsWith('-')) {
-      return isStdinPath(text) ? refusal(false) : NO_RUN;
+      const subcommand = hasSubcommand ? 'none' : readSubcommand(name, text);
+
+      if (subcommand === 'script') {
+        hasSubcommand = true;
+        continue;
+      }
+
+      return subcommand === 'stdin' || isStdinPath(text) ? refusal(false) : NO_RUN;
     }
 
     hasOption = true;
-    hasStdinOption ||= !runnerSpecs.interpreterNoStdinOptions.includes(text);
+    hasStdinOption ||= !noStdinOptions.includes(text);
 
     if (runnerSpecs.interpreterValuedOptions.includes(text)) {
       if (words[index + 1]?.isOpaque === true) {
@@ -238,6 +253,16 @@ function readInterpreter({ name, words, start }: Run): NoRun | Unreadable {
   }
 
   return !hasOption || hasStdinOption ? refusal(false) : NO_RUN;
+}
+
+// What an interpreter's first operand is when it names a subcommand: one the script
+// follows, or one that reads stdin.
+function readSubcommand(name: string, text: string): 'script' | 'stdin' | 'none' {
+  if ((runnerSpecs.ownScriptSubcommands[name] ?? []).includes(text)) {
+    return 'script';
+  }
+
+  return (runnerSpecs.ownStdinSubcommands[name] ?? []).includes(text) ? 'stdin' : 'none';
 }
 
 // Option letters may follow a value inside a group (`-W0c`), so every letter counts.

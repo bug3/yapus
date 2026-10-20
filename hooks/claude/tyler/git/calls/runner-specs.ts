@@ -135,20 +135,40 @@ const INTERPRETER_VALUED_OPTIONS: readonly string[] = [
   '--input-type',
 ];
 
-// Script operands that name stdin.
-const STDIN_PATHS: readonly string[] = ['-', '/dev/stdin'];
-const STDIN_PREFIXES: readonly string[] = ['/dev/fd/', '/proc/self/fd/'];
+// Script operands that name stdin, after `path.posix.normalize`: any device or process
+// file may be stdin.
+const STDIN_PATHS: readonly string[] = ['-'];
+const STDIN_PREFIXES: readonly string[] = ['/dev/', '/proc/'];
 
 // Interpreter options that print information or run tests, so with no script the
-// interpreter does not read stdin.
-const INTERPRETER_NO_STDIN_OPTIONS: readonly string[] = [
-  '--version',
-  '-V',
-  '-v',
-  '--help',
-  '-h',
-  '--test',
-];
+// interpreter does not read stdin; the short ones differ by family (`python3 -v` is
+// verbose and still reads stdin).
+const INTERPRETER_NO_STDIN_OPTIONS: readonly string[] = ['--version', '--help', '--test'];
+
+const OWN_NO_STDIN_OPTIONS: Readonly<Partial<Record<string, readonly string[]>>> = {
+  node: ['-v', '-h'],
+  nodejs: ['-v', '-h'],
+  deno: ['-v', '-h'],
+  bun: ['-v', '-h'],
+  python: ['-V', '-h'],
+  python2: ['-V', '-h'],
+  python3: ['-V', '-h'],
+  pypy: ['-V', '-h'],
+  ipython: ['-V', '-h'],
+  perl: ['-v', '-V'],
+};
+
+// Interpreter subcommands followed by the script operand (`deno run x.ts`), and those
+// that read stdin (`deno repl`).
+const OWN_SCRIPT_SUBCOMMANDS: Readonly<Partial<Record<string, readonly string[]>>> = {
+  deno: ['run', 'x', 'task'],
+  bun: ['run', 'x', 'task'],
+};
+
+const OWN_STDIN_SUBCOMMANDS: Readonly<Partial<Record<string, readonly string[]>>> = {
+  deno: ['repl'],
+  bun: ['repl'],
+};
 
 export const runnerSpecs = {
   runners: RUNNERS,
@@ -159,6 +179,9 @@ export const runnerSpecs = {
   ownInlineOptions: OWN_INLINE_OPTIONS,
   interpreterValuedOptions: INTERPRETER_VALUED_OPTIONS,
   interpreterNoStdinOptions: INTERPRETER_NO_STDIN_OPTIONS,
+  ownNoStdinOptions: OWN_NO_STDIN_OPTIONS,
+  ownScriptSubcommands: OWN_SCRIPT_SUBCOMMANDS,
+  ownStdinSubcommands: OWN_STDIN_SUBCOMMANDS,
   stdinPaths: STDIN_PATHS,
   stdinPrefixes: STDIN_PREFIXES,
 };

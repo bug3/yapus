@@ -376,3 +376,82 @@ test('refuses an opaque option value before the script, whatever the line says',
 test('does not judge an opaque argument of the script', () => {
   assert.deepEqual(callsOf('python3 x.py $X'), NONE);
 });
+
+test('refuses a script path that normalises to stdin', () => {
+  assert.deepEqual(
+    callsOf('python3 //dev//stdin'),
+    unjudgeable('python3 runs code the gate cannot read', false),
+  );
+});
+
+test('refuses a script path with a dot segment under /dev', () => {
+  assert.deepEqual(
+    callsOf('python3 /dev/./stdin'),
+    unjudgeable('python3 runs code the gate cannot read', false),
+  );
+});
+
+test('refuses a script under the /proc of another thread', () => {
+  assert.deepEqual(
+    callsOf('python3 /proc/thread-self/fd/0'),
+    unjudgeable('python3 runs code the gate cannot read', false),
+  );
+});
+
+test('refuses a script under the /proc of a numbered process', () => {
+  assert.deepEqual(
+    callsOf('perl /proc/1234/fd/0'),
+    unjudgeable('perl runs code the gate cannot read', false),
+  );
+});
+
+test('refuses python3 -v, which is verbose and reads stdin', () => {
+  assert.deepEqual(
+    callsOf('echo x | python3 -v; git status'),
+    unjudgeable('python3 runs code the gate cannot read', false),
+  );
+});
+
+test('does not call node -v', () => {
+  assert.deepEqual(callsOf('node -v && git status'), gitCall('status'));
+});
+
+test('does not call node --test', () => {
+  assert.deepEqual(callsOf('node --test && git status'), gitCall('status'));
+});
+
+test('does not call perl -V', () => {
+  assert.deepEqual(callsOf('perl -V'), NONE);
+});
+
+test('refuses ruby -v, which has no short information option here', () => {
+  assert.deepEqual(
+    callsOf('ruby -v'),
+    unjudgeable('ruby runs code the gate cannot read', false),
+  );
+});
+
+test('refuses deno run reading stdin', () => {
+  assert.deepEqual(
+    callsOf('echo x | deno run -; git status'),
+    unjudgeable('deno runs code the gate cannot read', false),
+  );
+});
+
+test('refuses bun run of /dev/stdin', () => {
+  assert.deepEqual(
+    callsOf('bun run /dev/stdin'),
+    unjudgeable('bun runs code the gate cannot read', false),
+  );
+});
+
+test('refuses deno repl, which reads stdin', () => {
+  assert.deepEqual(
+    callsOf('deno repl'),
+    unjudgeable('deno runs code the gate cannot read', false),
+  );
+});
+
+test('does not call bun run of a script', () => {
+  assert.deepEqual(callsOf('bun run build && git status'), gitCall('status'));
+});
