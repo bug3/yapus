@@ -1,5 +1,6 @@
 import { type Heredoc, readHeredoc } from './read-heredoc.ts';
 import { readRedirection } from './read-redirection.ts';
+import type { Context } from './read-substitution.ts';
 import { makeFailure, readWord } from './read-word.ts';
 
 export interface Word {
@@ -40,20 +41,20 @@ interface PendingHeredoc {
   readonly bodies: string[];
 }
 
-interface Region {
+export interface Region {
   readonly start: number;
   readonly depth: number;
   readonly isClosedByParen: boolean;
 }
 
-interface RegionItems {
+export interface RegionItems {
   readonly kind: 'region';
   readonly items: readonly Item[];
   readonly end: number;
 }
 
 interface Builder {
-  readonly home: string | undefined;
+  readonly context: Context;
   readonly items: Item[];
   words: Word[];
   heredocs: Heredoc[];
@@ -81,26 +82,26 @@ export function splitCommands(line: string, home: string | undefined): Split {
 
 // Splits from `start` to the end of input, or, when `isClosedByParen`, up to the
 // unquoted `)` that closes the region (its position is `end`, the `)` is not consumed).
-function splitRegion(
+export function splitRegion(
   line: string,
   home: string | undefined,
   region: Region,
 ): RegionItems | SplitFailure {
   const builder: Builder = {
-    home,
+    context: { home, level: region.depth },
     items: [],
     words: [],
     heredocs: [],
     pending: [],
     isAwaitingTarget: false,
-    depth: region.depth,
+    depth: 0,
   };
   let position = region.start;
 
   while (position < line.length) {
     const isClose = region.isClosedByParen && line.charAt(position) === ')';
 
-    if (isClose && builder.depth === region.depth) {
+    if (isClose && builder.depth === 0) {
       break;
     }
 
@@ -111,6 +112,10 @@ function splitRegion(
     }
 
     position = step;
+  }
+
+  if (region.isClosedByParen && position >= line.length) {
+    return makeFailure('unclosed $(');
   }
 
   const failure = endCommand(builder);
@@ -152,7 +157,7 @@ function readStep(
     return makeFailure('case statement');
   }
 
-  const redirection = readRedirection(line, position);
+  const redirection = readRedirection(line, position, builder.context);
 
   if (redirection.kind === 'failure') {
     return redirection;
@@ -174,6 +179,7 @@ function readStep(
     }
 
     builder.isAwaitingTarget = !redirection.hasTarget;
+    builder.items.push(...redirection.items);
 
     return redirection.end;
   }
@@ -204,7 +210,7 @@ function readCommandWord(
   position: number,
   builder: Builder,
 ): number | SplitFailure {
-  const read = readWord(line, position);
+  const read = readWord(line, position, builder.context);
 
   if (read.kind === 'failure') {
     return read;
@@ -214,14 +220,16 @@ function readCommandWord(
     return read.end;
   }
 
+  builder.items.push(...read.items);
+
   if (builder.isAwaitingTarget) {
     builder.isAwaitingTarget = false;
   } else if (read.isPlain && (read.text === '{' || read.text === '}')) {
     return endCommand(builder) ?? read.end;
-  } else if (read.tilde === 'home' && builder.home !== undefined) {
-    builder.words.push({ text: builder.home + read.text.slice(1), isOpaque: false });
+  } else if (read.tilde === 'home' && builder.context.home !== undefined && !read.isOpaque) {
+    builder.words.push({ text: builder.context.home + read.text.slice(1), isOpaque: false });
   } else {
-    builder.words.push({ text: read.text, isOpaque: read.tilde !== 'none' });
+    builder.words.push({ text: read.text, isOpaque: read.isOpaque || read.tilde !== 'none' });
   }
 
   return read.end;

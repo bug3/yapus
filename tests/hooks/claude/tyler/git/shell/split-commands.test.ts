@@ -123,18 +123,6 @@ test('fails on an open left at the end', () => {
   assert.deepEqual(splitCommands('( a', undefined), failure('unclosed ('));
 });
 
-test('fails on $( as substitution', () => {
-  assert.deepEqual(splitCommands('a $(b)', undefined), failure('substitution not supported yet'));
-});
-
-test('fails on <( as substitution', () => {
-  assert.deepEqual(splitCommands('a <(b)', undefined), failure('substitution not supported yet'));
-});
-
-test('fails on >( as substitution', () => {
-  assert.deepEqual(splitCommands('a >(b)', undefined), failure('substitution not supported yet'));
-});
-
 test('keeps a quoted $( literal', () => {
   assert.deepEqual(splitCommands("'$(' a", undefined), command('$(', 'a'));
 });

@@ -1,17 +1,32 @@
-import type { SplitFailure } from './split-commands.ts';
+import { readExpansion } from './read-expansion.ts';
+import type { Context } from './read-substitution.ts';
+import type { Item, SplitFailure } from './split-commands.ts';
 
 export type Tilde = 'none' | 'home' | 'user';
 
+// `items` are the commands of the substitutions in the word, to run before it;
+// `isOpaque` is true when the word holds an expansion of any kind.
 export interface WordRead {
   readonly kind: 'word';
   readonly text: string;
   readonly isPresent: boolean;
   readonly isPlain: boolean;
+  readonly isOpaque: boolean;
+  readonly items: readonly Item[];
   readonly tilde: Tilde;
   readonly end: number;
 }
 
 export type Read = WordRead | SplitFailure;
+
+interface Accumulator {
+  text: string;
+  isPresent: boolean;
+  isPlain: boolean;
+  isOpaque: boolean;
+  readonly items: Item[];
+  readonly context: Context;
+}
 
 const BOUNDARIES = ' \t\n&|;()<>';
 const DOUBLE_QUOTE_ESCAPABLE = '"\\$`';
@@ -26,68 +41,46 @@ export function makeFailure(reason: string): SplitFailure {
 
 // `isPlain` is true when no quote or backslash was used; `tilde` describes a
 // leading unquoted `~`.
-export function readWord(line: string, start: number): Read {
-  let text = '';
-  let isPresent = false;
-  let isPlain = true;
-  let dollarEnd = -1;
+export function readWord(line: string, start: number, context: Context): Read {
+  const word: Accumulator = {
+    text: '',
+    isPresent: false,
+    isPlain: true,
+    isOpaque: false,
+    items: [],
+    context,
+  };
   let position = start;
 
-  while (position < line.length && !isWordBoundary(line.charAt(position))) {
-    const char = line.charAt(position);
-
-    if (char === '\\') {
-      const next = line.charAt(position + 1);
-
-      if (next === '') {
-        return makeFailure('trailing backslash');
-      }
-
-      if (next !== '\n') {
-        text += next;
-        isPresent = true;
-      }
-
-      isPlain = false;
-      position += 2;
-    } else if (char === "'") {
-      const close = line.indexOf("'", position + 1);
-
-      if (close === -1) {
-        return makeFailure('unterminated single quote');
-      }
-
-      text += line.slice(position + 1, close);
-      isPresent = true;
-      isPlain = false;
-      position = close + 1;
-    } else if (char === '"') {
-      const quoted = readDoubleQuoted(line, position + 1);
-
-      if (quoted.kind === 'failure') {
-        return quoted;
-      }
-
-      text += quoted.text;
-      isPresent = true;
-      isPlain = false;
-      position = quoted.end;
-    } else {
-      text += char;
-      isPresent = true;
-      position += 1;
-
-      if (char === '$') {
-        dollarEnd = position;
-      }
+  while (position < line.length) {
+    if (isWordBoundary(line.charAt(position)) && !isProcessSubstitution(line, position)) {
+      break;
     }
+
+    const step = readPart(line, position, word);
+
+    if (typeof step !== 'number') {
+      return step;
+    }
+
+    position = step;
   }
 
-  if (line.charAt(position) === '(' && dollarEnd === position) {
-    return makeFailure('substitution not supported yet');
-  }
+  return {
+    kind: 'word',
+    text: word.text,
+    isPresent: word.isPresent,
+    isPlain: word.isPlain,
+    isOpaque: word.isOpaque,
+    items: word.items,
+    tilde: readTilde(line, start),
+    end: position,
+  };
+}
 
-  return { kind: 'word', text, isPresent, isPlain, tilde: readTilde(line, start), end: position };
+function isProcessSubstitution(line: string, position: number): boolean {
+  return (line.charAt(position) === '<' || line.charAt(position) === '>') &&
+    line.charAt(position + 1) === '(';
 }
 
 function readTilde(line: string, start: number): Tilde {
@@ -100,39 +93,138 @@ function readTilde(line: string, start: number): Tilde {
   return next === '/' || isWordBoundary(next) ? 'home' : 'user';
 }
 
-// Reads from just after the opening quote; `end` is just after the closing one.
-function readDoubleQuoted(line: string, start: number): Read {
-  let text = '';
+// Reads one piece of a word; returns the position after it.
+function readPart(line: string, position: number, word: Accumulator): number | SplitFailure {
+  const char = line.charAt(position);
+  const next = line.charAt(position + 1);
+
+  if (char === '\\') {
+    if (next === '') {
+      return makeFailure('trailing backslash');
+    }
+
+    if (next !== '\n') {
+      word.text += next;
+      word.isPresent = true;
+    }
+
+    word.isPlain = false;
+
+    return position + 2;
+  }
+
+  if (char === "'") {
+    const close = line.indexOf("'", position + 1);
+
+    if (close === -1) {
+      return makeFailure('unterminated single quote');
+    }
+
+    word.text += line.slice(position + 1, close);
+    word.isPresent = true;
+    word.isPlain = false;
+
+    return close + 1;
+  }
+
+  if (char === '"') {
+    word.isPresent = true;
+    word.isPlain = false;
+
+    return readDoubleQuoted(line, position + 1, word);
+  }
+
+  if (char === '$' && next === "'") {
+    return readAnsiC(line, position, word);
+  }
+
+  if (char === '$' && next === '"') {
+    word.isOpaque = true;
+
+    return position + 1;
+  }
+
+  return readExpansionInto(line, position, word);
+}
+
+// Reads `$'...'`, which ends at the first `'` that no backslash escapes.
+function readAnsiC(line: string, start: number, word: Accumulator): number | SplitFailure {
+  let position = start + 2;
+
+  while (position < line.length) {
+    if (line.charAt(position) === "'") {
+      word.text += line.slice(start, position + 1);
+      word.isPresent = true;
+      word.isPlain = false;
+      word.isOpaque = true;
+
+      return position + 1;
+    }
+
+    position += line.charAt(position) === '\\' ? 2 : 1;
+  }
+
+  return makeFailure("unterminated $' quote");
+}
+
+// Reads an expansion at `position`; any other character is added as it is.
+function readExpansionInto(
+  line: string,
+  position: number,
+  word: Accumulator,
+): number | SplitFailure {
+  const expansion = readExpansion(line, position, word.context);
+
+  word.isPresent = true;
+
+  if (expansion.kind === 'failure') {
+    return expansion;
+  }
+
+  if (expansion.kind === 'none') {
+    word.text += line.charAt(position);
+
+    return position + 1;
+  }
+
+  word.text += line.slice(position, expansion.end);
+  word.isOpaque = true;
+  word.items.push(...expansion.items);
+
+  return expansion.end;
+}
+
+// Reads from just after the opening quote; the result is just after the closing one.
+function readDoubleQuoted(
+  line: string,
+  start: number,
+  word: Accumulator,
+): number | SplitFailure {
   let position = start;
 
   while (position < line.length) {
     const char = line.charAt(position);
+    const next = line.charAt(position + 1);
 
     if (char === '"') {
-      return {
-        kind: 'word',
-        text,
-        isPresent: true,
-        isPlain: false,
-        tilde: 'none',
-        end: position + 1,
-      };
+      return position + 1;
     }
 
-    if (char === '\\') {
-      const next = line.charAt(position + 1);
+    if (char === '$' || char === '`') {
+      const step = readExpansionInto(line, position, word);
 
-      if (next === '\n') {
-        position += 2;
-      } else if (next !== '' && DOUBLE_QUOTE_ESCAPABLE.includes(next)) {
-        text += next;
-        position += 2;
-      } else {
-        text += char;
-        position += 1;
+      if (typeof step !== 'number') {
+        return step;
       }
+
+      position = step;
+    } else if (char === '\\' && next === '\n') {
+      position += 2;
+    } else if (char === '\\' && next !== '' && DOUBLE_QUOTE_ESCAPABLE.includes(next)) {
+      word.text += next;
+      position += 2;
     } else {
-      text += char;
+      word.text += char;
       position += 1;
     }
   }

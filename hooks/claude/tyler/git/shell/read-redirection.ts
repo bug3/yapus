@@ -1,15 +1,18 @@
 import type { Heredoc } from './read-heredoc.ts';
+import type { Context } from './read-substitution.ts';
 import { isWordBoundary, makeFailure, readWord } from './read-word.ts';
-import type { SplitFailure } from './split-commands.ts';
+import type { Item, SplitFailure } from './split-commands.ts';
 
 export interface NoRedirection {
   readonly kind: 'none';
 }
 
-// `end` is just past the operator and its attached target, if any.
+// `end` is just past the operator and its attached target, if any; `items` are the
+// commands of substitutions in that target.
 export interface RedirectionRead {
   readonly kind: 'redirection';
   readonly hasTarget: boolean;
+  readonly items: readonly Item[];
   readonly end: number;
 }
 
@@ -27,7 +30,11 @@ const OPERATORS = ['&>>', '<<<', '<<-', '>>', '>|', '<>', '&>', '>&', '<&', '<<'
 const HEREDOCS = ['<<', '<<-'];
 const SUBSTITUTION_OPERATORS = ['<', '>'];
 
-export function readRedirection(line: string, start: number): RedirectionResult {
+export function readRedirection(
+  line: string,
+  start: number,
+  context: Context,
+): RedirectionResult {
   let position = start;
 
   while (/^[0-9]$/.test(line.charAt(position))) {
@@ -41,37 +48,54 @@ export function readRedirection(line: string, start: number): RedirectionResult 
   }
 
   if (HEREDOCS.includes(operator)) {
-    return readDelimiter(line, position + operator.length, operator === '<<-');
+    return readDelimiter(line, position + operator.length, {
+      isTabStripped: operator === '<<-',
+      context,
+    });
   }
 
   const after = position + operator.length;
   const next = line.charAt(after);
 
   if (next === '(' && SUBSTITUTION_OPERATORS.includes(operator)) {
-    return makeFailure('substitution not supported yet');
+    return { kind: 'none' };
   }
 
   if (isWordBoundary(next)) {
-    return { kind: 'redirection', hasTarget: false, end: after };
+    return { kind: 'redirection', hasTarget: false, items: [], end: after };
   }
 
-  const target = readWord(line, after);
+  const target = readWord(line, after, context);
 
   if (target.kind === 'failure') {
     return target;
   }
 
-  return { kind: 'redirection', hasTarget: target.isPresent, end: target.end };
+  return {
+    kind: 'redirection',
+    hasTarget: target.isPresent,
+    items: target.items,
+    end: target.end,
+  };
 }
 
-function readDelimiter(line: string, start: number, isTabStripped: boolean): RedirectionResult {
+interface DelimiterOptions {
+  readonly isTabStripped: boolean;
+  readonly context: Context;
+}
+
+function readDelimiter(
+  line: string,
+  start: number,
+  options: DelimiterOptions,
+): RedirectionResult {
   let position = start;
 
   while (line.charAt(position) === ' ' || line.charAt(position) === '\t') {
     position += 1;
   }
 
-  const word = readWord(line, position);
+  const word = readWord(line, position, options.context);
 
   if (word.kind === 'failure') {
     return word;
@@ -81,5 +105,9 @@ function readDelimiter(line: string, start: number, isTabStripped: boolean): Red
     return makeFailure('heredoc without a delimiter');
   }
 
-  return { kind: 'heredoc', heredoc: { delimiter: word.text, isTabStripped }, end: word.end };
+  return {
+    kind: 'heredoc',
+    heredoc: { delimiter: word.text, isTabStripped: options.isTabStripped },
+    end: word.end,
+  };
 }
