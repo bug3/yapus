@@ -1,3 +1,4 @@
+import { isUnreadable } from '../../rules/get-unreadable-reason.ts';
 import type { Word } from '../../shell/split-commands.ts';
 import type { Unreadable } from '../read-wrapper.ts';
 import { findOptionsEnd } from './find-options-end.ts';
@@ -40,7 +41,8 @@ export function readGitRuns(words: readonly Word[]): GitRuns | Unreadable {
 
 // Where words may become a command string, any opaque word may be one, or an option,
 // `foreach` or `run`. Elsewhere a word the shell may split can expand to an option
-// that runs a command; git reads no option after a literal `--`.
+// that runs a command, and an opaque one that starts with `-` or `+` is an option of
+// unknown value; git reads no option after a true `--`.
 function readUnreadableArgument(
   words: readonly Word[],
   runner: GitRunner,
@@ -58,7 +60,7 @@ function readUnreadableArgument(
 
   const options = words.slice(1, findOptionsEnd(words));
 
-  return options.some((word) => word.isOpaque && word.canSplit) ? UNREADABLE_ARGUMENT : undefined;
+  return options.some(isUnreadable) ? UNREADABLE_ARGUMENT : undefined;
 }
 
 function refuseSubcommand(words: readonly Word[], runner: GitRunner): Unreadable {

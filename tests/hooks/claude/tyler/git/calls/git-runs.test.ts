@@ -320,6 +320,33 @@ test('refuses a splittable word before a literal -- of git grep', () => {
   assert.deepEqual(callsOf('git grep $p -- x'), SPLIT_ARGUMENT);
 });
 
+test('refuses a quoted opaque option of git fetch', () => {
+  assert.deepEqual(callsOf('git fetch "--upload-pack=$x" origin'), SPLIT_ARGUMENT);
+});
+
+test('refuses a quoted opaque forced refspec of git push', () => {
+  assert.deepEqual(callsOf('git push origin "+$b"'), SPLIT_ARGUMENT);
+});
+
+test('reads a quoted opaque word that starts with - after the -- that ends options', () => {
+  assert.deepEqual(callsOf('git grep foo -- "-$x"'), {
+    kind: 'calls',
+    calls: [
+      {
+        tool: 'git',
+        words: [
+          { text: 'grep', isOpaque: false, canSplit: false },
+          { text: 'foo', isOpaque: false, canSplit: false },
+          { text: '--', isOpaque: false, canSplit: false },
+          { text: '-$x', isOpaque: true, canSplit: false },
+        ],
+        configs: [],
+        assignments: [],
+      },
+    ],
+  });
+});
+
 test('refuses a splittable word after a -- that is the value of git grep -e', () => {
   assert.deepEqual(callsOf('git grep -e -- $x'), SPLIT_ARGUMENT);
 });
