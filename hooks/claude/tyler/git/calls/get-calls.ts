@@ -171,7 +171,9 @@ function readCommand(
     return found;
   }
 
-  return readVariables(cursor, found.kind === 'call' ? found.call : undefined) ?? found;
+  const call = found.kind === 'call' ? found.call : undefined;
+
+  return readVariables(cursor, call, item.words) ?? found;
 }
 
 function readWords(cursor: Cursor): Found | CallsUnjudgeable {

@@ -25,8 +25,18 @@ const PROGRAM_VARIABLES: readonly string[] = [
   'PAGER',
 ];
 
+// Variables that name hooks git installs (`git clone`, `git init`); no value passes.
+const HOOK_VARIABLES: readonly string[] = ['GIT_TEMPLATE_DIR'];
+
 // The literal values of a program variable that run nothing the gate must read.
 const HARMLESS_PROGRAMS: readonly string[] = ['true', ':', 'cat', ''];
+
+// What may follow a program variable's name in a word that sets it.
+const WATCHED_SUFFIXES: readonly string[] = ['=', '+=', '[', '++', '--'];
+
+// Options of these programs holding `n` make a name refer to another variable.
+const NAMEREF_PROGRAMS: readonly string[] = ['declare', 'typeset', 'local'];
+const NAMEREF_OPTION = /^-[A-Za-z]*n/;
 
 // Programs whose operands the shell evaluates as arithmetic, and programs that do so with
 // an option holding `i` (`declare -i`), where `a[$(cmd)]` runs cmd.
@@ -45,6 +55,10 @@ export const variableSpecs = {
   variablePrograms: VARIABLE_PROGRAMS,
   programVariables: PROGRAM_VARIABLES,
   harmlessPrograms: HARMLESS_PROGRAMS,
+  hookVariables: HOOK_VARIABLES,
+  watchedSuffixes: WATCHED_SUFFIXES,
+  namerefPrograms: NAMEREF_PROGRAMS,
+  namerefOption: NAMEREF_OPTION,
   arithmeticPrograms: ARITHMETIC_PROGRAMS,
   integerPrograms: INTEGER_PROGRAMS,
   integerOption: INTEGER_OPTION,

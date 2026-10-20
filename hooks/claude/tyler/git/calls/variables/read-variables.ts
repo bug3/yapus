@@ -1,15 +1,33 @@
+import type { Word } from '../../shell/split-commands.ts';
 import type { Call } from '../get-calls.ts';
 import type { Cursor, Unreadable } from '../read-wrapper.ts';
-import { CONFIG_REFUSAL, isConfigName, refuseSetting } from './refuse-setting.ts';
+import {
+  CONFIG_REFUSAL,
+  isConfigName,
+  isConfigWord,
+  refuseWatchedWord,
+} from './refuse-watched-word.ts';
 
-// The refusal for the variables a command's assignments and wrappers set or remove, or
-// undefined; `call` is the call the command makes, if any.
-export function readVariables(cursor: Cursor, call: Call | undefined): Unreadable | undefined {
+// The refusal for the watched variables a command may set or remove, or undefined;
+// `call` is the call the command makes, if any, and `words` are the command's words. A
+// GIT_CONFIG* assignment on a git call is left to the rules, which read its assignments.
+export function readVariables(
+  cursor: Cursor,
+  call: Call | undefined,
+  words: readonly Word[],
+): Unreadable | undefined {
   if (cursor.unsets.some(isConfigName)) {
     return CONFIG_REFUSAL;
   }
 
-  return cursor.settings
-    .map((word) => refuseSetting(word, call))
+  const isConfigSet = [...words, ...cursor.words].some((word) =>
+    isConfigWord(word) && !(call?.tool === 'git' && cursor.settings.includes(word)));
+
+  if (isConfigSet) {
+    return CONFIG_REFUSAL;
+  }
+
+  return [...words, ...cursor.words]
+    .map(refuseWatchedWord)
     .find((refusal) => refusal !== undefined);
 }

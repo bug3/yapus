@@ -195,3 +195,100 @@ test('refuses a program variable set through arch -e', () => {
     unjudgeable('PAGER names a program the gate cannot read', false),
   );
 });
+
+const PAGER = unjudgeable('PAGER names a program the gate cannot read', false);
+
+test('refuses a GIT_CONFIG name as a for loop variable', () => {
+  assert.deepEqual(callsOf('for GIT_CONFIG_COUNT in 0; do :; done'), CONFIG);
+});
+
+test('refuses a GIT_CONFIG name in let', () => {
+  assert.deepEqual(callsOf('let GIT_CONFIG_COUNT=0'), CONFIG);
+});
+
+test('refuses a GIT_CONFIG name inside (( ))', () => {
+  assert.deepEqual(callsOf('(( GIT_CONFIG_COUNT = 0 ))'), CONFIG);
+});
+
+test('refuses a GIT_CONFIG name read from stdin', () => {
+  assert.deepEqual(callsOf('read GIT_CONFIG_COUNT'), CONFIG);
+});
+
+test('refuses a GIT_CONFIG name set by printf -v', () => {
+  assert.deepEqual(callsOf('printf -v GIT_CONFIG_COUNT 0'), CONFIG);
+});
+
+test('refuses a value that names a GIT_CONFIG variable', () => {
+  assert.deepEqual(callsOf('typeset r=GIT_CONFIG_COUNT'), CONFIG);
+});
+
+test('refuses a GIT_CONFIG name where an identifier starts inside a word', () => {
+  assert.deepEqual(callsOf('echo x=GIT_CONFIG_COUNT'), CONFIG);
+});
+
+test('refuses GIT_CONFIG inside a longer word', () => {
+  assert.deepEqual(callsOf('printf -vGIT_CONFIG_COUNT 0'), CONFIG);
+});
+
+test('refuses a GIT_TEMPLATE_DIR assignment before git', () => {
+  assert.deepEqual(
+    callsOf('GIT_TEMPLATE_DIR=/tmp/t git clone url'),
+    unjudgeable('GIT_TEMPLATE_DIR names hooks the gate cannot read', false),
+  );
+});
+
+test('refuses a GIT_TEMPLATE_DIR export even with an empty value', () => {
+  assert.deepEqual(
+    callsOf('export GIT_TEMPLATE_DIR='),
+    unjudgeable('GIT_TEMPLATE_DIR names hooks the gate cannot read', false),
+  );
+});
+
+test('refuses a program variable name alone', () => {
+  assert.deepEqual(callsOf('read PAGER'), PAGER);
+});
+
+test('refuses a program variable set by printf -v', () => {
+  assert.deepEqual(callsOf('printf -vPAGER less'), PAGER);
+});
+
+test('refuses a program variable appended to', () => {
+  assert.deepEqual(callsOf('PAGER+=x'), PAGER);
+});
+
+test('refuses a program variable indexed', () => {
+  assert.deepEqual(callsOf("'PAGER[0]=less'"), PAGER);
+});
+
+test('refuses a program variable incremented in arithmetic', () => {
+  assert.deepEqual(callsOf('let PAGER++'), PAGER);
+});
+
+test('refuses a nameref target that names a program variable', () => {
+  assert.deepEqual(callsOf('r=PAGER'), PAGER);
+});
+
+test('refuses declare -n', () => {
+  assert.deepEqual(
+    callsOf('declare -n r=x'),
+    unjudgeable('a nameref the gate cannot follow', false),
+  );
+});
+
+test('refuses local with -n in a short group', () => {
+  assert.deepEqual(
+    callsOf('local -rn r=x'),
+    unjudgeable('a nameref the gate cannot follow', false),
+  );
+});
+
+test('does not call declare without -n', () => {
+  assert.deepEqual(callsOf('declare -r r=x'), NONE);
+});
+
+test('does not refuse a commit message that mentions PAGER in a sentence', () => {
+  assert.deepEqual(
+    callsOf('git commit -m "set PAGER for the docs"'),
+    gitCall([], 'commit', '-m', 'set PAGER for the docs'),
+  );
+});
