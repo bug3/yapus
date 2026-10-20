@@ -26,7 +26,20 @@ function unjudgeable(reason: string, shouldAlwaysDeny: boolean): unknown {
   return { kind: 'unjudgeable', reason, shouldAlwaysDeny };
 }
 
-const UNREADABLE_COMMAND = unjudgeable('a command run by git the gate cannot read', true);
+const REBASE_ARGUMENT = unjudgeable(
+  'cannot judge `git rebase` with an argument that may run a command; write it literally',
+  true,
+);
+
+const SUBMODULE_ARGUMENT = unjudgeable(
+  'cannot judge `git submodule` with an argument that may run a command; write it literally',
+  true,
+);
+
+const BISECT_ARGUMENT = unjudgeable(
+  'cannot judge `git bisect` with an argument that may run a command; write it literally',
+  true,
+);
 
 test('reads the command of git rebase -x', () => {
   assert.deepEqual(callsOf("git rebase -x 'git push -f' HEAD"), {
@@ -50,7 +63,7 @@ test('reads the command attached to git rebase -x', () => {
 });
 
 test('refuses an opaque command of git rebase -x', () => {
-  assert.deepEqual(callsOf('git rebase -x "x$c" HEAD'), UNREADABLE_COMMAND);
+  assert.deepEqual(callsOf('git rebase -x "x$c" HEAD'), REBASE_ARGUMENT);
 });
 
 test('reads the words of git submodule foreach as a command and as a joined string', () => {
@@ -76,7 +89,7 @@ test('reads a shell string run by git submodule foreach as argv', () => {
 });
 
 test('refuses an opaque word in the command of git submodule foreach', () => {
-  assert.deepEqual(callsOf('git submodule foreach "x$c"'), UNREADABLE_COMMAND);
+  assert.deepEqual(callsOf('git submodule foreach "x$c"'), SUBMODULE_ARGUMENT);
 });
 
 test('reads the words after git bisect run as a command and as a joined string', () => {
@@ -105,7 +118,7 @@ test('reads the joined words of git bisect run as a shell string', () => {
 });
 
 test('refuses an opaque program after git bisect run', () => {
-  assert.deepEqual(callsOf('git bisect run "x$c"'), UNREADABLE_COMMAND);
+  assert.deepEqual(callsOf('git bisect run "x$c"'), BISECT_ARGUMENT);
 });
 
 test('reads the command of git difftool --extcmd=', () => {
@@ -115,11 +128,31 @@ test('reads the command of git difftool --extcmd=', () => {
   });
 });
 
-test('reads the command of git mergetool -x', () => {
+test('does not read git mergetool -x as a command, which mergetool does not take', () => {
   assert.deepEqual(callsOf("git mergetool -x 'git a'"), {
     kind: 'calls',
-    calls: [call('mergetool', '-x', 'git a'), call('a')],
+    calls: [call('mergetool', '-x', 'git a')],
   });
+});
+
+test('refuses a quoted opaque word of git mergetool', () => {
+  assert.deepEqual(
+    callsOf('git mergetool "$f"'),
+    unjudgeable(
+      'cannot judge `git mergetool` with an argument that may run a command; write it literally',
+      true,
+    ),
+  );
+});
+
+test('refuses a quoted opaque word of git difftool', () => {
+  assert.deepEqual(
+    callsOf('git difftool "x$f"'),
+    unjudgeable(
+      'cannot judge `git difftool` with an argument that may run a command; write it literally',
+      true,
+    ),
+  );
 });
 
 test('does not read git difftool --tool-help as a command', () => {
@@ -223,40 +256,27 @@ test('refuses git grep -O', () => {
 const SPLIT_ARGUMENT = unjudgeable('a git argument the gate cannot read may run a command', true);
 
 test('refuses a splittable word before git submodule foreach', () => {
-  assert.deepEqual(callsOf('git submodule $X foreach true'), SPLIT_ARGUMENT);
+  assert.deepEqual(callsOf('git submodule $X foreach true'), SUBMODULE_ARGUMENT);
 });
 
 test('refuses a splittable word before git bisect run', () => {
-  assert.deepEqual(callsOf('git bisect $X run true'), SPLIT_ARGUMENT);
+  assert.deepEqual(callsOf('git bisect $X run true'), BISECT_ARGUMENT);
 });
 
 test('refuses a splittable word in git rebase arguments', () => {
-  assert.deepEqual(callsOf('git rebase $opts HEAD'), SPLIT_ARGUMENT);
+  assert.deepEqual(callsOf('git rebase $opts HEAD'), REBASE_ARGUMENT);
 });
 
 test('refuses a quoted word of git rebase that starts with an expansion', () => {
-  assert.deepEqual(callsOf('git rebase "$base"'), SPLIT_ARGUMENT);
+  assert.deepEqual(callsOf('git rebase "$base"'), REBASE_ARGUMENT);
 });
 
-test('reads a quoted opaque word of git rebase with a literal start as one operand', () => {
-  assert.deepEqual(callsOf('git rebase "origin/$b"'), {
-    kind: 'calls',
-    calls: [
-      {
-        tool: 'git',
-        words: [
-          { text: 'rebase', isOpaque: false, canSplit: false },
-          { text: 'origin/$b', isOpaque: true, canSplit: false },
-        ],
-        configs: [],
-        assignments: [],
-      },
-    ],
-  });
+test('refuses a quoted opaque word of git rebase with a literal start', () => {
+  assert.deepEqual(callsOf('git rebase "origin/$b"'), REBASE_ARGUMENT);
 });
 
 test('refuses a quoted word that starts with an expansion before git bisect run', () => {
-  assert.deepEqual(callsOf('git bisect "$X" run true'), SPLIT_ARGUMENT);
+  assert.deepEqual(callsOf('git bisect "$X" run true'), BISECT_ARGUMENT);
 });
 
 test('reads a quoted opaque word of git push as one operand', () => {
@@ -301,7 +321,7 @@ test('refuses a splittable word before a literal -- of git grep', () => {
 });
 
 test('refuses a splittable word after a literal -- of git submodule foreach', () => {
-  assert.deepEqual(callsOf('git submodule foreach -- x$c'), SPLIT_ARGUMENT);
+  assert.deepEqual(callsOf('git submodule foreach -- x$c'), SUBMODULE_ARGUMENT);
 });
 
 test('refuses a git submodule foreach option it does not know', () => {

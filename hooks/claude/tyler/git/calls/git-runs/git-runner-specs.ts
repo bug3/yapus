@@ -12,7 +12,7 @@ export type GitRunnerKind =
 // group) serve `commandOptions`; `refusedLongs` and `refusedLetters` serve
 // `refusedOptions`; `refusal` ends the reason for `refused`, after `git NAME`.
 // `isRunningStrings` holds for a subcommand whose words may become a command string, so
-// no word that starts with an expansion is read as one operand.
+// no opaque word is read as one operand.
 export interface GitRunner {
   readonly subcommands: readonly string[];
   readonly kind: GitRunnerKind;
@@ -48,12 +48,14 @@ const RUNNERS: readonly GitRunner[] = [
   },
   {
     ...NONE,
-    subcommands: ['difftool', 'mergetool'],
+    subcommands: ['difftool'],
     kind: 'commandOptions',
     isRunningStrings: true,
     commandLong: '--extcmd',
     valuedLetters: ['t'],
   },
+  // `git mergetool` takes no command option; its words may still name a tool to run.
+  { ...NONE, subcommands: ['mergetool'], kind: 'refusedOptions', isRunningStrings: true },
   { ...NONE, subcommands: ['submodule'], kind: 'submodule', isRunningStrings: true },
   { ...NONE, subcommands: ['bisect'], kind: 'bisect', isRunningStrings: true },
   {

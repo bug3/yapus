@@ -24,9 +24,6 @@ const UNREADABLE_ARGUMENT: Unreadable = {
   shouldAlwaysDeny: true,
 };
 
-// A word that starts with an expansion may be any word: an option, `foreach` or `run`.
-const EXPANSION_START = /^[$`]/;
-
 // The commands a git call runs; `words` begin at the subcommand.
 export function readGitRuns(words: readonly Word[]): GitRuns | Unreadable {
   const subcommand = words[0]?.text ?? '';
@@ -37,23 +34,31 @@ export function readGitRuns(words: readonly Word[]): GitRuns | Unreadable {
     return NO_RUNS;
   }
 
-  return hasUnreadableArgument(words, runner)
-    ? UNREADABLE_ARGUMENT
-    : HANDLERS[runner.kind](words, runner);
+  return readUnreadableArgument(words, runner) ?? HANDLERS[runner.kind](words, runner);
 }
 
-// A word the shell may split can expand to an option that runs a command; git reads no
-// option after a literal `--`, except in the words of a command string. Where words
-// may become a command string, a word that starts with an expansion is not read either.
-function hasUnreadableArgument(words: readonly Word[], runner: GitRunner): boolean {
-  const end = words.findIndex((word, index) => index > 0 && !word.isOpaque && word.text === '--');
-  const options = runner.isRunningStrings || end === -1 ? words.slice(1) : words.slice(1, end);
+// Where words may become a command string, any opaque word may be one, or an option,
+// `foreach` or `run`. Elsewhere a word the shell may split can expand to an option
+// that runs a command; git reads no option after a literal `--`.
+function readUnreadableArgument(
+  words: readonly Word[],
+  runner: GitRunner,
+): Unreadable | undefined {
+  if (runner.isRunningStrings) {
+    return words.slice(1).some((word) => word.isOpaque)
+      ? {
+        kind: 'unjudgeable',
+        reason: `cannot judge \`git ${ words[0]?.text ?? '' }\` with an argument that may `
+          + 'run a command; write it literally',
+        shouldAlwaysDeny: true,
+      }
+      : undefined;
+  }
 
-  return (
-    options.some((word) => word.isOpaque && word.canSplit) ||
-    (runner.isRunningStrings &&
-      words.slice(1).some((word) => word.isOpaque && EXPANSION_START.test(word.text)))
-  );
+  const end = words.findIndex((word, index) => index > 0 && !word.isOpaque && word.text === '--');
+  const options = end === -1 ? words.slice(1) : words.slice(1, end);
+
+  return options.some((word) => word.isOpaque && word.canSplit) ? UNREADABLE_ARGUMENT : undefined;
 }
 
 function refuseSubcommand(words: readonly Word[], runner: GitRunner): Unreadable {
