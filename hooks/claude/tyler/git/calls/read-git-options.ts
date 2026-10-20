@@ -30,7 +30,7 @@ export function readGitOptions(
 
     if (!word.text.startsWith('-')) {
       return word.isOpaque
-        ? { kind: 'unjudgeable', reason: SUBCOMMAND_REASON }
+        ? { kind: 'unjudgeable', reason: SUBCOMMAND_REASON, shouldAlwaysDeny: false }
         : { kind: 'options', words: words.slice(index), configs };
     }
 
@@ -42,7 +42,7 @@ export function readGitOptions(
     const value = readValue(words, index);
 
     if (value === undefined) {
-      return { kind: 'unjudgeable', reason: OPTION_REASON };
+      return { kind: 'unjudgeable', reason: OPTION_REASON, shouldAlwaysDeny: false };
     }
 
     if (CONFIG_OPTIONS.includes(value.name)) {

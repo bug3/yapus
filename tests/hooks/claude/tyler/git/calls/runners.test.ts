@@ -27,12 +27,12 @@ function gitCall(...texts: readonly string[]): unknown {
   };
 }
 
-function unjudgeable(reason: string): unknown {
-  return { kind: 'unjudgeable', reason };
+function unjudgeable(reason: string, shouldAlwaysDeny: boolean): unknown {
+  return { kind: 'unjudgeable', reason, shouldAlwaysDeny };
 }
 
 const SCRIPT = 'a shell reading a script or stdin the gate cannot read';
-const NONE = { kind: 'calls', calls: [] };
+const SPLIT_TEXT = 'env -S text the gate cannot read';
 
 test('reads the string of bash -c', () => {
   assert.deepEqual(callsOf("bash -c 'git reset --hard'"), gitCall('reset', '--hard'));
@@ -49,72 +49,44 @@ test('reads the string after a shell option that takes a value', () => {
 test('refuses a shell string it cannot read', () => {
   assert.deepEqual(
     callsOf('sh -c "$X"'),
-    unjudgeable('a shell string the gate cannot read'),
+    unjudgeable('a shell string the gate cannot read', true),
   );
 });
 
 test('refuses a shell string that does not split', () => {
-  assert.deepEqual(callsOf("sh -c 'git push)'"), unjudgeable('unmatched )'));
+  assert.deepEqual(callsOf("sh -c 'git push)'"), unjudgeable('unmatched )', false));
+});
+
+test('refuses a shell that runs a script file by its path', () => {
+  assert.deepEqual(callsOf('bash ./build.sh'), unjudgeable(SCRIPT, false));
+});
+
+test('refuses a shell given an opaque word, whatever the line says', () => {
+  assert.deepEqual(callsOf('bash $ARGS'), unjudgeable(SCRIPT, true));
 });
 
 test('refuses a shell that runs a script file', () => {
-  assert.deepEqual(callsOf('zsh script.sh'), unjudgeable(SCRIPT));
+  assert.deepEqual(callsOf('zsh script.sh'), unjudgeable(SCRIPT, false));
 });
 
 test('refuses a shell that reads a pipe', () => {
-  assert.deepEqual(callsOf("echo 'git push' | bash"), unjudgeable(SCRIPT));
+  assert.deepEqual(callsOf("echo 'git push' | bash"), unjudgeable(SCRIPT, false));
 });
 
 test('refuses a shell that reads a heredoc', () => {
-  assert.deepEqual(callsOf('bash <<EOF\ngit push\nEOF'), unjudgeable(SCRIPT));
+  assert.deepEqual(callsOf('bash <<EOF\ngit push\nEOF'), unjudgeable(SCRIPT, false));
 });
 
 test('refuses a shell that reads a redirection', () => {
-  assert.deepEqual(callsOf('sh < x'), unjudgeable(SCRIPT));
+  assert.deepEqual(callsOf('sh < x'), unjudgeable(SCRIPT, false));
 });
 
 test('refuses source', () => {
-  assert.deepEqual(callsOf('source env.sh'), unjudgeable(SCRIPT));
+  assert.deepEqual(callsOf('source env.sh'), unjudgeable(SCRIPT, false));
 });
 
 test('refuses a dot command', () => {
-  assert.deepEqual(callsOf('. env.sh'), unjudgeable(SCRIPT));
-});
-
-test('refuses any executor that is given a shell, an evaluator or a sourcer', () => {
-  assert.deepEqual(
-    callsOf("stdbuf -oL sh -c 'x'"),
-    unjudgeable('stdbuf runs a command the gate cannot read'),
-  );
-  assert.deepEqual(
-    callsOf('setsid eval x'),
-    unjudgeable('setsid runs a command the gate cannot read'),
-  );
-  assert.deepEqual(
-    callsOf('ssh host source x'),
-    unjudgeable('ssh runs a command the gate cannot read'),
-  );
-});
-
-test('refuses xargs that is given a shell', () => {
-  assert.deepEqual(
-    callsOf("xargs /bin/BASH -c '{}'"),
-    unjudgeable('xargs runs a command the gate cannot read'),
-  );
-});
-
-test('refuses find that is given a shell', () => {
-  assert.deepEqual(
-    callsOf("find . -exec sh -c 'x' \\;"),
-    unjudgeable('find runs a command the gate cannot read'),
-  );
-});
-
-test('refuses ssh that is given a shell', () => {
-  assert.deepEqual(
-    callsOf('ssh host bash'),
-    unjudgeable('ssh runs a command the gate cannot read'),
-  );
+  assert.deepEqual(callsOf('. env.sh'), unjudgeable(SCRIPT, false));
 });
 
 test('reads env -S as a command line', () => {
@@ -128,7 +100,7 @@ test('puts the words after the env -S string behind its words', () => {
 test('refuses an env -S string it cannot read', () => {
   assert.deepEqual(
     callsOf('env -S "$X"'),
-    unjudgeable('a shell string the gate cannot read'),
+    unjudgeable(SPLIT_TEXT, true),
   );
 });
 
@@ -143,53 +115,7 @@ test('reads eval with one string', () => {
 test('refuses eval of an opaque value', () => {
   assert.deepEqual(
     callsOf('eval $X'),
-    unjudgeable('eval of a value the gate cannot read'),
-  );
-});
-
-test('refuses xargs that runs git', () => {
-  assert.deepEqual(
-    callsOf('xargs git branch -D'),
-    unjudgeable('xargs runs a command the gate cannot read'),
-  );
-});
-
-test('refuses find -exec of git', () => {
-  assert.deepEqual(
-    callsOf('find . -exec git checkout -- . \\;'),
-    unjudgeable('find runs a command the gate cannot read'),
-  );
-});
-
-test('refuses ssh that runs git', () => {
-  assert.deepEqual(
-    callsOf('ssh host git push'),
-    unjudgeable('ssh runs a command the gate cannot read'),
-  );
-});
-
-test('refuses setsid that runs git', () => {
-  assert.deepEqual(
-    callsOf('setsid git push'),
-    unjudgeable('setsid runs a command the gate cannot read'),
-  );
-});
-
-test('does not call xargs that runs another program', () => {
-  assert.deepEqual(callsOf('xargs echo'), NONE);
-});
-
-test('refuses a git word held inside a longer word', () => {
-  assert.deepEqual(
-    callsOf("xargs sh -c 'git push'"),
-    unjudgeable('xargs runs a command the gate cannot read'),
-  );
-});
-
-test('refuses an executor given an opaque word', () => {
-  assert.deepEqual(
-    callsOf('ssh $HOST ls'),
-    unjudgeable('ssh runs a command the gate cannot read'),
+    unjudgeable('eval of a value the gate cannot read', true),
   );
 });
 
@@ -200,6 +126,112 @@ test('reads two nested strings', () => {
 test('refuses a third nested string', () => {
   assert.deepEqual(
     callsOf('bash -c "bash -c \\"bash -c \'git push\'\\""'),
-    unjudgeable('commands nested too deep'),
+    unjudgeable('commands nested too deep', false),
+  );
+});
+
+test('reads the string of each shell that takes -c', () => {
+  assert.deepEqual(callsOf("mksh -c 'git push'"), gitCall('push'));
+  assert.deepEqual(callsOf("yash -c 'git push'"), gitCall('push'));
+  assert.deepEqual(callsOf("posh -c 'git push'"), gitCall('push'));
+  assert.deepEqual(callsOf("ash -c 'git push'"), gitCall('push'));
+  assert.deepEqual(callsOf("dash -c 'git push'"), gitCall('push'));
+  assert.deepEqual(callsOf("ksh -c 'git push'"), gitCall('push'));
+});
+
+test('refuses fish', () => {
+  assert.deepEqual(
+    callsOf("fish -c 'git push'"),
+    unjudgeable('fish runs a command the gate cannot read', false),
+  );
+});
+
+test('refuses tcsh', () => {
+  assert.deepEqual(
+    callsOf('tcsh x'),
+    unjudgeable('tcsh runs a command the gate cannot read', false),
+  );
+});
+
+test('refuses csh', () => {
+  assert.deepEqual(
+    callsOf('csh'),
+    unjudgeable('csh runs a command the gate cannot read', false),
+  );
+});
+
+test('refuses elvish', () => {
+  assert.deepEqual(
+    callsOf('elvish x'),
+    unjudgeable('elvish runs a command the gate cannot read', false),
+  );
+});
+
+test('refuses nu', () => {
+  assert.deepEqual(
+    callsOf('nu -c x'),
+    unjudgeable('nu runs a command the gate cannot read', false),
+  );
+});
+
+test('refuses pwsh', () => {
+  assert.deepEqual(
+    callsOf('pwsh -Command x'),
+    unjudgeable('pwsh runs a command the gate cannot read', false),
+  );
+});
+
+test('refuses powershell in any case', () => {
+  assert.deepEqual(
+    callsOf('PowerShell x'),
+    unjudgeable('powershell runs a command the gate cannot read', false),
+  );
+});
+
+test('refuses an opaque program word in a shell string', () => {
+  assert.deepEqual(
+    callsOf("bash -c '$X push'"),
+    unjudgeable('a program name the gate cannot read', true),
+  );
+});
+
+test('reads env options and assignments in the env -S string', () => {
+  assert.deepEqual(callsOf("env -S '-i A=1 git push'"), {
+    kind: 'calls',
+    calls: [
+      {
+        tool: 'git',
+        words: [{ text: 'push', isOpaque: false }],
+        configs: [],
+        assignments: ['A'],
+      },
+    ],
+  });
+});
+
+test('reads the env -S string as words, not as a shell line', () => {
+  assert.deepEqual(callsOf("env -S 'git push;'"), gitCall('push;'));
+});
+
+test('reads the attached env -S string', () => {
+  assert.deepEqual(callsOf("env '-Sgit push'"), gitCall('push'));
+});
+
+test('refuses an env -S string with a dollar sign', () => {
+  assert.deepEqual(callsOf("env -S 'git push ${X}'"), unjudgeable(SPLIT_TEXT, true));
+});
+
+test('refuses an env -S string with a backslash', () => {
+  assert.deepEqual(callsOf("env -S 'g\\it push'"), unjudgeable(SPLIT_TEXT, true));
+});
+
+test('refuses an env -S string with a quote', () => {
+  assert.deepEqual(callsOf('env -S "\'g\'it push"'), unjudgeable(SPLIT_TEXT, true));
+});
+
+test('refuses an opaque program word after the env -S string', () => {
+  assert.deepEqual(
+    callsOf("env -S 'A=1' $X push"),
+    unjudgeable('a wrapper argument the gate cannot read', true),
   );
 });

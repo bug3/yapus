@@ -5,7 +5,10 @@ export interface WrapperSpec {
   readonly valued: readonly string[];
   readonly attached: readonly string[];
   readonly hasDigitFlag: boolean;
+  // Fixed words between the options and the program (`timeout` DURATION).
   readonly extraWords: number;
+  // Whether the program runs a shell when no command follows (`chroot NEWROOT`).
+  readonly isShellWhenAlone: boolean;
   // Whether NAME=VALUE words may follow the options before the program (`env`).
   readonly hasAssignments: boolean;
   // Options after which the command runs nothing (`command -v`).
@@ -23,6 +26,7 @@ const NONE: WrapperSpec = {
   attached: [],
   hasDigitFlag: false,
   extraWords: 0,
+  isShellWhenAlone: false,
   hasAssignments: false,
   ends: [],
   splitValued: [],
@@ -65,6 +69,52 @@ const WRAPPERS: readonly WrapperSpec[] = [
     valued: ['-u'],
     attached: ['--user='],
   },
+  {
+    ...NONE,
+    name: 'stdbuf',
+    valued: ['-i', '-o', '-e'],
+    attached: ['--input=', '--output=', '--error=', '-i', '-o', '-e'],
+  },
+  { ...NONE, name: 'setsid', flags: ['-c', '-f', '-w', '--ctty', '--fork', '--wait'] },
+  // `doas -s` runs a shell, so the gate does not know it.
+  { ...NONE, name: 'doas', flags: ['-n'], valued: ['-u', '-C'] },
+  {
+    ...NONE,
+    name: 'ionice',
+    flags: ['-t'],
+    valued: ['-c', '-n', '--class', '--classdata'],
+  },
+  // `taskset -p` changes a running process and runs no command.
+  {
+    ...NONE,
+    name: 'taskset',
+    flags: ['-a', '--all-tasks'],
+    ends: ['-p', '--pid'],
+    extraWords: 1,
+  },
+  {
+    ...NONE,
+    name: 'caffeinate',
+    flags: ['-d', '-i', '-m', '-s', '-u'],
+    valued: ['-t', '-w'],
+  },
+  { ...NONE, name: 'unbuffer', flags: ['-p'] },
+  { ...NONE, name: 'builtin' },
+  {
+    ...NONE,
+    name: 'time',
+    flags: ['-p', '-l', '-h', '-a', '--portability', '--verbose', '--append'],
+    valued: ['-o', '--output'],
+    attached: ['--output='],
+  },
+  {
+    ...NONE,
+    name: 'chroot',
+    flags: ['--skip-chdir'],
+    attached: ['--userspec=', '--groups='],
+    extraWords: 1,
+    isShellWhenAlone: true,
+  },
 ];
 
 const RESERVED_WORDS: readonly string[] = [
@@ -76,7 +126,6 @@ const RESERVED_WORDS: readonly string[] = [
   'while',
   'until',
   'do',
-  'time',
   'coproc',
 ];
 

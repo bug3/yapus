@@ -47,9 +47,9 @@ test('denies a call it cannot judge when the text mentions git', () => {
 });
 
 test('denies a call it cannot judge when quotes hide git from the raw text', () => {
-  assert.deepEqual(getVerdict({ stdinText: bashCall("stdbuf sh -c 'g''it push'"), home: HOME }), {
+  assert.deepEqual(getVerdict({ stdinText: bashCall("xargs sh -c 'g''it push'"), home: HOME }), {
     kind: 'deny',
-    detail: 'cannot judge a git or gh call: stdbuf runs a command the gate cannot read',
+    detail: 'cannot judge a git or gh call: xargs runs a command the gate cannot read',
   });
 });
 

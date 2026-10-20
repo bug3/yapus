@@ -7,7 +7,7 @@ import {
 import { isGitWord } from './is-git-word.ts';
 import { programName } from './program-name.ts';
 import { readGitOptions } from './read-git-options.ts';
-import { type Resplit, readRunner, UNREADABLE_STRING } from './read-runner.ts';
+import { type Resplit, readRunner } from './read-runner.ts';
 import { type Cursor, readWrapper } from './read-wrapper.ts';
 
 export interface Call {
@@ -22,9 +22,12 @@ export interface CallsFound {
   readonly calls: readonly Call[];
 }
 
+// `shouldAlwaysDeny` holds when the part the gate cannot read may itself be the
+// program that runs.
 export interface CallsUnjudgeable {
   readonly kind: 'unjudgeable';
   readonly reason: string;
+  readonly shouldAlwaysDeny: boolean;
 }
 
 export type Calls = CallsFound | CallsUnjudgeable;
@@ -85,13 +88,13 @@ function collectCalls(
 
 function readNested(resplit: Resplit, home: string | undefined, depth: number): Calls {
   if (depth >= MAX_DEPTH) {
-    return { kind: 'unjudgeable', reason: 'commands nested too deep' };
+    return { kind: 'unjudgeable', reason: 'commands nested too deep', shouldAlwaysDeny: false };
   }
 
   const split = splitCommands(resplit.text, home);
 
   if (split.kind === 'failure') {
-    return { kind: 'unjudgeable', reason: split.reason };
+    return { kind: 'unjudgeable', reason: split.reason, shouldAlwaysDeny: false };
   }
 
   return collectCalls(split.items, home, depth + 1);
@@ -100,10 +103,10 @@ function readNested(resplit: Resplit, home: string | undefined, depth: number): 
 function readCommand(
   item: CommandItem,
 ): CommandCall | NoCall | Resplit | CallsUnjudgeable {
-  const cursor: Cursor = { index: 0, assignments: [] };
+  const cursor: Cursor = { words: item.words, index: 0, assignments: [] };
 
   for (;;) {
-    const reading = readWrapper(item.words, cursor);
+    const reading = readWrapper(cursor);
 
     if (reading.kind === 'unjudgeable') {
       return reading;
@@ -113,32 +116,14 @@ function readCommand(
       return NO_CALL;
     }
 
-    if (reading.kind === 'split') {
-      return readSplitString(reading.string, reading.rest);
-    }
-
     if (reading.kind === 'program') {
-      return readProgram(item.words, cursor);
+      return readProgram(cursor);
     }
   }
 }
 
-// `env -S` runs its string with the words after it appended, as a shell line.
-function readSplitString(string: Word, rest: readonly Word[]): Resplit | CallsUnjudgeable {
-  if (string.isOpaque || rest.some((word) => word.isOpaque)) {
-    return { kind: 'unjudgeable', reason: UNREADABLE_STRING };
-  }
-
-  return {
-    kind: 'resplit',
-    text: [string.text, ...rest.map((word) => word.text)].join(' '),
-  };
-}
-
-function readProgram(
-  words: readonly Word[],
-  cursor: Cursor,
-): CommandCall | NoCall | Resplit | CallsUnjudgeable {
+function readProgram(cursor: Cursor): CommandCall | NoCall | Resplit | CallsUnjudgeable {
+  const { words } = cursor;
   const program = words[cursor.index];
 
   if (program === undefined) {
@@ -149,6 +134,7 @@ function readProgram(
     return {
       kind: 'unjudgeable',
       reason: 'a program name the gate cannot read',
+      shouldAlwaysDeny: true,
     };
   }
 

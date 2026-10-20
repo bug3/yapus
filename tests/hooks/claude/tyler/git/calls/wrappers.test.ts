@@ -27,10 +27,17 @@ function gitCall(assignments: readonly string[], ...texts: readonly string[]): u
   };
 }
 
+function unjudgeable(reason: string, shouldAlwaysDeny: boolean): unknown {
+  return { kind: 'unjudgeable', reason, shouldAlwaysDeny };
+}
+
 const UNREADABLE = {
   kind: 'unjudgeable',
   reason: 'a wrapper argument the gate cannot read',
+  shouldAlwaysDeny: true,
 };
+
+const NONE = { kind: 'calls', calls: [] };
 
 test('treats a path to env as a wrapper', () => {
   assert.deepEqual(callsOf('/usr/bin/env -i git push'), gitCall([], 'push'));
@@ -94,4 +101,114 @@ test('refuses an env word with an opaque name before the equals sign', () => {
 
 test('skips coproc', () => {
   assert.deepEqual(callsOf('coproc git push'), gitCall([], 'push'));
+});
+
+test('skips stdbuf with an attached mode', () => {
+  assert.deepEqual(callsOf('stdbuf -oL git reset --hard'), gitCall([], 'reset', '--hard'));
+});
+
+test('skips stdbuf modes with separate and long values', () => {
+  assert.deepEqual(
+    callsOf('stdbuf -i 0 -o L -e 0 -iL -o0 -eL --input=0 --output=L --error=0 git push'),
+    gitCall([], 'push'),
+  );
+});
+
+test('reads env -S behind stdbuf', () => {
+  assert.deepEqual(callsOf("stdbuf env -S 'git push'"), gitCall([], 'push'));
+});
+
+test('reads a shell string behind stdbuf', () => {
+  assert.deepEqual(callsOf("stdbuf -oL sh -c 'git push'"), gitCall([], 'push'));
+});
+
+test('skips setsid options', () => {
+  assert.deepEqual(
+    callsOf('setsid -c -f -w --ctty --fork --wait git push'),
+    gitCall([], 'push'),
+  );
+});
+
+test('skips doas options', () => {
+  assert.deepEqual(callsOf('doas -n -u root -C /etc/doas.conf git push'), gitCall([], 'push'));
+});
+
+test('refuses doas -s, which runs a shell', () => {
+  assert.deepEqual(callsOf('doas -s'), unjudgeable('doas option the gate cannot read', false));
+});
+
+test('skips ionice options', () => {
+  assert.deepEqual(
+    callsOf('ionice -c 2 -n 7 -t --class 3 --classdata 1 git push'),
+    gitCall([], 'push'),
+  );
+});
+
+test('skips the taskset mask', () => {
+  assert.deepEqual(callsOf('taskset 0x1 git push'), gitCall([], 'push'));
+});
+
+test('skips taskset -a and the mask', () => {
+  assert.deepEqual(callsOf('taskset --all-tasks 0x1 git push'), gitCall([], 'push'));
+});
+
+test('treats taskset -p as no call', () => {
+  assert.deepEqual(callsOf('taskset -p 1'), NONE);
+});
+
+test('skips caffeinate options', () => {
+  assert.deepEqual(
+    callsOf('caffeinate -d -i -m -s -u -t 60 -w 1 git push'),
+    gitCall([], 'push'),
+  );
+});
+
+test('skips unbuffer -p', () => {
+  assert.deepEqual(callsOf('unbuffer -p git push'), gitCall([], 'push'));
+});
+
+test('reads eval behind builtin', () => {
+  assert.deepEqual(callsOf('builtin eval git push'), gitCall([], 'push'));
+});
+
+test('refuses a builtin option', () => {
+  assert.deepEqual(
+    callsOf('builtin -x git push'),
+    unjudgeable('builtin option the gate cannot read', false),
+  );
+});
+
+test('skips the time program by its path', () => {
+  assert.deepEqual(callsOf('/usr/bin/time -p git push'), gitCall([], 'push'));
+});
+
+test('skips the time program in upper case', () => {
+  assert.deepEqual(callsOf('TIME git push'), gitCall([], 'push'));
+});
+
+test('skips the time program options', () => {
+  assert.deepEqual(
+    callsOf(
+      'time -l -h -a -o f --portability --verbose --append --output f --output=f git push',
+    ),
+    gitCall([], 'push'),
+  );
+});
+
+test('skips the chroot root', () => {
+  assert.deepEqual(callsOf('chroot /x git push'), gitCall([], 'push'));
+});
+
+test('skips chroot options and the root', () => {
+  assert.deepEqual(
+    callsOf('chroot --userspec=u:g --groups=g --skip-chdir /x git push'),
+    gitCall([], 'push'),
+  );
+});
+
+test('refuses chroot without a command, which runs a shell', () => {
+  assert.deepEqual(
+    callsOf('chroot /x'),
+    unjudgeable('chroot runs a shell the gate cannot read', false),
+  );
 });

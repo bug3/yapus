@@ -2,7 +2,9 @@ import type { Word } from '../shell/split-commands.ts';
 import { programName } from './program-name.ts';
 import { type WrapperSpec, wrapperSpecs } from './wrapper-specs.ts';
 
+// The words being read, which `env -S` replaces with the words of its string.
 export interface Cursor {
+  words: readonly Word[];
   index: number;
   readonly assignments: string[];
 }
@@ -11,17 +13,12 @@ export interface Reading {
   readonly kind: 'moved' | 'ended' | 'program';
 }
 
+// `shouldAlwaysDeny` holds when the part the gate cannot read may itself be the
+// program that runs.
 export interface Unreadable {
   readonly kind: 'unjudgeable';
   readonly reason: string;
-}
-
-// The string that an option such as `env -S` hands over to be split again, and the words
-// after it.
-export interface SplitReading {
-  readonly kind: 'split';
-  readonly string: Word;
-  readonly rest: readonly Word[];
+  readonly shouldAlwaysDeny: boolean;
 }
 
 export const MOVED: Reading = { kind: 'moved' };
@@ -32,16 +29,27 @@ export const PROGRAM: Reading = { kind: 'program' };
 
 // `NAME=`, `NAME+=` and `NAME[index]=`.
 const ASSIGNMENT = /^([A-Za-z_][A-Za-z0-9_]*)(?:\[[^\]]*\])?\+?=/;
-const WRAPPER_ARGUMENT = 'a wrapper argument the gate cannot read';
 const DIGIT_FLAG = /^-\d+$/;
+// `env -S` gives these characters a meaning the gate does not read: escapes,
+// variables, quotes and comments.
+const SPLIT_SPECIAL = /[\\$'"#]/;
+
+const WRAPPER_ARGUMENT: Unreadable = {
+  kind: 'unjudgeable',
+  reason: 'a wrapper argument the gate cannot read',
+  shouldAlwaysDeny: true,
+};
+
+const SPLIT_TEXT: Unreadable = {
+  kind: 'unjudgeable',
+  reason: 'env -S text the gate cannot read',
+  shouldAlwaysDeny: true,
+};
 
 // Applies the one rule that matches at the cursor: a reserved word, an assignment or a
 // wrapper. `program` means no rule applies and the word at the cursor is the program.
-export function readWrapper(
-  words: readonly Word[],
-  cursor: Cursor,
-): Reading | SplitReading | Unreadable {
-  const word = words[cursor.index];
+export function readWrapper(cursor: Cursor): Reading | Unreadable {
+  const word = cursor.words[cursor.index];
 
   if (word === undefined) {
     return ENDED;
@@ -61,8 +69,7 @@ export function readWrapper(
   }
 
   if (wrapperSpecs.reservedWords.includes(word.text)) {
-    cursor.index +=
-      word.text === 'time' && words[cursor.index + 1]?.text === '-p' ? 2 : 1;
+    cursor.index += 1;
 
     return MOVED;
   }
@@ -76,16 +83,12 @@ export function readWrapper(
 
   cursor.index += 1;
 
-  return skipOptions(words, cursor, spec);
+  return skipOptions(cursor, spec);
 }
 
-function skipOptions(
-  words: readonly Word[],
-  cursor: Cursor,
-  spec: WrapperSpec,
-): Reading | SplitReading | Unreadable {
+function skipOptions(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable {
   for (;;) {
-    const word = words[cursor.index];
+    const word = cursor.words[cursor.index];
 
     if (word === undefined || isAssignment(word)) {
       break;
@@ -93,7 +96,7 @@ function skipOptions(
 
     // An unquoted opaque word can expand to several words, so nothing past it is known.
     if (word.isOpaque) {
-      return { kind: 'unjudgeable', reason: WRAPPER_ARGUMENT };
+      return WRAPPER_ARGUMENT;
     }
 
     if (!word.text.startsWith('-')) {
@@ -104,10 +107,14 @@ function skipOptions(
       return ENDED;
     }
 
-    const split = readSplit(words, cursor.index, spec);
+    const split = readSplit(cursor, spec);
 
-    if (split !== undefined) {
-      return split;
+    if (split === 'unjudgeable') {
+      return SPLIT_TEXT;
+    }
+
+    if (split === 'read') {
+      continue;
     }
 
     const step = stepOf(word.text, spec);
@@ -116,31 +123,28 @@ function skipOptions(
       return {
         kind: 'unjudgeable',
         reason: `${ spec.name } option the gate cannot read`,
+        shouldAlwaysDeny: false,
       };
     }
 
-    if (hasOpaque(words, cursor.index + 1, cursor.index + step)) {
-      return { kind: 'unjudgeable', reason: WRAPPER_ARGUMENT };
+    if (hasOpaque(cursor.words, cursor.index + 1, cursor.index + step)) {
+      return WRAPPER_ARGUMENT;
     }
 
     cursor.index += step;
   }
 
-  return finishWrapper(words, cursor, spec);
+  return finishWrapper(cursor, spec);
 }
 
 // Reads what follows the options: the fixed extra words, the `env` assignments, and a
 // check on the word where the program should start (an opaque extra word was refused
 // with the options).
-function finishWrapper(
-  words: readonly Word[],
-  cursor: Cursor,
-  spec: WrapperSpec,
-): Reading | Unreadable {
+function finishWrapper(cursor: Cursor, spec: WrapperSpec): Reading | Unreadable {
   cursor.index += spec.extraWords;
 
   while (spec.hasAssignments) {
-    const word = words[cursor.index];
+    const word = cursor.words[cursor.index];
 
     if (word === undefined || word.text.startsWith('-') || !word.text.includes('=')) {
       break;
@@ -150,11 +154,17 @@ function finishWrapper(
     cursor.index += 1;
   }
 
-  const next = words[cursor.index];
+  const next = cursor.words[cursor.index];
 
-  return next?.isOpaque === true && !isAssignment(next)
-    ? { kind: 'unjudgeable', reason: WRAPPER_ARGUMENT }
-    : MOVED;
+  if (next === undefined && spec.isShellWhenAlone) {
+    return {
+      kind: 'unjudgeable',
+      reason: `${ spec.name } runs a shell the gate cannot read`,
+      shouldAlwaysDeny: false,
+    };
+  }
+
+  return next?.isOpaque === true && !isAssignment(next) ? WRAPPER_ARGUMENT : MOVED;
 }
 
 function isAssignment(word: Word): boolean {
@@ -165,32 +175,37 @@ function hasOpaque(words: readonly Word[], start: number, end: number): boolean 
   return words.slice(start, end).some((word) => word.isOpaque);
 }
 
-// The split string of an option written as `-S v` or `-Sv` or `--name v` or `--name=v`.
-function readSplit(
-  words: readonly Word[],
-  index: number,
-  spec: WrapperSpec,
-): SplitReading | Unreadable | undefined {
-  const word = words[index];
-  const text = word?.text ?? '';
-
-  if (spec.splitValued.includes(text)) {
-    const string = words[index + 1];
-
-    return string === undefined
-      ? { kind: 'unjudgeable', reason: `${ spec.name } option the gate cannot read` }
-      : { kind: 'split', string, rest: words.slice(index + 2) };
-  }
-
+// Puts the words of a split string (`env -S v`, `-Sv`, `--split-string v` or
+// `--split-string=v`) in place of the option and its string, followed by the words
+// after it, so the wrapper reads them as its own arguments. `none` when the word at the
+// cursor is not such an option.
+function readSplit(cursor: Cursor, spec: WrapperSpec): 'read' | 'none' | 'unjudgeable' {
+  const { words, index } = cursor;
+  const text = words[index]?.text ?? '';
+  const isValued = spec.splitValued.includes(text);
   const prefix = spec.splitAttached.find((candidate) => text.startsWith(candidate));
 
-  if (prefix === undefined) {
-    return undefined;
+  if (!isValued && prefix === undefined) {
+    return 'none';
   }
 
-  const string = { text: text.slice(prefix.length), isOpaque: word?.isOpaque === true };
+  const string = isValued
+    ? words[index + 1]
+    : { text: text.slice(prefix?.length), isOpaque: words[index]?.isOpaque === true };
 
-  return { kind: 'split', string, rest: words.slice(index + 1) };
+  if (string === undefined || string.isOpaque || SPLIT_SPECIAL.test(string.text)) {
+    return 'unjudgeable';
+  }
+
+  const parts = string.text.split(/\s+/).filter((part) => part !== '');
+
+  cursor.words = [
+    ...parts.map((part) => ({ text: part, isOpaque: false })),
+    ...words.slice(index + (isValued ? 2 : 1)),
+  ];
+  cursor.index = 0;
+
+  return 'read';
 }
 
 // How many words an option takes; 0 when the gate does not know it.

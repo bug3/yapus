@@ -59,8 +59,8 @@ function none(): unknown {
   return { kind: 'calls', calls: [] };
 }
 
-function unjudgeable(reason: string): unknown {
-  return { kind: 'unjudgeable', reason };
+function unjudgeable(reason: string, shouldAlwaysDeny: boolean): unknown {
+  return { kind: 'unjudgeable', reason, shouldAlwaysDeny };
 }
 
 test('finds a git call and starts words at the subcommand', () => {
@@ -211,7 +211,7 @@ test('reads the string of env --split-string=', () => {
 test('refuses an env option it does not know', () => {
   assert.deepEqual(
     getCalls([item('env', '-x', 'git')]),
-    unjudgeable('env option the gate cannot read'),
+    unjudgeable('env option the gate cannot read', false),
   );
 });
 
@@ -305,7 +305,7 @@ test('skips sudo options', () => {
 test('refuses a sudo option it does not know', () => {
   assert.deepEqual(
     getCalls([item('sudo', '-i', 'git')]),
-    unjudgeable('sudo option the gate cannot read'),
+    unjudgeable('sudo option the gate cannot read', false),
   );
 });
 
@@ -350,7 +350,7 @@ test('does not take a name that only ends in git', () => {
 test('refuses an opaque program word', () => {
   assert.deepEqual(
     getCalls([opaqueItem('$GIT')]),
-    unjudgeable('a program name the gate cannot read'),
+    unjudgeable('a program name the gate cannot read', true),
   );
 });
 
@@ -439,56 +439,56 @@ test('reads git options without values', () => {
 test('refuses a git option with a missing value', () => {
   assert.deepEqual(
     getCalls([item('git', '-C')]),
-    unjudgeable('a git option the gate cannot read'),
+    unjudgeable('a git option the gate cannot read', false),
   );
 });
 
 test('refuses an opaque value of git -C', () => {
   assert.deepEqual(
     getCalls([opaqueItem('git', '-C', '$D')]),
-    unjudgeable('a git option the gate cannot read'),
+    unjudgeable('a git option the gate cannot read', false),
   );
 });
 
 test('refuses an opaque value of git -c', () => {
   assert.deepEqual(
     getCalls([opaqueItem('git', '-c', '$K')]),
-    unjudgeable('a git option the gate cannot read'),
+    unjudgeable('a git option the gate cannot read', false),
   );
 });
 
 test('refuses an opaque value of git --config-env', () => {
   assert.deepEqual(
     getCalls([opaqueItem('git', '--config-env=$K')]),
-    unjudgeable('a git option the gate cannot read'),
+    unjudgeable('a git option the gate cannot read', false),
   );
 });
 
 test('refuses an opaque value of git --git-dir', () => {
   assert.deepEqual(
     getCalls([opaqueItem('git', '--git-dir', '$G')]),
-    unjudgeable('a git option the gate cannot read'),
+    unjudgeable('a git option the gate cannot read', false),
   );
 });
 
 test('refuses a git option it does not know', () => {
   assert.deepEqual(
     getCalls([item('git', '--exec-path=x', 'status')]),
-    unjudgeable('a git option the gate cannot read'),
+    unjudgeable('a git option the gate cannot read', false),
   );
 });
 
 test('refuses an opaque git subcommand', () => {
   assert.deepEqual(
     getCalls([opaqueItem('git', '$SUB')]),
-    unjudgeable('a git subcommand the gate cannot read'),
+    unjudgeable('a git subcommand the gate cannot read', false),
   );
 });
 
 test('makes the first unjudgeable command decide the result', () => {
   assert.deepEqual(
     getCalls([item('git', 'a'), item('sudo', '-i'), opaqueItem('$X')]),
-    unjudgeable('sudo option the gate cannot read'),
+    unjudgeable('sudo option the gate cannot read', false),
   );
 });
 
