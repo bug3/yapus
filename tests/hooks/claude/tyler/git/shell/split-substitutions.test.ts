@@ -1,17 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { splitCommands } from '../../../../../../hooks/claude/tyler/git/shell/split-commands.ts';
-
-const OPEN = { kind: 'open' };
-const CLOSE = { kind: 'close' };
-
-function item(...texts: readonly string[]): unknown {
-  return {
-    kind: 'command',
-    words: texts.map((text) => ({ text, isOpaque: false })),
-    heredocs: [],
-  };
-}
+import { CLOSE, failure, item, items, OPEN } from './items.ts';
 
 function opaqueItem(plain: string, opaqueText: string): unknown {
   return {
@@ -22,14 +12,6 @@ function opaqueItem(plain: string, opaqueText: string): unknown {
     ],
     heredocs: [],
   };
-}
-
-function items(...list: readonly unknown[]): unknown {
-  return { kind: 'items', items: list };
-}
-
-function failure(reason: string): unknown {
-  return { kind: 'failure', reason };
 }
 
 test('splits the inside of $( and emits it before the command', () => {

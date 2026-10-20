@@ -1,13 +1,5 @@
-import { makeFailure } from './read-word.ts';
-import { type Item, type SplitFailure, splitRegion } from './split-commands.ts';
-
-// `level` counts the substitutions that enclose the text being read;
-// `isInDoubleQuotes` is true when that text is inside double quotes.
-export interface Context {
-  readonly home: string | undefined;
-  readonly level: number;
-  readonly isInDoubleQuotes?: boolean;
-}
+import { type Context, makeFailure, type SplitFailure } from './make-failure.ts';
+import { type Item, splitRegion } from './split-commands.ts';
 
 // `items` are the commands inside, wrapped in an open and a close; `end` is just past it.
 export interface SubstitutionRead {
@@ -50,7 +42,7 @@ function readParen(line: string, start: number, context: Context): SubstitutionR
   const region = splitRegion(line, context.home, {
     start: start + 2,
     depth: context.level + 1,
-    isClosedByParen: true,
+    closedBy: 'paren',
   });
 
   if (region.kind === 'failure') {
@@ -86,7 +78,7 @@ function readBacktick(line: string, start: number, context: Context): Substituti
   const region = splitRegion(inside, context.home, {
     start: 0,
     depth: context.level + 1,
-    isClosedByParen: false,
+    closedBy: 'input',
   });
 
   if (region.kind === 'failure') {

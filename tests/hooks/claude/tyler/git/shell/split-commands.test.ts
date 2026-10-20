@@ -1,19 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { splitCommands } from '../../../../../../hooks/claude/tyler/git/shell/split-commands.ts';
-
-function command(...texts: readonly string[]): unknown {
-  return {
-    kind: 'items',
-    items: [
-      {
-        kind: 'command',
-        words: texts.map((text) => ({ text, isOpaque: false })),
-        heredocs: [],
-      },
-    ],
-  };
-}
+import { command, failure, item, items, opaqueCommand, withBodies } from './items.ts';
 
 test('yields no items for an empty line', () => {
   assert.deepEqual(splitCommands('', undefined), { kind: 'items', items: [] });
@@ -30,29 +18,6 @@ test('splits words on spaces', () => {
 test('splits words on tabs', () => {
   assert.deepEqual(splitCommands('git\tstatus', undefined), command('git', 'status'));
 });
-
-function item(...texts: readonly string[]): unknown {
-  return {
-    kind: 'command',
-    words: texts.map((text) => ({ text, isOpaque: false })),
-    heredocs: [],
-  };
-}
-
-function opaque(text: string): unknown {
-  return {
-    kind: 'items',
-    items: [{ kind: 'command', words: [{ text, isOpaque: true }], heredocs: [] }],
-  };
-}
-
-function items(...list: readonly unknown[]): unknown {
-  return { kind: 'items', items: list };
-}
-
-function failure(reason: string): unknown {
-  return { kind: 'failure', reason };
-}
 
 test('ends a command at an unquoted newline', () => {
   assert.deepEqual(splitCommands('a\nb', undefined), items(item('a'), item('b')));
@@ -208,14 +173,6 @@ test('fails on a redirection followed by a redirection', () => {
   assert.deepEqual(splitCommands('a > >b', undefined), failure('redirection without a target'));
 });
 
-function withBodies(texts: readonly string[], bodies: readonly string[]): unknown {
-  return {
-    kind: 'command',
-    words: texts.map((text) => ({ text, isOpaque: false })),
-    heredocs: bodies,
-  };
-}
-
 test('fails on a heredoc without a body', () => {
   assert.deepEqual(splitCommands('a <<EOF', undefined), failure('unterminated heredoc'));
 });
@@ -332,11 +289,11 @@ test('replaces a leading tilde before a slash with home', () => {
 });
 
 test('marks a leading tilde opaque when home is unknown', () => {
-  assert.deepEqual(splitCommands('~/x', undefined), opaque('~/x'));
+  assert.deepEqual(splitCommands('~/x', undefined), opaqueCommand('~/x'));
 });
 
 test('marks ~name opaque', () => {
-  assert.deepEqual(splitCommands('~bob/x', '/h'), opaque('~bob/x'));
+  assert.deepEqual(splitCommands('~bob/x', '/h'), opaqueCommand('~bob/x'));
 });
 
 test('keeps a quoted tilde literal', () => {

@@ -1,7 +1,7 @@
+import { type Context, makeFailure, type SplitFailure } from './make-failure.ts';
 import { type Heredoc, readHeredoc } from './read-heredoc.ts';
 import { readRedirection } from './read-redirection.ts';
-import type { Context } from './read-substitution.ts';
-import { makeFailure, readWord } from './read-word.ts';
+import { readWord } from './read-word.ts';
 
 export interface Word {
   readonly text: string;
@@ -29,23 +29,29 @@ export interface SplitItems {
   readonly items: readonly Item[];
 }
 
-export interface SplitFailure {
-  readonly kind: 'failure';
-  readonly reason: string;
-}
-
 export type Split = SplitItems | SplitFailure;
 
-interface PendingHeredoc {
-  readonly heredoc: Heredoc;
-  readonly bodies: string[];
+// The heredocs opened by one ended command, whose bodies come at the next newline;
+// `index` is where its substitutions go, and `command` is the item to hold the bodies,
+// if the command had words.
+interface PendingCommand {
+  readonly heredocs: readonly Heredoc[];
   readonly index: number;
+  readonly command: CommandItem | undefined;
 }
 
+interface BodiesRead {
+  readonly pending: PendingCommand;
+  readonly bodies: readonly string[];
+  readonly items: readonly Item[];
+}
+
+// `closedBy` is `input` for a region that runs to the end of input, and `paren` for
+// one that ends at the unquoted `)` that closes it.
 export interface Region {
   readonly start: number;
   readonly depth: number;
-  readonly isClosedByParen: boolean;
+  readonly closedBy: 'input' | 'paren';
 }
 
 export interface RegionItems {
@@ -59,7 +65,7 @@ interface Builder {
   readonly items: Item[];
   words: Word[];
   heredocs: Heredoc[];
-  readonly pending: PendingHeredoc[];
+  readonly pending: PendingCommand[];
   isAwaitingTarget: boolean;
   depth: number;
 }
@@ -76,7 +82,7 @@ export function splitCommands(line: string, home: string | undefined): Split {
   const region = splitRegion(line, home, {
     start: 0,
     depth: 0,
-    isClosedByParen: false,
+    closedBy: 'input',
   });
 
   if (region.kind === 'failure') {
@@ -86,7 +92,7 @@ export function splitCommands(line: string, home: string | undefined): Split {
   return { kind: 'items', items: region.items };
 }
 
-// Splits from `start` to the end of input, or, when `isClosedByParen`, up to the
+// Splits from `start` to the end of input, or, when `closedBy` is `paren`, up to the
 // unquoted `)` that closes the region (its position is `end`, the `)` is not consumed).
 export function splitRegion(
   line: string,
@@ -105,7 +111,7 @@ export function splitRegion(
   let position = region.start;
 
   while (position < line.length) {
-    const isClose = region.isClosedByParen && line.charAt(position) === ')';
+    const isClose = region.closedBy === 'paren' && line.charAt(position) === ')';
 
     if (isClose && builder.depth === 0) {
       break;
@@ -120,7 +126,7 @@ export function splitRegion(
     position = step;
   }
 
-  if (region.isClosedByParen && position >= line.length) {
+  if (region.closedBy === 'paren' && position >= line.length) {
     return makeFailure('unclosed $(');
   }
 
@@ -246,25 +252,38 @@ function readCommandWord(
 
 // Reads the bodies of the heredocs opened on the line just ended, in order.
 function readBodies(line: string, start: number, builder: Builder): number | SplitFailure {
-  const inserts: { readonly index: number; readonly items: readonly Item[] }[] = [];
+  const reads: BodiesRead[] = [];
   let position = start;
 
-  for (const { heredoc, bodies, index } of builder.pending.splice(0)) {
-    const body = readHeredoc(line, position, { heredoc, context: builder.context });
+  for (const pending of builder.pending.splice(0)) {
+    const bodies: string[] = [];
+    const items: Item[] = [];
 
-    if (body.kind === 'failure') {
-      return body;
+    for (const heredoc of pending.heredocs) {
+      const body = readHeredoc(line, position, { heredoc, context: builder.context });
+
+      if (body.kind === 'failure') {
+        return body;
+      }
+
+      bodies.push(body.text);
+      items.push(...body.items);
+      position = body.end;
     }
 
-    bodies.push(body.text);
-    inserts.push({ index, items: body.items });
-    position = body.end;
+    reads.push({ pending, bodies, items });
   }
 
-  // Substitution commands run before the command that holds the heredoc; insert from
+  // Substitution commands run before the command that holds the heredoc; attach from
   // the back so that earlier indexes stay valid.
-  for (const { index, items } of inserts.reverse()) {
-    builder.items.splice(index, 0, ...items);
+  for (const read of reads.reverse()) {
+    const { command, index } = read.pending;
+
+    if (command !== undefined) {
+      builder.items[index] = { ...command, heredocs: read.bodies };
+    }
+
+    builder.items.splice(index, 0, ...read.items);
   }
 
   return position;
@@ -299,18 +318,24 @@ function endCommand(builder: Builder): SplitFailure | undefined {
     return makeFailure('redirection without a target');
   }
 
-  const bodies: string[] = [];
+  const command: CommandItem | undefined = builder.words.length > 0
+    ? { kind: 'command', words: builder.words, heredocs: [] }
+    : undefined;
 
-  for (const heredoc of builder.heredocs) {
-    builder.pending.push({ heredoc, bodies, index: builder.items.length });
+  if (builder.heredocs.length > 0) {
+    builder.pending.push({
+      heredocs: builder.heredocs,
+      index: builder.items.length,
+      command,
+    });
+  }
+
+  if (command !== undefined) {
+    builder.items.push(command);
   }
 
   builder.heredocs = [];
-
-  if (builder.words.length > 0) {
-    builder.items.push({ kind: 'command', words: builder.words, heredocs: bodies });
-    builder.words = [];
-  }
+  builder.words = [];
 
   return undefined;
 }

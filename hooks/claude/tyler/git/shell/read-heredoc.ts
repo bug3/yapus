@@ -1,7 +1,6 @@
+import { type Context, makeFailure, type SplitFailure } from './make-failure.ts';
 import { readExpansion } from './read-expansion.ts';
-import type { Context } from './read-substitution.ts';
-import { makeFailure } from './read-word.ts';
-import type { Item, SplitFailure } from './split-commands.ts';
+import type { Item } from './split-commands.ts';
 
 // `isQuoted` is true when the delimiter word held a quote or a backslash.
 export interface Heredoc {

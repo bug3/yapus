@@ -1,6 +1,5 @@
-import { type Context, readSubstitution, type SubstitutionResult } from './read-substitution.ts';
-import { makeFailure } from './read-word.ts';
-import type { SplitFailure } from './split-commands.ts';
+import { type Context, makeFailure, type SplitFailure } from './make-failure.ts';
+import { readSubstitution, type SubstitutionResult } from './read-substitution.ts';
 
 const PARAMETER = /^(?:[A-Za-z_][A-Za-z0-9_]*|[0-9@*#?$!-])/;
 const MAX_BRACED_DEPTH = 3;

@@ -1,7 +1,7 @@
+import { type Context, makeFailure, type SplitFailure } from './make-failure.ts';
 import type { Heredoc } from './read-heredoc.ts';
-import type { Context } from './read-substitution.ts';
-import { isWordBoundary, makeFailure, readWord } from './read-word.ts';
-import type { Item, SplitFailure } from './split-commands.ts';
+import { isWordBoundary, readWord } from './read-word.ts';
+import type { Item } from './split-commands.ts';
 
 export interface NoRedirection {
   readonly kind: 'none';

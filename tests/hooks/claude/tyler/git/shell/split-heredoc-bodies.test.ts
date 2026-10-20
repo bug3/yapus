@@ -1,30 +1,16 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { splitCommands } from '../../../../../../hooks/claude/tyler/git/shell/split-commands.ts';
-
-const OPEN = { kind: 'open' };
-const CLOSE = { kind: 'close' };
-
-function command(texts: readonly string[], heredocs: readonly string[]): unknown {
-  return {
-    kind: 'command',
-    words: texts.map((text) => ({ text, isOpaque: false })),
-    heredocs,
-  };
-}
-
-function items(...list: readonly unknown[]): unknown {
-  return { kind: 'items', items: list };
-}
+import { CLOSE, items, OPEN, withBodies } from './items.ts';
 
 test('splits a substitution in an unquoted body before its command', () => {
   assert.deepEqual(
     splitCommands('cat <<EOF\n$(git reset --hard)\nEOF', undefined),
     items(
       OPEN,
-      command(['git', 'reset', '--hard'], []),
+      withBodies(['git', 'reset', '--hard'], []),
       CLOSE,
-      command(['cat'], ['$(git reset --hard)']),
+      withBodies(['cat'], ['$(git reset --hard)']),
     ),
   );
 });
@@ -32,42 +18,42 @@ test('splits a substitution in an unquoted body before its command', () => {
 test('does not split a substitution in a quoted body', () => {
   assert.deepEqual(
     splitCommands("cat <<'EOF'\n$(git reset --hard)\nEOF", undefined),
-    items(command(['cat'], ['$(git reset --hard)'])),
+    items(withBodies(['cat'], ['$(git reset --hard)'])),
   );
 });
 
 test('splits a backtick substitution in an unquoted body', () => {
   assert.deepEqual(
     splitCommands('cat <<EOF\n`git status`\nEOF', undefined),
-    items(OPEN, command(['git', 'status'], []), CLOSE, command(['cat'], ['`git status`'])),
+    items(OPEN, withBodies(['git', 'status'], []), CLOSE, withBodies(['cat'], ['`git status`'])),
   );
 });
 
 test('does not split escaped substitutions in an unquoted body', () => {
   assert.deepEqual(
     splitCommands('cat <<EOF\n\\$(x) \\`x\\`\nEOF', undefined),
-    items(command(['cat'], ['\\$(x) \\`x\\`'])),
+    items(withBodies(['cat'], ['\\$(x) \\`x\\`'])),
   );
 });
 
 test('ends a continued delimiter line and reads the next line as a command', () => {
   assert.deepEqual(
     splitCommands('cat <<EOF\nE\\\nOF\ngit reset --hard', undefined),
-    items(command(['cat'], ['']), command(['git', 'reset', '--hard'], [])),
+    items(withBodies(['cat'], ['']), withBodies(['git', 'reset', '--hard'], [])),
   );
 });
 
 test('does not continue a line of a quoted-delimiter body', () => {
   assert.deepEqual(
     splitCommands("cat <<'EOF'\nE\\\nOF\nEOF", undefined),
-    items(command(['cat'], ['E\\\nOF'])),
+    items(withBodies(['cat'], ['E\\\nOF'])),
   );
 });
 
 test('does not join lines ending in an even number of backslashes', () => {
   assert.deepEqual(
     splitCommands('cat <<EOF\na\\\\\nEOF', undefined),
-    items(command(['cat'], ['a\\\\'])),
+    items(withBodies(['cat'], ['a\\\\'])),
   );
 });
 
@@ -75,9 +61,9 @@ test('keeps the inner tabs of a continued dash heredoc line in the delimiter tes
   assert.deepEqual(
     splitCommands("cat <<-EOF\n\tE\\\n\t\tOF\ncat <<'Y'\nEOF\ngit push --force\nY", undefined),
     items(
-      command(['cat'], ["E\t\tOF\ncat <<'Y'"]),
-      command(['git', 'push', '--force'], []),
-      command(['Y'], []),
+      withBodies(['cat'], ["E\t\tOF\ncat <<'Y'"]),
+      withBodies(['git', 'push', '--force'], []),
+      withBodies(['Y'], []),
     ),
   );
 });
@@ -108,13 +94,13 @@ test('puts the substitutions of two heredocs before their commands in order', ()
     splitCommands('cat <<A | cat <<B\n$(a)\nA\n$(b)\nB', undefined),
     items(
       OPEN,
-      command(['a'], []),
+      withBodies(['a'], []),
       CLOSE,
-      command(['cat'], ['$(a)']),
+      withBodies(['cat'], ['$(a)']),
       OPEN,
-      command(['b'], []),
+      withBodies(['b'], []),
       CLOSE,
-      command(['cat'], ['$(b)']),
+      withBodies(['cat'], ['$(b)']),
     ),
   );
 });

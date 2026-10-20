@@ -1,6 +1,6 @@
 import { readExpansion } from './read-expansion.ts';
-import type { Context } from './read-substitution.ts';
-import type { Item, SplitFailure } from './split-commands.ts';
+import { type Context, makeFailure, type SplitFailure } from './make-failure.ts';
+import type { Item } from './split-commands.ts';
 
 export type Tilde = 'none' | 'home' | 'user';
 
@@ -43,10 +43,6 @@ const EQUALS_EXPANSION = /^=./;
 
 export function isWordBoundary(char: string): boolean {
   return char === '' || BOUNDARIES.includes(char);
-}
-
-export function makeFailure(reason: string): SplitFailure {
-  return { kind: 'failure', reason };
 }
 
 // `isPlain` is true when no quote or backslash was used; `tilde` describes a
