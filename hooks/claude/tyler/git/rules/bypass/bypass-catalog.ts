@@ -42,6 +42,31 @@ export const bypassCatalog = {
   hooksPathKey: 'core.hookspath',
   aliasKeyPrefix: 'alias.',
   cleanRequireForceKey: 'clean.requireforce',
+  // The only keys the agent may set with `-c` or `git config`, compared in lower
+  // case: whole keys, and the sections any key of which is allowed (`color.`).
+  allowedConfigKeys: [
+    'core.pager',
+    'core.quotepath',
+    'core.autocrlf',
+    'core.safecrlf',
+    'format.pretty',
+    'init.defaultbranch',
+    'merge.conflictstyle',
+    'rebase.autosquash',
+    'rebase.autostash',
+    'pull.rebase',
+    'push.autosetupremote',
+    'fetch.prune',
+    'status.showuntrackedfiles',
+    'diff.renames',
+    'diff.colormoved',
+    'diff.algorithm',
+  ],
+  allowedConfigPrefixes: ['pager.', 'color.', 'advice.', 'column.', 'i18n.', 'log.'],
+  // Subcommands that put the key after them (`git config set key value`).
+  configKeySubcommands: ['set', 'unset'],
+  // Subcommands whose arguments the gate must read to judge them.
+  opaqueSubcommands: ['merge', 'am', 'rebase'],
   configReadFlags: ['--get', '--get-all', '--get-regexp', '--list', '-l'],
   configReadSubcommands: ['get', 'list'],
   configSectionFlags: ['--remove-section', '--rename-section'],

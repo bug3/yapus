@@ -1,6 +1,7 @@
 import type { Call } from '../../calls/get-calls.ts';
 import { bypassCatalog } from './bypass-catalog.ts';
 import { type Arguments, hasFlag, readArguments } from '../read-arguments.ts';
+import { getKeyRefusal } from './get-key-refusal.ts';
 import { readCommitArguments } from './read-commit-arguments.ts';
 
 // A reason to refuse a git call that skips the hooks, or undefined.
@@ -36,19 +37,35 @@ export function getBypassRefusal(call: Call): string | undefined {
   const reason = Object.entries(bypassCatalog.noVerifyReasons)
     .find(([name]) => name === subcommand)?.[1];
 
-  return reason !== undefined && skipsVerify(call, subcommand) ? reason : undefined;
+  return reason === undefined ? undefined : getSubcommandRefusal(call, subcommand, reason);
 }
 
-function skipsVerify(call: Call, subcommand: string): boolean {
+function getSubcommandRefusal(
+  call: Call,
+  subcommand: string,
+  noVerifyReason: string,
+): string | undefined {
   const rest = call.words.slice(1);
+  const opaqueReason =
+    `cannot judge \`git ${ subcommand }\` with an argument the gate cannot read`;
 
   if (subcommand === 'commit') {
     const args = readCommitArguments(rest);
 
-    return hasFlag(args, '--no-verify') || hasFlag(args, '-n');
+    if (hasFlag(args, '--no-verify') || hasFlag(args, '-n')) {
+      return noVerifyReason;
+    }
+
+    return args.hasStrayOpaque ? opaqueReason : undefined;
   }
 
-  return hasFlag(readArguments(literalTexts(rest)), '--no-verify');
+  if (hasFlag(readArguments(literalTexts(rest)), '--no-verify')) {
+    return noVerifyReason;
+  }
+
+  const isOpaqueRefused = bypassCatalog.opaqueSubcommands.some((name) => name === subcommand);
+
+  return isOpaqueRefused && rest.some((word) => word.isOpaque) ? opaqueReason : undefined;
 }
 
 function getConfigRefusal(call: Call): string | undefined {
@@ -67,28 +84,15 @@ function getConfigRefusal(call: Call): string | undefined {
 
   const isRead = hasAnyFlag(args, bypassCatalog.configReadFlags)
     || bypassCatalog.configReadSubcommands.some((name) => name === texts[0]);
-  const isHooksPath = texts.some((text) => text.toLowerCase() === bypassCatalog.hooksPathKey);
 
   if (isRead) {
     return undefined;
   }
 
-  const keyReason = texts.map(getKeyRefusal).find((reason) => reason !== undefined);
+  const [first, second] = args.operands;
+  const isKeyAfterSubcommand = bypassCatalog.configKeySubcommands.some((name) => name === first);
 
-  return isHooksPath ? bypassCatalog.reasons.hooksPath : keyReason;
-}
-
-// A reason to refuse setting this configuration key, or undefined.
-function getKeyRefusal(key: string): string | undefined {
-  const lower = key.toLowerCase();
-
-  if (lower.startsWith(bypassCatalog.aliasKeyPrefix)) {
-    return bypassCatalog.reasons.aliasConfig;
-  }
-
-  return lower === bypassCatalog.cleanRequireForceKey
-    ? bypassCatalog.reasons.cleanRequireForceConfig
-    : undefined;
+  return getKeyRefusal((isKeyAfterSubcommand ? second : first) ?? '');
 }
 
 function removesCore(args: Arguments): boolean {
