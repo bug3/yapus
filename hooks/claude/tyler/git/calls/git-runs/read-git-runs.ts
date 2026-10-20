@@ -1,5 +1,6 @@
 import type { Word } from '../../shell/split-commands.ts';
 import type { Unreadable } from '../read-wrapper.ts';
+import { findOptionsEnd } from './find-options-end.ts';
 import { type GitRunner, type GitRunnerKind, gitRunnerSpecs } from './git-runner-specs.ts';
 import type { GitRuns } from './make-runs.ts';
 import { NO_RUNS } from './make-runs.ts';
@@ -55,8 +56,7 @@ function readUnreadableArgument(
       : undefined;
   }
 
-  const end = words.findIndex((word, index) => index > 0 && !word.isOpaque && word.text === '--');
-  const options = end === -1 ? words.slice(1) : words.slice(1, end);
+  const options = words.slice(1, findOptionsEnd(words));
 
   return options.some((word) => word.isOpaque && word.canSplit) ? UNREADABLE_ARGUMENT : undefined;
 }

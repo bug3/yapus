@@ -1,6 +1,7 @@
 import type { Word } from '../../shell/split-commands.ts';
 import type { Unreadable } from '../read-wrapper.ts';
 import { runnerSpecs } from '../runner-specs.ts';
+import { findOptionsEnd } from './find-options-end.ts';
 import type { GitRunner } from './git-runner-specs.ts';
 import { isLongOption } from './is-long-option.ts';
 import { type GitRuns, NO_RUNS } from './make-runs.ts';
@@ -8,9 +9,10 @@ import { type GitRuns, NO_RUNS } from './make-runs.ts';
 const SHORT_GROUP = runnerSpecs.shortGroup;
 
 // An option that runs a command git takes as a program path or a shell string
-// (`git push --receive-pack CMD`), which the gate does not split.
+// (`git push --receive-pack CMD`), which the gate does not split; no option comes after
+// the `--` that ends them.
 export function refuseOptions(words: readonly Word[], runner: GitRunner): GitRuns | Unreadable {
-  const isRefused = words.slice(1).some(
+  const isRefused = words.slice(1, findOptionsEnd(words)).some(
     ({ text }) =>
       runner.refusedLongs.some((long) => isLongOption(text, long)) ||
       (SHORT_GROUP.test(text) && runner.refusedLetters.some((letter) => text.includes(letter))),

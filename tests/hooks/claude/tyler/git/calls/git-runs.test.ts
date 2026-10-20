@@ -320,6 +320,41 @@ test('refuses a splittable word before a literal -- of git grep', () => {
   assert.deepEqual(callsOf('git grep $p -- x'), SPLIT_ARGUMENT);
 });
 
+test('refuses a splittable word after a -- that is the value of git grep -e', () => {
+  assert.deepEqual(callsOf('git grep -e -- $x'), SPLIT_ARGUMENT);
+});
+
+test('refuses a splittable word after a -- that is the value of git fetch -o', () => {
+  assert.deepEqual(callsOf('git fetch -o -- $x'), SPLIT_ARGUMENT);
+});
+
+test('reads a splittable word after a -- that follows the value of git grep -e', () => {
+  assert.deepEqual(callsOf('git grep -e foo -- *.ts'), {
+    kind: 'calls',
+    calls: [
+      {
+        tool: 'git',
+        words: [
+          { text: 'grep', isOpaque: false, canSplit: false },
+          { text: '-e', isOpaque: false, canSplit: false },
+          { text: 'foo', isOpaque: false, canSplit: false },
+          { text: '--', isOpaque: false, canSplit: false },
+          { text: '*.ts', isOpaque: true, canSplit: true },
+        ],
+        configs: [],
+        assignments: [],
+      },
+    ],
+  });
+});
+
+test('does not read a refused option after the -- that ends options', () => {
+  assert.deepEqual(callsOf('git grep foo -- -Ofile.ts'), {
+    kind: 'calls',
+    calls: [call('grep', 'foo', '--', '-Ofile.ts')],
+  });
+});
+
 test('refuses a splittable word after a literal -- of git submodule foreach', () => {
   assert.deepEqual(callsOf('git submodule foreach -- x$c'), SUBMODULE_ARGUMENT);
 });
