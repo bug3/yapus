@@ -25,11 +25,18 @@ function opaqueCall(...texts: readonly string[]): Call {
   return { ...call, words: [...call.words, { text: '$X', isOpaque: true, canSplit: true }] };
 }
 
+function quotedCall(...texts: readonly string[]): Call {
+  const call = gitCall(...texts);
+
+  return { ...call, words: [...call.words, { text: '$X', isOpaque: true, canSplit: false }] };
+}
+
 function ghCall(...texts: readonly string[]): Call {
   return { ...gitCall(...texts), tool: 'gh' };
 }
 
-const OPAQUE_RESET = 'cannot judge `git reset` with an argument the gate cannot read';
+const OPAQUE_RESET = 'cannot judge `git reset` with an argument the gate cannot read'
+  + '; quote it if it is one word, and start it with neither - nor +';
 
 test('refuses git reset --hard', () => {
   assert.equal(
@@ -267,14 +274,16 @@ test('refuses an opaque argument of git reset', () => {
 test('names the subcommand when refusing an opaque argument', () => {
   assert.equal(
     getDestructiveRefusal(opaqueCall('stash')),
-    'cannot judge `git stash` with an argument the gate cannot read',
+    'cannot judge `git stash` with an argument the gate cannot read'
+    + '; quote it if it is one word, and start it with neither - nor +',
   );
 });
 
 test('refuses an opaque argument of git branch', () => {
   assert.equal(
     getDestructiveRefusal(opaqueCall('branch', '-d')),
-    'cannot judge `git branch` with an argument the gate cannot read',
+    'cannot judge `git branch` with an argument the gate cannot read'
+    + '; quote it if it is one word, and start it with neither - nor +',
   );
 });
 
@@ -433,6 +442,49 @@ test('refuses a gh call whose first or second word is opaque', () => {
 test('refuses an opaque later word of gh api', () => {
   assert.equal(
     getDestructiveRefusal({ ...opaqueCall('api', 'x'), tool: 'gh' }),
-    'cannot judge `gh api` with an argument the gate cannot read',
+    'cannot judge `gh api` with an argument the gate cannot read'
+    + '; quote it if it is one word, and start it with neither - nor +',
   );
+});
+
+test('allows a quoted opaque operand of git checkout and git branch -d', () => {
+  assert.equal(getDestructiveRefusal(quotedCall('checkout')), undefined);
+  assert.equal(getDestructiveRefusal(quotedCall('branch', '-d')), undefined);
+});
+
+test('refuses a quoted opaque word where a leading word stands', () => {
+  assert.equal(
+    getDestructiveRefusal(quotedCall('stash')),
+    'cannot judge `git stash` with an argument the gate cannot read'
+    + '; quote it if it is one word, and start it with neither - nor +',
+  );
+});
+
+test('refuses git checkout and git restore with an absolute pathspec', () => {
+  assert.equal(
+    getDestructiveRefusal(gitCall('checkout', '--', '/repo')),
+    destructiveCommands.checkoutPathspec.reason,
+  );
+  assert.equal(
+    getDestructiveRefusal(gitCall('restore', '/repo/src')),
+    destructiveCommands.restorePathspec.reason,
+  );
+});
+
+test('refuses git update-ref --stdin', () => {
+  assert.equal(
+    getDestructiveRefusal(gitCall('update-ref', '--stdin')),
+    destructiveCommands.updateRefStdin.reason,
+  );
+});
+
+test('refuses gh api with a method the gate cannot read', () => {
+  assert.equal(
+    getDestructiveRefusal({ ...quotedCall('api', 'x', '-X'), tool: 'gh' }),
+    destructiveCommands.ghApiDelete.reason,
+  );
+});
+
+test('allows gh api with a quoted opaque path', () => {
+  assert.equal(getDestructiveRefusal({ ...quotedCall('api', 'repos'), tool: 'gh' }), undefined);
 });

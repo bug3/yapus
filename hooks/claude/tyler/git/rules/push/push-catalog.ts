@@ -1,3 +1,5 @@
+import { getUnreadableReason } from '../get-unreadable-reason.ts';
+
 const reasons = {
   force: '`git push --force` overwrites the remote history; a person runs it',
   lease: '`git push --force-with-lease` without `--force-if-includes`; a person runs it',
@@ -5,7 +7,7 @@ const reasons = {
   mirror: '`git push --mirror` overwrites and deletes remote refs; a person runs it',
   delete: '`git push` that deletes a remote ref; a person runs it',
   prune: '`git push --prune` deletes remote refs; a person runs it',
-  opaque: 'cannot judge `git push` with an argument the gate cannot read',
+  opaque: getUnreadableReason('git push'),
 } as const;
 
 export const pushCatalog = {

@@ -1,3 +1,4 @@
+import type { Word } from '../../shell/split-commands.ts';
 import { hasFlag, type Arguments } from '../read-arguments.ts';
 
 export type DestructiveId =
@@ -13,11 +14,12 @@ export type DestructiveId =
   | 'stashClear'
   | 'stashDrop'
   | 'switchForce'
-  | 'updateRefDelete';
+  | 'updateRefDelete'
+  | 'updateRefStdin';
 
 // The arguments after the leading words, with the words as written.
 export interface Judged extends Arguments {
-  readonly written: readonly string[];
+  readonly written: readonly Word[];
 }
 
 export interface Matcher {
@@ -25,8 +27,6 @@ export interface Matcher {
   // The words that name the command, starting at the subcommand.
   readonly leading: readonly string[];
   readonly reason: string;
-  // Whether an argument the gate cannot read makes the call unjudgeable.
-  readonly hasOpaqueGuard: boolean;
   // Judges the words after the leading ones.
   readonly isMatch: (args: Judged) => boolean;
 }
@@ -40,91 +40,84 @@ export const destructiveCommands = {
     tool: 'git',
     leading: ['reset'],
     reason: '`git reset --hard` discards uncommitted work; a person runs it',
-    hasOpaqueGuard: true,
     isMatch: (args) => hasFlag(args, '--hard'),
   },
   cleanForce: {
     tool: 'git',
     leading: ['clean'],
     reason: '`git clean -f` deletes untracked files for good; a person runs it',
-    hasOpaqueGuard: true,
     isMatch: (args) => hasFlag(args, '-f') || hasFlag(args, '--force'),
   },
   checkoutPathspec: {
     tool: 'git',
     leading: ['checkout'],
     reason: '`git checkout .` discards uncommitted work; a person runs it',
-    hasOpaqueGuard: true,
     isMatch: hasWholeTree,
   },
   restorePathspec: {
     tool: 'git',
     leading: ['restore'],
     reason: '`git restore .` discards uncommitted work; a person runs it',
-    hasOpaqueGuard: true,
     isMatch: (args) => hasWholeTree(args) && !restoresIndexOnly(args),
   },
   checkoutForce: {
     tool: 'git',
     leading: ['checkout'],
     reason: '`git checkout --force` discards uncommitted work; a person runs it',
-    hasOpaqueGuard: true,
     isMatch: hasForceOption,
   },
   switchForce: {
     tool: 'git',
     leading: ['switch'],
     reason: '`git switch --force` discards uncommitted work; a person runs it',
-    hasOpaqueGuard: true,
     isMatch: hasForceOption,
   },
   updateRefDelete: {
     tool: 'git',
     leading: ['update-ref'],
     reason: '`git update-ref -d` deletes a ref; a person runs it',
-    hasOpaqueGuard: true,
     isMatch: (args) => hasFlag(args, '-d') || hasFlag(args, '--delete'),
+  },
+  updateRefStdin: {
+    tool: 'git',
+    leading: ['update-ref'],
+    reason: '`git update-ref --stdin` can delete refs named on stdin; a person runs it',
+    isMatch: (args) => hasFlag(args, '--stdin'),
   },
   branchDelete: {
     tool: 'git',
     leading: ['branch'],
     reason: '`git branch -D` deletes a branch even if unmerged; a person runs it',
-    hasOpaqueGuard: true,
     isMatch: (args) => hasFlag(args, '-D') || (hasDelete(args) && hasForce(args)),
   },
   stashDrop: {
     tool: 'git',
     leading: ['stash', 'drop'],
     reason: '`git stash drop` deletes a stash entry; a person runs it',
-    hasOpaqueGuard: true,
     isMatch: () => true,
   },
   stashClear: {
     tool: 'git',
     leading: ['stash', 'clear'],
     reason: '`git stash clear` deletes every stash entry; a person runs it',
-    hasOpaqueGuard: true,
     isMatch: () => true,
   },
   ghRepoDelete: {
     tool: 'gh',
     leading: ['repo', 'delete'],
     reason: '`gh repo delete` deletes a repository; a person runs it',
-    hasOpaqueGuard: true,
     isMatch: () => true,
   },
   ghApiDelete: {
     tool: 'gh',
     leading: ['api'],
     reason: '`gh api -X DELETE` deletes on GitHub; a person runs it',
-    hasOpaqueGuard: true,
     isMatch: (args) => readsDeleteMethod(args.written),
   },
   ghAliasSet: {
     tool: 'gh',
     leading: ['alias', 'set'],
     reason: '`gh alias set` can name a destructive command; a person runs it',
-    hasOpaqueGuard: true,
     isMatch: () => true,
   },
 } as const satisfies Record<DestructiveId, Matcher>;
@@ -133,7 +126,8 @@ function hasWholeTree(args: Arguments): boolean {
   return args.operands.some(isWholeTree) || hasFlag(args, '--pathspec-from-file');
 }
 
-// A pathspec that names the whole tree, however it is spelled.
+// A pathspec that names the whole tree, however it is spelled. An absolute path may
+// name the repository root, which the gate does not know.
 function isWholeTree(operand: string): boolean {
   let path = operand;
 
@@ -145,6 +139,7 @@ function isWholeTree(operand: string): boolean {
 
   return WHOLE_TREE.includes(path)
     || operand.startsWith(':')
+    || operand.startsWith('/')
     || path.split('/').includes('..');
 }
 
@@ -159,31 +154,34 @@ function hasForceOption(args: Arguments): boolean {
   return FORCE_OPTIONS.some((flag) => hasFlag(args, flag));
 }
 
-// `-X DELETE`, `-XDELETE`, `--method DELETE` or `--method=DELETE`, in any case.
-function readsDeleteMethod(written: readonly string[]): boolean {
-  return written.some((text, index) => {
-    const method = readMethod(text, written[index + 1]);
-
-    return method?.toLowerCase() === 'delete';
-  });
+// `-X DELETE`, `-XDELETE`, `--method DELETE` or `--method=DELETE`, in any case. A
+// method the gate cannot read may be DELETE.
+function readsDeleteMethod(written: readonly Word[]): boolean {
+  return written.some((word, index) => isDeleteMethod(word, written[index + 1]));
 }
 
-function readMethod(text: string, next: string | undefined): string | undefined {
+function isDeleteMethod(word: Word, next: Word | undefined): boolean {
+  const { text } = word;
+
   if (text === '--method') {
-    return next;
+    return isDelete(next);
   }
 
   if (text.startsWith('--method=')) {
-    return text.slice('--method='.length);
+    return isDelete({ ...word, text: text.slice('--method='.length) });
   }
 
   const letter = text.startsWith('-') && !text.startsWith('--') ? text.indexOf('X') : -1;
 
   if (letter < 0) {
-    return undefined;
+    return false;
   }
 
-  return letter === text.length - 1 ? next : text.slice(letter + 1);
+  return isDelete(letter === text.length - 1 ? next : { ...word, text: text.slice(letter + 1) });
+}
+
+function isDelete(method: Word | undefined): boolean {
+  return method !== undefined && (method.isOpaque || method.text.toLowerCase() === 'delete');
 }
 
 function hasDelete(args: Arguments): boolean {

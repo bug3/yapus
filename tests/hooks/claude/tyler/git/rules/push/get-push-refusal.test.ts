@@ -23,6 +23,10 @@ function withOpaque(call: Call): Call {
   return { ...call, words: [...call.words, { text: '$X', isOpaque: true, canSplit: true }] };
 }
 
+function withQuoted(call: Call, text = '$B'): Call {
+  return { ...call, words: [...call.words, { text, isOpaque: true, canSplit: false }] };
+}
+
 test('refuses --force and -f, alone, in a group and next to a lease', () => {
   assert.equal(getPushRefusal(gitCall('push', '--force', 'origin', 'x')), reasons.force);
   assert.equal(getPushRefusal(gitCall('push', '-f')), reasons.force);
@@ -143,4 +147,16 @@ test('reads an option after -o in the same group', () => {
 test('ignores a call that is not git push', () => {
   assert.equal(getPushRefusal(gitCall('commit', '--force')), undefined);
   assert.equal(getPushRefusal({ ...gitCall('push', '--force'), tool: 'gh' }), undefined);
+});
+
+test('passes a quoted opaque refspec', () => {
+  assert.equal(
+    getPushRefusal(withQuoted(gitCall('push', '-u', 'origin'))),
+    undefined,
+  );
+});
+
+test('refuses a quoted opaque word that visibly starts with + or -', () => {
+  assert.equal(getPushRefusal(withQuoted(gitCall('push', 'origin'), '+$B')), reasons.opaque);
+  assert.equal(getPushRefusal(withQuoted(gitCall('push', 'origin'), '--$x')), reasons.opaque);
 });

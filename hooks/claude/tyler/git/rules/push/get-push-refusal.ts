@@ -1,4 +1,5 @@
 import type { Call } from '../../calls/get-calls.ts';
+import { isUnreadable } from '../get-unreadable-reason.ts';
 import type { Arguments } from '../read-arguments.ts';
 import { pushCatalog } from './push-catalog.ts';
 import { readPushArguments } from './read-push-arguments.ts';
@@ -11,7 +12,7 @@ export function getPushRefusal(call: Call): string | undefined {
 
   const rest = call.words.slice(1);
 
-  if (rest.some((word) => word.isOpaque)) {
+  if (rest.some(isUnreadable)) {
     return pushCatalog.reasons.opaque;
   }
 
