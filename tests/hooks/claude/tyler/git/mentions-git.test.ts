@@ -68,3 +68,11 @@ test('mentions git inside a brace or beside a glob', () => {
   assert.equal(mentionsGit('{git,push,--force}'), true);
   assert.equal(mentionsGit('ls *git*'), true);
 });
+
+test('mentions git split by a line continuation', () => {
+  assert.equal(mentionsGit('g\\\nit push'), true);
+});
+
+test('mentions git after an ANSI-C quote mark', () => {
+  assert.equal(mentionsGit("$'git' push"), true);
+});
