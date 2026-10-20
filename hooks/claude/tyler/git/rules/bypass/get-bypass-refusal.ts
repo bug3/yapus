@@ -15,6 +15,14 @@ export function getBypassRefusal(call: Call): string | undefined {
     return bypassCatalog.reasons.hooksPath;
   }
 
+  for (const config of call.configs) {
+    const reason = getKeyRefusal(config.text.split('=')[0] ?? '');
+
+    if (reason !== undefined) {
+      return reason;
+    }
+  }
+
   if (call.assignments.some((name) => name.startsWith(bypassCatalog.environmentConfigPrefix))) {
     return bypassCatalog.reasons.configEnvironment;
   }
@@ -61,7 +69,26 @@ function getConfigRefusal(call: Call): string | undefined {
     || bypassCatalog.configReadSubcommands.some((name) => name === texts[0]);
   const isHooksPath = texts.some((text) => text.toLowerCase() === bypassCatalog.hooksPathKey);
 
-  return !isRead && isHooksPath ? bypassCatalog.reasons.hooksPath : undefined;
+  if (isRead) {
+    return undefined;
+  }
+
+  const keyReason = texts.map(getKeyRefusal).find((reason) => reason !== undefined);
+
+  return isHooksPath ? bypassCatalog.reasons.hooksPath : keyReason;
+}
+
+// A reason to refuse setting this configuration key, or undefined.
+function getKeyRefusal(key: string): string | undefined {
+  const lower = key.toLowerCase();
+
+  if (lower.startsWith(bypassCatalog.aliasKeyPrefix)) {
+    return bypassCatalog.reasons.aliasConfig;
+  }
+
+  return lower === bypassCatalog.cleanRequireForceKey
+    ? bypassCatalog.reasons.cleanRequireForceConfig
+    : undefined;
 }
 
 function removesCore(args: Arguments): boolean {

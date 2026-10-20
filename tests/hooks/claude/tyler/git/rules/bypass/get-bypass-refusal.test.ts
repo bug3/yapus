@@ -233,6 +233,54 @@ test('passes other git calls', () => {
   assert.equal(getBypassRefusal(gitCall()), undefined);
 });
 
+test('refuses a -c alias in any case', () => {
+  assert.equal(
+    getBypassRefusal(withConfig(gitCall('status'), 'alias.x=!rm')),
+    bypassCatalog.reasons.aliasConfig,
+  );
+  assert.equal(
+    getBypassRefusal(withConfig(gitCall('status'), 'ALIAS.st=status')),
+    bypassCatalog.reasons.aliasConfig,
+  );
+});
+
+test('refuses a -c clean.requireForce in any case', () => {
+  assert.equal(
+    getBypassRefusal(withConfig(gitCall('clean'), 'clean.requireForce=false')),
+    bypassCatalog.reasons.cleanRequireForceConfig,
+  );
+});
+
+test('passes a -c of an unrelated key and a value that only mentions alias', () => {
+  assert.equal(getBypassRefusal(withConfig(gitCall('status'), 'user.name=x')), undefined);
+  assert.equal(getBypassRefusal(withConfig(gitCall('status'), 'user.name=alias.x')), undefined);
+});
+
+test('refuses git config writing an alias or clean.requireForce', () => {
+  assert.equal(
+    getBypassRefusal(gitCall('config', 'alias.x', '!rm')),
+    bypassCatalog.reasons.aliasConfig,
+  );
+  assert.equal(
+    getBypassRefusal(gitCall('config', '--global', 'Alias.x', 'status')),
+    bypassCatalog.reasons.aliasConfig,
+  );
+  assert.equal(
+    getBypassRefusal(gitCall('config', '--unset', 'alias.x')),
+    bypassCatalog.reasons.aliasConfig,
+  );
+  assert.equal(
+    getBypassRefusal(gitCall('config', 'clean.requireForce', 'false')),
+    bypassCatalog.reasons.cleanRequireForceConfig,
+  );
+});
+
+test('passes git config reads of an alias', () => {
+  assert.equal(getBypassRefusal(gitCall('config', '--get', 'alias.x')), undefined);
+  assert.equal(getBypassRefusal(gitCall('config', 'get', 'clean.requireForce')), undefined);
+  assert.equal(getBypassRefusal(gitCall('config', '--get-regexp', 'alias')), undefined);
+});
+
 test('ignores gh calls', () => {
   assert.equal(getBypassRefusal({ ...gitCall('commit', '--no-verify'), tool: 'gh' }), undefined);
 });

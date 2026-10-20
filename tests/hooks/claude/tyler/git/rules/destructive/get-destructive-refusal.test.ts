@@ -285,3 +285,154 @@ test('allows an opaque argument of git log', () => {
 test('allows an opaque argument of gh repo view', () => {
   assert.equal(getDestructiveRefusal({ ...opaqueCall('repo', 'view'), tool: 'gh' }), undefined);
 });
+
+test('refuses a whole-tree pathspec spelled with dots and slashes', () => {
+  const { reason } = destructiveCommands.checkoutPathspec;
+
+  assert.equal(getDestructiveRefusal(gitCall('checkout', './')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('checkout', './.')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('checkout', './/')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('checkout', '--', './')), reason);
+});
+
+test('refuses a pathspec with magic', () => {
+  const { reason } = destructiveCommands.checkoutPathspec;
+
+  assert.equal(getDestructiveRefusal(gitCall('checkout', ':(top)')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('checkout', ':!x')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('checkout', ':/.')), reason);
+});
+
+test('refuses a pathspec that climbs out with a parent component', () => {
+  const { reason } = destructiveCommands.checkoutPathspec;
+
+  assert.equal(getDestructiveRefusal(gitCall('checkout', '..')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('checkout', '../x')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('checkout', 'a/../..')), reason);
+});
+
+test('refuses a pathspec read from a file in any form', () => {
+  const { reason } = destructiveCommands.checkoutPathspec;
+
+  assert.equal(getDestructiveRefusal(gitCall('checkout', '--pathspec-from-file=x')), reason);
+  assert.equal(
+    getDestructiveRefusal(gitCall('checkout', '--pathspec-from-file', 'x')),
+    reason,
+  );
+  assert.equal(getDestructiveRefusal(gitCall('checkout', '--pathspec-from')), reason);
+});
+
+test('allows a plain directory or file pathspec', () => {
+  assert.equal(getDestructiveRefusal(gitCall('checkout', 'src/')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('checkout', '--', 'src/')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('checkout', 'a.ts')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('restore', './src')), undefined);
+});
+
+test('refuses git restore of the whole tree with any option beyond the index ones', () => {
+  const { reason } = destructiveCommands.restorePathspec;
+
+  assert.equal(getDestructiveRefusal(gitCall('restore', '--worktree', '.')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('restore', '--staged', '-s', 'HEAD~1', '.')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('restore', '--staged', '--source=x', '.')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('restore', '--staged', '--no-staged', '.')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('restore', '-q', '.')), reason);
+  assert.equal(
+    getDestructiveRefusal(gitCall('restore', '--staged', '--pathspec-from-file=x')),
+    reason,
+  );
+});
+
+test('allows git restore of the whole tree with only index options', () => {
+  assert.equal(getDestructiveRefusal(gitCall('restore', '--staged', '-q', '.')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('restore', '-Sq', '.')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('restore', '--staged', '--quiet', ':/')), undefined);
+});
+
+test('refuses git checkout and git switch with a force option', () => {
+  assert.equal(
+    getDestructiveRefusal(gitCall('checkout', '-f', 'main')),
+    destructiveCommands.checkoutForce.reason,
+  );
+  assert.equal(
+    getDestructiveRefusal(gitCall('checkout', '--force', 'main')),
+    destructiveCommands.checkoutForce.reason,
+  );
+  assert.equal(
+    getDestructiveRefusal(gitCall('switch', '-f', 'main')),
+    destructiveCommands.switchForce.reason,
+  );
+  assert.equal(
+    getDestructiveRefusal(gitCall('switch', '--discard-changes', 'main')),
+    destructiveCommands.switchForce.reason,
+  );
+  assert.equal(
+    getDestructiveRefusal(gitCall('switch', '--discard', 'main')),
+    destructiveCommands.switchForce.reason,
+  );
+});
+
+test('allows git checkout and git switch without a force option', () => {
+  assert.equal(getDestructiveRefusal(gitCall('checkout', 'main')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('checkout', '--', 'src/')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('switch', 'main')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('switch', '-c', 'x')), undefined);
+});
+
+test('refuses git update-ref with a delete option', () => {
+  assert.equal(
+    getDestructiveRefusal(gitCall('update-ref', '-d', 'refs/heads/x')),
+    destructiveCommands.updateRefDelete.reason,
+  );
+  assert.equal(
+    getDestructiveRefusal(gitCall('update-ref', '--delete', 'refs/heads/x')),
+    destructiveCommands.updateRefDelete.reason,
+  );
+});
+
+test('allows git update-ref without a delete option', () => {
+  assert.equal(getDestructiveRefusal(gitCall('update-ref', 'refs/heads/x', 'HEAD')), undefined);
+});
+
+test('refuses gh api with the DELETE method in every form', () => {
+  const { reason } = destructiveCommands.ghApiDelete;
+
+  assert.equal(getDestructiveRefusal(ghCall('api', '-X', 'DELETE', 'repos/x/y')), reason);
+  assert.equal(getDestructiveRefusal(ghCall('api', '-XDELETE', 'repos/x/y')), reason);
+  assert.equal(getDestructiveRefusal(ghCall('api', '--method', 'DELETE', 'x')), reason);
+  assert.equal(getDestructiveRefusal(ghCall('api', '--method=DELETE', 'x')), reason);
+  assert.equal(getDestructiveRefusal(ghCall('api', 'x', '-X', 'delete')), reason);
+  assert.equal(getDestructiveRefusal(ghCall('api', '--method=Delete', 'x')), reason);
+});
+
+test('allows gh api with another method or none', () => {
+  assert.equal(getDestructiveRefusal(ghCall('api', 'repos/x/y')), undefined);
+  assert.equal(getDestructiveRefusal(ghCall('api', '-X', 'GET', 'x')), undefined);
+  assert.equal(getDestructiveRefusal(ghCall('api', '--method=POST', 'x')), undefined);
+  assert.equal(getDestructiveRefusal(ghCall('api', 'delete')), undefined);
+});
+
+test('refuses gh alias set but allows gh alias list', () => {
+  assert.equal(
+    getDestructiveRefusal(ghCall('alias', 'set', 'x', 'repo delete')),
+    destructiveCommands.ghAliasSet.reason,
+  );
+  assert.equal(getDestructiveRefusal(ghCall('alias', 'list')), undefined);
+});
+
+const OPAQUE_GH = 'cannot judge `gh` with an argument the gate cannot read';
+
+test('refuses a gh call whose first or second word is opaque', () => {
+  const opaque = { text: '$X', isOpaque: true };
+  const plain = { text: 'repo', isOpaque: false };
+
+  assert.equal(getDestructiveRefusal({ ...ghCall(), words: [opaque] }), OPAQUE_GH);
+  assert.equal(getDestructiveRefusal({ ...ghCall(), words: [plain, opaque] }), OPAQUE_GH);
+});
+
+test('refuses an opaque later word of gh api', () => {
+  assert.equal(
+    getDestructiveRefusal({ ...opaqueCall('api', 'x'), tool: 'gh' }),
+    'cannot judge `gh api` with an argument the gate cannot read',
+  );
+});

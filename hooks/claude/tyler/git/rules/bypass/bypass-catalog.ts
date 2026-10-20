@@ -6,6 +6,9 @@ const reasons = {
   noVerifyPush: '`git push --no-verify` skips the push hooks; a person runs it',
   hooksPath: 'setting `core.hooksPath` skips the hooks yapus relies on; a person does it',
   configWrite: 'this `git config` may skip the hooks yapus relies on; a person runs it',
+  aliasConfig: 'a git alias can hide a command the gate refuses; a person sets it',
+  cleanRequireForceConfig:
+    'setting `clean.requireForce` lets `git clean` delete without `-f`; a person does it',
   configEnvironment: '`GIT_CONFIG*` variables can skip the hooks yapus relies on',
 } as const;
 
@@ -37,6 +40,8 @@ export const bypassCatalog = {
     '--pathspec-from-file',
   ],
   hooksPathKey: 'core.hookspath',
+  aliasKeyPrefix: 'alias.',
+  cleanRequireForceKey: 'clean.requireforce',
   configReadFlags: ['--get', '--get-all', '--get-regexp', '--list', '-l'],
   configReadSubcommands: ['get', 'list'],
   configSectionFlags: ['--remove-section', '--rename-section'],
