@@ -40,6 +40,18 @@ interface PendingHeredoc {
   readonly bodies: string[];
 }
 
+interface Region {
+  readonly start: number;
+  readonly depth: number;
+  readonly isClosedByParen: boolean;
+}
+
+interface RegionItems {
+  readonly kind: 'region';
+  readonly items: readonly Item[];
+  readonly end: number;
+}
+
 interface Builder {
   readonly home: string | undefined;
   readonly items: Item[];
@@ -54,16 +66,44 @@ interface Builder {
 const SEPARATORS = ['&&', '||', '|&', '&', '|', ';', '\n'];
 
 export function splitCommands(line: string, home: string | undefined): Split {
-  const builder: Builder = { home, items: [],
+  const region = splitRegion(line, home, {
+    start: 0,
+    depth: 0,
+    isClosedByParen: false,
+  });
+
+  if (region.kind === 'failure') {
+    return region;
+  }
+
+  return { kind: 'items', items: region.items };
+}
+
+// Splits from `start` to the end of input, or, when `isClosedByParen`, up to the
+// unquoted `)` that closes the region (its position is `end`, the `)` is not consumed).
+function splitRegion(
+  line: string,
+  home: string | undefined,
+  region: Region,
+): RegionItems | SplitFailure {
+  const builder: Builder = {
+    home,
+    items: [],
     words: [],
     heredocs: [],
     pending: [],
     isAwaitingTarget: false,
-    depth: 0,
+    depth: region.depth,
   };
-  let position = 0;
+  let position = region.start;
 
   while (position < line.length) {
+    const isClose = region.isClosedByParen && line.charAt(position) === ')';
+
+    if (isClose && builder.depth === region.depth) {
+      break;
+    }
+
     const step = readStep(line, position, builder);
 
     if (typeof step !== 'number') {
@@ -87,7 +127,7 @@ export function splitCommands(line: string, home: string | undefined): Split {
     return makeFailure('unclosed (');
   }
 
-  return { kind: 'items', items: builder.items };
+  return { kind: 'region', items: builder.items, end: position };
 }
 
 // Returns the position after what it consumed.
