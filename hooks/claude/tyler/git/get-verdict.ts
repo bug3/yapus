@@ -5,6 +5,7 @@ import { getBranchRefusal } from './rules/branch/get-branch-refusal.ts';
 import { getBypassRefusal } from './rules/bypass/get-bypass-refusal.ts';
 import { getDestructiveRefusal } from './rules/destructive/get-destructive-refusal.ts';
 import { getUnknownRefusal } from './rules/known/get-unknown-refusal.ts';
+import { getBodyLineRefusal } from './rules/gh/get-body-line-refusal.ts';
 import { getMisplacedOptionRefusal } from './rules/gh/get-misplaced-option-refusal.ts';
 import { getPrRefusal } from './rules/gh/get-pr-refusal.ts';
 import { getPushRefusal } from './rules/push/get-push-refusal.ts';
@@ -72,6 +73,12 @@ export function getVerdict(input: Input): Verdict {
   }
 
   for (const call of found.calls) {
+    const lineReason = getBodyLineRefusal(call, split.items);
+
+    if (lineReason !== undefined) {
+      return deny(lineReason);
+    }
+
     for (const rule of RULES) {
       const reason = rule(call);
 

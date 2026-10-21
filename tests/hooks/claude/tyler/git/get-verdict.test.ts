@@ -319,6 +319,15 @@ test('denies a pull request create with an option before its action', () => {
   assert.match('detail' in verdict ? verdict.detail : '', /^the word after `gh pr`/);
 });
 
+test('denies a pull request create on a line that writes its body file', () => {
+  const line = "cat > /tmp/b.md <<'EOF'\nx\nEOF\n"
+    + 'gh pr create -d -t "feat(hooks): add a check" -F /tmp/b.md';
+  const verdict = getVerdict({ stdinText: bashCall(line), home: HOME });
+
+  assert.equal(verdict.kind, 'deny');
+  assert.match('detail' in verdict ? verdict.detail : '', /^run `gh pr create` on a line/);
+});
+
 test('denies an opaque script of source or a shell', () => {
   const detail = 'cannot judge a git or gh call: '
     + 'a shell reading a script or stdin the gate cannot read';

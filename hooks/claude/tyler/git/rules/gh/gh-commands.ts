@@ -104,6 +104,9 @@ export const ghCommands = {
       + ` or \`${ shown }=false\``,
   },
   reasons: {
+    bodyLine: (action: string): string =>
+      `run \`gh ${ action }\` on a line of its own, after the body file is written; `
+      + 'the gate reads the body file before the line runs',
     optionBeforeAction: (command: string): string =>
       `the word after \`gh ${ command }\` is an option or cannot be read, so the gate cannot `
       + `tell the action; put gh options after \`gh ${ command } <action>\``,
