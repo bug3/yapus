@@ -12,7 +12,7 @@ test('parses a Bash call', () => {
     cwd: CWD,
   });
 
-  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'git status' });
+  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'git status', cwd: CWD });
 });
 
 test('parses a Bash call and ignores the other fields', () => {
@@ -28,7 +28,7 @@ test('parses a Bash call and ignores the other fields', () => {
     session_id: 'abc',
   });
 
-  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'git status' });
+  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'git status', cwd: CWD });
 });
 
 test('returns other for a tool that is not Bash', () => {
@@ -84,7 +84,7 @@ test('fails on a command that holds a lone surrogate', () => {
 test('parses a Bash call without a cwd', () => {
   const stdinText = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'ls' } });
 
-  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'ls' });
+  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'ls', cwd: undefined });
 });
 
 test('parses a Bash call with a relative cwd', () => {
@@ -94,5 +94,25 @@ test('parses a Bash call with a relative cwd', () => {
     cwd: 'repo',
   });
 
-  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'ls' });
+  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'ls', cwd: undefined });
+});
+
+test('returns undefined for a cwd that is not text', () => {
+  const stdinText = JSON.stringify({
+    tool_name: 'Bash',
+    tool_input: { command: 'ls' },
+    cwd: 7,
+  });
+
+  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'ls', cwd: undefined });
+});
+
+test('returns undefined for a cwd with a NUL', () => {
+  const stdinText = JSON.stringify({
+    tool_name: 'Bash',
+    tool_input: { command: 'ls' },
+    cwd: '/repo\0x',
+  });
+
+  assert.deepEqual(parsePayload(stdinText), { kind: 'call', command: 'ls', cwd: undefined });
 });
