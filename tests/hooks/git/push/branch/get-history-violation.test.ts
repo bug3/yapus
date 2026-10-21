@@ -31,6 +31,21 @@ test('refuses a person forcing main', (t) => {
   assert.ok(pushRun.stderr.includes(MAIN_REWRITE));
 });
 
+test('refuses a force to main dressed as a fast-forward by a replace graft', (t) => {
+  const { repository } = makePushRepo(t);
+
+  seedRemote(repository, 'refs/heads/main');
+  const remoteSha = runGit(['rev-parse', 'HEAD'], repository).trim();
+
+  runGit(['commit', '--amend', '--allow-empty', '--message', REWRITTEN], repository);
+  runGit(['replace', '--graft', 'HEAD', remoteSha], repository);
+
+  const pushRun = runPersonPush(t, repository, ['origin', '+HEAD:refs/heads/main']);
+
+  assert.equal(pushRun.status, 1);
+  assert.ok(pushRun.stderr.includes(MAIN_REWRITE));
+});
+
 test('refuses an agent forcing main even when the key is true', (t) => {
   const { repository } = makePushRepo(t);
 
@@ -118,7 +133,7 @@ test('refuses when the time budget is spent before the comparison', (t) => {
 
   assert.match(
     getHistoryViolation(MISSING_RECORD, factsOf(repository, 0)) ?? '',
-    /^cannot compare refs\/heads\/main with the push \(git merge-base --is-ancestor \w+ \w+: ran out of its time budget\); the push is blocked, retry it$/,
+    /^cannot compare refs\/heads\/main with the push \(git --no-replace-objects merge-base --is-ancestor \w+ \w+: ran out of its time budget\); the push is blocked, retry it$/,
   );
 });
 

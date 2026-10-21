@@ -44,13 +44,20 @@ export function getHistoryViolation(record: PushRecord, facts: BranchFacts): str
 }
 
 // A force is a push whose remote sha is no ancestor of the local one; a remote
-// sha the repository does not have counts as one.
+// sha the repository does not have counts as one. Replace refs and grafts are
+// local, so the comparison reads the commits as the server will.
 function isForce(record: PushRecord, facts: BranchFacts): boolean | ForceCheck {
   if (isZeroSha(record.remoteSha)) {
     return false;
   }
 
-  const args = ['merge-base', '--is-ancestor', record.remoteSha, record.localSha];
+  const args = [
+    '--no-replace-objects',
+    'merge-base',
+    '--is-ancestor',
+    record.remoteSha,
+    record.localSha,
+  ];
   const run = runExpecting(args, [IS_ANCESTOR, NOT_ANCESTOR, OBJECT_MISSING], facts.place);
 
   if (isFailure(run)) {
