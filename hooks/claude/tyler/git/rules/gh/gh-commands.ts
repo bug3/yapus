@@ -115,6 +115,16 @@ export const ghCommands = {
     title: (command: string, violations: readonly string[]): string =>
       `the title of \`${ command }\` breaks the subject rule: ${ violations.join('; ') }; `
       + 'rewrite it',
+    unknownLabel: (command: string, label: string): string =>
+      `\`${ command }\` names the label ${ JSON.stringify(label) }, which is not in the label `
+      + 'catalog; use a label from hooks/shared/catalogs',
+    titleLabels: (command: string, expected: readonly string[]): string =>
+      `the type, scope and breaking-change labels of \`${ command }\` must be exactly `
+      + `${ expected.map((label) => `\`${ label }\``).join(', ') }, as its title says, `
+      + 'and no kind label; fix --label',
+    removedTitleLabel: (command: string, label: string): string =>
+      `\`${ command } --remove-label\` cannot remove ${ JSON.stringify(label) }, which the `
+      + 'title says; change the title instead',
     bodyFileNotAbsolute: (command: string, path: string): string =>
       `the --body-file of \`${ command }\` is ${ JSON.stringify(path) }; `
       + 'write an absolute path to a file, not - or a relative path',

@@ -11,6 +11,7 @@ import { makeTempDir } from '../../../../../../helpers/make-temp-dir.ts';
 const BODY = '## Summary\na\n\n## Test plan\nb\n\nBuilt with yapus\n'
   + 'Co-authored-by: yapus <noreply@yapus.dev>\n';
 const TITLE = 'feat(hooks): add a check';
+const LABELS = 'type: feat,scope: hooks';
 
 function ghCall(...texts: readonly string[]): Call {
   return {
@@ -36,9 +37,9 @@ function refusalOf(...texts: readonly string[]): string | undefined {
 test('accepts a draft pull request with a good title and body file', (t) => {
   const file = bodyFile(t);
 
-  assert.equal(refusalOf('pr', 'create', '-d', '-t', TITLE, '-F', file), undefined);
+  assert.equal(refusalOf('pr', 'create', '-d', '-t', TITLE, '-l', LABELS, '-F', file), undefined);
   assert.equal(
-    refusalOf('pr', 'new', '--draft', '--title', TITLE, '--body-file', file),
+    refusalOf('pr', 'new', '--draft', '--title', TITLE, '--label', LABELS, '--body-file', file),
     undefined,
   );
 });
@@ -117,7 +118,7 @@ test('lets a forbidden flag be switched off', (t) => {
   const file = bodyFile(t);
 
   assert.equal(
-    refusalOf('pr', 'create', '-d', '--fill=false', '-t', TITLE, '-F', file),
+    refusalOf('pr', 'create', '-d', '--fill=false', '-t', TITLE, '-l', LABELS, '-F', file),
     undefined,
   );
 });
@@ -126,9 +127,25 @@ test('refuses a create whose body lacks the footer', (t) => {
   const file = bodyFile(t, '## Summary\na\n## Test plan\nb\n');
 
   assert.equal(
-    refusalOf('pr', 'create', '-d', '-t', TITLE, '-F', file),
+    refusalOf('pr', 'create', '-d', '-t', TITLE, '-l', LABELS, '-F', file),
     'the body must end with the lines `Built with yapus` and '
     + '`Co-authored-by: yapus <noreply@yapus.dev>`; add them',
+  );
+});
+
+test('refuses a create whose labels do not say what its title says', (t) => {
+  const file = bodyFile(t);
+
+  assert.match(
+    refusalOf('pr', 'create', '-d', '-t', TITLE, '-l', 'type: fix', '-F', file) ?? '',
+    /^the type, scope and breaking-change labels of `gh pr create`/,
+  );
+});
+
+test('refuses an edit that removes a label the title says', () => {
+  assert.match(
+    refusalOf('pr', 'edit', '7', '--remove-label', 'type: feat') ?? '',
+    /^`gh pr edit --remove-label` cannot remove/,
   );
 });
 

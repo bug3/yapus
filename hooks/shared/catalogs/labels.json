@@ -1,0 +1,32 @@
+{
+  "type": {
+    "color": "0e8a16",
+    "description": "Type of change"
+  },
+  "scope": {
+    "color": "1d76db",
+    "description": "Area of the product"
+  },
+  "extras": [
+    {
+      "name": "breaking-change",
+      "color": "b60205",
+      "description": "Changes what callers rely on"
+    },
+    {
+      "name": "kind: bug",
+      "color": "d73a4a",
+      "description": "Something does not work"
+    },
+    {
+      "name": "kind: feature",
+      "color": "a2eeef",
+      "description": "A new capability"
+    },
+    {
+      "name": "kind: other",
+      "color": "ededed",
+      "description": "Neither a bug nor a feature"
+    }
+  ]
+}

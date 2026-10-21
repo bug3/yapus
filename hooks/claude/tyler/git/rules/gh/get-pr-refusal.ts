@@ -4,6 +4,8 @@ import { getBodyRefusal } from './body/get-body-refusal.ts';
 import { getGhAction } from './get-gh-action.ts';
 import { ghCatalogs } from './gh-catalogs.ts';
 import { ghCommands } from './gh-commands.ts';
+import { getCreateLabelRefusal } from './labels/get-create-label-refusal.ts';
+import { getEditLabelRefusal } from './labels/get-edit-label-refusal.ts';
 import { getForbiddenOptionRefusal } from './options/get-forbidden-option-refusal.ts';
 import { readLiteralValues } from './options/read-literal-values.ts';
 import { readGhArguments, type GhArguments } from './read-gh-arguments.ts';
@@ -35,12 +37,14 @@ function getCreateRefusal(args: GhArguments, command: string): string | undefine
   return getForbiddenOptionRefusal(args, command)
     ?? getTitleRefusal(args, command, true)
     ?? getDraftRefusal(args, command)
+    ?? getCreateLabelRefusal(args, command)
     ?? getBodyRefusal(args, command, ghCommands.bodies.pr);
 }
 
 function getEditRefusal(args: GhArguments, command: string): string | undefined {
   return getForbiddenOptionRefusal(args, command)
     ?? getTitleRefusal(args, command, false)
+    ?? getEditLabelRefusal(args, command)
     ?? (args.values.has('body-file')
       ? getBodyRefusal(args, command, ghCommands.bodies.pr)
       : undefined);
