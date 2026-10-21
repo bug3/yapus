@@ -171,6 +171,18 @@ export const ghCommands = {
     required: ['merge', 'delete-branch'],
     forbidden: ['admin', 'squash', 'rebase', 'auto', 'disable-auto'],
   },
+  // What `gh api` and `gh label` write with, read by words (gh v2.102.0
+  // pkg/cmd/api/api.go: `-i` is its only short flag, so a field option in a short
+  // group follows only `i` letters).
+  writes: {
+    readMethod: 'GET',
+    methodOption: '--method',
+    methodLetter: 'X',
+    fieldOptions: ['--field', '--raw-field', '--input'],
+    shortFieldGroup: /^-i*[fF]/u,
+    graphqlOperand: 'graphql',
+    labelActions: ['create', 'edit', 'delete', 'clone'],
+  },
   // An issue title is `<scope>: <symptom>`, at most this many characters.
   maxIssueTitle: MAX_ISSUE_TITLE,
   // Options that take the title or the body from somewhere the gate cannot read.
@@ -218,6 +230,15 @@ export const ghCommands = {
       + 'the gate reads it',
     missingOption: (command: string, shown: string): string =>
       `\`${ command }\` needs ${ shown }; write it`,
+    apiMethod: '`gh api` with a method other than GET writes on GitHub; a person runs it',
+    apiFields: '`gh api` with a field or input option and no method posts; '
+      + 'add -X GET to read, or a person runs it',
+    apiGraphql: '`gh api graphql` posts every query and mutation; a person runs it',
+    apiExpansion: '`gh api` has an argument that starts with an expansion, which could be a '
+      + 'method or a field; write it literally',
+    labelWrite: (action: string): string =>
+      `\`gh label ${ action }\` changes labels outside the catalog; run `
+      + '`node hooks/shared/labels/sync-labels.ts` instead',
     mergeForbidden: (command: string, shown: string): string =>
       `\`${ command } --${ shown }\` is not a plain merge; use --merge and --delete-branch only`,
     draftOnly: (command: string): string =>

@@ -347,6 +347,23 @@ test('denies a squash merge and allows a merge commit', () => {
   assert.deepEqual(getVerdict({ stdinText: bashCall('gh pr merge 3 -md'), home: HOME }), ALLOW);
 });
 
+test('denies a gh api write and a label change', () => {
+  const post = getVerdict({ stdinText: bashCall('gh api -X POST /x'), home: HOME });
+  const label = getVerdict({ stdinText: bashCall('gh label create x'), home: HOME });
+
+  assert.equal(post.kind, 'deny');
+  assert.match('detail' in post ? post.detail : '', /^`gh api` with a method other than GET/);
+  assert.equal(label.kind, 'deny');
+  assert.match('detail' in label ? label.detail : '', /^`gh label create` changes labels/);
+});
+
+test('allows a gh api read with a quoted endpoint', () => {
+  assert.deepEqual(
+    getVerdict({ stdinText: bashCall('gh api -X GET "repos/o/$R" --paginate'), home: HOME }),
+    ALLOW,
+  );
+});
+
 test('allows a gh api call that starts with an option', () => {
   assert.deepEqual(getVerdict({ stdinText: bashCall('gh api -H x /user'), home: HOME }), ALLOW);
 });
