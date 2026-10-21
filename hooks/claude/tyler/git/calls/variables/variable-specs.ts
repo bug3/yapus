@@ -28,6 +28,9 @@ const PROGRAM_VARIABLES: readonly string[] = [
 // Variables that name hooks git installs (`git clone`, `git init`); no value passes.
 const HOOK_VARIABLES: readonly string[] = ['GIT_TEMPLATE_DIR'];
 
+// Variables the pre-push hook reads to tell an agent's push from a person's; no value passes.
+const AGENT_VARIABLES: readonly string[] = ['CLAUDECODE'];
+
 // The literal values of a program variable that run nothing the gate must read.
 const HARMLESS_PROGRAMS: readonly string[] = ['true', ':', 'cat', ''];
 
@@ -60,6 +63,7 @@ export const variableSpecs = {
   programVariables: PROGRAM_VARIABLES,
   harmlessPrograms: HARMLESS_PROGRAMS,
   hookVariables: HOOK_VARIABLES,
+  agentVariables: AGENT_VARIABLES,
   watchedSuffixes: WATCHED_SUFFIXES,
   namerefPrograms: NAMEREF_PROGRAMS,
   namerefOption: NAMEREF_OPTION,

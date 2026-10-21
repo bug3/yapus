@@ -19,6 +19,8 @@ function unjudgeable(reason: string, shouldAlwaysDeny: boolean): unknown {
 
 const CONFIG = unjudgeable('`GIT_CONFIG*` variables can skip the hooks yapus relies on', false);
 
+const AGENT = unjudgeable('CLAUDECODE marks the shell as an agent\'s; a person changes it', false);
+
 const UNREADABLE_NAME = unjudgeable('a variable name the gate cannot read', true);
 
 const NONE = { kind: 'calls', calls: [] };
@@ -242,6 +244,33 @@ test('refuses a GIT_TEMPLATE_DIR export even with an empty value', () => {
     callsOf('export GIT_TEMPLATE_DIR='),
     unjudgeable('GIT_TEMPLATE_DIR names hooks the gate cannot read', false),
   );
+});
+
+test('refuses an empty CLAUDECODE assignment before git push', () => {
+  assert.deepEqual(callsOf('CLAUDECODE= git push origin main'), AGENT);
+});
+
+test('refuses unset of CLAUDECODE', () => {
+  assert.deepEqual(callsOf('unset CLAUDECODE; git push'), AGENT);
+});
+
+test('refuses env -u of CLAUDECODE, apart or attached', () => {
+  assert.deepEqual(callsOf('env -u CLAUDECODE git push'), AGENT);
+  assert.deepEqual(callsOf('env -uCLAUDECODE git push'), AGENT);
+  assert.deepEqual(callsOf('env --unset=CLAUDECODE git push'), AGENT);
+});
+
+test('refuses an export of CLAUDECODE to another value', () => {
+  assert.deepEqual(callsOf('export CLAUDECODE=0; git push'), AGENT);
+});
+
+test('refuses env NAME= for CLAUDECODE and a standalone assignment', () => {
+  assert.deepEqual(callsOf('env CLAUDECODE=0 git push'), AGENT);
+  assert.deepEqual(callsOf('CLAUDECODE=0; git push'), AGENT);
+});
+
+test('allows reading CLAUDECODE', () => {
+  assert.deepEqual(callsOf('echo $CLAUDECODE; git status'), gitCall([], 'status'));
 });
 
 test('refuses a program variable name alone', () => {

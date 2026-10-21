@@ -2,7 +2,9 @@ import type { Word } from '../../shell/split-commands.ts';
 import type { Call } from '../get-calls.ts';
 import type { Cursor, Unreadable } from '../read-wrapper.ts';
 import {
+  AGENT_REFUSAL,
   CONFIG_REFUSAL,
+  isAgentName,
   isConfigName,
   isConfigWord,
   refuseWatchedWord,
@@ -18,6 +20,10 @@ export function readVariables(
 ): Unreadable | undefined {
   if (cursor.unsets.some(isConfigName)) {
     return CONFIG_REFUSAL;
+  }
+
+  if (cursor.unsets.some(isAgentName)) {
+    return AGENT_REFUSAL;
   }
 
   const isConfigSet = [...words, ...cursor.words].some((word) =>
