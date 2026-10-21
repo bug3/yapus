@@ -1,5 +1,6 @@
 import { type DefaultBranchViolation, getDefaultBranches } from './get-default-branches.ts';
 import { type AllowanceViolation, getPushAllowance } from './get-push-allowance.ts';
+import type { Place } from './run-git.ts';
 
 export interface BranchFactsQuery {
   readonly repository: string;
@@ -13,6 +14,8 @@ export interface BranchFactsQuery {
 
 export interface BranchFacts {
   readonly isAgent: boolean;
+  // Where the rules run their own git calls.
+  readonly place: Place;
   readonly getDefaultBranches: () => string[] | DefaultBranchViolation;
   readonly getPushAllowance: () => boolean | AllowanceViolation;
 }
@@ -26,6 +29,7 @@ export function makeBranchFacts(query: BranchFactsQuery): BranchFacts {
 
   return {
     isAgent: env.CLAUDECODE === '1',
+    place,
     getDefaultBranches: once(
       () => getDefaultBranches({ repository, env: childEnv, deadline }),
     ),

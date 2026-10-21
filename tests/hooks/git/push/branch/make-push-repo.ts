@@ -29,6 +29,13 @@ export function makePushRepo(t: TestContext): PushRepo {
   return { repository, remote };
 }
 
+// A push the hook does not see, to put a ref on the remote before the test.
+export function seedRemote(repository: string, ref: string): void {
+  const args = ['-c', 'core.hooksPath=/dev/null', 'push', '--quiet', 'origin', `HEAD:${ ref }`];
+
+  runGit(args, repository);
+}
+
 // A real git push through the hook, as an agent.
 export function runAgentPush(
   t: TestContext,

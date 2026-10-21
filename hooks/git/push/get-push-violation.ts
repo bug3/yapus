@@ -1,4 +1,5 @@
 import { getChildEnv } from '../../shared/get-child-env.ts';
+import { getHistoryViolation } from './branch/get-history-violation.ts';
 import { getTargetViolation } from './branch/get-target-violation.ts';
 import { makeBranchFacts } from './branch/make-branch-facts.ts';
 import { getInterruptedViolation } from './get-interrupted-violation.ts';
@@ -43,10 +44,11 @@ export async function getPushViolation(
   });
 
   for (const record of pushRecords.records) {
-    const targetViolation = getTargetViolation(record, facts);
+    const branchViolation = getTargetViolation(record, facts)
+      ?? getHistoryViolation(record, facts);
 
-    if (targetViolation !== undefined) {
-      return targetViolation;
+    if (branchViolation !== undefined) {
+      return branchViolation;
     }
   }
 

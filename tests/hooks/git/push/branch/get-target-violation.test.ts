@@ -115,6 +115,7 @@ test('does not count a deletion as a push to the branch', () => {
   };
   const facts = {
     isAgent: true,
+    place: { cwd: '/', env: {}, deadline: Number.POSITIVE_INFINITY },
     getDefaultBranches: () => ['refs/heads/main'],
     getPushAllowance: () => false,
   };
