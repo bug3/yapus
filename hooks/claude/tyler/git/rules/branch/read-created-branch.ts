@@ -1,5 +1,6 @@
 import type { Word } from '../../shell/split-commands.ts';
-import { readArguments } from '../read-arguments.ts';
+import { isUnreadable } from '../get-unreadable-reason.ts';
+import { hasFlag, readArguments } from '../read-arguments.ts';
 import { branchCatalog } from './branch-catalog.ts';
 
 // What a git call names as a new branch: a word, nothing, or a call the gate
@@ -12,10 +13,19 @@ export function readCreatedBranch(words: readonly Word[]): CreatedBranch {
     leading.every((text, index) => words[index]?.text === text));
 
   if (creator !== undefined) {
-    return readOptionValue(words.slice(creator.leading.length), creator.letters, creator.longs);
+    const rest = words.slice(creator.leading.length);
+
+    return rest.some(isUnreadable)
+      ? 'unreadable'
+      : readOptionValue(rest, creator.letters, creator.longs);
   }
 
-  return words[0]?.text === 'branch' ? readBranchName(words.slice(1)) : 'none';
+  if (words[0]?.text !== 'branch') {
+    return 'none';
+  }
+
+  // A word the shell may split, or one that starts with - or +, may be an option.
+  return words.slice(1).some(isUnreadable) ? 'unreadable' : readBranchName(words.slice(1));
 }
 
 function readOptionValue(
@@ -56,7 +66,7 @@ function readOptionValue(
 // `git branch <name> [<start>]` creates; a rename or copy names its last operand.
 function readBranchName(words: readonly Word[]): CreatedBranch {
   const args = readArguments(words.map(({ text }) => text));
-  const has = (flags: readonly string[]): boolean => flags.some((flag) => args.flags.has(flag));
+  const has = (flags: readonly string[]): boolean => flags.some((flag) => hasFlag(args, flag));
   const isRename = has(branchCatalog.branchRenames);
 
   if (!isRename && has(branchCatalog.branchOtherModes)) {

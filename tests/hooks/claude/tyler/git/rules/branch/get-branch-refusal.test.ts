@@ -36,6 +36,24 @@ test('refuses a badly named branch from each creating command', () => {
   assert.match(refusalOf('branch', '-M', 'feat/a', 'wip'), NAME_REFUSAL);
 });
 
+test('reads git branch options cut to a prefix and listing options as no mode', () => {
+  assert.match(refusalOf('branch', '--mov', 'feat/a', 'wip'), NAME_REFUSAL);
+  assert.match(refusalOf('branch', '--sort=refname', 'wip'), NAME_REFUSAL);
+  assert.match(refusalOf('branch', '--format=x', 'wip'), NAME_REFUSAL);
+  assert.equal(getBranchRefusal(gitCall('branch', '--del', 'wip')), undefined);
+});
+
+test('refuses a word the shell may split in a creating command', () => {
+  const splittable = { text: '$X', isOpaque: true, canSplit: true };
+  const reason = 'cannot judge `git switch` with an argument the gate cannot read; '
+    + 'quote it if it is one word, and start it with neither - nor +';
+
+  assert.equal(
+    getBranchRefusal({ ...gitCall('switch'), words: [...gitCall('switch').words, splittable] }),
+    reason,
+  );
+});
+
 test('reads an attached value and a value after a short group', () => {
   assert.match(refusalOf('checkout', '-bwip'), NAME_REFUSAL);
   assert.match(refusalOf('checkout', '-qb', 'wip'), NAME_REFUSAL);
