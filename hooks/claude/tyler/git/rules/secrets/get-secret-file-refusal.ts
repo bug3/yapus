@@ -55,15 +55,28 @@ function getItemRefusal(item: CommandItem, home: string | undefined): string | u
 function findSecretFile(item: CommandItem): string | undefined {
   const isInterpreted = item.words.some((word) => isProgramOf(word, secretFiles.interpreters));
   const isShell = item.words.some((word) => isProgramOf(word, secretFiles.shells));
-  const names = (word: Word): boolean => expandBraces(word.text).some((text) => word.isOpaque
-    ? isSecretGlob(text) || text !== word.text && isSecretFile(text)
-    : isSecretFile(text)
-      || isInterpreted && text.split(secretFiles.nameBreaks).some(isSecretFile));
+  const names = (word: Word): boolean => namesSecret(word, isInterpreted);
   const inCode = isInterpreted || isShell
     ? item.heredocs.flatMap((body) => body.split(secretFiles.nameBreaks)).find(isSecretFile)
     : undefined;
 
   return [...item.words, ...item.inputTargets].find(names)?.text ?? inCode;
+}
+
+// Whether a word, with its brace groups expanded, names a secret file. A word the
+// expander cannot read counts as secret when the shell would expand it (opaque); a
+// quoted one is read as it stands.
+function namesSecret(word: Word, isInterpreted: boolean): boolean {
+  const expanded = expandBraces(word.text);
+
+  if (expanded === undefined && word.isOpaque) {
+    return true;
+  }
+
+  return (expanded ?? [word.text]).some((text) => word.isOpaque
+    ? isSecretGlob(text) || text !== word.text && isSecretFile(text)
+    : isSecretFile(text)
+      || isInterpreted && text.split(secretFiles.nameBreaks).some(isSecretFile));
 }
 
 function isProgramOf(word: Word, programs: readonly string[]): boolean {

@@ -222,3 +222,18 @@ test('refuses a glob after an expansion that reaches a key file', () => {
 test('passes a glob after an expansion that reaches no secret file', () => {
   assert.equal(refusalOf('cat $D*.ts'), undefined);
 });
+
+test('refuses a word whose brace sequence it cannot read', () => {
+  assert.equal(refusalOf('cat x{1..3}'), shown('cat', 'x{1..3}'));
+});
+
+test('refuses a word whose brace groups pass the cap', () => {
+  assert.equal(
+    refusalOf('cat {a,b}{a,b}{a,b}{a,b}{a,b}{a,b}{a,b}{a,b}{a,b}'),
+    shown('cat', '{a,b}{a,b}{a,b}{a,b}{a,b}{a,b}{a,b}{a,b}{a,b}'),
+  );
+});
+
+test('passes a quoted word with a brace sequence', () => {
+  assert.equal(refusalOf('git commit -m "see {1..3}"'), undefined);
+});
