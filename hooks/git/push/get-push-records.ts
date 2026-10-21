@@ -1,5 +1,6 @@
 // A sha is 40 hex digits under SHA-1 and 64 under SHA-256.
 const SHA = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
+const ZEROS = /^0+$/;
 const FIELD_COUNT = 4;
 const LINE_FORM = '"<local ref> <local sha> <remote ref> <remote sha>"';
 
@@ -34,6 +35,10 @@ export function getPushRecords(stdinText: string): PushRecords | PushLinesViolat
   }
 
   return { records: lines.filter((line) => line !== '').map(getRecord) };
+}
+
+export function isZeroSha(sha: string): boolean {
+  return ZEROS.test(sha);
 }
 
 function isPushLine(line: string): boolean {

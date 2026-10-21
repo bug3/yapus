@@ -21,14 +21,22 @@ async function main(): Promise<void> {
 }
 
 // git runs the hook at the work tree root, so the working directory is the
-// repository; tmpdir reads TMPDIR.
+// repository; tmpdir reads TMPDIR. run.sh drops the hook name, so git's first
+// argument, the remote, is argv[2].
 async function readPushInput(): Promise<PushInput | undefined> {
   const signal = makeInterruptSignal();
   const stdinText = await readStdin(process.stdin, STDIN_LIMIT_SECONDS);
 
   return stdinText === undefined
     ? undefined
-    : { stdinText, env: process.env, repository: process.cwd(), tempParent: tmpdir(), signal };
+    : {
+      stdinText,
+      env: process.env,
+      repository: process.cwd(),
+      remote: process.argv[2] ?? '',
+      tempParent: tmpdir(),
+      signal,
+    };
 }
 
 // Node would end at once on each of these; the signal lets the push test stop

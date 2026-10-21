@@ -1,6 +1,4 @@
-import { getPushRecords, type PushLinesViolation } from './get-push-records.ts';
-
-const ZEROS = /^0+$/;
+import { getPushRecords, isZeroSha, type PushLinesViolation } from './get-push-records.ts';
 
 export interface PushCommits {
   readonly commits: string[];
@@ -17,7 +15,7 @@ export function getPushCommits(stdinText: string): PushCommits | PushLinesViolat
 
   const localShas = pushRecords.records
     .map(({ localSha }) => localSha)
-    .filter((sha) => !ZEROS.test(sha));
+    .filter((sha) => !isZeroSha(sha));
 
   return { commits: [...new Set(localShas)] };
 }

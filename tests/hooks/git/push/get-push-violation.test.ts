@@ -78,6 +78,7 @@ function makePushInput(t: TestContext, repository: string, stdinText: string) {
       npm_config_update_notifier: 'false',
     },
     repository,
+    remote: 'origin',
     tempParent,
     signal: new AbortController().signal,
   };
