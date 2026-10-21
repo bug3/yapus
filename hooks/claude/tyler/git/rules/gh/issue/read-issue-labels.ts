@@ -4,6 +4,7 @@ import { getUnknownLabelRefusal } from '../labels/get-unknown-label-refusal.ts';
 import { readLabelNames } from '../labels/read-label-names.ts';
 import { readLiteralValues } from '../options/read-literal-values.ts';
 import type { GhArguments, GhRefusal } from '../read-gh-arguments.ts';
+import { readIssueKind } from './read-issue-kind.ts';
 import { readIssueTitle } from './read-issue-title.ts';
 
 export interface IssueLabels {
@@ -11,8 +12,9 @@ export interface IssueLabels {
   readonly rules: BodyRules;
 }
 
-// The kind of a new issue from its labels, which must be exactly one `kind:` label
-// and the `scope:` label of the title. The title is read before this.
+// The kind of a new issue from its labels, which must be exactly one `type:` label
+// and the `scope:` label of the title, besides hand-kept extras and never the
+// breaking-change label. The title is read before this.
 export function readIssueLabels(
   args: GhArguments,
   command: string,
@@ -32,20 +34,14 @@ export function readIssueLabels(
 
   const scope = 'texts' in titles ? readIssueTitle(titles.texts.at(-1) ?? '')?.scope : undefined;
   const names = [...new Set(named.names)];
-  const kinds = names.filter((name) => name.startsWith(labelNames.kindPrefix));
-  const rules = ghCommands.bodies.issue.get(
-    kinds[0]?.slice(labelNames.kindPrefix.length) ?? '',
-  );
-  const isExact = names.length === 2
-    && names.includes(`${ labelNames.scopePrefix }${ scope ?? '' }`);
+  const types = names.filter((name) => name.startsWith(labelNames.typePrefix));
+  const scopes = names.filter((name) => name.startsWith(labelNames.scopePrefix));
+  const rules = types.length === 1 ? readIssueKind(types[0] ?? '') : undefined;
+  const isExact = scopes.length === 1
+    && scopes[0] === `${ labelNames.scopePrefix }${ scope ?? '' }`
+    && !names.includes(labelNames.breaking);
 
   return isExact && rules !== undefined
     ? { rules }
-    : {
-      refusal: ghCommands.reasons.issueLabels(
-        command,
-        [...ghCommands.bodies.issue.keys()].map((kind) => `${ labelNames.kindPrefix }${ kind }`),
-        scope ?? '<scope>',
-      ),
-    };
+    : { refusal: ghCommands.reasons.issueLabels(command, scope ?? '<scope>') };
 }

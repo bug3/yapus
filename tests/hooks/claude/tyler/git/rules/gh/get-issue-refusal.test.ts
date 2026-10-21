@@ -8,9 +8,10 @@ import {
 } from '../../../../../../../hooks/claude/tyler/git/rules/gh/get-issue-refusal.ts';
 import { makeTempDir } from '../../../../../../helpers/make-temp-dir.ts';
 
-const BUG_BODY = '## Summary\na\n## Steps to reproduce\nb\n## Expected\nc\n## Actual\nd\n';
+const BUG_BODY = '## Summary\na\n## Steps to reproduce\nb\n## Expected\nc\n## Actual\nd\n'
+  + '## Environment\ne\n';
 const TITLE = 'hooks: crashes on start';
-const LABELS = 'kind: bug,scope: hooks';
+const LABELS = 'type: fix,scope: hooks';
 
 function ghCall(...texts: readonly string[]): Call {
   return {
@@ -38,18 +39,26 @@ test('accepts an issue with a scope title, its labels and a body file of its kin
 
   assert.equal(refusalOf('issue', 'create', '-t', TITLE, '-l', LABELS, '-F', file), undefined);
   assert.equal(
-    refusalOf('issue', 'new', '--title', TITLE, '--label', 'scope: hooks', '-l', 'kind: bug',
+    refusalOf('issue', 'new', '--title', TITLE, '--label', 'scope: hooks', '-l', 'type: fix',
       '--body-file', file),
     undefined,
   );
 });
 
 test('accepts a feature issue with the feature headings', (t) => {
-  const file = bodyFile(t, '## Problem\na\n## Proposal\nb\n');
+  const file = bodyFile(t, '## Summary\na\n## Why\nb\n');
 
   assert.equal(
     refusalOf('issue', 'create', '-t', 'project: no way to x', '-F', file,
-      '-l', 'kind: feature,scope: project'),
+      '-l', 'type: feat,scope: project'),
+    undefined,
+  );
+});
+
+test('accepts an issue of any other type with the summary heading', (t) => {
+  assert.equal(
+    refusalOf('issue', 'create', '-t', TITLE, '-F', bodyFile(t, '## Summary\na\n'),
+      '-l', 'type: docs,scope: hooks'),
     undefined,
   );
 });
@@ -91,32 +100,45 @@ test('refuses a title out of the issue form, with an unknown scope or too long',
   );
 });
 
-test('refuses labels that are not one kind and the scope of the title', (t) => {
+test('refuses labels that are not one type and the scope of the title', (t) => {
   const file = bodyFile(t);
-  const reason = 'the labels of `gh issue create` must be exactly one of `kind: bug`, '
-    + '`kind: feature`, `kind: other` and `scope: hooks`, as its title says; fix --label';
+  const reason = 'the labels of `gh issue create` must be exactly one `type: <type>` label and '
+    + '`scope: hooks`, as its title says, plus any hand-kept extra label and never '
+    + '`breaking-change`; fix --label';
 
   assert.equal(refusalOf('issue', 'create', '-t', TITLE, '-F', file), reason);
-  assert.equal(refusalOf('issue', 'create', '-t', TITLE, '-l', 'kind: bug', '-F', file), reason);
+  assert.equal(refusalOf('issue', 'create', '-t', TITLE, '-l', 'type: fix', '-F', file), reason);
   assert.equal(
-    refusalOf('issue', 'create', '-t', TITLE, '-l', 'kind: bug,scope: lint', '-F', file),
+    refusalOf('issue', 'create', '-t', TITLE, '-l', 'scope: hooks', '-F', file),
     reason,
   );
   assert.equal(
-    refusalOf('issue', 'create', '-t', TITLE, '-l', 'kind: bug,kind: other,scope: hooks', '-F',
+    refusalOf('issue', 'create', '-t', TITLE, '-l', 'type: fix,scope: lint', '-F', file),
+    reason,
+  );
+  assert.equal(
+    refusalOf('issue', 'create', '-t', TITLE, '-l', 'type: fix,type: feat,scope: hooks', '-F',
       file),
     reason,
   );
   assert.equal(
-    refusalOf('issue', 'create', '-t', TITLE, '-l', 'kind: bug,scope: hooks,type: fix', '-F',
+    refusalOf('issue', 'create', '-t', TITLE, '-l', 'type: fix,scope: hooks,scope: lint', '-F',
       file),
     reason,
   );
 });
 
+test('refuses the breaking-change label on an issue', (t) => {
+  assert.match(
+    refusalOf('issue', 'create', '-t', TITLE, '-l', 'type: fix,scope: hooks,breaking-change', '-F',
+      bodyFile(t)) ?? '',
+    /^the labels of `gh issue create` must be exactly one `type: <type>` label/,
+  );
+});
+
 test('refuses a label outside the catalog', (t) => {
   assert.equal(
-    refusalOf('issue', 'create', '-t', TITLE, '-l', 'kind: bug,scope: hooks,wip', '-F',
+    refusalOf('issue', 'create', '-t', TITLE, '-l', 'type: fix,scope: hooks,wip', '-F',
       bodyFile(t)),
     '`gh issue create` names the label "wip", which is not in the label catalog; '
     + 'use a label from hooks/shared/catalogs',
@@ -126,9 +148,9 @@ test('refuses a label outside the catalog', (t) => {
 test('refuses a body file with the headings of another kind', (t) => {
   assert.equal(
     refusalOf('issue', 'create', '-t', TITLE, '-l', LABELS, '-F',
-      bodyFile(t, '## Problem\na\n## Proposal\nb\n')),
-    'the body must have the `##` headings Summary, Steps to reproduce, Expected, Actual in '
-    + 'order, each with text under it; fix the file',
+      bodyFile(t, '## Summary\na\n## Why\nb\n')),
+    'the body must have the `##` headings Summary, Steps to reproduce, Expected, Actual, '
+    + 'Environment in order, each with text under it; fix the file',
   );
 });
 
@@ -142,28 +164,66 @@ test('refuses an option that takes the text from where the gate cannot read it',
 test('judges an edit title when given, and passes an edit with none', () => {
   assert.equal(refusalOf('issue', 'edit', '7', '--add-assignee', '@me'), undefined);
   assert.equal(refusalOf('issue', 'edit', '7', '-t', TITLE), undefined);
-  assert.match(refusalOf('issue', 'edit', '7', '-t', 'bad') ?? '', /^the title "bad" of `gh issue edit`/);
+  assert.match(
+    refusalOf('issue', 'edit', '7', '-t', 'bad') ?? '',
+    /^the title "bad" of `gh issue edit`/,
+  );
 });
 
 test('judges the labels an edit adds and removes', () => {
-  assert.equal(refusalOf('issue', 'edit', '7', '--add-label', 'kind: bug'), undefined);
-  assert.match(refusalOf('issue', 'edit', '7', '--add-label', 'wip') ?? '', /not in the label catalog/);
+  assert.equal(refusalOf('issue', 'edit', '7', '--add-label', 'type: fix'), undefined);
+  assert.match(
+    refusalOf('issue', 'edit', '7', '--add-label', 'wip') ?? '',
+    /not in the label catalog/,
+  );
   assert.match(
     refusalOf('issue', 'edit', '7', '--remove-label', 'scope: hooks') ?? '',
     /^`gh issue edit --remove-label` cannot remove/,
   );
 });
 
+test('refuses an edit that adds two types, two scopes or breaking-change', () => {
+  const reason = 'the labels `gh issue edit` adds must be at most one `type: <type>` label, at '
+    + 'most one `scope:` label equal to the scope of its title, and never `breaking-change`; '
+    + 'fix --add-label';
+
+  assert.equal(refusalOf('issue', 'edit', '7', '--add-label', 'type: fix,type: feat'), reason);
+  assert.equal(refusalOf('issue', 'edit', '7', '--add-label', 'scope: hooks,scope: lint'), reason);
+  assert.equal(refusalOf('issue', 'edit', '7', '--add-label', 'breaking-change'), reason);
+  assert.equal(
+    refusalOf('issue', 'edit', '7', '-t', TITLE, '--add-label', 'scope: lint'),
+    reason,
+  );
+});
+
+test('judges an edit body file by the kind of the type label it adds', (t) => {
+  const summary = bodyFile(t, '## Summary\na\n');
+
+  assert.equal(
+    refusalOf('issue', 'edit', '7', '--add-label', 'type: docs', '-F', summary),
+    undefined,
+  );
+  assert.match(
+    refusalOf('issue', 'edit', '7', '--add-label', 'type: fix', '-F', summary) ?? '',
+    /^the body must have the `##` headings Summary, Steps to reproduce/,
+  );
+});
+
 test('accepts an edit body file that follows any kind', (t) => {
   assert.equal(refusalOf('issue', 'edit', '7', '-F', bodyFile(t, '## Summary\na\n')), undefined);
   assert.equal(refusalOf('issue', 'edit', '7', '-F', bodyFile(t)), undefined);
+  assert.equal(
+    refusalOf('issue', 'edit', '7', '-F', bodyFile(t, '## Summary\na\n## Why\nb\n')),
+    undefined,
+  );
 });
 
 test('refuses an edit body file that follows no kind', (t) => {
   assert.equal(
     refusalOf('issue', 'edit', '7', '-F', bodyFile(t, 'text\n')),
     'the body file of `gh issue edit` must follow one issue kind (bug: Summary, Steps to '
-    + 'reproduce, Expected, Actual, feature: Problem, Proposal, other: Summary); fix the file',
+    + 'reproduce, Expected, Actual, Environment, feature: Summary, Why, other: Summary); '
+    + 'fix the file',
   );
 });
 

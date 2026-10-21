@@ -207,12 +207,20 @@ export const ghCommands = {
       headings: ['Summary', 'Test plan'],
       footer: ['Built with yapus', 'Co-authored-by: yapus <noreply@yapus.dev>'],
     },
-    // By the `kind: <name>` label of the issue.
+    // By the kind of the issue, which follows its `type:` label (`issueKinds`).
     issue: new Map<string, BodyRules>([
-      ['bug', { headings: ['Summary', 'Steps to reproduce', 'Expected', 'Actual'], footer: [] }],
-      ['feature', { headings: ['Problem', 'Proposal'], footer: [] }],
+      ['bug', {
+        headings: ['Summary', 'Steps to reproduce', 'Expected', 'Actual', 'Environment'],
+        footer: [],
+      }],
+      ['feature', { headings: ['Summary', 'Why'], footer: [] }],
       ['other', { headings: ['Summary'], footer: [] }],
     ]),
+  },
+  // The kind of an issue by its type; any type not listed has the fallback kind.
+  issueKinds: {
+    byType: new Map([['fix', 'bug'], ['feat', 'feature']]),
+    fallback: 'other',
   },
   // A body file is read whole, up to this size.
   maxBodyBytes: 65_536,
@@ -273,10 +281,14 @@ export const ghCommands = {
       `the title ${ JSON.stringify(title) } of \`${ command }\` must be \`<scope>: <symptom>\`, `
       + 'a scope from hooks/shared/catalogs/scopes.json, a symptom, and at most '
       + `${ String(MAX_ISSUE_TITLE) } characters; rewrite it`,
-    issueLabels: (command: string, kinds: readonly string[], scope: string): string =>
-      `the labels of \`${ command }\` must be exactly one of `
-      + `${ kinds.map((kind) => `\`${ kind }\``).join(', ') } and \`scope: ${ scope }\`, `
-      + 'as its title says; fix --label',
+    issueLabels: (command: string, scope: string): string =>
+      `the labels of \`${ command }\` must be exactly one \`type: <type>\` label and `
+      + `\`scope: ${ scope }\`, as its title says, plus any hand-kept extra label and never `
+      + '`breaking-change`; fix --label',
+    issueEditLabels: (command: string): string =>
+      `the labels \`${ command }\` adds must be at most one \`type: <type>\` label, at most `
+      + 'one `scope:` label equal to the scope of its title, and never `breaking-change`; '
+      + 'fix --add-label',
     editBodyKinds: (command: string, kinds: readonly string[]): string =>
       `the body file of \`${ command }\` must follow one issue kind (${ kinds.join(', ') }); `
       + 'fix the file',

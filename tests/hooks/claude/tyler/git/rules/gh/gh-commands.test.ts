@@ -6,16 +6,27 @@ import {
 } from '../../../../../../../hooks/claude/tyler/git/rules/gh/labels/gh-labels.ts';
 import { labelNames } from '../../../../../../../hooks/shared/labels/read-labels.ts';
 
-// The kinds the label catalog names with a `kind:` label, sorted.
-function catalogKinds(): readonly string[] {
+const { issueKinds, bodies } = ghCommands;
+
+// The types the label catalog names with a `type:` label, sorted.
+function catalogTypes(): readonly string[] {
   return 'violation' in ghLabels
     ? [ghLabels.violation]
     : ghLabels
-      .filter(({ name }) => name.startsWith(labelNames.kindPrefix))
-      .map(({ name }) => name.slice(labelNames.kindPrefix.length))
+      .filter(({ name }) => name.startsWith(labelNames.typePrefix))
+      .map(({ name }) => name.slice(labelNames.typePrefix.length))
       .sort();
 }
 
-test('has a body rule for every kind label of the catalog and for no other', () => {
-  assert.deepEqual([...ghCommands.bodies.issue.keys()].sort(), catalogKinds());
+test('maps every type to a kind that has a body rule, and every body rule is reached', () => {
+  const targets = new Set([...issueKinds.byType.values(), issueKinds.fallback]);
+
+  assert.deepEqual([...targets].sort(), [...bodies.issue.keys()].sort());
+});
+
+test('names only types of the catalog in the type to kind map', () => {
+  assert.deepEqual(
+    [...issueKinds.byType.keys()].filter((type) => !catalogTypes().includes(type)),
+    [],
+  );
 });

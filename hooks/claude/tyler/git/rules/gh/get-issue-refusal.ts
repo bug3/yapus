@@ -3,6 +3,7 @@ import { getBodyRefusal } from './body/get-body-refusal.ts';
 import { getGhAction } from './get-gh-action.ts';
 import { ghCommands } from './gh-commands.ts';
 import { getIssueTitleRefusal } from './issue/get-issue-title-refusal.ts';
+import { readIssueEditLabels } from './issue/read-issue-edit-labels.ts';
 import { readIssueLabels } from './issue/read-issue-labels.ts';
 import { getEditLabelRefusal } from './labels/get-edit-label-refusal.ts';
 import { getForbiddenOptionRefusal } from './options/get-forbidden-option-refusal.ts';
@@ -43,14 +44,31 @@ function getCreateRefusal(args: GhArguments, command: string): string | undefine
 }
 
 function getEditRefusal(args: GhArguments, command: string): string | undefined {
-  return getForbiddenOptionRefusal(args, command)
+  const refusal = getForbiddenOptionRefusal(args, command)
     ?? getIssueTitleRefusal(args, command, false)
-    ?? getEditLabelRefusal(args, command)
-    ?? (args.values.has('body-file') ? getEditBodyRefusal(args, command) : undefined);
+    ?? getEditLabelRefusal(args, command);
+
+  if (refusal !== undefined) {
+    return refusal;
+  }
+
+  const labels = readIssueEditLabels(args, command);
+
+  if ('refusal' in labels) {
+    return labels.refusal;
+  }
+
+  if (!args.values.has('body-file')) {
+    return undefined;
+  }
+
+  return labels.rules === undefined
+    ? getEditBodyRefusal(args, command)
+    : getBodyRefusal(args, command, labels.rules);
 }
 
-// The kind of an existing issue is not visible here, so the body may follow any
-// kind's headings.
+// Without a type label in the call the kind of an existing issue is not visible
+// here, so the body may follow any kind's headings.
 function getEditBodyRefusal(args: GhArguments, command: string): string | undefined {
   const kinds = [...ghCommands.bodies.issue.entries()];
   const refusals = kinds.map(([, rules]) => getBodyRefusal(args, command, rules));
