@@ -18,7 +18,7 @@ function words(...texts: readonly string[]): Word[] {
 }
 
 function commandItem(...texts: readonly string[]): Item {
-  return { kind: 'command', words: words(...texts), heredocs: [] };
+  return { kind: 'command', words: words(...texts), heredocs: [], hasRedirection: false };
 }
 
 function callOf(...texts: readonly string[]): Call {

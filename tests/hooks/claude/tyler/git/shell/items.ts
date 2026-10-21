@@ -29,11 +29,16 @@ export function failure(reason: string): unknown {
 }
 
 export function item(...texts: readonly string[]): unknown {
-  return { kind: 'command', words: texts.map(plain), heredocs: [] };
+  return { kind: 'command', words: texts.map(plain), heredocs: [], hasRedirection: false };
+}
+
+// A command that has a redirection, whose target the words do not show.
+export function redirected(...texts: readonly string[]): unknown {
+  return { kind: 'command', words: texts.map(plain), heredocs: [], hasRedirection: true };
 }
 
 export function withBodies(texts: readonly string[], bodies: readonly string[]): unknown {
-  return { kind: 'command', words: texts.map(plain), heredocs: bodies };
+  return { kind: 'command', words: texts.map(plain), heredocs: bodies, hasRedirection: true };
 }
 
 // A result of one command made of plain words.
@@ -41,7 +46,12 @@ export function command(...texts: readonly string[]): unknown {
   return items(item(...texts));
 }
 
+// A result of one command that has a redirection.
+export function redirectedCommand(...texts: readonly string[]): unknown {
+  return items(redirected(...texts));
+}
+
 // A result of one command made of the given words.
 export function commandOf(...words: readonly Word[]): unknown {
-  return items({ kind: 'command', words, heredocs: [] });
+  return items({ kind: 'command', words, heredocs: [], hasRedirection: false });
 }

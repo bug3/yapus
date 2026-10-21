@@ -2,10 +2,12 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { splitCommands } from '../../../../../../hooks/claude/tyler/git/shell/split-commands.ts';
 import type { Word } from '../../../../../../hooks/claude/tyler/git/shell/split-commands.ts';
-import { CLOSE, failure, item, items, OPEN, opaque, plain, whole } from './items.ts';
+import {
+  CLOSE, failure, item, items, OPEN, opaque, plain, redirected, whole,
+} from './items.ts';
 
 function itemOf(text: string, word: Word): unknown {
-  return { kind: 'command', words: [plain(text), word], heredocs: [] };
+  return { kind: 'command', words: [plain(text), word], heredocs: [], hasRedirection: false };
 }
 
 function opaqueItem(text: string, opaqueText: string): unknown {
@@ -49,6 +51,7 @@ test('keeps heredocs and parentheses inside $( apart from the closing one', () =
         kind: 'command',
         words: [{ text: 'cat', isOpaque: false, canSplit: false }],
         heredocs: ['fix(x): y (M10)\n\nbody with ) and ('],
+        hasRedirection: true,
       },
       CLOSE,
       {
@@ -63,7 +66,7 @@ test('keeps heredocs and parentheses inside $( apart from the closing one', () =
             canSplit: false,
           },
         ],
-        heredocs: [],
+        heredocs: [], hasRedirection: false,
       },
     ),
   );
@@ -157,7 +160,7 @@ test('splits a process substitution with <(', () => {
         { text: '<(git show x)', isOpaque: true, canSplit: true },
         { text: 'y', isOpaque: false, canSplit: false },
       ],
-      heredocs: [],
+      heredocs: [], hasRedirection: false,
     }),
   );
 });
@@ -172,14 +175,14 @@ test('splits a process substitution with >(', () => {
 test('splits a substitution in a redirection target', () => {
   assert.deepEqual(
     splitCommands('a > $(b)', undefined),
-    items(OPEN, item('b'), CLOSE, item('a')),
+    items(OPEN, item('b'), CLOSE, redirected('a')),
   );
 });
 
 test('splits a substitution in an attached redirection target', () => {
   assert.deepEqual(
     splitCommands('a >$(b)', undefined),
-    items(OPEN, item('b'), CLOSE, item('a')),
+    items(OPEN, item('b'), CLOSE, redirected('a')),
   );
 });
 
@@ -246,7 +249,7 @@ test('reads ${...} to its matching brace past a quoted brace', () => {
         { text: '${b:-"}"}', isOpaque: true, canSplit: true },
         { text: 'c', isOpaque: false, canSplit: false },
       ],
-      heredocs: [],
+      heredocs: [], hasRedirection: false,
     }),
   );
 });
@@ -288,7 +291,7 @@ test('marks a $\'...\' word opaque and ends it at an unescaped quote', () => {
       { text: "$'b\\'c'", isOpaque: true, canSplit: false },
       { text: 'd', isOpaque: false, canSplit: false },
     ],
-    heredocs: [],
+    heredocs: [], hasRedirection: false,
   }));
 });
 

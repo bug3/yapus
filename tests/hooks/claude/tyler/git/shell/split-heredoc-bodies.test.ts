@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { splitCommands } from '../../../../../../hooks/claude/tyler/git/shell/split-commands.ts';
-import { CLOSE, items, OPEN, withBodies } from './items.ts';
+import { CLOSE, item, items, OPEN, withBodies } from './items.ts';
 
 test('splits a substitution in an unquoted body before its command', () => {
   assert.deepEqual(
     splitCommands('cat <<EOF\n$(git reset --hard)\nEOF', undefined),
     items(
       OPEN,
-      withBodies(['git', 'reset', '--hard'], []),
+      item('git', 'reset', '--hard'),
       CLOSE,
       withBodies(['cat'], ['$(git reset --hard)']),
     ),
@@ -25,7 +25,7 @@ test('does not split a substitution in a quoted body', () => {
 test('splits a backtick substitution in an unquoted body', () => {
   assert.deepEqual(
     splitCommands('cat <<EOF\n`git status`\nEOF', undefined),
-    items(OPEN, withBodies(['git', 'status'], []), CLOSE, withBodies(['cat'], ['`git status`'])),
+    items(OPEN, item('git', 'status'), CLOSE, withBodies(['cat'], ['`git status`'])),
   );
 });
 
@@ -39,7 +39,7 @@ test('does not split escaped substitutions in an unquoted body', () => {
 test('ends a continued delimiter line and reads the next line as a command', () => {
   assert.deepEqual(
     splitCommands('cat <<EOF\nE\\\nOF\ngit reset --hard', undefined),
-    items(withBodies(['cat'], ['']), withBodies(['git', 'reset', '--hard'], [])),
+    items(withBodies(['cat'], ['']), item('git', 'reset', '--hard')),
   );
 });
 
@@ -62,8 +62,8 @@ test('keeps the inner tabs of a continued dash heredoc line in the delimiter tes
     splitCommands("cat <<-EOF\n\tE\\\n\t\tOF\ncat <<'Y'\nEOF\ngit push --force\nY", undefined),
     items(
       withBodies(['cat'], ["E\t\tOF\ncat <<'Y'"]),
-      withBodies(['git', 'push', '--force'], []),
-      withBodies(['Y'], []),
+      item('git', 'push', '--force'),
+      item('Y'),
     ),
   );
 });
@@ -94,11 +94,11 @@ test('puts the substitutions of two heredocs before their commands in order', ()
     splitCommands('cat <<A | cat <<B\n$(a)\nA\n$(b)\nB', undefined),
     items(
       OPEN,
-      withBodies(['a'], []),
+      item('a'),
       CLOSE,
       withBodies(['cat'], ['$(a)']),
       OPEN,
-      withBodies(['b'], []),
+      item('b'),
       CLOSE,
       withBodies(['cat'], ['$(b)']),
     ),
@@ -112,7 +112,7 @@ test('reads a braced expansion with a quoted default as one opaque word', () => 
       { text: 'echo', isOpaque: false, canSplit: false },
       { text: '${x:-y}', isOpaque: true, canSplit: false },
     ],
-    heredocs: [],
+    heredocs: [], hasRedirection: false,
   }));
 });
 

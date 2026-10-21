@@ -135,7 +135,14 @@ function readNested(run: Nested, home: string | undefined, depth: number): Calls
   }
 
   if (run.kind === 'rerun') {
-    return collectCalls([{ kind: 'command', words: run.words, heredocs: [] }], home, depth + 1);
+    const rerun: Item = {
+      kind: 'command',
+      words: run.words,
+      heredocs: [],
+      hasRedirection: false,
+    };
+
+    return collectCalls([rerun], home, depth + 1);
   }
 
   const split = splitCommands(run.text, home);

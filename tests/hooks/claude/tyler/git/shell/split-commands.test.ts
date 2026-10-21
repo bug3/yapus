@@ -7,6 +7,8 @@ import {
   failure,
   item,
   items,
+  redirected,
+  redirectedCommand,
   whole,
   withBodies,
 } from './items.ts';
@@ -139,35 +141,48 @@ test('keeps a quoted hash and a mid-word hash literal', () => {
 });
 
 test('drops a redirection with its attached target', () => {
-  assert.deepEqual(splitCommands('a >file b', undefined), command('a', 'b'));
+  assert.deepEqual(splitCommands('a >file b', undefined), redirectedCommand('a', 'b'));
 });
 
 test('drops a redirection with its detached target', () => {
-  assert.deepEqual(splitCommands('a > file b', undefined), command('a', 'b'));
+  assert.deepEqual(splitCommands('a > file b', undefined), redirectedCommand('a', 'b'));
 });
 
 test('drops input, append, clobber and read-write redirections', () => {
-  assert.deepEqual(splitCommands('a <f1 >>f2 >|f3 <>f4 b', undefined), command('a', 'b'));
+  assert.deepEqual(
+    splitCommands('a <f1 >>f2 >|f3 <>f4 b', undefined),
+    redirectedCommand('a', 'b'),
+  );
 });
 
 test('drops redirections prefixed by digits', () => {
-  assert.deepEqual(splitCommands('a 2>f 10> g b', undefined), command('a', 'b'));
+  assert.deepEqual(splitCommands('a 2>f 10> g b', undefined), redirectedCommand('a', 'b'));
 });
 
 test('drops a descriptor duplication', () => {
-  assert.deepEqual(splitCommands('a 2>&1 b', undefined), command('a', 'b'));
+  assert.deepEqual(splitCommands('a 2>&1 b', undefined), redirectedCommand('a', 'b'));
 });
 
 test('drops &> and &>> with their targets', () => {
-  assert.deepEqual(splitCommands('a &>f &>> g b', undefined), command('a', 'b'));
+  assert.deepEqual(splitCommands('a &>f &>> g b', undefined), redirectedCommand('a', 'b'));
 });
 
 test('drops >&- as a close', () => {
-  assert.deepEqual(splitCommands('a >&- b <&0 c', undefined), command('a', 'b', 'c'));
+  assert.deepEqual(
+    splitCommands('a >&- b <&0 c', undefined),
+    redirectedCommand('a', 'b', 'c'),
+  );
 });
 
 test('drops a here-string with its word', () => {
-  assert.deepEqual(splitCommands('a <<< "x y" b', undefined), command('a', 'b'));
+  assert.deepEqual(splitCommands('a <<< "x y" b', undefined), redirectedCommand('a', 'b'));
+});
+
+test('marks only the command that has the redirection', () => {
+  assert.deepEqual(
+    splitCommands('a >f; b', undefined),
+    items(redirected('a'), item('b')),
+  );
 });
 
 test('keeps a quoted redirection character literal', () => {

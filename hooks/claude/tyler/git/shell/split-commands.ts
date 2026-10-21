@@ -14,6 +14,9 @@ export interface CommandItem {
   readonly kind: 'command';
   readonly words: readonly Word[];
   readonly heredocs: readonly string[];
+  // Whether the command has a redirection (`>`, `<`, a here-document), whose
+  // target the words do not show.
+  readonly hasRedirection: boolean;
 }
 
 export interface OpenItem {
@@ -67,6 +70,7 @@ interface Builder {
   readonly items: Item[];
   words: Word[];
   heredocs: Heredoc[];
+  hasRedirection: boolean;
   readonly pending: PendingCommand[];
   isAwaitingTarget: boolean;
   depth: number;
@@ -101,6 +105,7 @@ export function splitRegion(
     items: [],
     words: [],
     heredocs: [],
+    hasRedirection: false,
     pending: [],
     isAwaitingTarget: false,
     depth: 0,
@@ -178,6 +183,7 @@ function readStep(
     }
 
     builder.heredocs.push(redirection.heredoc);
+    builder.hasRedirection = true;
 
     return redirection.end;
   }
@@ -188,6 +194,7 @@ function readStep(
     }
 
     builder.isAwaitingTarget = !redirection.hasTarget;
+    builder.hasRedirection = true;
     builder.items.push(...redirection.items);
 
     return redirection.end;
@@ -320,7 +327,12 @@ function endCommand(builder: Builder): SplitFailure | undefined {
   }
 
   const command: CommandItem | undefined = builder.words.length > 0
-    ? { kind: 'command', words: builder.words, heredocs: [] }
+    ? {
+      kind: 'command',
+      words: builder.words,
+      heredocs: [],
+      hasRedirection: builder.hasRedirection,
+    }
     : undefined;
 
   if (builder.heredocs.length > 0) {
@@ -336,6 +348,7 @@ function endCommand(builder: Builder): SplitFailure | undefined {
   }
 
   builder.heredocs = [];
+  builder.hasRedirection = false;
   builder.words = [];
 
   return undefined;

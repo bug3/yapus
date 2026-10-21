@@ -22,6 +22,7 @@ function item(...texts: readonly string[]): Item {
     kind: 'command',
     words: [...texts].map((text) => ({ text, isOpaque: false, canSplit: false })),
     heredocs: [],
+    hasRedirection: false,
   };
 }
 
@@ -46,6 +47,7 @@ function opaqueItem(...texts: readonly string[]): Item {
       canSplit: index === last,
     })),
     heredocs: [],
+    hasRedirection: false,
   };
 }
 
@@ -186,6 +188,7 @@ test('records an assignment whose value is opaque', () => {
       { text: 'git', isOpaque: false, canSplit: false },
     ],
     heredocs: [],
+    hasRedirection: false,
   };
 
   assert.deepEqual(getCalls([opaque]), found('git', { assignments: ['A'] }));
