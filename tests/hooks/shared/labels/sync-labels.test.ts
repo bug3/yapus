@@ -27,7 +27,11 @@ interface Run {
   readonly calls: readonly string[];
 }
 
-function runSync(t: TestContext, failLabel = ''): Run {
+function runSync(
+  t: TestContext,
+  failLabel = '',
+  nodeArguments: readonly string[] = [SYNC],
+): Run {
   const directory = makeTempDir(t);
   const record = join(directory, 'record');
 
@@ -35,7 +39,7 @@ function runSync(t: TestContext, failLabel = ''): Run {
   writeFileSync(join(directory, 'gh'), FAKE_GH);
   chmodSync(join(directory, 'gh'), 0o755);
 
-  const run = spawnSync(process.execPath, [SYNC], {
+  const run = spawnSync(process.execPath, nodeArguments, {
     cwd: directory,
     encoding: 'utf8',
     env: {
@@ -72,6 +76,13 @@ test('creates every catalog label with gh label create --force', (t) => {
     'label|create|breaking-change|--color|b60205|--description|Changes what callers rely on'
     + '|--force|',
   ));
+});
+
+test('runs nothing when another program imports it', (t) => {
+  const importing = `await import(${ JSON.stringify(SYNC) })`;
+  const run = runSync(t, '', ['--input-type=module', '-e', importing]);
+
+  assert.deepEqual([run.status, run.stdout, run.calls], [0, '', []]);
 });
 
 test('prints one line per label, as many as gh was called', (t) => {

@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { writeSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getFirstLine } from '../get-first-line.ts';
 import { readLabels, type Label } from './read-labels.ts';
 
@@ -58,6 +59,6 @@ function fail(line: string): void {
   process.exitCode = 1;
 }
 
-if (import.meta.main) {
+if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
   await syncLabels();
 }
