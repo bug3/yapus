@@ -7,6 +7,7 @@ import { getBypassRefusal } from './rules/bypass/get-bypass-refusal.ts';
 import { getDestructiveRefusal } from './rules/destructive/get-destructive-refusal.ts';
 import { getUnknownRefusal } from './rules/known/get-unknown-refusal.ts';
 import { getOwnLineRefusal } from './rules/gh/get-own-line-refusal.ts';
+import { getSizeCheck } from './rules/gh/checks/get-size-check.ts';
 import { getGhWriteRefusal } from './rules/gh/get-gh-write-refusal.ts';
 import { getIssueRefusal } from './rules/gh/get-issue-refusal.ts';
 import { getMergeRefusal } from './rules/gh/get-merge-refusal.ts';
@@ -57,7 +58,7 @@ export const RULES: readonly Rule[] = [
 ];
 
 // The checks run after RULES, for each call.
-export const CHECKS: readonly Check[] = [];
+export const CHECKS: readonly Check[] = [getSizeCheck];
 
 const ALLOW: Allow = { kind: 'allow' };
 

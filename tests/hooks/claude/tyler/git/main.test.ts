@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
+import { getGitEnv } from '../../../../helpers/run-git.ts';
+import { makeSizeBranch } from '../../../../helpers/size/make-size-branch.ts';
 
 const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', '..', 'hooks');
 const MAIN = join(HOOKS, 'claude', 'tyler', 'git', 'main.ts');
@@ -60,6 +63,46 @@ test('exits 0 through the bash entry point for a plain git status', (t) => {
   assert.deepEqual([entryRun.status, entryRun.stdout, entryRun.stderr], [0, '', '']);
 });
 
+// A `gh pr create` that every rule but the size check passes; its body file is written.
+function makeCreateCommand(env: NodeJS.ProcessEnv): string {
+  const body = join(env.TMPDIR ?? '', 'body.md');
+
+  writeFileSync(body, '## Summary\na\n\n## Test plan\nb\n\nBuilt with yapus\n'
+    + 'Co-authored-by: yapus <noreply@yapus.dev>\n');
+
+  return 'gh pr create -d -t "feat(hooks): add a check" -l "type: feat,scope: hooks" '
+    + `-F ${ body } --base main`;
+}
+
+test('prints the notes of an allowed call as hook context on stdout', (t) => {
+  const env = makeHookEnv(t);
+  const hookRun = runHook(env, JSON.stringify({
+    tool_name: 'Bash',
+    tool_input: { command: makeCreateCommand(env) },
+    cwd: makeSizeBranch(t),
+  }));
+
+  assert.deepEqual([hookRun.status, hookRun.stderr], [0, '']);
+  assert.deepEqual(JSON.parse(hookRun.stdout), {
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      additionalContext: 'This pull request changes 456 lines, over 400. '
+        + 'Reviewers lose track of a change this size; consider splitting it.',
+    },
+  });
+});
+
+test('refuses a gh pr create when the payload names no working directory', (t) => {
+  const env = makeHookEnv(t);
+  const hookRun = runHook(env, JSON.stringify({
+    tool_name: 'Bash',
+    tool_input: { command: makeCreateCommand(env) },
+  }));
+
+  assert.deepEqual([hookRun.status, hookRun.stdout], [2, '']);
+  assert.match(hookRun.stderr, /cannot measure the pull request \(git rev-parse --verify/);
+});
+
 function runHook(env: NodeJS.ProcessEnv, stdinText: string) {
   return spawnSync(process.execPath, [MAIN], {
     cwd: env.TMPDIR,
@@ -74,5 +117,5 @@ function runHook(env: NodeJS.ProcessEnv, stdinText: string) {
 function makeHookEnv(t: TestContext): NodeJS.ProcessEnv {
   const tempDir = makeTempDir(t);
 
-  return { ...process.env, HOME: tempDir, TMPDIR: tempDir };
+  return { ...getGitEnv(process.env), HOME: tempDir, TMPDIR: tempDir };
 }

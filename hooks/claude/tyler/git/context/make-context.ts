@@ -15,5 +15,8 @@ const JUDGING_MS = 6000;
 export function makeContext(cwd: string | undefined): Context {
   const deadline = Date.now() + JUDGING_MS;
 
-  return { cwd, run: (program, args) => run(program, args, { cwd, deadline }) };
+  return {
+    cwd,
+    run: (program, args, options) => run({ program, args, ...options }, { cwd, deadline }),
+  };
 }

@@ -15,8 +15,20 @@ export interface RunFailure {
 
 export type RunResult = RunOutput | RunFailure;
 
+// What a run may be given besides its arguments: text for stdin, and variables added
+// to the environment of the child process.
+export interface RunOptions {
+  readonly input?: string | undefined;
+  readonly env?: Readonly<Record<string, string>> | undefined;
+}
+
 // The one seam for child processes: tests pass a fake.
-export type Run = (program: Program, args: readonly string[]) => RunResult;
+export type Run = (program: Program, args: readonly string[], options?: RunOptions) => RunResult;
+
+export interface Request extends RunOptions {
+  readonly program: Program;
+  readonly args: readonly string[];
+}
 
 export interface Place {
   readonly cwd: string | undefined;
@@ -34,7 +46,8 @@ const MAX_OUTPUT_BYTES = 4 * 1024 * 1024;
 // with an exit code, zero or not, comes back for the caller to judge; a missing
 // directory, a spent budget, a timeout, a spawn error or a kill by signal comes
 // back as a failure whose text is "<program> <args>: <detail>".
-export function run(program: Program, args: readonly string[], place: Place): RunResult {
+export function run(request: Request, place: Place): RunResult {
+  const { program, args, input, env } = request;
   const { cwd } = place;
 
   if (cwd === undefined) {
@@ -52,7 +65,8 @@ export function run(program: Program, args: readonly string[], place: Place): Ru
       cwd,
       encoding: 'utf8',
       maxBuffer: MAX_OUTPUT_BYTES,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, ...env },
+      input: input ?? '',
       timeout,
     });
 
