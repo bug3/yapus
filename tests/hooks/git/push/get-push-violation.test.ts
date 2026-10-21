@@ -6,7 +6,7 @@ import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { getGitEnv } from '../../../helpers/run-git.ts';
 import { FAILING_TEST, makeNpmRepo, PASSING_TEST } from './make-npm-repo.ts';
 
-const REMOTE_SHA = '1111111111111111111111111111111111111111';
+const NEW_REF_SHA = '0000000000000000000000000000000000000000';
 const DELETION_LINE =
   '(delete) 0000000000000000000000000000000000000000 refs/heads/old 1111111111111111111111111111111111111111\n';
 
@@ -60,7 +60,7 @@ test('refuses a push that only deletes when a signal came', async (t) => {
 });
 
 function makePushLine(sha: string): string {
-  return `refs/heads/main ${ sha } refs/heads/main ${ REMOTE_SHA }\n`;
+  return `refs/heads/main ${ sha } refs/heads/test/push ${ NEW_REF_SHA }\n`;
 }
 
 // The hook's own TMPDIR is its temporary parent; npm keeps a compile cache in

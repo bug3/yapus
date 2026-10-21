@@ -19,6 +19,7 @@ const WAIT_MS = 10000;
 const SLEEPING_TEST = 'sleep 30';
 // A locked worktree makes a single git worktree remove --force refuse.
 const LOCKING_TEST = 'git worktree lock "$PWD"';
+const NEW_REF_SHA = '0000000000000000000000000000000000000000';
 const LINE_SEPARATOR = String.fromCodePoint(0x2028);
 const DELETION_LINE =
   '(delete) 0000000000000000000000000000000000000000 refs/heads/old 1111111111111111111111111111111111111111\n';
@@ -178,7 +179,7 @@ test('writes a line when it cannot remove its worktree', (t) => {
 });
 
 function makePushLine(sha: string): string {
-  return `refs/heads/main ${ sha } refs/heads/main 1111111111111111111111111111111111111111\n`;
+  return `refs/heads/main ${ sha } refs/heads/test/push ${ NEW_REF_SHA }\n`;
 }
 
 function getRepositoryState(repository: string): string[] {

@@ -16,6 +16,7 @@ const BASH = execFileSync('/bin/sh', ['-c', 'command -v bash'], {
   timeout: SUBPROCESS_TIMEOUT_MS,
 }).trim();
 const EXECUTE_BITS = 0o111;
+const NEW_REF_SHA = '0000000000000000000000000000000000000000';
 
 test('lets a push through when npm test passes on its commit', (t) => {
   const { repository, sha } = makeNpmRepo(t, PASSING_TEST);
@@ -63,7 +64,7 @@ test('passes shellcheck with no findings', () => {
 });
 
 function makePushLine(sha: string): string {
-  return `refs/heads/main ${ sha } refs/heads/main 1111111111111111111111111111111111111111\n`;
+  return `refs/heads/main ${ sha } refs/heads/test/push ${ NEW_REF_SHA }\n`;
 }
 
 // The hook run as git runs it: from the repository root, with the remote name
