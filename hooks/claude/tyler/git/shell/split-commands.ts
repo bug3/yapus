@@ -1,7 +1,7 @@
 import { type Context, makeFailure, type SplitFailure } from './make-failure.ts';
 import { type Heredoc, readHeredoc } from './read-heredoc.ts';
 import { readRedirection } from './read-redirection.ts';
-import { readWord } from './read-word.ts';
+import { makeWord, readWord } from './read-word.ts';
 
 // `canSplit` is true when the shell may split the word into several words or glob it.
 export interface Word {
@@ -17,6 +17,9 @@ export interface CommandItem {
   // Whether the command has a redirection (`>`, `<`, a here-document), whose
   // target the words do not show.
   readonly hasRedirection: boolean;
+  // The targets of `<` and `<>`, which the command reads as files; a heredoc or `<<<`
+  // adds none.
+  readonly inputTargets: readonly Word[];
 }
 
 export interface OpenItem {
@@ -71,8 +74,10 @@ interface Builder {
   words: Word[];
   heredocs: Heredoc[];
   hasRedirection: boolean;
+  inputTargets: Word[];
   readonly pending: PendingCommand[];
   isAwaitingTarget: boolean;
+  isAwaitingInput: boolean;
   depth: number;
 }
 
@@ -106,8 +111,10 @@ export function splitRegion(
     words: [],
     heredocs: [],
     hasRedirection: false,
+    inputTargets: [],
     pending: [],
     isAwaitingTarget: false,
+    isAwaitingInput: false,
     depth: 0,
   };
   let position = region.start;
@@ -194,8 +201,13 @@ function readStep(
     }
 
     builder.isAwaitingTarget = !redirection.hasTarget;
+    builder.isAwaitingInput = redirection.isInput;
     builder.hasRedirection = true;
     builder.items.push(...redirection.items);
+
+    if (redirection.isInput && redirection.target !== undefined) {
+      builder.inputTargets.push(redirection.target);
+    }
 
     return redirection.end;
   }
@@ -240,19 +252,17 @@ function readCommandWord(
 
   if (builder.isAwaitingTarget) {
     builder.isAwaitingTarget = false;
+
+    if (builder.isAwaitingInput) {
+      builder.inputTargets.push(makeWord(read, builder.context.home));
+    }
   } else if (read.isPlain && read.text === 'case') {
     // A pattern's `)` would close an enclosing `$(` early.
     return makeFailure('case statement');
   } else if (read.isPlain && (read.text === '{' || read.text === '}')) {
     return endCommand(builder) ?? read.end;
-  } else if (read.tilde === 'home' && builder.context.home !== undefined && !read.isOpaque) {
-    const text = builder.context.home + read.text.slice(1);
-
-    builder.words.push({ text, isOpaque: false, canSplit: false });
   } else {
-    const isOpaque = read.isOpaque || read.tilde !== 'none';
-
-    builder.words.push({ text: read.text, isOpaque, canSplit: read.canSplit });
+    builder.words.push(makeWord(read, builder.context.home));
   }
 
   return read.end;
@@ -326,12 +336,15 @@ function endCommand(builder: Builder): SplitFailure | undefined {
     return makeFailure('redirection without a target');
   }
 
-  const command: CommandItem | undefined = builder.words.length > 0
+  // A group's redirection (`( cat ) < f`) has no words, but its input targets are read.
+  const hasItem = builder.words.length > 0 || builder.inputTargets.length > 0;
+  const command: CommandItem | undefined = hasItem
     ? {
       kind: 'command',
       words: builder.words,
       heredocs: [],
       hasRedirection: builder.hasRedirection,
+      inputTargets: builder.inputTargets,
     }
     : undefined;
 
@@ -349,6 +362,7 @@ function endCommand(builder: Builder): SplitFailure | undefined {
 
   builder.heredocs = [];
   builder.hasRedirection = false;
+  builder.inputTargets = [];
   builder.words = [];
 
   return undefined;

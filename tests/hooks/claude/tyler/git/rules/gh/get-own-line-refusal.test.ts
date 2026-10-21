@@ -18,7 +18,13 @@ function words(...texts: readonly string[]): Word[] {
 }
 
 function commandItem(...texts: readonly string[]): Item {
-  return { kind: 'command', words: words(...texts), heredocs: [], hasRedirection: false };
+  return {
+    kind: 'command',
+    words: words(...texts),
+    heredocs: [],
+    hasRedirection: false,
+    inputTargets: [],
+  };
 }
 
 function callOf(...texts: readonly string[]): Call {
@@ -62,7 +68,7 @@ test('refuses a command word the shell expands', () => {
     kind: 'command',
     words: [program, ...words(...CREATE.slice(1))],
     heredocs: [],
-    hasRedirection: false,
+    hasRedirection: false, inputTargets: [],
   };
 
   assert.equal(getOwnLineRefusal(callOf(...CREATE.slice(1)), [item]), REFUSAL);
@@ -73,7 +79,7 @@ test('refuses a call whose command has a redirection', () => {
     kind: 'command',
     words: words(...CREATE),
     heredocs: [],
-    hasRedirection: true,
+    hasRedirection: true, inputTargets: [],
   };
 
   assert.equal(getOwnLineRefusal(callOf(...CREATE.slice(1)), [item]), REFUSAL);

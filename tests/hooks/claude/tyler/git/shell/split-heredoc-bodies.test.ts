@@ -112,7 +112,7 @@ test('reads a braced expansion with a quoted default as one opaque word', () => 
       { text: 'echo', isOpaque: false, canSplit: false },
       { text: '${x:-y}', isOpaque: true, canSplit: false },
     ],
-    heredocs: [], hasRedirection: false,
+    heredocs: [], hasRedirection: false, inputTargets: [],
   }));
 });
 

@@ -96,7 +96,7 @@ test('reads the body file of a merge only from a line of its own', () => {
     kind: 'command',
     words: texts.map((text) => ({ text, isOpaque: false, canSplit: false })),
     heredocs: [],
-    hasRedirection: false,
+    hasRedirection: false, inputTargets: [],
   });
 
   assert.equal(getOwnLineRefusal(ghCall(...merge.slice(1)), [item(...merge)]), undefined);

@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
   readRedirection,
 } from '../../../../../../hooks/claude/tyler/git/shell/read-redirection.ts';
+import { plain } from './items.ts';
 
 const CONTEXT = { home: undefined, level: 0 };
 
@@ -14,6 +15,8 @@ test('consumes an attached target', () => {
   assert.deepEqual(readRedirection('>file b', 0, CONTEXT), {
     kind: 'redirection',
     hasTarget: true,
+    isInput: false,
+    target: plain('file'),
     items: [],
     end: 5,
   });
@@ -23,6 +26,8 @@ test('leaves a detached target to the caller', () => {
   assert.deepEqual(readRedirection('> file', 0, CONTEXT), {
     kind: 'redirection',
     hasTarget: false,
+    isInput: false,
+    target: undefined,
     items: [],
     end: 1,
   });
@@ -32,6 +37,8 @@ test('includes a touching digit prefix', () => {
   assert.deepEqual(readRedirection('12>&1', 0, CONTEXT), {
     kind: 'redirection',
     hasTarget: true,
+    isInput: false,
+    target: plain('1'),
     items: [],
     end: 5,
   });

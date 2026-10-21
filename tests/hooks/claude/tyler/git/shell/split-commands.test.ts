@@ -7,6 +7,7 @@ import {
   failure,
   item,
   items,
+  readingCommand,
   redirected,
   redirectedCommand,
   whole,
@@ -148,10 +149,10 @@ test('drops a redirection with its detached target', () => {
   assert.deepEqual(splitCommands('a > file b', undefined), redirectedCommand('a', 'b'));
 });
 
-test('drops input, append, clobber and read-write redirections', () => {
+test('drops the words of input, append, clobber and read-write redirections', () => {
   assert.deepEqual(
     splitCommands('a <f1 >>f2 >|f3 <>f4 b', undefined),
-    redirectedCommand('a', 'b'),
+    readingCommand(['f1', 'f4'], 'a', 'b'),
   );
 });
 

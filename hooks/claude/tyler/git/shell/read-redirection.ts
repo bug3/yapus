@@ -1,7 +1,7 @@
 import { type Context, makeFailure, type SplitFailure } from './make-failure.ts';
 import type { Heredoc } from './read-heredoc.ts';
-import { isWordBoundary, readWord } from './read-word.ts';
-import type { Item } from './split-commands.ts';
+import { isWordBoundary, makeWord, readWord } from './read-word.ts';
+import type { Item, Word } from './split-commands.ts';
 
 export interface NoRedirection {
   readonly kind: 'none';
@@ -12,6 +12,10 @@ export interface NoRedirection {
 export interface RedirectionRead {
   readonly kind: 'redirection';
   readonly hasTarget: boolean;
+  // Whether the operator reads the target as a file (`<` and `<>`); `target` is the
+  // attached target, if any.
+  readonly isInput: boolean;
+  readonly target: Word | undefined;
   readonly items: readonly Item[];
   readonly end: number;
 }
@@ -29,6 +33,8 @@ export type RedirectionResult = NoRedirection | RedirectionRead | HeredocRead | 
 const OPERATORS = ['&>>', '<<<', '<<-', '>>', '>|', '<>', '&>', '>&', '<&', '<<', '<', '>'];
 const HEREDOCS = ['<<', '<<-'];
 const SUBSTITUTION_OPERATORS = ['<', '>'];
+// The operators whose target is a file the command reads.
+const INPUT_OPERATORS = ['<', '<>'];
 
 export function readRedirection(
   line: string,
@@ -61,8 +67,17 @@ export function readRedirection(
     return { kind: 'none' };
   }
 
+  const isInput = INPUT_OPERATORS.includes(operator);
+
   if (isWordBoundary(next)) {
-    return { kind: 'redirection', hasTarget: false, items: [], end: after };
+    return {
+      kind: 'redirection',
+      hasTarget: false,
+      isInput,
+      target: undefined,
+      items: [],
+      end: after,
+    };
   }
 
   const target = readWord(line, after, context);
@@ -74,6 +89,8 @@ export function readRedirection(
   return {
     kind: 'redirection',
     hasTarget: target.isPresent,
+    isInput,
+    target: target.isPresent ? makeWord(target, context.home) : undefined,
     items: target.items,
     end: target.end,
   };

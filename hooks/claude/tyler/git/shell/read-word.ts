@@ -1,6 +1,6 @@
 import { readExpansion } from './read-expansion.ts';
 import { type Context, makeFailure, type SplitFailure } from './make-failure.ts';
-import type { Item } from './split-commands.ts';
+import type { Item, Word } from './split-commands.ts';
 
 export type Tilde = 'none' | 'home' | 'user';
 
@@ -46,6 +46,20 @@ const EQUALS_EXPANSION = /^=./;
 
 export function isWordBoundary(char: string): boolean {
   return char === '' || BOUNDARIES.includes(char);
+}
+
+// The word a read gives: a leading `~` becomes the home directory when it is known,
+// and stays opaque otherwise.
+export function makeWord(read: WordRead, home: string | undefined): Word {
+  if (read.tilde === 'home' && home !== undefined && !read.isOpaque) {
+    return { text: home + read.text.slice(1), isOpaque: false, canSplit: false };
+  }
+
+  return {
+    text: read.text,
+    isOpaque: read.isOpaque || read.tilde !== 'none',
+    canSplit: read.canSplit,
+  };
 }
 
 // `isPlain` is true when no quote or backslash was used; `tilde` describes a

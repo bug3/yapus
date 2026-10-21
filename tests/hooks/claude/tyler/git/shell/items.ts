@@ -29,16 +29,48 @@ export function failure(reason: string): unknown {
 }
 
 export function item(...texts: readonly string[]): unknown {
-  return { kind: 'command', words: texts.map(plain), heredocs: [], hasRedirection: false };
+  return {
+    kind: 'command',
+    words: texts.map(plain),
+    heredocs: [],
+    hasRedirection: false,
+    inputTargets: [],
+  };
 }
 
 // A command that has a redirection, whose target the words do not show.
 export function redirected(...texts: readonly string[]): unknown {
-  return { kind: 'command', words: texts.map(plain), heredocs: [], hasRedirection: true };
+  return {
+    kind: 'command',
+    words: texts.map(plain),
+    heredocs: [],
+    hasRedirection: true,
+    inputTargets: [],
+  };
 }
 
 export function withBodies(texts: readonly string[], bodies: readonly string[]): unknown {
-  return { kind: 'command', words: texts.map(plain), heredocs: bodies, hasRedirection: true };
+  return {
+    kind: 'command',
+    words: texts.map(plain),
+    heredocs: bodies,
+    hasRedirection: true,
+    inputTargets: [],
+  };
+}
+
+// A result of one command that reads the given files through `<` or `<>`.
+export function readingCommand(
+  targets: readonly string[],
+  ...texts: readonly string[]
+): unknown {
+  return items({
+    kind: 'command',
+    words: texts.map(plain),
+    heredocs: [],
+    hasRedirection: true,
+    inputTargets: targets.map(plain),
+  });
 }
 
 // A result of one command made of plain words.
@@ -53,5 +85,5 @@ export function redirectedCommand(...texts: readonly string[]): unknown {
 
 // A result of one command made of the given words.
 export function commandOf(...words: readonly Word[]): unknown {
-  return items({ kind: 'command', words, heredocs: [], hasRedirection: false });
+  return items({ kind: 'command', words, heredocs: [], hasRedirection: false, inputTargets: [] });
 }

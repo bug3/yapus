@@ -22,7 +22,7 @@ function item(...texts: readonly string[]): Item {
     kind: 'command',
     words: [...texts].map((text) => ({ text, isOpaque: false, canSplit: false })),
     heredocs: [],
-    hasRedirection: false,
+    hasRedirection: false, inputTargets: [],
   };
 }
 
@@ -47,7 +47,7 @@ function opaqueItem(...texts: readonly string[]): Item {
       canSplit: index === last,
     })),
     heredocs: [],
-    hasRedirection: false,
+    hasRedirection: false, inputTargets: [],
   };
 }
 
@@ -68,6 +68,12 @@ function none(): unknown {
 function unjudgeable(reason: string, shouldAlwaysDeny: boolean): unknown {
   return { kind: 'unjudgeable', reason, shouldAlwaysDeny };
 }
+
+test('skips the item a group redirection leaves with no words', () => {
+  assert.deepEqual(getCalls(splitItems('( git status ) < f')), found('git', {
+    words: words('status'),
+  }));
+});
 
 test('finds a git call and starts words at the subcommand', () => {
   assert.deepEqual(
@@ -188,7 +194,7 @@ test('records an assignment whose value is opaque', () => {
       { text: 'git', isOpaque: false, canSplit: false },
     ],
     heredocs: [],
-    hasRedirection: false,
+    hasRedirection: false, inputTargets: [],
   };
 
   assert.deepEqual(getCalls([opaque]), found('git', { assignments: ['A'] }));

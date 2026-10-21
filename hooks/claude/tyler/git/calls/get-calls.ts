@@ -140,6 +140,7 @@ function readNested(run: Nested, home: string | undefined, depth: number): Calls
       words: run.words,
       heredocs: [],
       hasRedirection: false,
+      inputTargets: [],
     };
 
     return collectCalls([rerun], home, depth + 1);
