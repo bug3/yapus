@@ -30,9 +30,18 @@ test('accepts exactly the type and scope labels the title says', () => {
   assert.equal(refusalOf('feat(hooks): add', 'type: feat', 'scope: hooks'), undefined);
 });
 
-test('reads labels joined by commas, trimmed, across repeated options', () => {
-  assert.equal(refusalOf('feat(hooks): add', 'type: feat, scope: hooks'), undefined);
+test('reads labels joined by commas, across repeated options', () => {
+  assert.equal(refusalOf('feat(hooks): add', 'type: feat,scope: hooks'), undefined);
+  assert.equal(refusalOf('feat(hooks): add', '"type: feat",scope: hooks'), undefined);
   assert.equal(refusalOf('feat(hooks): add', 'type: feat', 'scope: hooks'), undefined);
+});
+
+test('refuses a label with a space after the comma, as gh keeps it', () => {
+  assert.equal(
+    refusalOf('feat(hooks): add', 'type: feat, scope: hooks'),
+    '`gh pr create` names the label " scope: hooks", which is not in the label catalog; '
+    + 'use a label from hooks/shared/catalogs',
+  );
 });
 
 test('wants the breaking-change label when the title has a bang', () => {
