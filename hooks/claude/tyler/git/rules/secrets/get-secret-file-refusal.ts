@@ -43,21 +43,24 @@ function getItemRefusal(item: CommandItem, home: string | undefined): string | u
 
   // A redirection on a group of commands leaves an item with no program.
   return program === undefined
-    ? secretFiles.reasons.groupShown(file.text)
-    : secretFiles.reasons.shown(programName(program.text), file.text);
+    ? secretFiles.reasons.groupShown(file)
+    : secretFiles.reasons.shown(programName(program.text), file);
 }
 
 // The first literal word or input target that names a secret file, or opaque word whose
-// glob could. The code of an
-// interpreter is cut into names, since the file is a string inside it.
-function findSecretFile(item: CommandItem): Word | undefined {
+// glob could, as the text to show. The code of an interpreter, in its words and its
+// heredocs, is cut into names, since the file is a string inside it.
+function findSecretFile(item: CommandItem): string | undefined {
   const isInterpreted = item.words.some(isInterpreter);
   const names = (word: Word): boolean => word.isOpaque
     ? isSecretGlob(word.text)
     : isSecretFile(word.text)
       || isInterpreted && word.text.split(secretFiles.nameBreaks).some(isSecretFile);
+  const inCode = isInterpreted
+    ? item.heredocs.flatMap((body) => body.split(secretFiles.nameBreaks)).find(isSecretFile)
+    : undefined;
 
-  return [...item.words, ...item.inputTargets].find(names);
+  return [...item.words, ...item.inputTargets].find(names)?.text ?? inCode;
 }
 
 function isInterpreter(word: Word): boolean {

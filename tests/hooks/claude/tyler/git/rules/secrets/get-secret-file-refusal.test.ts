@@ -92,6 +92,17 @@ test('refuses a secret file named inside node code behind a wrapper', () => {
   );
 });
 
+test('refuses a secret file named in the heredoc of an interpreter', () => {
+  assert.equal(
+    refusalOf("python3 <<'EOF'\nprint(open('.env').read())\nEOF"),
+    shown('python3', '.env'),
+  );
+});
+
+test('passes a heredoc that mentions .env for a program that runs no code', () => {
+  assert.equal(refusalOf('git commit -F - <<EOF\nignore .env\nEOF'), undefined);
+});
+
 test('refuses a secret file named inside a jq filter', () => {
   assert.equal(refusalOf("jq 'input' .env"), shown('jq', '.env'));
 });
