@@ -56,3 +56,16 @@ test('refuses a removed label that is not literal', () => {
     + 'the gate reads it',
   );
 });
+
+test('refuses an added or removed label list that is not well-formed', () => {
+  assert.equal(
+    refusalOf(['"type: feat'], []),
+    'the --add-label of `gh pr edit` is not a label list gh reads as the gate does '
+    + '(a line break, or quotes that do not pair); write the labels plain or in double quotes',
+  );
+  assert.equal(
+    refusalOf([], ['kind: bug\nkind: other']),
+    'the --remove-label of `gh pr edit` is not a label list gh reads as the gate does '
+    + '(a line break, or quotes that do not pair); write the labels plain or in double quotes',
+  );
+});

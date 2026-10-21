@@ -252,6 +252,9 @@ export const ghCommands = {
     labelWrite: (action: string): string =>
       `\`gh label ${ action }\` changes labels outside the catalog; `
       + 'a person runs the sync program hooks/shared/labels/sync-labels.ts',
+    labelList: (command: string, option: string): string =>
+      `the --${ option } of \`${ command }\` is not a label list gh reads as the gate does `
+      + '(a line break, or quotes that do not pair); write the labels plain or in double quotes',
     mergeForbidden: (command: string, shown: string): string =>
       `\`${ command } --${ shown }\` is not a plain merge; use --merge and --delete-branch only`,
     draftOnly: (command: string): string =>

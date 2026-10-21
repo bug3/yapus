@@ -37,8 +37,24 @@ test('reads an empty field after a trailing comma', () => {
   assert.deepEqual(namesOf('a,'), { names: ['a', ''] });
 });
 
-test('keeps a value that is not well-formed CSV whole', () => {
-  assert.deepEqual(namesOf('a"b,c'), { names: ['a"b,c'] });
-  assert.deepEqual(namesOf('"a"b,c'), { names: ['"a"b,c'] });
-  assert.deepEqual(namesOf('"unclosed,c'), { names: ['"unclosed,c'] });
+test('refuses a value that is not well-formed CSV', () => {
+  const refusal = {
+    refusal: 'the --label of `gh pr create` is not a label list gh reads as the gate does '
+      + '(a line break, or quotes that do not pair); write the labels plain or in double quotes',
+  };
+
+  assert.deepEqual(namesOf('a"b,c'), refusal);
+  assert.deepEqual(namesOf('"a"b,c'), refusal);
+  assert.deepEqual(namesOf('"unclosed,c'), refusal);
+});
+
+test('refuses a value with a line break', () => {
+  const refusal = {
+    refusal: 'the --label of `gh pr create` is not a label list gh reads as the gate does '
+      + '(a line break, or quotes that do not pair); write the labels plain or in double quotes',
+  };
+
+  assert.deepEqual(namesOf('a\nb'), refusal);
+  assert.deepEqual(namesOf('a,b\r'), refusal);
+  assert.deepEqual(namesOf('"a\nb"'), refusal);
 });

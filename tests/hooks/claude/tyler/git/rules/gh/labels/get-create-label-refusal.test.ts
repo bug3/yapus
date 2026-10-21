@@ -95,3 +95,11 @@ test('refuses a label that is not literal', () => {
     'the label of `gh pr create` is not literal; write the label literally, the gate reads it',
   );
 });
+
+test('refuses a label list that is not well-formed', () => {
+  assert.equal(
+    refusalOf('feat(hooks): add', '"type: feat"x,scope: hooks'),
+    'the --label of `gh pr create` is not a label list gh reads as the gate does '
+    + '(a line break, or quotes that do not pair); write the labels plain or in double quotes',
+  );
+});
