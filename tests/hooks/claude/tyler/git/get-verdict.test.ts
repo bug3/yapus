@@ -339,6 +339,14 @@ test('denies a gh command with an option before its action', () => {
   assert.match('detail' in verdict ? verdict.detail : '', /^the word after `gh repo`/);
 });
 
+test('denies a squash merge and allows a merge commit', () => {
+  const squash = getVerdict({ stdinText: bashCall('gh pr merge 3 -sd'), home: HOME });
+
+  assert.equal(squash.kind, 'deny');
+  assert.match('detail' in squash ? squash.detail : '', /^`gh pr merge --squash`/);
+  assert.deepEqual(getVerdict({ stdinText: bashCall('gh pr merge 3 -md'), home: HOME }), ALLOW);
+});
+
 test('allows a gh api call that starts with an option', () => {
   assert.deepEqual(getVerdict({ stdinText: bashCall('gh api -H x /user'), home: HOME }), ALLOW);
 });

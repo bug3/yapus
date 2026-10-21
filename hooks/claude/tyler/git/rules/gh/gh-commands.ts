@@ -129,6 +129,26 @@ const issueEdit: ActionSpec = {
   ],
 };
 
+const prMerge: ActionSpec = {
+  command: 'gh pr merge',
+  source: 'gh v2.102.0 pkg/cmd/pr/merge/merge.go',
+  options: [
+    { long: 'admin', kind: 'flag' },
+    { long: 'auto', kind: 'flag' },
+    { long: 'author-email', short: 'A', kind: 'value' },
+    { long: 'body', short: 'b', kind: 'value' },
+    { long: 'body-file', short: 'F', kind: 'value' },
+    { long: 'delete-branch', short: 'd', kind: 'flag' },
+    { long: 'disable-auto', kind: 'flag' },
+    { long: 'match-head-commit', kind: 'value' },
+    { long: 'merge', short: 'm', kind: 'flag' },
+    { long: 'rebase', short: 'r', kind: 'flag' },
+    { long: 'squash', short: 's', kind: 'flag' },
+    { long: 'subject', short: 't', kind: 'value' },
+    REPO,
+  ],
+};
+
 export const ghCommands = {
   // The known gh commands (known-commands.ts) with no action word: the word after
   // one is an operand or an option of its own (`gh copilot` passes its flags on).
@@ -143,7 +163,14 @@ export const ghCommands = {
     ['pr edit', prEdit],
     ['issue create', issueCreate],
     ['issue edit', issueEdit],
+    ['pr merge', prMerge],
   ]),
+  // `gh pr merge` makes a merge commit and deletes the branch: these flags must be
+  // on, and these must not be.
+  merge: {
+    required: ['merge', 'delete-branch'],
+    forbidden: ['admin', 'squash', 'rebase', 'auto', 'disable-auto'],
+  },
   // An issue title is `<scope>: <symptom>`, at most this many characters.
   maxIssueTitle: MAX_ISSUE_TITLE,
   // Options that take the title or the body from somewhere the gate cannot read.
@@ -191,6 +218,8 @@ export const ghCommands = {
       + 'the gate reads it',
     missingOption: (command: string, shown: string): string =>
       `\`${ command }\` needs ${ shown }; write it`,
+    mergeForbidden: (command: string, shown: string): string =>
+      `\`${ command } --${ shown }\` is not a plain merge; use --merge and --delete-branch only`,
     draftOnly: (command: string): string =>
       `\`${ command }\` must open a draft; add --draft`,
     title: (command: string, violations: readonly string[]): string =>

@@ -7,6 +7,7 @@ import { getDestructiveRefusal } from './rules/destructive/get-destructive-refus
 import { getUnknownRefusal } from './rules/known/get-unknown-refusal.ts';
 import { getBodyLineRefusal } from './rules/gh/get-body-line-refusal.ts';
 import { getIssueRefusal } from './rules/gh/get-issue-refusal.ts';
+import { getMergeRefusal } from './rules/gh/get-merge-refusal.ts';
 import { getMisplacedOptionRefusal } from './rules/gh/get-misplaced-option-refusal.ts';
 import { getPrRefusal } from './rules/gh/get-pr-refusal.ts';
 import { getPushRefusal } from './rules/push/get-push-refusal.ts';
@@ -41,6 +42,7 @@ export const RULES: readonly Rule[] = [
   getMisplacedOptionRefusal,
   getPrRefusal,
   getIssueRefusal,
+  getMergeRefusal,
 ];
 
 const ALLOW: Allow = { kind: 'allow' };
