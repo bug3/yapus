@@ -4,6 +4,8 @@ import { type TestContext, test } from 'node:test';
 import { getPushViolation } from '../../../../hooks/git/push/get-push-violation.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { getGitEnv } from '../../../helpers/run-git.ts';
+import { CLEAN_ANSWER, makeFakeScanner } from '../../../helpers/scanner/make-fake-scanner.ts';
+import { withScanner } from '../../../helpers/scanner/with-scanner.ts';
 import { FAILING_TEST, makeNpmRepo, PASSING_TEST } from './make-npm-repo.ts';
 
 const NEW_REF_SHA = '0000000000000000000000000000000000000000';
@@ -27,6 +29,19 @@ test('refuses a push whose commit fails npm test', async (t) => {
   assert.deepEqual(
     [await getPushViolation(pushInput), readdirSync(pushInput.tempParent)],
     [`npm test failed on ${ sha.slice(0, 12) }; fix it, then push again`, []],
+  );
+});
+
+test('refuses a push whose commits hold a secret before npm test runs', async (t) => {
+  const { repository, sha } = makeNpmRepo(t, FAILING_TEST);
+  const pushInput = makePushInput(t, repository, makePushLine(sha));
+  const report = '[{"RuleID":"aws-access-token","File":"a.env","StartLine":4}]';
+  const scanner = makeFakeScanner(t, { exitCode: 3, stdout: report, stderr: '' });
+
+  assert.equal(
+    await getPushViolation({ ...pushInput, env: withScanner(pushInput.env, scanner) }),
+    'secret found: rule aws-access-token, a.env line 4; stop and tell the person;'
+    + ' if it was pushed, rotate it; do not rewrite history to hide it',
   );
 });
 
@@ -68,17 +83,20 @@ function makePushLine(sha: string): string {
 function makePushInput(t: TestContext, repository: string, stdinText: string) {
   const tempParent = makeTempDir(t);
 
+  // A clean fake scanner is first on PATH, so that the scan says nothing.
   return {
     stdinText,
-    env: {
+    env: withScanner({
       ...getGitEnv(process.env),
       HOME: makeTempDir(t),
       TMPDIR: tempParent,
       NODE_DISABLE_COMPILE_CACHE: '1',
       npm_config_update_notifier: 'false',
-    },
+    }, makeFakeScanner(t, CLEAN_ANSWER)),
     repository,
     tempParent,
     signal: new AbortController().signal,
+    remote: 'origin',
+    warn: () => undefined,
   };
 }

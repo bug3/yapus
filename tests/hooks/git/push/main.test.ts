@@ -6,6 +6,8 @@ import { text } from 'node:stream/consumers';
 import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { getGitEnv, runGit } from '../../../helpers/run-git.ts';
+import { CLEAN_ANSWER, makeFakeScanner } from '../../../helpers/scanner/make-fake-scanner.ts';
+import { withScanner } from '../../../helpers/scanner/with-scanner.ts';
 import { listWorktrees } from './list-worktrees.ts';
 import {
   CLEAN_ENV_TEST, FAILING_TEST, makeNpmRepo, type NpmRepo, PASSING_TEST,
@@ -248,7 +250,8 @@ function makeMainEnv(t: TestContext, repository: string, extraEnv: NodeJS.Proces
   const tempDir = makeTempDir(t);
 
   // npm keeps a compile cache in TMPDIR, which a test checks is left empty.
-  return {
+  // A clean fake scanner is first on PATH, so that the scan says nothing.
+  return withScanner({
     ...getGitEnv(process.env),
     HOME: tempDir,
     GIT_DIR: join(repository, '.git'),
@@ -256,5 +259,5 @@ function makeMainEnv(t: TestContext, repository: string, extraEnv: NodeJS.Proces
     NODE_DISABLE_COMPILE_CACHE: '1',
     npm_config_update_notifier: 'false',
     ...extraEnv,
-  };
+  }, makeFakeScanner(t, CLEAN_ANSWER));
 }

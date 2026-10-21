@@ -34,7 +34,14 @@ async function readPushInput(): Promise<PushInput | undefined> {
       repository: process.cwd(),
       tempParent: tmpdir(),
       signal,
+      remote: process.argv[2] ?? '',
+      warn,
     };
+}
+
+// writeSync, as in stop.
+function warn(line: string): void {
+  writeSync(process.stderr.fd, `${ formatMessage(line) }\n`);
 }
 
 // Node would end at once on each of these; the signal lets the push test stop

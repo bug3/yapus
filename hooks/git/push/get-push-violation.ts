@@ -8,6 +8,7 @@ import { makeBranchFacts } from './branch/make-branch-facts.ts';
 import { getInterruptedViolation } from './get-interrupted-violation.ts';
 import { getPushCommits } from './get-push-commits.ts';
 import { getPushRecords } from './get-push-records.ts';
+import { getScanViolation } from './scan/get-scan-violation.ts';
 import { getToolViolation } from './get-tool-violation.ts';
 import { testCommit, type Limits } from './test-commit.ts';
 
@@ -20,13 +21,18 @@ export interface PushInput {
   readonly repository: string;
   readonly tempParent: string;
   readonly signal: AbortSignal;
+  // The remote the push goes to, as git gives it to the hook: a name or a URL.
+  readonly remote: string;
+  // Says a line to the person while the push goes on.
+  readonly warn: (line: string) => void;
 }
 
 // The first reason to refuse the push, or undefined when the branch rules
-// allow it and npm test passes on the commit each pushed ref points to. A
-// signal that came while no npm test ran still refuses the push.
+// allow it, the secret scan finds nothing and npm test passes on the commit
+// each pushed ref points to. A signal that came while no npm test ran still
+// refuses the push.
 export async function getPushViolation(
-  { stdinText, env, repository, tempParent, signal }: PushInput,
+  { stdinText, env, repository, tempParent, signal, remote, warn }: PushInput,
 ): Promise<string | undefined> {
   const toolViolation = getToolViolation(env, LIMITS.gitSeconds);
 
@@ -59,6 +65,14 @@ export async function getPushViolation(
     if (branchViolation !== undefined) {
       return branchViolation;
     }
+  }
+
+  const scanViolation = await getScanViolation(pushRecords.records, {
+    place: facts.place, remote, warn,
+  });
+
+  if (scanViolation !== undefined) {
+    return scanViolation;
   }
 
   const pushCommits = getPushCommits(stdinText);

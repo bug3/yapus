@@ -5,6 +5,9 @@ import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../helpers/make-temp-dir.ts';
 import { getGitEnv } from '../../helpers/run-git.ts';
+import { CLEAN_ANSWER, makeFakeScanner } from '../../helpers/scanner/make-fake-scanner.ts';
+import { makeToolDir } from '../../helpers/scanner/make-tool-dir.ts';
+import { withScanner } from '../../helpers/scanner/with-scanner.ts';
 import { listWorktrees } from './push/list-worktrees.ts';
 import { FAILING_TEST, makeNpmRepo, PASSING_TEST } from './push/make-npm-repo.ts';
 
@@ -50,6 +53,20 @@ test('refuses a push when npm test fails on its commit', (t) => {
   );
 });
 
+test('warns in one line and goes on to npm test when the scanner is missing', (t) => {
+  const { repository, sha } = makeNpmRepo(t, PASSING_TEST);
+  const tools = makeToolDir(t, ['basename', 'bash', 'dirname', 'env', 'git', 'node', 'npm', 'sh']);
+
+  const pushRun = runPrePushWithPath(t, {
+    repository, stdinText: makePushLine(sha), pathText: tools,
+  });
+
+  assert.deepEqual([pushRun.status, pushRun.stderr.split('\n')[0]], [
+    0,
+    'yapus push: gitleaks is not installed; the outgoing change is not scanned',
+  ]);
+});
+
 test('is executable, since git skips a hook that is not', () => {
   assert.notEqual(statSync(PRE_PUSH).mode & EXECUTE_BITS, 0);
 });
@@ -69,14 +86,27 @@ function makePushLine(sha: string): string {
 
 // The hook run as git runs it: from the repository root, with the remote name
 // and URL as arguments and the push lines on stdin, and what it left in its
-// own TMPDIR. npm keeps a compile cache in TMPDIR, so the cache is off.
+// own TMPDIR. npm keeps a compile cache in TMPDIR, so the cache is off. PATH
+// starts with a clean fake scanner unless the test gives its own PATH.
 function runPrePush(t: TestContext, repository: string, stdinText: string) {
+  return runPrePushWithPath(t, { repository, stdinText });
+}
+
+interface PrePushRun {
+  readonly repository: string;
+  readonly stdinText: string;
+  readonly pathText?: string;
+}
+
+function runPrePushWithPath(t: TestContext, { repository, stdinText, pathText }: PrePushRun) {
   const tempParent = makeTempDir(t);
+  const gitEnv = withScanner(getGitEnv(process.env), makeFakeScanner(t, CLEAN_ANSWER));
   const pushRun = spawnSync(BASH, [PRE_PUSH, 'origin', 'https://example.invalid/repo.git'], {
     cwd: repository,
     encoding: 'utf8',
     env: {
-      ...getGitEnv(process.env),
+      ...gitEnv,
+      PATH: pathText ?? gitEnv.PATH,
       HOME: makeTempDir(t),
       TMPDIR: tempParent,
       NODE_DISABLE_COMPILE_CACHE: '1',
