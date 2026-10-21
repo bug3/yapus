@@ -214,3 +214,11 @@ test('passes a brace group that makes no secret file', () => {
 test('passes a brace without a comma, which is literal', () => {
   assert.equal(refusalOf('cat .{env}'), undefined);
 });
+
+test('refuses a glob after an expansion that reaches a key file', () => {
+  assert.equal(refusalOf('cat $D*.pem'), shown('cat', '$D*.pem'));
+});
+
+test('passes a glob after an expansion that reaches no secret file', () => {
+  assert.equal(refusalOf('cat $D*.ts'), undefined);
+});

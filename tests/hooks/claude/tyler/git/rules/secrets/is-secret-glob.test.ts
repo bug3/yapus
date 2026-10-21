@@ -24,8 +24,8 @@ test('matches a negated bracket set', () => {
   assert.equal(isSecretGlob('x.p1[!3]'), true);
 });
 
-test('reads a bracket that never closes as a plain character', () => {
-  assert.equal(isSecretGlob('.env['), false);
+test('counts a bracket that never closes as secret', () => {
+  assert.equal(isSecretGlob('src/a['), true);
 });
 
 test('does not let a star reach a dotfile', () => {
@@ -38,4 +38,32 @@ test('does not match a word with no glob character', () => {
 
 test('does not match a glob for other files', () => {
   assert.equal(isSecretGlob('src/*.ts'), false);
+});
+
+test('counts a set with a character class as secret', () => {
+  assert.equal(isSecretGlob('src/[[:alpha:]].ts'), true);
+});
+
+test('counts a set with a collating symbol as secret', () => {
+  assert.equal(isSecretGlob('a[[.-.]]b.ts'), true);
+});
+
+test('counts a set with an equivalence class as secret', () => {
+  assert.equal(isSecretGlob('a[[=a=]]b.ts'), true);
+});
+
+test('counts a command substitution as a star', () => {
+  assert.equal(isSecretGlob('$(pwd)/*.pem'), true);
+});
+
+test('counts a braced expansion before a star as a star', () => {
+  assert.equal(isSecretGlob('${D}*.pem'), true);
+});
+
+test('counts a backtick span before a star as a star', () => {
+  assert.equal(isSecretGlob('`pwd`*.pem'), true);
+});
+
+test('does not match an expansion with no glob character', () => {
+  assert.equal(isSecretGlob('$D.pem'), false);
 });
