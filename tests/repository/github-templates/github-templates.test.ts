@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { ghCommands } from '../../../hooks/claude/tyler/git/rules/gh/gh-commands.ts';
+import { ghCommands } from '../../../hooks/claude/tyler/gh/rules/gh-commands.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 const { bodies } = ghCommands;
@@ -22,20 +22,20 @@ test('gives the pull request template the headings the gate requires', () => {
 test('gives the bug template the headings the gate requires of a bug', () => {
   assert.deepEqual(
     readHeadings('.github/ISSUE_TEMPLATE/bug.md'),
-    bodies.issue.get('bug')?.headings,
+    bodies.issue.bug.headings,
   );
 });
 
 test('gives the feature template the headings the gate requires of a feature', () => {
   assert.deepEqual(
     readHeadings('.github/ISSUE_TEMPLATE/feature.md'),
-    bodies.issue.get('feature')?.headings,
+    bodies.issue.feature.headings,
   );
 });
 
 test('gives the other template the headings the gate requires of other', () => {
   assert.deepEqual(
     readHeadings('.github/ISSUE_TEMPLATE/other.md'),
-    bodies.issue.get('other')?.headings,
+    bodies.issue.other.headings,
   );
 });

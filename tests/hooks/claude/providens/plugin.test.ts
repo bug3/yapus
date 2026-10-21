@@ -56,6 +56,17 @@ test('registers every providens hook', () => {
             },
           ],
         },
+        {
+          matcher: 'Bash',
+          hooks: [
+            {
+              type: 'command',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/gh',
+              timeout: 10,
+              onFailure: 'block',
+            },
+          ],
+        },
       ],
       SubagentStart: [
         {
