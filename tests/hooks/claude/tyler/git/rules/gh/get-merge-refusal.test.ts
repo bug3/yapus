@@ -27,49 +27,41 @@ test('accepts a merge commit that deletes the branch', () => {
   assert.equal(refusalOf('pr', 'merge', '12', '-m', '-d', '-R', 'o/r'), undefined);
 });
 
+const KIND = '`gh pr merge` needs exactly one of --merge and --squash; write it';
+
 test('counts a short group', () => {
   assert.equal(refusalOf('pr', 'merge', '-md'), undefined);
-  assert.equal(
-    refusalOf('pr', 'merge', '-ms'),
-    '`gh pr merge --squash` is not a plain merge; use --merge and --delete-branch only',
-  );
+  assert.equal(refusalOf('pr', 'merge', '-sd'), undefined);
+  assert.equal(refusalOf('pr', 'merge', '-ms'), KIND);
 });
 
-test('refuses a merge without --merge or without --delete-branch', () => {
-  assert.equal(refusalOf('pr', 'merge', '-d'), '`gh pr merge` needs --merge; write it');
+test('refuses a merge without a kind or without --delete-branch', () => {
+  assert.equal(refusalOf('pr', 'merge', '-d'), KIND);
   assert.equal(
     refusalOf('pr', 'merge', '--merge'),
     '`gh pr merge` needs --delete-branch; write it',
   );
   assert.equal(
-    refusalOf('pr', 'merge', '--merge=false', '-d'),
-    '`gh pr merge` needs --merge; write it',
+    refusalOf('pr', 'merge', '--squash'),
+    '`gh pr merge` needs --delete-branch; write it',
   );
+  assert.equal(refusalOf('pr', 'merge', '--merge=false', '-d'), KIND);
+});
+
+test('refuses a merge and a squash together', () => {
+  assert.equal(refusalOf('pr', 'merge', '--merge', '--squash', '-d'), KIND);
 });
 
 test('refuses the flags that change the merge', () => {
   const call = ['pr', 'merge', '-m', '-d'];
+  const reason = (flag: string): string =>
+    `\`gh pr merge --${ flag }\` is not a plain merge; use --merge (or --squash where `
+    + 'the repository allows it) and --delete-branch only';
 
-  assert.equal(
-    refusalOf(...call, '--admin'),
-    '`gh pr merge --admin` is not a plain merge; use --merge and --delete-branch only',
-  );
-  assert.equal(
-    refusalOf(...call, '--squash'),
-    '`gh pr merge --squash` is not a plain merge; use --merge and --delete-branch only',
-  );
-  assert.equal(
-    refusalOf(...call, '--rebase'),
-    '`gh pr merge --rebase` is not a plain merge; use --merge and --delete-branch only',
-  );
-  assert.equal(
-    refusalOf(...call, '--auto'),
-    '`gh pr merge --auto` is not a plain merge; use --merge and --delete-branch only',
-  );
-  assert.equal(
-    refusalOf(...call, '--disable-auto'),
-    '`gh pr merge --disable-auto` is not a plain merge; use --merge and --delete-branch only',
-  );
+  assert.equal(refusalOf(...call, '--admin'), reason('admin'));
+  assert.equal(refusalOf(...call, '--rebase'), reason('rebase'));
+  assert.equal(refusalOf(...call, '--auto'), reason('auto'));
+  assert.equal(refusalOf(...call, '--disable-auto'), reason('disable-auto'));
 });
 
 test('passes a flag written as false', () => {

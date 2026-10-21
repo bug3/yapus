@@ -341,12 +341,21 @@ test('denies a gh command with an option before its action', () => {
   assert.match('detail' in verdict ? verdict.detail : '', /^the word after `gh repo`/);
 });
 
-test('denies a squash merge and allows a merge commit', () => {
-  const squash = getVerdict({ stdinText: bashCall('gh pr merge 3 -sd'), home: HOME });
+test('allows a merge commit and a squash only where the setting allows it', () => {
+  const squash = bashCall('gh pr merge 3 -sd');
+  const on = ghContext('true\n');
+  const off: Context = { cwd: '/repo', run: () => ({ status: 1, stdout: '', stderr: '' }) };
 
-  assert.equal(squash.kind, 'deny');
-  assert.match('detail' in squash ? squash.detail : '', /^`gh pr merge --squash`/);
   assert.deepEqual(getVerdict({ stdinText: bashCall('gh pr merge 3 -md'), home: HOME }), ALLOW);
+  assert.deepEqual(getVerdict({ stdinText: squash, home: HOME }, on), ALLOW);
+  assert.deepEqual(getVerdict({ stdinText: squash, home: HOME }, off), {
+    kind: 'deny',
+    detail: 'squash merges are off here; a person turns them on with yapus.allowSquashMerge',
+  });
+  assert.deepEqual(getVerdict({ stdinText: squash, home: HOME }), {
+    kind: 'deny',
+    detail: 'cannot read yapus.allowSquashMerge (the gate runs nothing here); retry it',
+  });
 });
 
 test('denies a gh api write and a label change', () => {

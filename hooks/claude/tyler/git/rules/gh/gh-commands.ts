@@ -189,11 +189,15 @@ export const ghCommands = {
     ['pr merge', prMerge],
     ['pr ready', prReady],
   ]),
-  // `gh pr merge` makes a merge commit and deletes the branch: these flags must be
-  // on, and these must not be.
+  // `gh pr merge` deletes the branch and makes a merge commit or, when the repository
+  // setting allows it, a squash commit: exactly one of the `kinds` must be on, the
+  // `required` flags must be on, and the `forbidden` ones must not be.
   merge: {
-    required: ['merge', 'delete-branch'],
-    forbidden: ['admin', 'squash', 'rebase', 'auto', 'disable-auto'],
+    kinds: ['merge', 'squash'],
+    required: ['delete-branch'],
+    forbidden: ['admin', 'rebase', 'auto', 'disable-auto'],
+    // The git config key (a bool, set by a person) that lets a squash merge pass.
+    squashSetting: 'yapus.allowSquashMerge',
   },
   // Actions judged against the directory and repository the line starts in: each is
   // the one command of its line (as is any call that reads a body file), `unlessFlag`
@@ -284,7 +288,17 @@ export const ghCommands = {
       `the --${ option } of \`${ command }\` is not a label list gh reads as the gate does `
       + '(a line break, or quotes that do not pair); write the labels plain or in double quotes',
     mergeForbidden: (command: string, shown: string): string =>
-      `\`${ command } --${ shown }\` is not a plain merge; use --merge and --delete-branch only`,
+      `\`${ command } --${ shown }\` is not a plain merge; use --merge (or --squash where `
+      + 'the repository allows it) and --delete-branch only',
+    mergeKind: (command: string): string =>
+      `\`${ command }\` needs exactly one of --merge and --squash; write it`,
+    squashOff: 'squash merges are off here; a person turns them on with '
+      + 'yapus.allowSquashMerge',
+    squashSettingUnreadable: (detail: string): string =>
+      `cannot read yapus.allowSquashMerge (${ detail }); retry it`,
+    mergeMoving: (command: string, shown: string): string =>
+      `\`${ command }\` is judged against this directory's repository, so ${ shown } `
+      + 'is not allowed; remove it',
     draftOnly: (command: string): string =>
       `\`${ command }\` must open a draft; add --draft`,
     title: (command: string, violations: readonly string[]): string =>

@@ -5,8 +5,8 @@ import { readGhArguments } from './read-gh-arguments.ts';
 
 const { merge, reasons } = ghCommands;
 
-// A reason to refuse a `gh pr merge` that is not a merge commit with the branch
-// deleted, or that skips the checks or waits for them, or undefined.
+// A reason to refuse a `gh pr merge` that is not one merge or squash commit with the
+// branch deleted, or that skips the checks or waits for them, or undefined.
 export function getMergeRefusal(call: Call): string | undefined {
   const action = getGhAction(call.words);
   const spec = ghCommands.actions.get(action);
@@ -22,10 +22,15 @@ export function getMergeRefusal(call: Call): string | undefined {
   }
 
   const forbidden = merge.forbidden.find((long) => args.flags.get(long) === true);
+  const kinds = merge.kinds.filter((long) => args.flags.get(long) === true);
   const missing = merge.required.find((long) => args.flags.get(long) !== true);
 
   if (forbidden !== undefined) {
     return reasons.mergeForbidden(spec.command, forbidden);
+  }
+
+  if (kinds.length !== 1) {
+    return reasons.mergeKind(spec.command);
   }
 
   return missing === undefined ? undefined : reasons.missingOption(spec.command, `--${ missing }`);
