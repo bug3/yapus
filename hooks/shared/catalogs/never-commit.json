@@ -1,9 +1,0 @@
-[
-  ".env",
-  ".env.*",
-  "!.env.example",
-  "*.pem",
-  "*.key",
-  "*.p12",
-  "id_rsa*"
-]
