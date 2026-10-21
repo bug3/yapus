@@ -2,12 +2,10 @@ import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
-import { readCatalog } from '../../../../hooks/git/subject/read-catalog.ts';
-import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
+import { readCatalog } from '../../../hooks/shared/read-catalog.ts';
+import { makeTempDir } from '../../helpers/make-temp-dir.ts';
+import { programCatalogs } from '../git/subject/program-catalogs.ts';
 
-const CATALOGS = join(
-  import.meta.dirname, '..', '..', '..', '..', 'hooks', 'git', 'subject', 'catalogs',
-);
 const READ_KEYS: readonly string[] = ['path', 'words'];
 const LIST_REFUSAL = 'is not a sorted array of distinct lowercase words';
 const BLOCK = 'the commit is blocked until the catalog is fixed';
@@ -84,9 +82,9 @@ test('refuses an unsorted list', async (t) => {
 });
 
 test('reads the three catalogs of the program without violation', async () => {
-  const types = await readCatalog(join(CATALOGS, 'types.json'), 'type');
-  const scopes = await readCatalog(join(CATALOGS, 'scopes.json'), 'scope');
-  const verbs = await readCatalog(join(CATALOGS, 'verbs.json'), 'verb');
+  const types = await readCatalog(programCatalogs.types, 'type');
+  const scopes = await readCatalog(programCatalogs.scopes, 'scope');
+  const verbs = await readCatalog(programCatalogs.verbs, 'verb');
 
   assert.deepEqual(
     [Object.keys(types), Object.keys(scopes), Object.keys(verbs)],

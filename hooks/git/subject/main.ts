@@ -24,8 +24,16 @@ function readHookInput(): HookInput {
   return {
     messagePath: process.argv[2] ?? '',
     isEditorUsed: process.env.GIT_EDITOR !== ':',
-    catalogsPath: relative(process.cwd(), join(import.meta.dirname, 'catalogs')),
+    catalogPaths: {
+      types: getCatalogPath(import.meta.dirname, '..', '..', 'shared', 'catalogs', 'types.json'),
+      scopes: getCatalogPath(import.meta.dirname, 'catalogs', 'scopes.json'),
+      verbs: getCatalogPath(import.meta.dirname, 'catalogs', 'verbs.json'),
+    },
   };
+}
+
+function getCatalogPath(...parts: readonly string[]): string {
+  return relative(process.cwd(), join(...parts));
 }
 
 // writeSync, because process.exit can drop a pending write to a pipe.

@@ -1,18 +1,25 @@
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { readCatalog, type Catalog, type CatalogViolation } from '../../shared/read-catalog.ts';
 import { getSubject } from './get-subject.ts';
 import { getViolations, type Catalogs } from './get-violations.ts';
 import { formatMessage } from './output/format-message.ts';
-import { readCatalog, type Catalog, type CatalogViolation } from './read-catalog.ts';
+
+// The path of each catalog: types are shared with the other hooks, scopes and
+// verbs belong to the subject rule.
+export interface CatalogPaths {
+  readonly types: string;
+  readonly scopes: string;
+  readonly verbs: string;
+}
 
 export interface HookInput {
   readonly messagePath: string;
   readonly isEditorUsed: boolean;
-  readonly catalogsPath: string;
+  readonly catalogPaths: CatalogPaths;
 }
 
 export async function getMessages(
-  { messagePath, isEditorUsed, catalogsPath }: HookInput,
+  { messagePath, isEditorUsed, catalogPaths }: HookInput,
 ): Promise<string[]> {
   const messageText = await readMessage(messagePath);
 
@@ -24,7 +31,7 @@ export async function getMessages(
     ];
   }
 
-  const catalogs = await readCatalogs(catalogsPath);
+  const catalogs = await readCatalogs(catalogPaths);
 
   if (Array.isArray(catalogs)) {
     return catalogs.map(({ violation }) => formatMessage(violation));
@@ -47,11 +54,11 @@ async function readMessage(messagePath: string): Promise<string | undefined> {
   }
 }
 
-async function readCatalogs(catalogsPath: string): Promise<Catalogs | CatalogViolation[]> {
+async function readCatalogs(paths: CatalogPaths): Promise<Catalogs | CatalogViolation[]> {
   const [types, scopes, verbs] = await Promise.all([
-    readCatalog(join(catalogsPath, 'types.json'), 'type'),
-    readCatalog(join(catalogsPath, 'scopes.json'), 'scope'),
-    readCatalog(join(catalogsPath, 'verbs.json'), 'verb'),
+    readCatalog(paths.types, 'type'),
+    readCatalog(paths.scopes, 'scope'),
+    readCatalog(paths.verbs, 'verb'),
   ]);
   const isEveryCatalogRead = 'words' in types && 'words' in scopes && 'words' in verbs;
 

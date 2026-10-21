@@ -4,16 +4,13 @@ import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { getMessages } from '../../../../hooks/git/subject/get-messages.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
-
-const CATALOGS = join(
-  import.meta.dirname, '..', '..', '..', '..', 'hooks', 'git', 'subject', 'catalogs',
-);
+import { programCatalogs } from './program-catalogs.ts';
 
 test('returns no message for a valid subject', async (t) => {
   const messagePath = writeMessage(t, 'feat(hooks): add a check\n\nThe body.\n');
 
   assert.deepEqual(
-    await getMessages({ messagePath, isEditorUsed: false, catalogsPath: CATALOGS }),
+    await getMessages({ messagePath, isEditorUsed: false, catalogPaths: programCatalogs }),
     [],
   );
 });
@@ -22,10 +19,10 @@ test('names every unknown part of the subject', async (t) => {
   const messagePath = writeMessage(t, 'feet(hooks): added a check\n');
 
   assert.deepEqual(
-    await getMessages({ messagePath, isEditorUsed: false, catalogsPath: CATALOGS }),
+    await getMessages({ messagePath, isEditorUsed: false, catalogPaths: programCatalogs }),
     [
-      `yapus subject: type "feet" is not in ${ CATALOGS }/types.json; use a listed one or add it there`,
-      `yapus subject: verb "added" is not in ${ CATALOGS }/verbs.json; use a listed one or add it there`,
+      `yapus subject: type "feet" is not in ${ programCatalogs.types }; use a listed one or add it there`,
+      `yapus subject: verb "added" is not in ${ programCatalogs.verbs }; use a listed one or add it there`,
     ],
   );
 });
@@ -34,7 +31,7 @@ test('judges the subject left after the comments of an editor message', async (t
   const messagePath = writeMessage(t, '# a comment\nfeat(hooks): add a check\n');
 
   assert.deepEqual(
-    await getMessages({ messagePath, isEditorUsed: true, catalogsPath: CATALOGS }),
+    await getMessages({ messagePath, isEditorUsed: true, catalogPaths: programCatalogs }),
     [],
   );
 });
@@ -43,7 +40,7 @@ test('reports a message whose second line is not blank', async (t) => {
   const messagePath = writeMessage(t, 'feat(hooks): add a check\nThe body.\n');
 
   assert.deepEqual(
-    await getMessages({ messagePath, isEditorUsed: false, catalogsPath: CATALOGS }),
+    await getMessages({ messagePath, isEditorUsed: false, catalogPaths: programCatalogs }),
     [
       'yapus subject: the line after the subject is not blank; leave it empty before the body',
     ],
@@ -54,7 +51,7 @@ test('reports a message file that cannot be read', async (t) => {
   const messagePath = join(makeTempDir(t), 'missing');
 
   assert.deepEqual(
-    await getMessages({ messagePath, isEditorUsed: false, catalogsPath: CATALOGS }),
+    await getMessages({ messagePath, isEditorUsed: false, catalogPaths: programCatalogs }),
     [
       `yapus subject: cannot read the message file ${ messagePath }; the commit is blocked, retry it`,
     ],
@@ -63,12 +60,17 @@ test('reports a message file that cannot be read', async (t) => {
 
 test('reports every catalog that cannot be read', async (t) => {
   const messagePath = writeMessage(t, 'feat(hooks): add a check\n');
-  const catalogsPath = makeTempDir(t);
+  const directory = makeTempDir(t);
+  const catalogPaths = {
+    types: join(directory, 'types.json'),
+    scopes: join(directory, 'scopes.json'),
+    verbs: join(directory, 'verbs.json'),
+  };
 
-  assert.deepEqual(await getMessages({ messagePath, isEditorUsed: false, catalogsPath }), [
-    `yapus subject: ${ catalogsPath }/types.json cannot be read; the commit is blocked until the catalog is fixed`,
-    `yapus subject: ${ catalogsPath }/scopes.json cannot be read; the commit is blocked until the catalog is fixed`,
-    `yapus subject: ${ catalogsPath }/verbs.json cannot be read; the commit is blocked until the catalog is fixed`,
+  assert.deepEqual(await getMessages({ messagePath, isEditorUsed: false, catalogPaths }), [
+    `yapus subject: ${ directory }/types.json cannot be read; the commit is blocked until the catalog is fixed`,
+    `yapus subject: ${ directory }/scopes.json cannot be read; the commit is blocked until the catalog is fixed`,
+    `yapus subject: ${ directory }/verbs.json cannot be read; the commit is blocked until the catalog is fixed`,
   ]);
 });
 
