@@ -11,6 +11,7 @@ const SHELL_ENTRIES: readonly string[] = [
   'hooks/git/commit-msg',
   'hooks/git/pre-commit',
   'hooks/git/pre-push',
+  'hooks/git/reference-transaction',
 ];
 
 // The rules file the secret scanner reads; gitleaks takes only TOML.

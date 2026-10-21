@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -u
+
+# git runs this at every state of every ref transaction, with the state as the
+# argument and one "<old-value> <new-value> <ref-name>" line per update on
+# stdin. Only an agent's transaction that may create a branch, at the prepared
+# state, starts Node: the branch check judges it, and a refusal aborts it.
+
+if [ "${1-}" != prepared ] || [ "${CLAUDECODE-}" != 1 ]; then
+  exit 0
+fi
+
+lines=''
+may_create=no
+
+while IFS= read -r line || [ -n "$line" ]; do
+  lines="$lines$line
+"
+  old=${line%% *}
+  rest=${line#* }
+  ref=${rest#* }
+
+  case $old in
+    '' | *[!0]*) ;;
+    *)
+      case $ref in
+        refs/heads/*) may_create=yes ;;
+      esac
+      ;;
+  esac
+done
+
+if [ "$may_create" != yes ]; then
+  exit 0
+fi
+
+if ! dir=$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd); then
+  printf '%s\n' 'yapus reference-transaction: cannot find its own directory; reinstall yapus' >&2
+  exit 2
+fi
+
+printf '%s' "$lines" | bash "$dir/../run.sh" git/branch "$@"
