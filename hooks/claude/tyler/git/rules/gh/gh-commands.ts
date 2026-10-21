@@ -19,6 +19,9 @@ export const ghCommands = {
       `\`${ command } ${ shown }\` is not an option the gate knows; a person runs it`,
     missingValue: (command: string, shown: string): string =>
       `\`${ command } ${ shown }\` has no value; write the value after the option`,
+    bareEquals: (command: string, shown: string): string =>
+      `\`${ command } ${ shown }=\` ends in an equals sign with no value after it; `
+      + 'write the value after a space',
     badBoolean: (command: string, shown: string): string =>
       `\`${ command } ${ shown }\` takes only true or false; write \`${ shown }=true\``
       + ` or \`${ shown }=false\``,

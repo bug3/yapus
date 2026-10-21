@@ -101,6 +101,10 @@ function readShortGroup(reading: Reading, word: Word): string | undefined {
 
     rest = rest.slice(1);
 
+    if (rest === '=') {
+      return readerReasons.bareEquals(reading.spec.command, `-${ letter }`);
+    }
+
     const hasAttached = rest !== '' && (option.kind === 'value' || rest.startsWith('='));
     const text = rest.startsWith('=') ? rest.slice(1) : rest;
     const attached = hasAttached ? { ...word, text } : undefined;

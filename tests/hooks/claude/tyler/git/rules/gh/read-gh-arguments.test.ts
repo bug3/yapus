@@ -107,6 +107,13 @@ test('refuses a value option without a value', () => {
   ));
 });
 
+test('refuses a short option written with an equals sign and nothing after it', () => {
+  assert.deepEqual(read('-t='), refused(
+    '`gh pr create -t=` ends in an equals sign with no value after it; '
+    + 'write the value after a space',
+  ));
+});
+
 test('refuses a flag given a value other than true or false', () => {
   assert.deepEqual(read('--draft=yes'), refused(
     '`gh pr create --draft` takes only true or false; write `--draft=true` or `--draft=false`',
