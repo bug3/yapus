@@ -112,6 +112,34 @@ test('passes an interpreter script that names no secret file', () => {
   assert.equal(refusalOf('python3 -c "print(1)"'), undefined);
 });
 
+test('refuses a glob that reaches .env', () => {
+  assert.equal(refusalOf('cat .en*'), shown('cat', '.en*'));
+});
+
+test('refuses a glob that reaches a key file', () => {
+  assert.equal(refusalOf('cat *.pem'), shown('cat', '*.pem'));
+});
+
+test('refuses a bare star, which reaches every file but dotfiles', () => {
+  assert.equal(refusalOf('cat *'), shown('cat', '*'));
+});
+
+test('refuses a glob behind a directory', () => {
+  assert.equal(refusalOf('cat keys/id_r?a'), shown('cat', 'keys/id_r?a'));
+});
+
+test('refuses a glob in an input redirection', () => {
+  assert.equal(refusalOf('cat < .en*'), shown('cat', '.en*'));
+});
+
+test('passes a glob that reaches no secret file', () => {
+  assert.equal(refusalOf('cat *.ts'), undefined);
+});
+
+test('passes a glob given to ls', () => {
+  assert.equal(refusalOf('ls *'), undefined);
+});
+
 test('refuses git rm of .env without --cached', () => {
   assert.equal(refusalOf('git rm .env'), shown('git', '.env'));
 });

@@ -9,6 +9,7 @@ import {
   type Word,
 } from '../../shell/split-commands.ts';
 import { isSecretFile } from './is-secret-file.ts';
+import { isSecretGlob } from './is-secret-glob.ts';
 import { secretFiles } from './secret-files.ts';
 
 // A reason to refuse a line whose commands name a file that holds secrets, or
@@ -46,15 +47,17 @@ function getItemRefusal(item: CommandItem, home: string | undefined): string | u
     : secretFiles.reasons.shown(programName(program.text), file.text);
 }
 
-// The first literal word or input target that names a secret file. The code of an
+// The first literal word or input target that names a secret file, or opaque word whose
+// glob could. The code of an
 // interpreter is cut into names, since the file is a string inside it.
 function findSecretFile(item: CommandItem): Word | undefined {
   const isInterpreted = item.words.some(isInterpreter);
-  const names = (word: Word): boolean =>
-    isSecretFile(word.text)
-    || isInterpreted && word.text.split(secretFiles.nameBreaks).some(isSecretFile);
+  const names = (word: Word): boolean => word.isOpaque
+    ? isSecretGlob(word.text)
+    : isSecretFile(word.text)
+      || isInterpreted && word.text.split(secretFiles.nameBreaks).some(isSecretFile);
 
-  return [...item.words, ...item.inputTargets].find((word) => !word.isOpaque && names(word));
+  return [...item.words, ...item.inputTargets].find(names);
 }
 
 function isInterpreter(word: Word): boolean {

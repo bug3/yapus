@@ -7,6 +7,8 @@ const patterns: readonly string[] = neverCommit;
 const programs: readonly string[] = ['[', 'chmod', 'ls', 'mkdir', 'test', 'touch'];
 const gitSubcommands: readonly string[] = ['check-ignore', 'status'];
 
+const globSamples: readonly string[] = ['.env', '.env.local', 'x.pem', 'x.key', 'x.p12', 'id_rsa'];
+
 // Programs that run code written in their arguments: the interpreters the gate already
 // lists, and the text tools whose script can open a file.
 const interpreters: readonly string[] = [
@@ -27,6 +29,8 @@ export const secretFiles = {
   patterns,
   // How many strings a shell runs (`bash -c`) are read inside one another.
   maxNesting: 2,
+  // The names an opaque word with a glob is tried against, one per pattern.
+  globSamples,
   interpreters,
   // What a name may be made of when it is cut out of the code of an interpreter.
   nameBreaks: /[^A-Za-z0-9._/-]+/,
