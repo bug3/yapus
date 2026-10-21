@@ -8,7 +8,7 @@ import { programCatalogs } from '../git/subject/program-catalogs.ts';
 
 const READ_KEYS: readonly string[] = ['path', 'words'];
 const LIST_REFUSAL = 'is not a sorted array of distinct lowercase words';
-const BLOCK = 'the commit is blocked until the catalog is fixed';
+const BLOCK = 'blocked until the catalog is fixed';
 
 test('reads the words of a sorted list of distinct lowercase words', async (t) => {
   const path = writeCatalog(t, '["add", "fix"]\n');

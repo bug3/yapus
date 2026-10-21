@@ -51,5 +51,5 @@ function isSortedAndDistinct(words: readonly string[]): boolean {
 }
 
 function makeViolation(path: string, reason: string): CatalogViolation {
-  return { violation: `${ path } ${ reason }; the commit is blocked until the catalog is fixed` };
+  return { violation: `${ path } ${ reason }; blocked until the catalog is fixed` };
 }

@@ -77,9 +77,9 @@ test('reports every catalog that cannot be read', async (t) => {
   };
 
   assert.deepEqual(await getMessages({ messagePath, isEditorUsed: false, catalogPaths }), [
-    `yapus subject: ${ directory }/types.json cannot be read; the commit is blocked until the catalog is fixed`,
-    `yapus subject: ${ directory }/scopes.json cannot be read; the commit is blocked until the catalog is fixed`,
-    `yapus subject: ${ directory }/verbs.json cannot be read; the commit is blocked until the catalog is fixed`,
+    `yapus subject: ${ directory }/types.json cannot be read; blocked until the catalog is fixed`,
+    `yapus subject: ${ directory }/scopes.json cannot be read; blocked until the catalog is fixed`,
+    `yapus subject: ${ directory }/verbs.json cannot be read; blocked until the catalog is fixed`,
   ]);
 });
 
