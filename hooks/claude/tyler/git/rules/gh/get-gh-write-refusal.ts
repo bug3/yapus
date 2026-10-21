@@ -8,9 +8,18 @@ const { reasons, writes } = ghCommands;
 const LABEL_WRITES: readonly string[] = writes.labelActions;
 const FIELD_OPTIONS: readonly string[] = writes.fieldOptions;
 
+// What a scan of the words after `gh api` found. A value of an option is never
+// read as an option or an operand.
+interface Scan {
+  readonly queue: Word[];
+  readonly methods: Word[];
+  readonly operands: Word[];
+  hasField: boolean;
+}
+
 // A reason to refuse a `gh api` that may write or post, or a `gh label` that
-// changes labels, or undefined. The words of `gh api` are scanned, not read as
-// options, so every option the scan does not look for passes.
+// changes labels, or undefined. Only the options that decide a write are looked
+// for, so every other option of `gh api` passes.
 export function getGhWriteRefusal(call: Call): string | undefined {
   const [command, action] = call.words;
 
@@ -34,53 +43,86 @@ function getApiRefusal(words: readonly Word[]): string | undefined {
     return reasons.apiExpansion;
   }
 
-  if (words.some(({ text }) => text === writes.graphqlOperand)) {
+  const scan = scanApi(words);
+
+  if (scan.operands.some(({ text }) => text === writes.graphqlOperand)) {
     return reasons.apiGraphql;
   }
 
-  const methods = words.flatMap((word, index) => readMethod(word, words[index + 1]) ?? []);
-
-  if (methods.some(isWrite)) {
+  if (scan.methods.some(isWrite)) {
     return reasons.apiMethod;
   }
 
-  return methods.length === 0 && words.some(isFieldOption) ? reasons.apiFields : undefined;
+  return scan.methods.length === 0 && scan.hasField ? reasons.apiFields : undefined;
 }
 
 function startsWithExpansion({ isOpaque, text }: Word): boolean {
   return isOpaque && (text.startsWith('$') || text.startsWith('`'));
 }
 
-// The method written by `-X POST`, `-XPOST`, `--method POST` or `--method=POST`.
-function readMethod(word: Word, next: Word | undefined): Word | undefined {
-  const { text } = word;
+function scanApi(words: readonly Word[]): Scan {
+  const scan: Scan = { queue: [...words], methods: [], operands: [], hasField: false };
+  let isAfterDashes = false;
 
-  if (text === writes.methodOption) {
-    return next;
+  for (let word = scan.queue.shift(); word !== undefined; word = scan.queue.shift()) {
+    const { text } = word;
+
+    if (isAfterDashes || !text.startsWith('-') || text === '-') {
+      scan.operands.push(word);
+    } else if (text === '--') {
+      isAfterDashes = true;
+    } else if (text.startsWith('--')) {
+      scanLong(scan, word);
+    } else {
+      scanShortGroup(scan, word);
+    }
   }
 
-  if (text.startsWith(`${ writes.methodOption }=`)) {
-    return { ...word, text: text.slice(writes.methodOption.length + 1) };
+  return scan;
+}
+
+// `--name value` or `--name=value`.
+function scanLong(scan: Scan, word: Word): void {
+  const equals = word.text.indexOf('=');
+  const name = (equals < 0 ? word.text : word.text.slice(0, equals)).slice(2);
+  const option = writes.apiValueOptions.find(({ long }) => long === name);
+
+  if (option !== undefined) {
+    const attached = equals < 0 ? undefined : { ...word, text: word.text.slice(equals + 1) };
+
+    takeValue(scan, option.long, attached ?? scan.queue.shift());
+  }
+}
+
+// Flag letters, then at most one value letter: `-X POST`, `-XPOST`, `-iX=POST`.
+function scanShortGroup(scan: Scan, word: Word): void {
+  const letters = word.text.slice(1);
+
+  for (let index = 0; index < letters.length; index += 1) {
+    const option = writes.apiValueOptions.find(({ short }) => short === letters[index]);
+
+    if (option !== undefined) {
+      const rest = letters.slice(index + 1);
+      const text = rest.startsWith('=') ? rest.slice(1) : rest;
+
+      takeValue(scan, option.long, rest === '' ? scan.queue.shift() : { ...word, text });
+
+      return;
+    }
+  }
+}
+
+function takeValue(scan: Scan, long: string, value: Word | undefined): void {
+  if (FIELD_OPTIONS.includes(long)) {
+    scan.hasField = true;
   }
 
-  const letter = text.startsWith('-') && !text.startsWith('--')
-    ? text.indexOf(writes.methodLetter)
-    : -1;
-
-  if (letter < 0) {
-    return undefined;
+  if (long === writes.methodOption && value !== undefined) {
+    scan.methods.push(value);
   }
-
-  return letter === text.length - 1 ? next : { ...word, text: text.slice(letter + 1) };
 }
 
 // A method the gate cannot read may be a write.
 function isWrite(method: Word): boolean {
   return method.isOpaque || method.text.toUpperCase() !== writes.readMethod;
-}
-
-function isFieldOption({ text }: Word): boolean {
-  const name = text.split('=')[0] ?? text;
-
-  return FIELD_OPTIONS.includes(name) || writes.shortFieldGroup.test(text);
 }

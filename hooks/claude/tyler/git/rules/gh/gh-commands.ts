@@ -149,6 +149,20 @@ const prMerge: ActionSpec = {
   ],
 };
 
+// The options of `gh api` that take a value.
+const API_VALUE_OPTIONS: readonly { readonly long: string; readonly short?: string }[] = [
+  { long: 'cache' },
+  { long: 'field', short: 'F' },
+  { long: 'header', short: 'H' },
+  { long: 'hostname' },
+  { long: 'input' },
+  { long: 'jq', short: 'q' },
+  { long: 'method', short: 'X' },
+  { long: 'preview', short: 'p' },
+  { long: 'raw-field', short: 'f' },
+  { long: 'template', short: 't' },
+];
+
 export const ghCommands = {
   // The known gh commands (known-commands.ts) with no action word: the word after
   // one is an operand or an option of its own (`gh copilot` passes its flags on).
@@ -171,15 +185,14 @@ export const ghCommands = {
     required: ['merge', 'delete-branch'],
     forbidden: ['admin', 'squash', 'rebase', 'auto', 'disable-auto'],
   },
-  // What `gh api` and `gh label` write with, read by words (gh v2.102.0
-  // pkg/cmd/api/api.go: `-i` is its only short flag, so a field option in a short
-  // group follows only `i` letters).
+  // What `gh api` and `gh label` write with, read by words. The options of `gh api`
+  // that take a value (gh v2.102.0 pkg/cmd/api/api.go; its only flag with a short
+  // name is `-i`), so that a value is never read as an option.
   writes: {
     readMethod: 'GET',
-    methodOption: '--method',
-    methodLetter: 'X',
-    fieldOptions: ['--field', '--raw-field', '--input'],
-    shortFieldGroup: /^-i*[fF]/u,
+    methodOption: 'method',
+    fieldOptions: ['field', 'raw-field', 'input'],
+    apiValueOptions: API_VALUE_OPTIONS,
     graphqlOperand: 'graphql',
     labelActions: ['create', 'edit', 'delete', 'clone'],
   },

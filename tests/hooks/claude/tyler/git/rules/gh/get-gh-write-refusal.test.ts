@@ -34,6 +34,20 @@ test('passes a read through gh api', () => {
   assert.equal(refusalOf('api', '--jq', '.login', '--include', '/user'), undefined);
 });
 
+test('does not read the value of an option as an option', () => {
+  assert.equal(refusalOf('api', '/x', '-H', '-f', '/user'), undefined);
+  assert.equal(refusalOf('api', '/x', '--header', '-XPOST'), undefined);
+  assert.equal(refusalOf('api', '/x', '-HX-Api:1', '-q', '-f'), undefined);
+  assert.equal(refusalOf('api', '/x', '--jq=-f', '--hostname', '--input'), undefined);
+  assert.equal(refusalOf('api', '-H', 'graphql', '/x'), undefined);
+});
+
+test('refuses a field whose neighbour option takes a method-like value', () => {
+  assert.equal(refusalOf('api', 'repos/o/r', '-f', 'a=b', '-H', '-XGET'), FIELDS);
+  assert.equal(refusalOf('api', 'repos/o/r', '-f', 'a=b', '--header', '--method=GET'), FIELDS);
+  assert.equal(refusalOf('api', 'repos/o/r', '-f', 'a=b', '-HX-A:b', '-X', 'POST'), METHOD);
+});
+
 test('passes a get method in any spelling and any case', () => {
   assert.equal(refusalOf('api', '-XGET', '/user'), undefined);
   assert.equal(refusalOf('api', '--method=get', '/user'), undefined);
