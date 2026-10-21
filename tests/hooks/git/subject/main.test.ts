@@ -11,9 +11,9 @@ const SUBPROCESS_TIMEOUT_MS = 10000;
 const FORM_REFUSAL =
   'is not in the form "type(scope): verb ...", such as "feat(hooks): add a check"; rewrite the subject';
 const UNKNOWN_SCOPE_LINE =
-  'yapus subject: scope "nope" is not in hooks/git/subject/catalogs/scopes.json; use a listed one or add it there';
+  'yapus subject: scope "nope" is not in hooks/shared/catalogs/scopes.json; use a listed one or add it there';
 const UNKNOWN_VERB_LINE =
-  'yapus subject: verb "added" is not in hooks/git/subject/catalogs/verbs.json; use a listed one or add it there';
+  'yapus subject: verb "added" is not in hooks/shared/catalogs/verbs.json; use a listed one or add it there';
 
 test('exits 0 with no output for a valid message', (t) => {
   const hookRun = runHook(writeMessage(t, 'feat(hooks): add a check\n'));

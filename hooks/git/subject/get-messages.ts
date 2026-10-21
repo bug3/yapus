@@ -4,8 +4,7 @@ import { getSubject } from './get-subject.ts';
 import { getViolations, type Catalogs } from './get-violations.ts';
 import { formatMessage } from './output/format-message.ts';
 
-// The path of each catalog: types are shared with the other hooks, scopes and
-// verbs belong to the subject rule.
+// The path of each catalog; the catalogs are shared with the other hooks.
 export interface CatalogPaths {
   readonly types: string;
   readonly scopes: string;

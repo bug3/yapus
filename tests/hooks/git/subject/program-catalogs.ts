@@ -6,6 +6,6 @@ const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', 'hooks');
 // The catalogs the subject hook reads in the repository.
 export const programCatalogs: CatalogPaths = {
   types: join(HOOKS, 'shared', 'catalogs', 'types.json'),
-  scopes: join(HOOKS, 'git', 'subject', 'catalogs', 'scopes.json'),
-  verbs: join(HOOKS, 'git', 'subject', 'catalogs', 'verbs.json'),
+  scopes: join(HOOKS, 'shared', 'catalogs', 'scopes.json'),
+  verbs: join(HOOKS, 'shared', 'catalogs', 'verbs.json'),
 };

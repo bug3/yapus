@@ -29,7 +29,7 @@ test('refuses a commit whose verb is not in the catalog', (t) => {
     [messageRun.status, messageRun.stderr],
     [
       2,
-      'yapus subject: verb "fixed" is not in hooks/git/subject/catalogs/verbs.json; use a listed one or add it there\n',
+      'yapus subject: verb "fixed" is not in hooks/shared/catalogs/verbs.json; use a listed one or add it there\n',
     ],
   );
 });
