@@ -6,7 +6,7 @@ import { getBranchRefusal } from './rules/branch/get-branch-refusal.ts';
 import { getBypassRefusal } from './rules/bypass/get-bypass-refusal.ts';
 import { getDestructiveRefusal } from './rules/destructive/get-destructive-refusal.ts';
 import { getUnknownRefusal } from './rules/known/get-unknown-refusal.ts';
-import { getBodyLineRefusal } from './rules/gh/get-body-line-refusal.ts';
+import { getOwnLineRefusal } from './rules/gh/get-own-line-refusal.ts';
 import { getGhWriteRefusal } from './rules/gh/get-gh-write-refusal.ts';
 import { getIssueRefusal } from './rules/gh/get-issue-refusal.ts';
 import { getMergeRefusal } from './rules/gh/get-merge-refusal.ts';
@@ -102,7 +102,7 @@ export function getVerdict(
   }
 
   for (const call of found.calls) {
-    const lineReason = getBodyLineRefusal(call, split.items);
+    const lineReason = getOwnLineRefusal(call, split.items);
 
     if (lineReason !== undefined) {
       return deny(lineReason);

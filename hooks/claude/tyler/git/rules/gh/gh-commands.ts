@@ -185,6 +185,11 @@ export const ghCommands = {
     required: ['merge', 'delete-branch'],
     forbidden: ['admin', 'squash', 'rebase', 'auto', 'disable-auto'],
   },
+  // Actions judged against the directory and repository the line starts in: each is
+  // the one command of its line (as is any call that reads a body file).
+  ownLine: {
+    actions: ['pr create', 'pr merge'],
+  },
   // What `gh api` and `gh label` write with, read by words. The options of `gh api`
   // that take a value (gh v2.102.0 pkg/cmd/api/api.go; its only flag with a short
   // name is `-i`), so that a value is never read as an option.
@@ -240,6 +245,9 @@ export const ghCommands = {
     bodyLine: (action: string): string =>
       `run \`gh ${ action }\` on a line of its own, after the body file is written; `
       + 'the gate reads the body file before the line runs',
+    ownLine: (action: string): string =>
+      `run \`gh ${ action }\` on a line of its own; the gate judges it against the `
+      + 'directory and repository the line starts in',
     optionBeforeAction: (command: string): string =>
       `the word after \`gh ${ command }\` is an option or cannot be read, so the gate cannot `
       + `tell the action; put gh options after \`gh ${ command } <action>\``,

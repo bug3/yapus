@@ -4,10 +4,12 @@ import { getGhAction } from './get-gh-action.ts';
 import { ghCommands } from './gh-commands.ts';
 import { readGhArguments } from './read-gh-arguments.ts';
 
-// A reason to refuse a gh call that reads a body file when the line holds anything
-// else that could write that file first, or undefined. The gate reads the file
-// before the line runs, so the call must be the one command of its line.
-export function getBodyLineRefusal(call: Call, items: readonly Item[]): string | undefined {
+// A reason to refuse a gh call that must be the one command of its line, or
+// undefined. A call that reads a body file is read before the line runs, so
+// nothing else on the line may write that file first; the calls the catalog lists
+// are judged against the directory and repository the line starts in, so nothing
+// on the line may change them first.
+export function getOwnLineRefusal(call: Call, items: readonly Item[]): string | undefined {
   const action = getGhAction(call.words);
   const spec = ghCommands.actions.get(action);
 
@@ -17,8 +19,12 @@ export function getBodyLineRefusal(call: Call, items: readonly Item[]): string |
 
   const args = readGhArguments(call.words.slice(2), spec);
 
-  return 'values' in args && args.values.has('body-file')
-    ? ghCommands.reasons.bodyLine(action)
+  if ('values' in args && args.values.has('body-file')) {
+    return ghCommands.reasons.bodyLine(action);
+  }
+
+  return ghCommands.ownLine.actions.some((own) => own === action)
+    ? ghCommands.reasons.ownLine(action)
     : undefined;
 }
 

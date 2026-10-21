@@ -406,14 +406,14 @@ function bashCall(command: string): string {
   return JSON.stringify({ tool_name: 'Bash', tool_input: { command }, cwd: '/tmp' });
 }
 
-test('denies a merge that hides --admin in a quoted variable', () => {
+test('denies a merge that follows an assignment on its line', () => {
   const verdict = getVerdict({
     stdinText: bashCall('f=--admin; gh pr merge 12 --merge --delete-branch "$f"'),
     home: HOME,
   });
 
   assert.equal(verdict.kind, 'deny');
-  assert.match('detail' in verdict ? verdict.detail : '', /^cannot judge `gh pr merge`/);
+  assert.match('detail' in verdict ? verdict.detail : '', /^run `gh pr merge` on a line of its own/);
 });
 
 const CONTEXT = { cwd: '/repo', run: () => ({ failure: 'no run in this test' }) };

@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { Call } from '../../../../../../../hooks/claude/tyler/git/calls/get-calls.ts';
 import {
-  getBodyLineRefusal,
-} from '../../../../../../../hooks/claude/tyler/git/rules/gh/get-body-line-refusal.ts';
+  getOwnLineRefusal,
+} from '../../../../../../../hooks/claude/tyler/git/rules/gh/get-own-line-refusal.ts';
 import {
   getMergeRefusal,
 } from '../../../../../../../hooks/claude/tyler/git/rules/gh/get-merge-refusal.ts';
@@ -107,9 +107,9 @@ test('reads the body file of a merge only from a line of its own', () => {
     hasRedirection: false,
   });
 
-  assert.equal(getBodyLineRefusal(ghCall(...merge.slice(1)), [item(...merge)]), undefined);
+  assert.equal(getOwnLineRefusal(ghCall(...merge.slice(1)), [item(...merge)]), undefined);
   assert.equal(
-    getBodyLineRefusal(ghCall(...merge.slice(1)), [item(...merge), item('cat')]),
+    getOwnLineRefusal(ghCall(...merge.slice(1)), [item(...merge), item('cat')]),
     'run `gh pr merge` on a line of its own, after the body file is written; '
     + 'the gate reads the body file before the line runs',
   );
