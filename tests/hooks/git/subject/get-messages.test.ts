@@ -15,6 +15,15 @@ test('returns no message for a valid subject', async (t) => {
   );
 });
 
+test('returns no message for the revert type of the program catalog', async (t) => {
+  const messagePath = writeMessage(t, 'revert(hooks): drop a check\n');
+
+  assert.deepEqual(
+    await getMessages({ messagePath, isEditorUsed: false, catalogPaths: programCatalogs }),
+    [],
+  );
+});
+
 test('names every unknown part of the subject', async (t) => {
   const messagePath = writeMessage(t, 'feet(hooks): added a check\n');
 

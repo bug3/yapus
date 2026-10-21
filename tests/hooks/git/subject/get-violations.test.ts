@@ -56,10 +56,31 @@ test('refuses a missing scope', () => {
   ]);
 });
 
-test('refuses a breaking change mark', () => {
-  assert.deepEqual(getViolations('feat(hooks)!: add a check', CATALOGS), [
-    `"feat(hooks)!: add a check" ${ FORM_REFUSAL }`,
+test('passes a breaking change mark before the colon', () => {
+  assert.deepEqual(getViolations('feat(hooks)!: add a check', CATALOGS), []);
+});
+
+test('refuses a breaking change mark anywhere else', () => {
+  assert.deepEqual(getViolations('feat!(hooks): add a check', CATALOGS), [
+    `"feat!(hooks): add a check" ${ FORM_REFUSAL }`,
   ]);
+});
+
+test('passes a subject of 72 characters', () => {
+  const subject = `feat(hooks): add ${ 'x'.repeat(55) }`;
+
+  assert.equal(subject.length, 72);
+  assert.deepEqual(getViolations(subject, CATALOGS), []);
+});
+
+test('refuses a subject over 72 characters', () => {
+  assert.deepEqual(getViolations(`feat(hooks): add ${ 'x'.repeat(56) }`, CATALOGS), [
+    'the subject is 73 characters; keep it at most 72',
+  ]);
+});
+
+test('counts the subject in characters, not UTF-16 units', () => {
+  assert.deepEqual(getViolations(`feat(hooks): add ${ '\u{1D465}'.repeat(55) }`, CATALOGS), []);
 });
 
 test('refuses a merge subject', () => {
