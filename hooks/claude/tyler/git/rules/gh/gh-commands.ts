@@ -292,6 +292,8 @@ export const ghCommands = {
     actions: ['pr comment', 'issue comment', 'pr review'],
     forbiddenOptions: ['editor', 'web'],
   },
+  // The option that uploads a file; no action that has it may use it.
+  attachOption: 'attach',
   // A body file is read whole, up to this size.
   maxBodyBytes: 65_536,
   readerReasons: {
@@ -322,6 +324,8 @@ export const ghCommands = {
     commentForbiddenOption: (command: string, shown: string): string =>
       `\`${ command } --${ shown }\` takes its text from where the gate cannot read it; `
       + 'give --body or --body-file with an absolute path',
+    attachUpload: (command: string, shown: string): string =>
+      `\`${ command } --${ shown }\` uploads a file the gate cannot read; a person attaches it`,
     literalValue: (command: string, what: string): string =>
       `the ${ what } of \`${ command }\` is not literal; write the ${ what } literally, `
       + 'the gate reads it',
