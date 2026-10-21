@@ -74,6 +74,8 @@ const prEdit: ActionSpec = {
 };
 
 export const ghCommands = {
+  // The gh commands the gate reads the action of: the word after the command.
+  actionCommands: ['pr', 'issue', 'label'],
   // Spellings of an action that gh treats as another.
   aliases: new Map([['pr new', 'pr create']]),
   actions: new Map([['pr create', prCreate], ['pr edit', prEdit]]),
@@ -102,6 +104,9 @@ export const ghCommands = {
       + ` or \`${ shown }=false\``,
   },
   reasons: {
+    optionBeforeAction: (command: string): string =>
+      `the word after \`gh ${ command }\` is an option or cannot be read, so the gate cannot `
+      + `tell the action; put gh options after \`gh ${ command } <action>\``,
     forbiddenOption: (command: string, shown: string): string =>
       `\`${ command } --${ shown }\` takes its text from where the gate cannot read it; `
       + 'give --title and --body-file with an absolute path',

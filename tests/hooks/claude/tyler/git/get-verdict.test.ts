@@ -312,6 +312,13 @@ test('denies a pull request created without a draft or a subject title', () => {
   assert.match('detail' in verdict ? verdict.detail : '', /^the title of `gh pr create`/);
 });
 
+test('denies a pull request create with an option before its action', () => {
+  const verdict = getVerdict({ stdinText: bashCall('gh pr -R o/r create -d'), home: HOME });
+
+  assert.equal(verdict.kind, 'deny');
+  assert.match('detail' in verdict ? verdict.detail : '', /^the word after `gh pr`/);
+});
+
 test('denies an opaque script of source or a shell', () => {
   const detail = 'cannot judge a git or gh call: '
     + 'a shell reading a script or stdin the gate cannot read';
