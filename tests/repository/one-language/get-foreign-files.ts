@@ -12,6 +12,9 @@ const SHELL_ENTRIES: readonly string[] = [
   'hooks/git/pre-push',
 ];
 
+// The rules file the secret scanner reads; gitleaks takes only TOML.
+const TOOL_CONFIGS: readonly string[] = ['hooks/shared/scanner/gitleaks.toml'];
+
 // Every kept file under root in a language or format the repository does
 // not use.
 export function getForeignFiles(root: string): string[] {
@@ -21,5 +24,6 @@ export function getForeignFiles(root: string): string[] {
 function isKept(path: string): boolean {
   return KEPT_EXTENSIONS.includes(extname(path))
     || KEPT_NAMES.includes(basename(path))
-    || SHELL_ENTRIES.includes(path);
+    || SHELL_ENTRIES.includes(path)
+    || TOOL_CONFIGS.includes(path);
 }

@@ -19,6 +19,16 @@ test('finds nothing among TypeScript, markdown, JSON, the license and the shell 
   assert.deepEqual(getForeignFiles(root), []);
 });
 
+test('keeps the scanner rules file and names any other TOML file', (t) => {
+  const root = makeTempRepo(t);
+
+  mkdirSync(join(root, 'hooks', 'shared', 'scanner'), { recursive: true });
+  writeFileSync(join(root, 'hooks', 'shared', 'scanner', 'gitleaks.toml'), '');
+  writeFileSync(join(root, 'other.toml'), '');
+
+  assert.deepEqual(getForeignFiles(root), ['other.toml']);
+});
+
 test('names a file in another language and a shell script that is not an entry', (t) => {
   const root = makeTempRepo(t);
 

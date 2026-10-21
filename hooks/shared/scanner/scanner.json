@@ -1,0 +1,21 @@
+{
+  "program": "gitleaks",
+  "commonArguments": [
+    "--report-format",
+    "json",
+    "--report-path",
+    "-",
+    "--redact",
+    "--no-banner",
+    "--no-color",
+    "--ignore-gitleaks-allow"
+  ],
+  "configFile": "gitleaks.toml",
+  "removedVariables": [
+    "GITLEAKS_CONFIG",
+    "GITLEAKS_CONFIG_TOML"
+  ],
+  "findingsExitCode": 3,
+  "hookTimeoutSeconds": 20,
+  "hookSpawnSeconds": 25
+}
