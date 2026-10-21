@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { statSync, writeFileSync } from 'node:fs';
+import { readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../helpers/make-temp-dir.ts';
@@ -15,21 +15,36 @@ const BASH = execFileSync('/bin/sh', ['-c', 'command -v bash'], {
 const EXECUTE_BITS = 0o111;
 const NO_EDITOR = ':';
 const SCISSORS = '# ------------------------ >8 ------------------------';
+const AGENT: NodeJS.ProcessEnv = { CLAUDECODE: '1' };
+// spawnSync leaves out a variable whose value is undefined.
+const PERSON: NodeJS.ProcessEnv = { CLAUDECODE: undefined };
+const VALID_MESSAGE = 'feat(hooks): add a check\n';
+
+interface CommitMsgRun {
+  readonly messageText: string;
+  readonly editor: string;
+  readonly who: NodeJS.ProcessEnv;
+}
 
 test('lets a commit through when its subject keeps the rule', (t) => {
-  const messageRun = runCommitMsg(t, 'feat(hooks): add a check\n', NO_EDITOR);
+  const messageRun = runCommitMsg(t, {
+    messageText: VALID_MESSAGE, editor: NO_EDITOR, who: PERSON,
+  });
 
   assert.deepEqual([messageRun.status, messageRun.stderr], [0, '']);
 });
 
 test('refuses a commit whose verb is not in the catalog', (t) => {
-  const messageRun = runCommitMsg(t, 'fix(hooks): fixed it\n', NO_EDITOR);
+  const messageRun = runCommitMsg(t, {
+    messageText: 'fix(hooks): fixed it\n', editor: NO_EDITOR, who: AGENT,
+  });
 
   assert.deepEqual(
-    [messageRun.status, messageRun.stderr],
+    [messageRun.status, messageRun.stderr, messageRun.messageAfter],
     [
       2,
       'yapus subject: verb "fixed" is not in hooks/shared/catalogs/verbs.json; use a listed one or add it there\n',
+      'fix(hooks): fixed it\n',
     ],
   );
 });
@@ -43,9 +58,35 @@ test('lets a commit through that git commit -v wrote with an editor', (t) => {
     '',
   ].join('\n');
 
-  const messageRun = runCommitMsg(t, messageText, 'vi');
+  const messageRun = runCommitMsg(t, { messageText, editor: 'vi', who: PERSON });
 
   assert.deepEqual([messageRun.status, messageRun.stderr], [0, '']);
+});
+
+test('adds the trailers to an agent message that keeps the rule', (t) => {
+  const messageRun = runCommitMsg(t, {
+    messageText: VALID_MESSAGE, editor: NO_EDITOR, who: AGENT,
+  });
+
+  assert.deepEqual(
+    [messageRun.status, messageRun.stderr, messageRun.messageAfter],
+    [
+      0,
+      '',
+      'feat(hooks): add a check\n\nAssisted-by: Claude Code\nCo-authored-by: yapus <noreply@yapus.dev>\n',
+    ],
+  );
+});
+
+test('leaves the message of a commit without CLAUDECODE as it is', (t) => {
+  const messageRun = runCommitMsg(t, {
+    messageText: VALID_MESSAGE, editor: NO_EDITOR, who: PERSON,
+  });
+
+  assert.deepEqual(
+    [messageRun.status, messageRun.stderr, messageRun.messageAfter],
+    [0, '', VALID_MESSAGE],
+  );
 });
 
 test('is executable, since git skips a hook that is not', () => {
@@ -62,17 +103,20 @@ test('passes shellcheck with no findings', () => {
 });
 
 // The hook run as git runs it: from the repository root, with the path of
-// the message file.
-function runCommitMsg(t: TestContext, messageText: string, editor: string) {
+// the message file, as an agent or a person whatever runs the test; the
+// message file as the hook left it.
+function runCommitMsg(t: TestContext, { messageText, editor, who }: CommitMsgRun) {
   const tempDir = makeTempDir(t);
   const messageFile = join(tempDir, 'COMMIT_EDITMSG');
 
   writeFileSync(messageFile, messageText);
 
-  return spawnSync(BASH, [COMMIT_MSG, messageFile], {
+  const hookRun = spawnSync(BASH, [COMMIT_MSG, messageFile], {
     cwd: ROOT,
     encoding: 'utf8',
-    env: { ...process.env, GIT_EDITOR: editor, HOME: tempDir, TMPDIR: tempDir },
+    env: { ...process.env, GIT_EDITOR: editor, HOME: tempDir, TMPDIR: tempDir, ...who },
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
+
+  return { ...hookRun, messageAfter: readFileSync(messageFile, 'utf8') };
 }

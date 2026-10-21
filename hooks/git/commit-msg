@@ -2,7 +2,9 @@
 set -u
 
 # git runs this with the path of the commit message file; the subject check
-# judges the message, and a refusal stops the commit.
+# judges the message, and a refusal stops the commit. On an agent's commit
+# (CLAUDECODE=1) a message that passes then gets the trailers of
+# git/trailer/trailers.json, and a failure to add them stops the commit too.
 
 if ! dir=$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd); then
   printf '%s\n' 'yapus commit-msg: cannot find its own directory; reinstall yapus' >&2
@@ -10,3 +12,14 @@ if ! dir=$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd); then
 fi
 
 bash "$dir/../run.sh" git/subject "$@"
+status=$?
+
+if [ "$status" -ne 0 ]; then
+  exit "$status"
+fi
+
+if [ "${CLAUDECODE-}" != 1 ]; then
+  exit 0
+fi
+
+bash "$dir/../run.sh" git/trailer "$@"
