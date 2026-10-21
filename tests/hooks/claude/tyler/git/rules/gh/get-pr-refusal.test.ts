@@ -80,7 +80,7 @@ test('refuses a title with an autosquash prefix', (t) => {
 
 test('refuses a title that is not literal', (t) => {
   const call = ghCall('pr', 'create', '-d', '-F', bodyFile(t), '-t');
-  const title = { text: '$T', isOpaque: true, canSplit: false };
+  const title = { text: 'a$T', isOpaque: true, canSplit: false };
 
   assert.equal(
     getPrRefusal({ ...call, words: [...call.words, title] }),

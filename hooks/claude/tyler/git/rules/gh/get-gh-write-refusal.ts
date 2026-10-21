@@ -1,6 +1,10 @@
 import type { Call } from '../../calls/get-calls.ts';
 import type { Word } from '../../shell/split-commands.ts';
-import { getUnreadableReason, isUnreadable } from '../get-unreadable-reason.ts';
+import {
+  getUnreadableReason,
+  isUnreadable,
+  startsWithExpansion,
+} from '../get-unreadable-reason.ts';
 import { ghCommands } from './gh-commands.ts';
 
 const { reasons, writes } = ghCommands;
@@ -54,10 +58,6 @@ function getApiRefusal(words: readonly Word[]): string | undefined {
   }
 
   return scan.methods.length === 0 && scan.hasField ? reasons.apiFields : undefined;
-}
-
-function startsWithExpansion({ isOpaque, text }: Word): boolean {
-  return isOpaque && (text.startsWith('$') || text.startsWith('`'));
 }
 
 function scanApi(words: readonly Word[]): Scan {

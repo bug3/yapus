@@ -1,5 +1,9 @@
 import type { Word } from '../../shell/split-commands.ts';
-import { getUnreadableReason, isUnreadable } from '../get-unreadable-reason.ts';
+import {
+  getUnreadableReason,
+  isUnreadable,
+  startsWithExpansion,
+} from '../get-unreadable-reason.ts';
 import { ghCommands, type ActionSpec, type OptionSpec } from './gh-commands.ts';
 
 export interface GhArguments {
@@ -37,7 +41,7 @@ export function readGhArguments(
   words: readonly Word[],
   spec: ActionSpec,
 ): GhArguments | GhRefusal {
-  if (words.some(isUnreadable)) {
+  if (words.some((word) => isUnreadable(word) || startsWithExpansion(word))) {
     return { refusal: getUnreadableReason(spec.command) };
   }
 

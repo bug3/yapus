@@ -128,3 +128,23 @@ test('refuses a word the gate cannot read', () => {
     + 'quote it if it is one word, and start it with neither - nor +',
   ));
 });
+
+test('refuses a quoted word that starts with an expansion', () => {
+  const reason = 'cannot judge `gh pr create` with an argument the gate cannot read; '
+    + 'quote it if it is one word, and start it with neither - nor +';
+
+  assert.deepEqual(
+    readGhArguments([word('-t'), { text: '$F', isOpaque: true, canSplit: false }], SPEC),
+    refused(reason),
+  );
+  assert.deepEqual(
+    readGhArguments([word('-t'), { text: '`pwd`', isOpaque: true, canSplit: false }], SPEC),
+    refused(reason),
+  );
+});
+
+test('reads a quoted word that only holds an expansion later', () => {
+  const value = { text: 'a-$F', isOpaque: true, canSplit: false };
+
+  assert.ok('values' in readGhArguments([word('-t'), value], SPEC));
+});
