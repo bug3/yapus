@@ -7,7 +7,6 @@ export type DestructiveId =
   | 'checkoutPathspec'
   | 'cleanForce'
   | 'ghAliasSet'
-  | 'ghApiDelete'
   | 'ghRepoDelete'
   | 'resetHard'
   | 'remoteSetHead'
@@ -122,12 +121,6 @@ export const destructiveCommands = {
     reason: '`gh repo delete` deletes a repository; a person runs it',
     isMatch: () => true,
   },
-  ghApiDelete: {
-    tool: 'gh',
-    leading: ['api'],
-    reason: '`gh api -X DELETE` deletes on GitHub; a person runs it',
-    isMatch: (args) => readsDeleteMethod(args.written),
-  },
   ghAliasSet: {
     tool: 'gh',
     leading: ['alias', 'set'],
@@ -173,36 +166,6 @@ function writesSymbolicRef(args: Arguments): boolean {
 
 function hasForceOption(args: Arguments): boolean {
   return FORCE_OPTIONS.some((flag) => hasFlag(args, flag));
-}
-
-// `-X DELETE`, `-XDELETE`, `--method DELETE` or `--method=DELETE`, in any case. A
-// method the gate cannot read may be DELETE.
-function readsDeleteMethod(written: readonly Word[]): boolean {
-  return written.some((word, index) => isDeleteMethod(word, written[index + 1]));
-}
-
-function isDeleteMethod(word: Word, next: Word | undefined): boolean {
-  const { text } = word;
-
-  if (text === '--method') {
-    return isDelete(next);
-  }
-
-  if (text.startsWith('--method=')) {
-    return isDelete({ ...word, text: text.slice('--method='.length) });
-  }
-
-  const letter = text.startsWith('-') && !text.startsWith('--') ? text.indexOf('X') : -1;
-
-  if (letter < 0) {
-    return false;
-  }
-
-  return isDelete(letter === text.length - 1 ? next : { ...word, text: text.slice(letter + 1) });
-}
-
-function isDelete(method: Word | undefined): boolean {
-  return method !== undefined && (method.isOpaque || method.text.toLowerCase() === 'delete');
 }
 
 function hasDelete(args: Arguments): boolean {

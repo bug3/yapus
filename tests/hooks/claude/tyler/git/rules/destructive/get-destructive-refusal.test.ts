@@ -403,24 +403,6 @@ test('allows git update-ref without a delete option', () => {
   assert.equal(getDestructiveRefusal(gitCall('update-ref', 'refs/heads/x', 'HEAD')), undefined);
 });
 
-test('refuses gh api with the DELETE method in every form', () => {
-  const { reason } = destructiveCommands.ghApiDelete;
-
-  assert.equal(getDestructiveRefusal(ghCall('api', '-X', 'DELETE', 'repos/x/y')), reason);
-  assert.equal(getDestructiveRefusal(ghCall('api', '-XDELETE', 'repos/x/y')), reason);
-  assert.equal(getDestructiveRefusal(ghCall('api', '--method', 'DELETE', 'x')), reason);
-  assert.equal(getDestructiveRefusal(ghCall('api', '--method=DELETE', 'x')), reason);
-  assert.equal(getDestructiveRefusal(ghCall('api', 'x', '-X', 'delete')), reason);
-  assert.equal(getDestructiveRefusal(ghCall('api', '--method=Delete', 'x')), reason);
-});
-
-test('allows gh api with another method or none', () => {
-  assert.equal(getDestructiveRefusal(ghCall('api', 'repos/x/y')), undefined);
-  assert.equal(getDestructiveRefusal(ghCall('api', '-X', 'GET', 'x')), undefined);
-  assert.equal(getDestructiveRefusal(ghCall('api', '--method=POST', 'x')), undefined);
-  assert.equal(getDestructiveRefusal(ghCall('api', 'delete')), undefined);
-});
-
 test('refuses gh alias set but allows gh alias list', () => {
   assert.equal(
     getDestructiveRefusal(ghCall('alias', 'set', 'x', 'repo delete')),
@@ -437,14 +419,6 @@ test('refuses a gh call whose first or second word is opaque', () => {
 
   assert.equal(getDestructiveRefusal({ ...ghCall(), words: [opaque] }), OPAQUE_GH);
   assert.equal(getDestructiveRefusal({ ...ghCall(), words: [plain, opaque] }), OPAQUE_GH);
-});
-
-test('refuses an opaque later word of gh api', () => {
-  assert.equal(
-    getDestructiveRefusal({ ...opaqueCall('api', 'x'), tool: 'gh' }),
-    'cannot judge `gh api` with an argument the gate cannot read'
-    + '; quote it if it is one word, and start it with neither - nor +',
-  );
 });
 
 test('allows a quoted opaque operand of git checkout and git branch -d', () => {
@@ -476,17 +450,6 @@ test('refuses git update-ref --stdin', () => {
     getDestructiveRefusal(gitCall('update-ref', '--stdin')),
     destructiveCommands.updateRefStdin.reason,
   );
-});
-
-test('refuses gh api with a method the gate cannot read', () => {
-  assert.equal(
-    getDestructiveRefusal({ ...quotedCall('api', 'x', '-X'), tool: 'gh' }),
-    destructiveCommands.ghApiDelete.reason,
-  );
-});
-
-test('allows gh api with a quoted opaque path', () => {
-  assert.equal(getDestructiveRefusal({ ...quotedCall('api', 'repos'), tool: 'gh' }), undefined);
 });
 
 test('refuses git remote set-head with any arguments', () => {

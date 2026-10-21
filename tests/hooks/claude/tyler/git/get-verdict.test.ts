@@ -357,6 +357,15 @@ test('denies a gh api write and a label change', () => {
   assert.match('detail' in label ? label.detail : '', /^`gh label create` changes labels/);
 });
 
+test('denies gh api with the DELETE method through the write rule', () => {
+  const verdict = getVerdict({ stdinText: bashCall('gh api -X DELETE repos/o/r'), home: HOME });
+
+  assert.deepEqual(verdict, {
+    kind: 'deny',
+    detail: '`gh api` with a method other than GET writes on GitHub; a person runs it',
+  });
+});
+
 test('allows a gh api read with a quoted endpoint', () => {
   assert.deepEqual(
     getVerdict({ stdinText: bashCall('gh api -X GET "repos/o/$R" --paginate'), home: HOME }),
