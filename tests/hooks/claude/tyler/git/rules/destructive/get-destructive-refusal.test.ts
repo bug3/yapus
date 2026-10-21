@@ -403,6 +403,78 @@ test('allows git update-ref without a delete option', () => {
   assert.equal(getDestructiveRefusal(gitCall('update-ref', 'refs/heads/x', 'HEAD')), undefined);
 });
 
+test('refuses git update-ref of a remote-tracking ref in any form', () => {
+  const { reason } = destructiveCommands.updateRefRemote;
+
+  assert.equal(
+    getDestructiveRefusal(gitCall('update-ref', 'refs/remotes/origin/main', 'HEAD')),
+    reason,
+  );
+  assert.equal(
+    getDestructiveRefusal(gitCall('update-ref', '--no-deref', 'refs/remotes/origin/main', 'HEAD')),
+    reason,
+  );
+  assert.equal(
+    getDestructiveRefusal(gitCall('update-ref', '-m', 'why', 'refs/remotes/origin/main', 'HEAD')),
+    reason,
+  );
+});
+
+test('refuses git fetch and git pull into a remote-tracking ref', () => {
+  assert.equal(
+    getDestructiveRefusal(gitCall('fetch', 'origin', 'main:refs/remotes/origin/main')),
+    destructiveCommands.fetchRemoteRef.reason,
+  );
+  assert.equal(
+    getDestructiveRefusal(gitCall('fetch', 'origin', '+HEAD:refs/remotes/origin/main')),
+    destructiveCommands.fetchRemoteRef.reason,
+  );
+  assert.equal(
+    getDestructiveRefusal(gitCall('pull', 'origin', '+main:refs/remotes/origin/main')),
+    destructiveCommands.pullRemoteRef.reason,
+  );
+});
+
+test('refuses git fetch into a short or oddly written remote-tracking name', () => {
+  const { reason } = destructiveCommands.fetchRemoteRef;
+
+  assert.equal(getDestructiveRefusal(gitCall('fetch', 'origin', 'x:remotes/origin/main')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('fetch', 'origin', 'x:origin/main')), reason);
+  assert.equal(
+    getDestructiveRefusal(gitCall('fetch', 'origin', 'x:REFS//remotes/origin/main')),
+    reason,
+  );
+});
+
+test('refuses git fetch and git pull with --refmap', () => {
+  assert.equal(
+    getDestructiveRefusal(gitCall('fetch', '--refmap=refs/remotes/o/*', 'origin', 'main')),
+    destructiveCommands.fetchRemoteRef.reason,
+  );
+  assert.equal(
+    getDestructiveRefusal(gitCall('pull', '--refmap=x', 'origin', 'main')),
+    destructiveCommands.pullRemoteRef.reason,
+  );
+});
+
+test('refuses git update-ref of a remote-tracking ref written oddly', () => {
+  assert.equal(
+    getDestructiveRefusal(gitCall('update-ref', 'REFS//remotes/origin/main', 'HEAD')),
+    destructiveCommands.updateRefRemote.reason,
+  );
+});
+
+test('allows git fetch of a bare destination and of a url remote', () => {
+  assert.equal(getDestructiveRefusal(gitCall('fetch', 'origin', 'main:main')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('fetch', 'https://x.test/y.git')), undefined);
+});
+
+test('allows git fetch and git pull that write no remote-tracking ref', () => {
+  assert.equal(getDestructiveRefusal(gitCall('fetch', 'origin', 'main')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('fetch', 'origin', 'main:refs/heads/x')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('pull', 'origin', 'main')), undefined);
+});
+
 test('refuses gh alias set but allows gh alias list', () => {
   assert.equal(
     getDestructiveRefusal(ghCall('alias', 'set', 'x', 'repo delete')),

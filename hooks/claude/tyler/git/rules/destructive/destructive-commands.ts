@@ -6,8 +6,10 @@ export type DestructiveId =
   | 'checkoutForce'
   | 'checkoutPathspec'
   | 'cleanForce'
+  | 'fetchRemoteRef'
   | 'ghAliasSet'
   | 'ghRepoDelete'
+  | 'pullRemoteRef'
   | 'resetHard'
   | 'remoteSetHead'
   | 'restorePathspec'
@@ -16,6 +18,7 @@ export type DestructiveId =
   | 'switchForce'
   | 'symbolicRefWrite'
   | 'updateRefDelete'
+  | 'updateRefRemote'
   | 'updateRefStdin';
 
 // The arguments after the leading words, with the words as written.
@@ -34,6 +37,8 @@ export interface Matcher {
 
 const WHOLE_TREE = ['.', '', '*'];
 const RESTORE_INDEX_OPTIONS = ['--staged', '-S', '-q', '--quiet'];
+const REMOTE_REFS = 'refs/remotes/';
+const OWN_REFS = ['refs/heads/', 'refs/tags/'];
 const FORCE_OPTIONS = ['-f', '--force', '--discard-changes'];
 
 export const destructiveCommands = {
@@ -84,6 +89,27 @@ export const destructiveCommands = {
     leading: ['update-ref'],
     reason: '`git update-ref --stdin` can delete refs named on stdin; a person runs it',
     isMatch: (args) => hasFlag(args, '--stdin'),
+  },
+  updateRefRemote: {
+    tool: 'git',
+    leading: ['update-ref'],
+    reason: '`git update-ref` moves a remote-tracking branch the gate measures against; '
+      + 'a person runs it',
+    isMatch: (args) => args.operands.some((operand) => normalise(operand).startsWith(REMOTE_REFS)),
+  },
+  fetchRemoteRef: {
+    tool: 'git',
+    leading: ['fetch'],
+    reason: '`git fetch` into `refs/remotes/` moves a remote-tracking branch the gate '
+      + 'measures against; a person runs it',
+    isMatch: writesRemoteRef,
+  },
+  pullRemoteRef: {
+    tool: 'git',
+    leading: ['pull'],
+    reason: '`git pull` into `refs/remotes/` moves a remote-tracking branch the gate '
+      + 'measures against; a person runs it',
+    isMatch: writesRemoteRef,
   },
   remoteSetHead: {
     tool: 'git',
@@ -162,6 +188,23 @@ function restoresIndexOnly(args: Arguments): boolean {
 // (`-mwhy`) cannot be told apart from it.
 function writesSymbolicRef(args: Arguments): boolean {
   return args.operands.length >= 2;
+}
+
+// A `--refmap`, or a refspec operand (`+src:dst`, after the remote) whose destination git
+// may resolve to a remote-tracking ref: it has a `/` and is not under `refs/heads/` or
+// `refs/tags/` (this covers `refs/remotes/x`, `remotes/x` and `origin/x`).
+function writesRemoteRef(args: Arguments): boolean {
+  return hasFlag(args, '--refmap') || args.operands.slice(1).some((operand) => {
+    const colon = operand.indexOf(':');
+    const destination = colon < 0 ? '' : normalise(operand.slice(colon + 1));
+
+    return destination.includes('/') && !OWN_REFS.some((own) => destination.startsWith(own));
+  });
+}
+
+// A ref text as git compares it here: repeated slashes collapsed, case ignored.
+function normalise(ref: string): string {
+  return ref.replace(/\/+/gu, '/').toLowerCase();
 }
 
 function hasForceOption(args: Arguments): boolean {
