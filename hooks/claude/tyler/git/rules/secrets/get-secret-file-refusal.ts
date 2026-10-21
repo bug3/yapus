@@ -113,6 +113,29 @@ function getNestedRefusal(
     }
   }
 
+  return item.words.some((word) => isProgramOf(word, secretFiles.shells))
+    ? getHeredocRefusal(item, home, depth)
+    : undefined;
+}
+
+// The heredoc of a shell is a script: its commands are judged whole. A body that does
+// not split is left to the token check of `findSecretFile`, which reads every word of it.
+function getHeredocRefusal(
+  item: CommandItem,
+  home: string | undefined,
+  depth: number,
+): string | undefined {
+  for (const body of item.heredocs) {
+    const split = splitCommands(body, home);
+    const reason = split.kind === 'items'
+      ? getSecretFileRefusal(split.items, home, depth + 1)
+      : undefined;
+
+    if (reason !== undefined) {
+      return reason;
+    }
+  }
+
   return undefined;
 }
 

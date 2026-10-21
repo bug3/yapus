@@ -237,3 +237,18 @@ test('refuses a word whose brace groups pass the cap', () => {
 test('passes a quoted word with a brace sequence', () => {
   assert.equal(refusalOf('git commit -m "see {1..3}"'), undefined);
 });
+
+test('refuses a glob inside the heredoc of a shell', () => {
+  assert.equal(refusalOf("bash <<'EOF'\ncat .en*\nEOF"), shown('cat', '.en*'));
+});
+
+test('refuses a heredoc of a shell that does not split when it names a secret file', () => {
+  assert.equal(
+    refusalOf("bash <<'EOF'\ncat .env 'oops\nEOF"),
+    shown('bash', '.env'),
+  );
+});
+
+test('passes a heredoc of a shell that does not split and names no secret file', () => {
+  assert.equal(refusalOf("bash <<'EOF'\ncat 'oops\nEOF"), undefined);
+});
