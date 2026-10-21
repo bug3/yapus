@@ -19,6 +19,8 @@ export interface BodyRules {
   readonly footer: readonly string[];
 }
 
+const MAX_ISSUE_TITLE = 72;
+
 const REPO: OptionSpec = { long: 'repo', short: 'R', kind: 'value' };
 
 const prCreate: ActionSpec = {
@@ -73,6 +75,60 @@ const prEdit: ActionSpec = {
   ],
 };
 
+const issueCreate: ActionSpec = {
+  command: 'gh issue create',
+  source: 'gh 2.102 `gh issue create --help`',
+  options: [
+    { long: 'assignee', short: 'a', kind: 'value' },
+    { long: 'attach', kind: 'value' },
+    { long: 'blocked-by', kind: 'value' },
+    { long: 'blocking', kind: 'value' },
+    { long: 'body', short: 'b', kind: 'value' },
+    { long: 'body-file', short: 'F', kind: 'value' },
+    { long: 'editor', short: 'e', kind: 'flag' },
+    { long: 'label', short: 'l', kind: 'value' },
+    { long: 'milestone', short: 'm', kind: 'value' },
+    { long: 'parent', kind: 'value' },
+    { long: 'project', short: 'p', kind: 'value' },
+    { long: 'recover', kind: 'value' },
+    { long: 'template', short: 'T', kind: 'value' },
+    { long: 'title', short: 't', kind: 'value' },
+    { long: 'type', kind: 'value' },
+    { long: 'web', short: 'w', kind: 'flag' },
+    REPO,
+  ],
+};
+
+const issueEdit: ActionSpec = {
+  command: 'gh issue edit',
+  source: 'gh v2.102.0 pkg/cmd/issue/edit/edit.go (flags) and `gh pr edit --help` (--attach)',
+  options: [
+    { long: 'add-assignee', kind: 'value' },
+    { long: 'add-blocked-by', kind: 'value' },
+    { long: 'add-blocking', kind: 'value' },
+    { long: 'add-label', kind: 'value' },
+    { long: 'add-project', kind: 'value' },
+    { long: 'add-sub-issue', kind: 'value' },
+    { long: 'attach', kind: 'value' },
+    { long: 'body', short: 'b', kind: 'value' },
+    { long: 'body-file', short: 'F', kind: 'value' },
+    { long: 'milestone', short: 'm', kind: 'value' },
+    { long: 'parent', kind: 'value' },
+    { long: 'remove-assignee', kind: 'value' },
+    { long: 'remove-blocked-by', kind: 'value' },
+    { long: 'remove-blocking', kind: 'value' },
+    { long: 'remove-label', kind: 'value' },
+    { long: 'remove-milestone', kind: 'flag' },
+    { long: 'remove-parent', kind: 'flag' },
+    { long: 'remove-project', kind: 'value' },
+    { long: 'remove-sub-issue', kind: 'value' },
+    { long: 'remove-type', kind: 'flag' },
+    { long: 'title', short: 't', kind: 'value' },
+    { long: 'type', kind: 'value' },
+    REPO,
+  ],
+};
+
 export const ghCommands = {
   // The known gh commands (known-commands.ts) with no action word: the word after
   // one is an operand or an option of its own (`gh copilot` passes its flags on).
@@ -81,8 +137,15 @@ export const ghCommands = {
     'api', 'browse', 'co', 'completion', 'copilot', 'help', 'licenses', 'status', 'version',
   ],
   // Spellings of an action that gh treats as another.
-  aliases: new Map([['pr new', 'pr create']]),
-  actions: new Map([['pr create', prCreate], ['pr edit', prEdit]]),
+  aliases: new Map([['pr new', 'pr create'], ['issue new', 'issue create']]),
+  actions: new Map([
+    ['pr create', prCreate],
+    ['pr edit', prEdit],
+    ['issue create', issueCreate],
+    ['issue edit', issueEdit],
+  ]),
+  // An issue title is `<scope>: <symptom>`, at most this many characters.
+  maxIssueTitle: MAX_ISSUE_TITLE,
   // Options that take the title or the body from somewhere the gate cannot read.
   forbiddenOptions: [
     'body', 'editor', 'web', 'fill', 'fill-first', 'fill-verbose', 'template', 'recover',
@@ -92,6 +155,12 @@ export const ghCommands = {
       headings: ['Summary', 'Test plan'],
       footer: ['Built with yapus', 'Co-authored-by: yapus <noreply@yapus.dev>'],
     },
+    // By the `kind: <name>` label of the issue.
+    issue: new Map<string, BodyRules>([
+      ['bug', { headings: ['Summary', 'Steps to reproduce', 'Expected', 'Actual'], footer: [] }],
+      ['feature', { headings: ['Problem', 'Proposal'], footer: [] }],
+      ['other', { headings: ['Summary'], footer: [] }],
+    ]),
   },
   // A body file is read whole, up to this size.
   maxBodyBytes: 65_536,
@@ -134,6 +203,17 @@ export const ghCommands = {
       `the type, scope and breaking-change labels of \`${ command }\` must be exactly `
       + `${ expected.map((label) => `\`${ label }\``).join(', ') }, as its title says, `
       + 'and no kind label; fix --label',
+    issueTitle: (command: string, title: string): string =>
+      `the title ${ JSON.stringify(title) } of \`${ command }\` must be \`<scope>: <symptom>\`, `
+      + 'a scope from hooks/shared/catalogs/scopes.json, a symptom, and at most '
+      + `${ String(MAX_ISSUE_TITLE) } characters; rewrite it`,
+    issueLabels: (command: string, kinds: readonly string[], scope: string): string =>
+      `the labels of \`${ command }\` must be exactly one of `
+      + `${ kinds.map((kind) => `\`${ kind }\``).join(', ') } and \`scope: ${ scope }\`, `
+      + 'as its title says; fix --label',
+    editBodyKinds: (command: string, kinds: readonly string[]): string =>
+      `the body file of \`${ command }\` must follow one issue kind (${ kinds.join(', ') }); `
+      + 'fix the file',
     removedTitleLabel: (command: string, label: string): string =>
       `\`${ command } --remove-label\` cannot remove ${ JSON.stringify(label) }, which the `
       + 'title says; change the title instead',
