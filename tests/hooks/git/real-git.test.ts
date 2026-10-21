@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readdirSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../helpers/make-temp-dir.ts';
@@ -8,7 +8,6 @@ import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
 import { getGitEnv, runGit } from '../../helpers/run-git.ts';
 import { CLEAN_ANSWER, makeFakeScanner } from '../../helpers/scanner/make-fake-scanner.ts';
 import { withScanner } from '../../helpers/scanner/with-scanner.ts';
-import { FAILING_TEST, makeNpmRepo, PASSING_TEST } from './push/make-npm-repo.ts';
 
 const HOOKS = join(import.meta.dirname, '..', '..', '..', 'hooks', 'git');
 const SUBPROCESS_TIMEOUT_MS = 60000;
@@ -77,32 +76,6 @@ test('refuses a commit from a file whose second line is not blank', (t) => {
   );
 });
 
-test('lets a push through when npm test passes on its commit', (t) => {
-  const { repository } = makeNpmRepo(t, PASSING_TEST);
-  const tempParent = makeTempDir(t);
-
-  runGit(['config', 'core.hooksPath', HOOKS], repository);
-
-  const pushRun = runPush(t, repository, tempParent);
-
-  assert.deepEqual([pushRun.status, readdirSync(tempParent)], [0, []]);
-});
-
-test('refuses a push when npm test fails on its commit', (t) => {
-  const { repository, sha } = makeNpmRepo(t, FAILING_TEST);
-  const tempParent = makeTempDir(t);
-
-  runGit(['config', 'core.hooksPath', HOOKS], repository);
-
-  const pushRun = runPush(t, repository, tempParent);
-
-  assert.equal(pushRun.status, 1);
-  assert.ok(pushRun.stderr.includes(
-    `yapus push: npm test failed on ${ sha.slice(0, 12) }; fix it, then push again\n`,
-  ));
-  assert.deepEqual(readdirSync(tempParent), []);
-});
-
 // A temporary repository whose git runs the hooks of this repository.
 function makeHookedRepo(t: TestContext): string {
   const repository = makeTempRepo(t);
@@ -110,24 +83,6 @@ function makeHookedRepo(t: TestContext): string {
   runGit(['config', 'core.hooksPath', HOOKS], repository);
 
   return repository;
-}
-
-// A push to a bare repository in the test's directory. npm keeps a compile
-// cache in TMPDIR, which the test checks is left empty, so the cache is off.
-function runPush(t: TestContext, repository: string, tempParent: string) {
-  const remote = makeTempDir(t);
-
-  runGit(['init', '--bare', '--quiet'], remote);
-
-  return runRealGit(t, {
-    repository,
-    args: ['push', '--quiet', remote, 'HEAD:refs/heads/main'],
-    extraEnv: {
-      TMPDIR: tempParent,
-      NODE_DISABLE_COMPILE_CACHE: '1',
-      npm_config_update_notifier: 'false',
-    },
-  });
 }
 
 // Git runs with a clean fake scanner first on PATH, so that the scan hooks

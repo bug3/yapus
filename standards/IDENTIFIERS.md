@@ -4,7 +4,6 @@ paths:
   - "**/*.sh"
   - "**/*.json"
   - "hooks/git/commit-msg"
-  - "hooks/git/pre-push"
   - "hooks/git/reference-transaction"
 ---
 

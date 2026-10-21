@@ -3,7 +3,6 @@ paths:
   - "**/*.ts"
   - "**/*.sh"
   - "hooks/git/commit-msg"
-  - "hooks/git/pre-push"
   - "hooks/git/reference-transaction"
 ---
 
