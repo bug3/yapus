@@ -21,8 +21,7 @@ async function main(): Promise<void> {
 }
 
 // git runs the hook at the work tree root, so the working directory is the
-// repository; tmpdir reads TMPDIR. run.sh drops the hook name, so git's first
-// argument, the remote, is argv[2].
+// repository; tmpdir reads TMPDIR.
 async function readPushInput(): Promise<PushInput | undefined> {
   const signal = makeInterruptSignal();
   const stdinText = await readStdin(process.stdin, STDIN_LIMIT_SECONDS);
@@ -33,7 +32,6 @@ async function readPushInput(): Promise<PushInput | undefined> {
       stdinText,
       env: process.env,
       repository: process.cwd(),
-      remote: process.argv[2] ?? '',
       tempParent: tmpdir(),
       signal,
     };

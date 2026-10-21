@@ -14,8 +14,6 @@ export interface PushInput {
   readonly stdinText: string;
   readonly env: NodeJS.ProcessEnv;
   readonly repository: string;
-  // git's first hook argument: a remote name or a URL; empty when missing.
-  readonly remote: string;
   readonly tempParent: string;
   readonly signal: AbortSignal;
 }
