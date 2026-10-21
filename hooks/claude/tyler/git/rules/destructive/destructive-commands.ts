@@ -193,13 +193,15 @@ function writesSymbolicRef(args: Arguments): boolean {
 // A `--refmap`, or a refspec operand (`+src:dst`, after the remote) whose destination git
 // may resolve to a remote-tracking ref: it has a `/` and is not under `refs/heads/` or
 // `refs/tags/` (this covers `refs/remotes/x`, `remotes/x` and `origin/x`).
+// `--stdin` reads refspecs the gate cannot see.
 function writesRemoteRef(args: Arguments): boolean {
-  return hasFlag(args, '--refmap') || args.operands.slice(1).some((operand) => {
-    const colon = operand.indexOf(':');
-    const destination = colon < 0 ? '' : normalise(operand.slice(colon + 1));
+  return hasFlag(args, '--refmap') || hasFlag(args, '--stdin')
+    || args.operands.slice(1).some((operand) => {
+      const colon = operand.indexOf(':');
+      const destination = colon < 0 ? '' : normalise(operand.slice(colon + 1));
 
-    return destination.includes('/') && !OWN_REFS.some((own) => destination.startsWith(own));
-  });
+      return destination.includes('/') && !OWN_REFS.some((own) => destination.startsWith(own));
+    });
 }
 
 // A ref text as git compares it here: repeated slashes collapsed, case ignored.

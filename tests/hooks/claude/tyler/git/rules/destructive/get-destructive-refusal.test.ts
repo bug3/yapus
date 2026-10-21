@@ -457,6 +457,13 @@ test('refuses git fetch and git pull with --refmap', () => {
   );
 });
 
+test('refuses git fetch with --stdin, whose refspecs the gate cannot see', () => {
+  assert.equal(
+    getDestructiveRefusal(gitCall('fetch', '--stdin', 'origin')),
+    destructiveCommands.fetchRemoteRef.reason,
+  );
+});
+
 test('refuses git update-ref of a remote-tracking ref written oddly', () => {
   assert.equal(
     getDestructiveRefusal(gitCall('update-ref', 'REFS//remotes/origin/main', 'HEAD')),
