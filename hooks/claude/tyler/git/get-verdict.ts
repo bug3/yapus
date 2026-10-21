@@ -15,6 +15,7 @@ import { getIssueRefusal } from './rules/gh/get-issue-refusal.ts';
 import { getMergeRefusal } from './rules/gh/get-merge-refusal.ts';
 import { getMisplacedOptionRefusal } from './rules/gh/get-misplaced-option-refusal.ts';
 import { getPrRefusal } from './rules/gh/get-pr-refusal.ts';
+import { getCommentRefusal } from './rules/gh/scan/get-comment-refusal.ts';
 import { getPushRefusal } from './rules/push/get-push-refusal.ts';
 import { getSecretFileRefusal } from './rules/secrets/get-secret-file-refusal.ts';
 import { getUnreadableSecretRefusal } from './rules/secrets/get-unreadable-secret-refusal.ts';
@@ -59,6 +60,7 @@ export const RULES: readonly Rule[] = [
   getIssueRefusal,
   getMergeRefusal,
   getGhWriteRefusal,
+  getCommentRefusal,
 ];
 
 // The checks run after RULES, for each call.

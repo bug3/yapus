@@ -171,6 +171,16 @@ test('passes a ready --undo wherever it stands', () => {
   assert.equal(getOwnLineRefusal(callOf(...ready), items), undefined);
 });
 
+test('refuses a comment with a body file that shares its line', () => {
+  const items = [commandItem('echo', 'x'), commandItem('gh', 'pr', 'comment', '-F', '/tmp/b.md')];
+
+  assert.equal(
+    getOwnLineRefusal(callOf('pr', 'comment', '-F', '/tmp/b.md'), items),
+    'run `gh pr comment` on a line of its own, after the body file is written; '
+    + 'the gate reads the body file before the line runs',
+  );
+});
+
 test('refuses a ready whose --undo is false or cannot be read', () => {
   const items = [commandItem('cd', '/other'), commandItem('gh', 'pr', 'ready')];
 

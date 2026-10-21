@@ -129,6 +129,45 @@ const issueEdit: ActionSpec = {
   ],
 };
 
+// The options the three comment actions share.
+const COMMENT_OPTIONS: readonly OptionSpec[] = [
+  { long: 'body', short: 'b', kind: 'value' },
+  { long: 'body-file', short: 'F', kind: 'value' },
+  REPO,
+];
+
+const prComment: ActionSpec = {
+  command: 'gh pr comment',
+  source: 'gh 2.102 `gh pr comment --help`',
+  options: [
+    ...COMMENT_OPTIONS,
+    { long: 'attach', kind: 'value' },
+    { long: 'create-if-none', kind: 'flag' },
+    { long: 'delete-last', kind: 'flag' },
+    { long: 'edit-last', kind: 'flag' },
+    { long: 'editor', short: 'e', kind: 'flag' },
+    { long: 'web', short: 'w', kind: 'flag' },
+    { long: 'yes', kind: 'flag' },
+  ],
+};
+
+const issueComment: ActionSpec = {
+  command: 'gh issue comment',
+  source: 'gh 2.102 `gh issue comment --help`',
+  options: prComment.options,
+};
+
+const prReview: ActionSpec = {
+  command: 'gh pr review',
+  source: 'gh 2.102 `gh pr review --help`',
+  options: [
+    ...COMMENT_OPTIONS,
+    { long: 'approve', short: 'a', kind: 'flag' },
+    { long: 'comment', short: 'c', kind: 'flag' },
+    { long: 'request-changes', short: 'r', kind: 'flag' },
+  ],
+};
+
 const prMerge: ActionSpec = {
   command: 'gh pr merge',
   source: 'gh v2.102.0 pkg/cmd/pr/merge/merge.go',
@@ -188,6 +227,9 @@ export const ghCommands = {
     ['issue edit', issueEdit],
     ['pr merge', prMerge],
     ['pr ready', prReady],
+    ['pr comment', prComment],
+    ['issue comment', issueComment],
+    ['pr review', prReview],
   ]),
   // `gh pr merge` deletes the branch and makes a merge commit or, when the repository
   // setting allows it, a squash commit: exactly one of the `kinds` must be on, the
@@ -243,6 +285,13 @@ export const ghCommands = {
     byType: new Map([['fix', 'bug'], ['feat', 'feature']]),
     fallback: 'other',
   },
+  // The actions that add text to an existing pull request or issue. Their
+  // `--body` is read by the gate, so it is no forbidden option; these two are
+  // (an editor or a browser is where the gate cannot read the text).
+  comments: {
+    actions: ['pr comment', 'issue comment', 'pr review'],
+    forbiddenOptions: ['editor', 'web'],
+  },
   // A body file is read whole, up to this size.
   maxBodyBytes: 65_536,
   readerReasons: {
@@ -270,6 +319,9 @@ export const ghCommands = {
     forbiddenOption: (command: string, shown: string): string =>
       `\`${ command } --${ shown }\` takes its text from where the gate cannot read it; `
       + 'give --title and --body-file with an absolute path',
+    commentForbiddenOption: (command: string, shown: string): string =>
+      `\`${ command } --${ shown }\` takes its text from where the gate cannot read it; `
+      + 'give --body or --body-file with an absolute path',
     literalValue: (command: string, what: string): string =>
       `the ${ what } of \`${ command }\` is not literal; write the ${ what } literally, `
       + 'the gate reads it',
