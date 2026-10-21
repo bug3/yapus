@@ -16,6 +16,8 @@ import { getMergeRefusal } from './rules/gh/get-merge-refusal.ts';
 import { getMisplacedOptionRefusal } from './rules/gh/get-misplaced-option-refusal.ts';
 import { getPrRefusal } from './rules/gh/get-pr-refusal.ts';
 import { getPushRefusal } from './rules/push/get-push-refusal.ts';
+import { getSecretFileRefusal } from './rules/secrets/get-secret-file-refusal.ts';
+import { getUnreadableSecretRefusal } from './rules/secrets/get-unreadable-secret-refusal.ts';
 import { splitCommands } from './shell/split-commands.ts';
 
 export interface Input {
@@ -92,7 +94,19 @@ export function getVerdict(
   const split = splitCommands(command, input.home);
 
   if (split.kind === 'failure') {
+    const unreadable = getUnreadableSecretRefusal(command);
+
+    if (unreadable !== undefined) {
+      return deny(unreadable);
+    }
+
     return mentionsGit(command) ? deny(`cannot read the command: ${ split.reason }`) : ALLOW;
+  }
+
+  const secret = getSecretFileRefusal(split.items, input.home);
+
+  if (secret !== undefined) {
+    return deny(secret);
   }
 
   const found = getCalls(split.items, input.home);
