@@ -18,7 +18,21 @@ test('refuses a line that names .env', () => {
 test('refuses a line that names a quoted .env', () => {
   assert.equal(
     getUnreadableSecretRefusal('cat ".env" \'unclosed'),
-    secretFiles.reasons.unreadable('".env"'),
+    secretFiles.reasons.unreadable('.env'),
+  );
+});
+
+test('refuses a name glued to a redirection and a substitution', () => {
+  assert.equal(
+    getUnreadableSecretRefusal('x=$(cat<.env'),
+    secretFiles.reasons.unreadable('.env'),
+  );
+});
+
+test('refuses a name that is an option value', () => {
+  assert.equal(
+    getUnreadableSecretRefusal('run --env-file=.env \'oops'),
+    secretFiles.reasons.unreadable('.env'),
   );
 });
 
