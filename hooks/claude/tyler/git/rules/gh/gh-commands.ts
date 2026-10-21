@@ -250,8 +250,8 @@ export const ghCommands = {
     apiExpansion: '`gh api` has an argument that starts with an expansion, which could be a '
       + 'method or a field; write it literally',
     labelWrite: (action: string): string =>
-      `\`gh label ${ action }\` changes labels outside the catalog; run `
-      + '`node hooks/shared/labels/sync-labels.ts` instead',
+      `\`gh label ${ action }\` changes labels outside the catalog; `
+      + 'a person runs the sync program hooks/shared/labels/sync-labels.ts',
     mergeForbidden: (command: string, shown: string): string =>
       `\`${ command } --${ shown }\` is not a plain merge; use --merge and --delete-branch only`,
     draftOnly: (command: string): string =>

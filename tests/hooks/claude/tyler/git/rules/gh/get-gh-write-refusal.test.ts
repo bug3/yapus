@@ -126,22 +126,22 @@ test('refuses every gh label change', () => {
   assert.equal(
     refusalOf('label', 'create', 'x'),
     '`gh label create` changes labels outside the catalog; '
-    + 'run `node hooks/shared/labels/sync-labels.ts` instead',
+    + 'a person runs the sync program hooks/shared/labels/sync-labels.ts',
   );
   assert.equal(
     refusalOf('label', 'edit', 'x'),
     '`gh label edit` changes labels outside the catalog; '
-    + 'run `node hooks/shared/labels/sync-labels.ts` instead',
+    + 'a person runs the sync program hooks/shared/labels/sync-labels.ts',
   );
   assert.equal(
     refusalOf('label', 'delete', 'x'),
     '`gh label delete` changes labels outside the catalog; '
-    + 'run `node hooks/shared/labels/sync-labels.ts` instead',
+    + 'a person runs the sync program hooks/shared/labels/sync-labels.ts',
   );
   assert.equal(
     refusalOf('label', 'clone', 'x'),
     '`gh label clone` changes labels outside the catalog; '
-    + 'run `node hooks/shared/labels/sync-labels.ts` instead',
+    + 'a person runs the sync program hooks/shared/labels/sync-labels.ts',
   );
 });
 
