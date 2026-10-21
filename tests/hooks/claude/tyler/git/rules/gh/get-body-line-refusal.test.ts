@@ -37,16 +37,46 @@ test('refuses a call followed by another command', () => {
   assert.equal(getBodyLineRefusal(callOf(...CREATE.slice(1)), items), REFUSAL);
 });
 
-test('refuses a line whose last words are not the call\'s', () => {
+test('passes gh written as a path', () => {
+  const items = [commandItem('/usr/local/bin/gh', ...CREATE.slice(1))];
+
+  assert.equal(getBodyLineRefusal(callOf(...CREATE.slice(1)), items), undefined);
+});
+
+test('refuses a line whose command is not gh itself', () => {
   const items = [commandItem('echo', 'pr', 'create', '-F', '/tmp/other.md')];
+
+  assert.equal(getBodyLineRefusal(callOf(...CREATE.slice(1)), items), REFUSAL);
+  assert.equal(getBodyLineRefusal(callOf(...CREATE.slice(1)), [commandItem('ghx')]), REFUSAL);
+});
+
+test('refuses a call run through a wrapper', () => {
+  const items = [commandItem('env', 'X=1', ...CREATE)];
 
   assert.equal(getBodyLineRefusal(callOf(...CREATE.slice(1)), items), REFUSAL);
 });
 
-test('passes a call run through a wrapper that is the one command of its line', () => {
-  const items = [commandItem('env', ...CREATE)];
+test('refuses a command word the shell expands', () => {
+  const program = { text: '$GH', isOpaque: true, canSplit: false };
+  const item: Item = {
+    kind: 'command',
+    words: [program, ...words(...CREATE.slice(1))],
+    heredocs: [],
+    hasRedirection: false,
+  };
 
-  assert.equal(getBodyLineRefusal(callOf(...CREATE.slice(1)), items), undefined);
+  assert.equal(getBodyLineRefusal(callOf(...CREATE.slice(1)), [item]), REFUSAL);
+});
+
+test('refuses a call whose command has a redirection', () => {
+  const item: Item = {
+    kind: 'command',
+    words: words(...CREATE),
+    heredocs: [],
+    hasRedirection: true,
+  };
+
+  assert.equal(getBodyLineRefusal(callOf(...CREATE.slice(1)), [item]), REFUSAL);
 });
 
 test('refuses a call that shares its line with another command', () => {

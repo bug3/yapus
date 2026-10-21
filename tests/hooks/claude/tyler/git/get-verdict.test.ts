@@ -312,6 +312,16 @@ test('denies a pull request created without a draft or a subject title', () => {
   assert.match('detail' in verdict ? verdict.detail : '', /^the title of `gh pr create`/);
 });
 
+test('denies a pull request create whose output truncates its body file', () => {
+  const verdict = getVerdict({
+    stdinText: bashCall('gh pr create -d -t "feat(hooks): add a check" -F /tmp/b.md > /tmp/b.md'),
+    home: HOME,
+  });
+
+  assert.equal(verdict.kind, 'deny');
+  assert.match('detail' in verdict ? verdict.detail : '', /^run `gh pr create` on a line/);
+});
+
 test('denies an issue created with a title out of the issue form', () => {
   const verdict = getVerdict({
     stdinText: bashCall('gh issue create --title "Add a check" --body-file /tmp/b.md'),

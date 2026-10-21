@@ -11,7 +11,7 @@ export function getBodyLineRefusal(call: Call, items: readonly Item[]): string |
   const action = getGhAction(call.words);
   const spec = ghCommands.actions.get(action);
 
-  if (call.tool !== 'gh' || spec === undefined || isOnlyCommand(call, items)) {
+  if (call.tool !== 'gh' || spec === undefined || isOnlyCommand(items)) {
     return undefined;
   }
 
@@ -22,16 +22,14 @@ export function getBodyLineRefusal(call: Call, items: readonly Item[]): string |
     : undefined;
 }
 
-// Whether the line is one command whose last words are the call's: a call read
-// out of a string (`bash -c 'cat > f; gh ...'`) is not.
-function isOnlyCommand(call: Call, items: readonly Item[]): boolean {
+// Whether the line is one command that is gh itself, written as `gh` or a path
+// ending in `/gh`, with no redirection that could write the file first. A wrapper,
+// a string a shell runs and the like are not.
+function isOnlyCommand(items: readonly Item[]): boolean {
   const [item] = items;
+  const program = item?.kind === 'command' ? item.words[0] : undefined;
 
-  if (items.length !== 1 || item?.kind !== 'command') {
-    return false;
-  }
-
-  const start = item.words.length - call.words.length;
-
-  return call.words.every((word, index) => item.words[start + index]?.text === word.text);
+  return items.length === 1 && item?.kind === 'command' && !item.hasRedirection
+    && program !== undefined
+    && (program.text === 'gh' || program.text.endsWith('/gh'));
 }
