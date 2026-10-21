@@ -4,11 +4,10 @@ import { isRecord } from '../is-record.ts';
 import { readCatalog, type CatalogViolation } from '../read-catalog.ts';
 
 // How a label is named: the prefix of the labels derived from the types and the
-// scopes, the prefix of the issue kinds, and the label of a breaking change.
+// scopes, and the label of a breaking change.
 export const labelNames = {
   typePrefix: 'type: ',
   scopePrefix: 'scope: ',
-  kindPrefix: 'kind: ',
   breaking: 'breaking-change',
 } as const;
 

@@ -55,6 +55,22 @@ test('accepts a feature issue with the feature headings', (t) => {
   );
 });
 
+test('accepts the hand-kept extras on an issue', (t) => {
+  assert.equal(
+    refusalOf('issue', 'create', '-t', TITLE, '-F', bodyFile(t),
+      '-l', 'type: fix,scope: hooks,help wanted,good first issue,dependencies'),
+    undefined,
+  );
+});
+
+test('refuses a kind label, which the catalog no longer holds', (t) => {
+  assert.match(
+    refusalOf('issue', 'create', '-t', TITLE, '-F', bodyFile(t),
+      '-l', 'type: fix,scope: hooks,kind: bug') ?? '',
+    /names the label "kind: bug", which is not in the label catalog/,
+  );
+});
+
 test('accepts an issue of any other type with the summary heading', (t) => {
   assert.equal(
     refusalOf('issue', 'create', '-t', TITLE, '-F', bodyFile(t, '## Summary\na\n'),

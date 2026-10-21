@@ -24,8 +24,8 @@ function refusalOf(added: readonly string[], removed: readonly string[]): string
   return getEditLabelRefusal(argsOf(added, removed), COMMAND);
 }
 
-test('accepts adding catalog labels and removing a kind label', () => {
-  assert.equal(refusalOf(['type: feat', 'kind: bug'], ['kind: other']), undefined);
+test('accepts adding catalog labels and removing a hand-kept extra', () => {
+  assert.equal(refusalOf(['type: feat', 'help wanted'], ['dependencies']), undefined);
 });
 
 test('refuses adding a label outside the catalog', () => {
@@ -64,7 +64,7 @@ test('refuses an added or removed label list that is not well-formed', () => {
     + '(a line break, or quotes that do not pair); write the labels plain or in double quotes',
   );
   assert.equal(
-    refusalOf([], ['kind: bug\nkind: other']),
+    refusalOf([], ['help wanted\ndependencies']),
     'the --remove-label of `gh pr edit` is not a label list gh reads as the gate does '
     + '(a line break, or quotes that do not pair); write the labels plain or in double quotes',
   );

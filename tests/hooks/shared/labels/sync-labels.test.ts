@@ -70,7 +70,7 @@ test('creates every catalog label with gh label create --force', (t) => {
     'label|create|scope: hooks|--color|1d76db|--description|Area of the product|--force|',
   ));
   assert.ok(run.calls.includes(
-    'label|create|kind: bug|--color|d73a4a|--description|Something does not work|--force|',
+    'label|create|help wanted|--color|008672|--description|Extra attention is needed|--force|',
   ));
   assert.ok(run.calls.includes(
     'label|create|breaking-change|--color|b60205|--description|Changes what callers rely on'

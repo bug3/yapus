@@ -276,7 +276,7 @@ export const ghCommands = {
     titleLabels: (command: string, expected: readonly string[]): string =>
       `the type, scope and breaking-change labels of \`${ command }\` must be exactly `
       + `${ expected.map((label) => `\`${ label }\``).join(', ') }, as its title says, `
-      + 'and no kind label; fix --label',
+      + 'besides any hand-kept extra label; fix --label',
     issueTitle: (command: string, title: string): string =>
       `the title ${ JSON.stringify(title) } of \`${ command }\` must be \`<scope>: <symptom>\`, `
       + 'a scope from hooks/shared/catalogs/scopes.json, a symptom, and at most '

@@ -32,7 +32,6 @@ export function getCreateLabelRefusal(args: GhArguments, command: string): strin
   const written = [...new Set(named.names.filter(isTitleLabel))];
   const isExact = written.length === expected.length
     && expected.every((label) => written.includes(label));
-  const hasKind = named.names.some((name) => name.startsWith(labelNames.kindPrefix));
 
-  return isExact && !hasKind ? undefined : ghCommands.reasons.titleLabels(command, expected);
+  return isExact ? undefined : ghCommands.reasons.titleLabels(command, expected);
 }

@@ -14,19 +14,19 @@
       "description": "Changes what callers rely on"
     },
     {
-      "name": "kind: bug",
-      "color": "d73a4a",
-      "description": "Something does not work"
+      "name": "dependencies",
+      "color": "0366d6",
+      "description": "Updates a dependency"
     },
     {
-      "name": "kind: feature",
-      "color": "a2eeef",
-      "description": "A new capability"
+      "name": "good first issue",
+      "color": "7057ff",
+      "description": "Good for newcomers"
     },
     {
-      "name": "kind: other",
-      "color": "ededed",
-      "description": "Neither a bug nor a feature"
+      "name": "help wanted",
+      "color": "008672",
+      "description": "Extra attention is needed"
     }
   ]
 }

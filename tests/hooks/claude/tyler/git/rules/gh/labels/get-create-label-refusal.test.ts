@@ -10,7 +10,7 @@ import {
 
 const COMMAND = 'gh pr create';
 const EXACT = 'the type, scope and breaking-change labels of `gh pr create` must be exactly ';
-const KIND_TAIL = ', as its title says, and no kind label; fix --label';
+const EXTRA_TAIL = ', as its title says, besides any hand-kept extra label; fix --label';
 
 function argsOf(title: string, ...labels: readonly string[]): GhArguments {
   const word = (text: string) => ({ text, isOpaque: false, canSplit: false });
@@ -51,19 +51,19 @@ test('wants the breaking-change label when the title has a bang', () => {
   );
   assert.equal(
     refusalOf('feat(hooks)!: add', 'type: feat', 'scope: hooks'),
-    `${ EXACT }\`type: feat\`, \`scope: hooks\`, \`breaking-change\`${ KIND_TAIL }`,
+    `${ EXACT }\`type: feat\`, \`scope: hooks\`, \`breaking-change\`${ EXTRA_TAIL }`,
   );
 });
 
 test('refuses the breaking-change label when the title has no bang', () => {
   assert.equal(
     refusalOf('feat(hooks): add', 'type: feat', 'scope: hooks', 'breaking-change'),
-    `${ EXACT }\`type: feat\`, \`scope: hooks\`${ KIND_TAIL }`,
+    `${ EXACT }\`type: feat\`, \`scope: hooks\`${ EXTRA_TAIL }`,
   );
 });
 
 test('refuses a missing, wrong or extra type or scope label', () => {
-  const refusal = `${ EXACT }\`type: feat\`, \`scope: hooks\`${ KIND_TAIL }`;
+  const refusal = `${ EXACT }\`type: feat\`, \`scope: hooks\`${ EXTRA_TAIL }`;
 
   assert.equal(refusalOf('feat(hooks): add'), refusal);
   assert.equal(refusalOf('feat(hooks): add', 'type: feat'), refusal);
@@ -71,10 +71,10 @@ test('refuses a missing, wrong or extra type or scope label', () => {
   assert.equal(refusalOf('feat(hooks): add', 'type: feat', 'type: fix', 'scope: hooks'), refusal);
 });
 
-test('refuses a kind label on a pull request', () => {
+test('accepts the hand-kept extras on a pull request', () => {
   assert.equal(
-    refusalOf('feat(hooks): add', 'type: feat', 'scope: hooks', 'kind: bug'),
-    `${ EXACT }\`type: feat\`, \`scope: hooks\`${ KIND_TAIL }`,
+    refusalOf('feat(hooks): add', 'type: feat', 'scope: hooks', 'dependencies', 'help wanted'),
+    undefined,
   );
 });
 
