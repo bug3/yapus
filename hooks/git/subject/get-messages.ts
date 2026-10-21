@@ -1,7 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { readCatalog, type Catalog, type CatalogViolation } from '../../shared/read-catalog.ts';
+import {
+  getSubjectViolations,
+  type Catalogs,
+} from '../../shared/subject/get-subject-violations.ts';
 import { getSubject } from './get-subject.ts';
-import { getViolations, type Catalogs } from './get-violations.ts';
 import { formatMessage } from './output/format-message.ts';
 
 // The path of each catalog; the catalogs are shared with the other hooks.
@@ -42,7 +45,7 @@ export async function getMessages(
     return [formatMessage(subject.violation)];
   }
 
-  return getViolations(subject.subject, catalogs).map(formatMessage);
+  return getSubjectViolations(subject.subject, catalogs).map(formatMessage);
 }
 
 async function readMessage(messagePath: string): Promise<string | undefined> {

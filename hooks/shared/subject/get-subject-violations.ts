@@ -1,5 +1,5 @@
-import { partForms } from '../../shared/part-forms.ts';
-import type { Catalog } from '../../shared/read-catalog.ts';
+import { partForms } from '../part-forms.ts';
+import type { Catalog } from '../read-catalog.ts';
 
 // git's autosquash prefixes, which may stack.
 const AUTOSQUASH_PREFIXES = /^(?:(?:fixup|squash|amend)! )*/;
@@ -16,7 +16,7 @@ export interface Catalogs {
   readonly verbs: Catalog;
 }
 
-export function getViolations(subject: string, catalogs: Catalogs): string[] {
+export function getSubjectViolations(subject: string, catalogs: Catalogs): string[] {
   return [...getLengthViolations(subject), ...getFormViolations(subject, catalogs)];
 }
 
