@@ -6,6 +6,8 @@ import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
 import { getGitEnv, runGit } from '../../helpers/run-git.ts';
+import { CLEAN_ANSWER, makeFakeScanner } from '../../helpers/scanner/make-fake-scanner.ts';
+import { withScanner } from '../../helpers/scanner/with-scanner.ts';
 import { FAILING_TEST, makeNpmRepo, PASSING_TEST } from './push/make-npm-repo.ts';
 
 const HOOKS = join(import.meta.dirname, '..', '..', '..', 'hooks', 'git');
@@ -128,11 +130,15 @@ function runPush(t: TestContext, repository: string, tempParent: string) {
   });
 }
 
+// Git runs with a clean fake scanner first on PATH, so that the scan hooks
+// say nothing whether or not the machine has one.
 function runRealGit(t: TestContext, { repository, args, extraEnv = {} }: GitRun) {
+  const baseEnv = withScanner(getGitEnv(process.env), makeFakeScanner(t, CLEAN_ANSWER));
+
   return spawnSync('git', args, {
     cwd: repository,
     encoding: 'utf8',
-    env: { ...getGitEnv(process.env), HOME: makeTempDir(t), TMPDIR: makeTempDir(t), ...extraEnv },
+    env: { ...baseEnv, HOME: makeTempDir(t), TMPDIR: makeTempDir(t), ...extraEnv },
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
 }

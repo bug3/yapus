@@ -9,6 +9,7 @@ const KEPT_NAMES: readonly string[] = ['.gitignore', 'LICENSE'];
 const SHELL_ENTRIES: readonly string[] = [
   'hooks/run.sh',
   'hooks/git/commit-msg',
+  'hooks/git/pre-commit',
   'hooks/git/pre-push',
 ];
 
