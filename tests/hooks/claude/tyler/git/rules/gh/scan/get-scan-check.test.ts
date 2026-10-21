@@ -100,6 +100,44 @@ test('sends the body of a comment and of a review', () => {
   assert.equal(ran[1]?.options?.input, 'needs work');
 });
 
+test('sends the subject, the body and the body file of a merge', (t) => {
+  const ran: Ran[] = [];
+  const path = fileIn(t, 'from a file\n');
+  const call = callOf('pr', 'merge', '3', '-m', '-d', '-t', 'feat: x', '-b', 'text', '-F', path);
+
+  getScanCheck(call, contextOf(CLEAN, ran));
+
+  assert.equal(ran[0]?.options?.input, 'feat: x\ntext\nfrom a file\n');
+});
+
+test('refuses a merge whose body holds a secret', () => {
+  const call = callOf('pr', 'merge', '3', '-m', '-d', '--body', 'AKIAIOSFODNN7EXAMPLE');
+
+  assert.deepEqual(getScanCheck(call, contextOf({ status: 3, stdout: REPORT, stderr: '' })), {
+    refusal: 'the text holds a secret (aws-access-token, line 2); remove it; '
+      + 'stop and tell the person',
+  });
+});
+
+test('refuses a merge subject the shell expands', () => {
+  const call: Call = {
+    ...callOf('pr', 'merge', '3', '-m', '-d', '--subject', '$S'),
+    words: [
+      ...['pr', 'merge', '3', '-m', '-d', '--subject'].map((text) => ({
+        text,
+        isOpaque: false,
+        canSplit: false,
+      })),
+      { text: 'a $S', isOpaque: true, canSplit: false },
+    ],
+  };
+
+  assert.deepEqual(getScanCheck(call, contextOf(CLEAN)), {
+    refusal: 'the subject of `gh pr merge` is not literal; '
+      + 'write the subject literally, the gate reads it',
+  });
+});
+
 test('sends the body file of a comment', (t) => {
   const ran: Ran[] = [];
   const path = fileIn(t, 'from a file\n');

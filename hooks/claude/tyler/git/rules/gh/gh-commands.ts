@@ -296,12 +296,14 @@ export const ghCommands = {
   },
   // The options whose text goes through the secret scanner, by action: the title
   // and the body file of a create or edit (`--body` is forbidden there), the body
-  // and the body file of a comment or review.
+  // and the body file of a comment or review, the subject, the body and the body file
+  // of a merge (gh sends them to GitHub, which writes the merge commit message).
   scanned: new Map<string, readonly string[]>([
     ['pr create', ['title', 'body-file']],
     ['pr edit', ['title', 'body-file']],
     ['issue create', ['title', 'body-file']],
     ['issue edit', ['title', 'body-file']],
+    ['pr merge', ['subject', 'body', 'body-file']],
     ...COMMENT_ACTIONS.map(
       (action): [string, readonly string[]] => [action, ['body', 'body-file']],
     ),
