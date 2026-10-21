@@ -16,8 +16,22 @@ export interface Catalogs {
   readonly verbs: Catalog;
 }
 
-export function getSubjectViolations(subject: string, catalogs: Catalogs): string[] {
-  return [...getLengthViolations(subject), ...getFormViolations(subject, catalogs)];
+export interface SubjectOptions {
+  // A commit may start with git's autosquash prefixes; a pull request title may not.
+  readonly allowAutosquash: boolean;
+}
+
+const COMMIT_OPTIONS: SubjectOptions = { allowAutosquash: true };
+
+export function getSubjectViolations(
+  subject: string,
+  catalogs: Catalogs,
+  options: SubjectOptions = COMMIT_OPTIONS,
+): string[] {
+  return [
+    ...getLengthViolations(subject),
+    ...getFormViolations(subject, catalogs, options),
+  ];
 }
 
 // The whole first line, as tools show it: in characters, not UTF-16 units.
@@ -29,8 +43,13 @@ function getLengthViolations(subject: string): string[] {
     : [];
 }
 
-function getFormViolations(subject: string, catalogs: Catalogs): string[] {
-  const [, type, scope, verb] = FORM.exec(subject.replace(AUTOSQUASH_PREFIXES, '')) ?? [];
+function getFormViolations(
+  subject: string,
+  catalogs: Catalogs,
+  options: SubjectOptions,
+): string[] {
+  const judged = options.allowAutosquash ? subject.replace(AUTOSQUASH_PREFIXES, '') : subject;
+  const [, type, scope, verb] = FORM.exec(judged) ?? [];
   const hasForm = type !== undefined && scope !== undefined && verb !== undefined;
 
   if (!hasForm) {

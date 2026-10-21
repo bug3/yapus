@@ -302,6 +302,16 @@ test('denies an interpreter reading stdin on a line that mentions git', () => {
   );
 });
 
+test('denies a pull request created without a draft or a subject title', () => {
+  const verdict = getVerdict({
+    stdinText: bashCall('gh pr create --title "Add a check" --body-file /tmp/b.md'),
+    home: HOME,
+  });
+
+  assert.equal(verdict.kind, 'deny');
+  assert.match('detail' in verdict ? verdict.detail : '', /^the title of `gh pr create`/);
+});
+
 test('denies an opaque script of source or a shell', () => {
   const detail = 'cannot judge a git or gh call: '
     + 'a shell reading a script or stdin the gate cannot read';

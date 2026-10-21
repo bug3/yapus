@@ -107,6 +107,14 @@ test('judges the subject after stacked autosquash prefixes', () => {
   assert.deepEqual(getSubjectViolations(subject, CATALOGS), []);
 });
 
+test('refuses a fixup prefix when autosquash is not allowed', () => {
+  const subject = 'fixup! feat(hooks): add a check';
+
+  assert.deepEqual(getSubjectViolations(subject, CATALOGS, { allowAutosquash: false }), [
+    `${ JSON.stringify(subject) } ${ FORM_REFUSAL }`,
+  ]);
+});
+
 test('refuses a fixup prefix before a subject out of form', () => {
   assert.deepEqual(getSubjectViolations('fixup! Fixed it', CATALOGS), [
     `"fixup! Fixed it" ${ FORM_REFUSAL }`,

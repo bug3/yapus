@@ -5,6 +5,7 @@ import { getBranchRefusal } from './rules/branch/get-branch-refusal.ts';
 import { getBypassRefusal } from './rules/bypass/get-bypass-refusal.ts';
 import { getDestructiveRefusal } from './rules/destructive/get-destructive-refusal.ts';
 import { getUnknownRefusal } from './rules/known/get-unknown-refusal.ts';
+import { getPrRefusal } from './rules/gh/get-pr-refusal.ts';
 import { getPushRefusal } from './rules/push/get-push-refusal.ts';
 import { splitCommands } from './shell/split-commands.ts';
 
@@ -34,6 +35,7 @@ export const RULES: readonly Rule[] = [
   getBypassRefusal,
   getPushRefusal,
   getBranchRefusal,
+  getPrRefusal,
 ];
 
 const ALLOW: Allow = { kind: 'allow' };
