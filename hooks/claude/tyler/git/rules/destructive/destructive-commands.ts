@@ -10,10 +10,12 @@ export type DestructiveId =
   | 'ghApiDelete'
   | 'ghRepoDelete'
   | 'resetHard'
+  | 'remoteSetHead'
   | 'restorePathspec'
   | 'stashClear'
   | 'stashDrop'
   | 'switchForce'
+  | 'symbolicRefWrite'
   | 'updateRefDelete'
   | 'updateRefStdin';
 
@@ -84,6 +86,18 @@ export const destructiveCommands = {
     reason: '`git update-ref --stdin` can delete refs named on stdin; a person runs it',
     isMatch: (args) => hasFlag(args, '--stdin'),
   },
+  remoteSetHead: {
+    tool: 'git',
+    leading: ['remote', 'set-head'],
+    reason: '`git remote set-head` moves which branch counts as the default; a person runs it',
+    isMatch: () => true,
+  },
+  symbolicRefWrite: {
+    tool: 'git',
+    leading: ['symbolic-ref'],
+    reason: '`git symbolic-ref` moves which branch counts as the default; a person runs it',
+    isMatch: writesSymbolicRef,
+  },
   branchDelete: {
     tool: 'git',
     leading: ['branch'],
@@ -148,6 +162,13 @@ function restoresIndexOnly(args: Arguments): boolean {
   const hasStaged = hasFlag(args, '--staged') || hasFlag(args, '-S');
 
   return hasStaged && [...args.flags].every((flag) => RESTORE_INDEX_OPTIONS.includes(flag));
+}
+
+// Two operands (a ref and its target) write; one reads. The `-m` value is not an operand.
+function writesSymbolicRef(args: Arguments): boolean {
+  const operands = args.operands.length - (hasFlag(args, '-m') ? 1 : 0);
+
+  return operands >= 2;
 }
 
 function hasForceOption(args: Arguments): boolean {

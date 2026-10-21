@@ -152,6 +152,25 @@ test('denies git branch -D in a for body', () => {
   });
 });
 
+test('denies git remote set-head in a compound line', () => {
+  const stdinText = bashCall('git fetch && git remote set-head origin x');
+
+  assert.deepEqual(getVerdict({ stdinText, home: HOME }), {
+    kind: 'deny',
+    detail: destructiveCommands.remoteSetHead.reason,
+  });
+});
+
+test('denies an unquoted variable in git remote add but allows a quoted one', () => {
+  const unquoted = getVerdict({ stdinText: bashCall('git remote add origin $URL'), home: HOME });
+
+  assert.equal(unquoted.kind, 'deny');
+  assert.deepEqual(
+    getVerdict({ stdinText: bashCall('git remote add origin "$URL"'), home: HOME }),
+    ALLOW,
+  );
+});
+
 test('denies git clean -f behind env -C', () => {
   assert.deepEqual(getVerdict({ stdinText: bashCall('env -C /tmp git clean -f'), home: HOME }), {
     kind: 'deny',

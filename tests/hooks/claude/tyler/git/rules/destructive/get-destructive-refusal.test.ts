@@ -488,3 +488,53 @@ test('refuses gh api with a method the gate cannot read', () => {
 test('allows gh api with a quoted opaque path', () => {
   assert.equal(getDestructiveRefusal({ ...quotedCall('api', 'repos'), tool: 'gh' }), undefined);
 });
+
+test('refuses git remote set-head with any arguments', () => {
+  const { reason } = destructiveCommands.remoteSetHead;
+
+  assert.equal(getDestructiveRefusal(gitCall('remote', 'set-head', 'origin', 'x')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('remote', 'set-head', 'origin', '-a')), reason);
+  assert.equal(getDestructiveRefusal(gitCall('remote', 'set-head')), reason);
+});
+
+test('allows git remote subcommands other than set-head', () => {
+  assert.equal(getDestructiveRefusal(gitCall('remote', '-v')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('remote', 'add', 'origin', 'u')), undefined);
+});
+
+test('refuses git symbolic-ref with two operands, with or without -m', () => {
+  const { reason } = destructiveCommands.symbolicRefWrite;
+
+  assert.equal(
+    getDestructiveRefusal(gitCall('symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/heads/x')),
+    reason,
+  );
+  assert.equal(
+    getDestructiveRefusal(gitCall('symbolic-ref', '-m', 'why', 'HEAD', 'refs/heads/x')),
+    reason,
+  );
+});
+
+test('allows git symbolic-ref reads, deletes and a -m value alone', () => {
+  assert.equal(getDestructiveRefusal(gitCall('symbolic-ref', 'HEAD')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('symbolic-ref', '--short', 'HEAD')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('symbolic-ref', '-d', 'refs/x')), undefined);
+  assert.equal(getDestructiveRefusal(gitCall('symbolic-ref', '-m', 'why', 'HEAD')), undefined);
+});
+
+test('refuses an unquoted variable in git remote and git symbolic-ref', () => {
+  assert.equal(
+    getDestructiveRefusal(opaqueCall('remote', 'add', 'origin')),
+    'cannot judge `git remote` with an argument the gate cannot read'
+    + '; quote it if it is one word, and start it with neither - nor +',
+  );
+  assert.equal(
+    getDestructiveRefusal(opaqueCall('symbolic-ref')),
+    'cannot judge `git symbolic-ref` with an argument the gate cannot read'
+    + '; quote it if it is one word, and start it with neither - nor +',
+  );
+});
+
+test('allows a quoted variable in git remote add', () => {
+  assert.equal(getDestructiveRefusal(quotedCall('remote', 'add', 'origin')), undefined);
+});
