@@ -32,6 +32,12 @@ test('drops the git variables and isolates the git config', () => {
   });
 });
 
+test('drops CLAUDECODE', () => {
+  const env = getGitEnv({ CLAUDECODE: '1', PATH: '/usr/bin' });
+
+  assert.equal('CLAUDECODE' in env, false);
+});
+
 test('lists the repository in cwd whatever git variables and config the caller has', (t) => {
   const repoA = makeTempRepo(t);
   const repoB = makeTempRepo(t);
