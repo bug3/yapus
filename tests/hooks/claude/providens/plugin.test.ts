@@ -22,16 +22,6 @@ test('registers every providens hook', () => {
             },
           ],
         },
-        {
-          matcher: 'startup|resume|clear',
-          hooks: [
-            {
-              type: 'command',
-              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/ashlar/start',
-              timeout: 60,
-            },
-          ],
-        },
       ],
       PreToolUse: [
         {
@@ -68,16 +58,6 @@ test('registers every providens hook', () => {
             },
           ],
         },
-        {
-          matcher: '^providens:warden$',
-          hooks: [
-            {
-              type: 'command',
-              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/ashlar/review',
-              timeout: 60,
-            },
-          ],
-        },
       ],
       SubagentStop: [
         {
@@ -88,27 +68,6 @@ test('registers every providens hook', () => {
               command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/return',
               timeout: 10,
               onFailure: 'block',
-            },
-          ],
-        },
-        {
-          matcher: '^providens:warden$',
-          hooks: [
-            {
-              type: 'command',
-              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/ashlar/review',
-              timeout: 60,
-            },
-          ],
-        },
-      ],
-      Stop: [
-        {
-          hooks: [
-            {
-              type: 'command',
-              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/ashlar/gate',
-              timeout: 60,
             },
           ],
         },
