@@ -8,6 +8,7 @@ import {
   splitCommands,
   type Word,
 } from '../../shell/split-commands.ts';
+import { expandBraces } from './expand-braces.ts';
 import { isSecretFile } from './is-secret-file.ts';
 import { isSecretGlob } from './is-secret-glob.ts';
 import { secretFiles } from './secret-files.ts';
@@ -49,26 +50,28 @@ function getItemRefusal(item: CommandItem, home: string | undefined): string | u
 
 // The first literal word or input target that names a secret file, or opaque word whose
 // glob could, as the text to show. The code of an interpreter, in its words and its
-// heredocs, is cut into names, since the file is a string inside it.
+// heredocs, is cut into names, since the file is a string inside it; so is the heredoc
+// of a shell.
 function findSecretFile(item: CommandItem): string | undefined {
-  const isInterpreted = item.words.some(isInterpreter);
-  const names = (word: Word): boolean => word.isOpaque
-    ? isSecretGlob(word.text)
-    : isSecretFile(word.text)
-      || isInterpreted && word.text.split(secretFiles.nameBreaks).some(isSecretFile);
-  const inCode = isInterpreted
+  const isInterpreted = item.words.some((word) => isProgramOf(word, secretFiles.interpreters));
+  const isShell = item.words.some((word) => isProgramOf(word, secretFiles.shells));
+  const names = (word: Word): boolean => expandBraces(word.text).some((text) => word.isOpaque
+    ? isSecretGlob(text) || text !== word.text && isSecretFile(text)
+    : isSecretFile(text)
+      || isInterpreted && text.split(secretFiles.nameBreaks).some(isSecretFile));
+  const inCode = isInterpreted || isShell
     ? item.heredocs.flatMap((body) => body.split(secretFiles.nameBreaks)).find(isSecretFile)
     : undefined;
 
   return [...item.words, ...item.inputTargets].find(names)?.text ?? inCode;
 }
 
-function isInterpreter(word: Word): boolean {
+function isProgramOf(word: Word, programs: readonly string[]): boolean {
   const base = programName(word.text);
   const unversioned = runnerSpecs.versionedName.exec(base)?.[1] ?? base;
 
   return !word.isOpaque
-    && (secretFiles.interpreters.includes(base) || secretFiles.interpreters.includes(unversioned));
+    && (programs.includes(base) || programs.includes(unversioned));
 }
 
 // The strings a program in the command runs as a shell (`env bash -c STRING`); a

@@ -190,3 +190,27 @@ test('passes an opaque word', () => {
 test('passes a commit message that mentions .env', () => {
   assert.equal(refusalOf('git commit -m "ignore .env"'), undefined);
 });
+
+test('refuses a secret file named in the heredoc of a shell', () => {
+  assert.equal(refusalOf("bash <<'EOF'\ncat .env\nEOF"), shown('bash', '.env'));
+});
+
+test('refuses a brace group that makes .env', () => {
+  assert.equal(refusalOf('cat .{env,x}'), shown('cat', '.{env,x}'));
+});
+
+test('refuses a brace group that makes a key file', () => {
+  assert.equal(refusalOf('cat x.{pem,txt}'), shown('cat', 'x.{pem,txt}'));
+});
+
+test('refuses a nested brace group that makes .env', () => {
+  assert.equal(refusalOf('cat .{x,{env,y}}'), shown('cat', '.{x,{env,y}}'));
+});
+
+test('passes a brace group that makes no secret file', () => {
+  assert.equal(refusalOf('cat x.{ts,txt}'), undefined);
+});
+
+test('passes a brace without a comma, which is literal', () => {
+  assert.equal(refusalOf('cat .{env}'), undefined);
+});

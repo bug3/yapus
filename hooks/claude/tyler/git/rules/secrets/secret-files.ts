@@ -23,6 +23,11 @@ const interpreters: readonly string[] = [
   'sed',
 ];
 
+// Shells, whose heredoc is a script; their words are judged by `-c` strings instead.
+const shells: readonly string[] = runnerSpecs.runners
+  .filter((group) => group.kind === 'shell')
+  .flatMap((group) => group.names);
+
 // What the secret-file rule judges by: the never-commit patterns (a leading `!` marks
 // an exception), the programs that never show a file's content, and the reasons.
 export const secretFiles = {
@@ -32,6 +37,7 @@ export const secretFiles = {
   // The names an opaque word with a glob is tried against, one per pattern.
   globSamples,
   interpreters,
+  shells,
   // What a name may be made of when it is cut out of the code of an interpreter.
   nameBreaks: /[^A-Za-z0-9._/-]+/,
   allowed: {
