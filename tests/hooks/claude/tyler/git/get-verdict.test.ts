@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import type { Call } from '../../../../../hooks/claude/tyler/git/calls/get-calls.ts';
+import type { Context } from '../../../../../hooks/claude/tyler/git/context/make-context.ts';
 import {
   getVerdict,
 } from
@@ -412,4 +414,62 @@ test('denies a merge that hides --admin in a quoted variable', () => {
 
   assert.equal(verdict.kind, 'deny');
   assert.match('detail' in verdict ? verdict.detail : '', /^cannot judge `gh pr merge`/);
+});
+
+const CONTEXT = { cwd: '/repo', run: () => ({ failure: 'no run in this test' }) };
+const LINE = 'git status && git log';
+
+test('allows with the notes of the checks, one per call that has one', () => {
+  const checks = [() => ({ note: 'first' }), (call: Call) => (
+    call.words[0]?.text === 'log' ? { note: 'second' } : undefined
+  )];
+
+  assert.deepEqual(getVerdict({ stdinText: bashCall(LINE), home: HOME }, CONTEXT, checks), {
+    kind: 'allow',
+    notes: ['first', 'first', 'second'],
+  });
+});
+
+test('lets a refusal of a check win over notes before and after it', () => {
+  const checks = [
+    () => ({ note: 'a note' }),
+    (call: Call) => (call.words[0]?.text === 'log' ? { refusal: 'no log' } : undefined),
+  ];
+
+  assert.deepEqual(getVerdict({ stdinText: bashCall(LINE), home: HOME }, CONTEXT, checks), {
+    kind: 'deny',
+    detail: 'no log',
+  });
+});
+
+test('hands the context to a check', () => {
+  const checks = [(call: Call, context: Context) => ({
+    note: `${ call.tool } ${ String(context.cwd) }`,
+  })];
+
+  assert.deepEqual(
+    getVerdict({ stdinText: bashCall('git status'), home: HOME }, CONTEXT, checks),
+    { kind: 'allow', notes: ['git /repo'] },
+  );
+});
+
+test('gives a check the payload cwd and a run that fails when no context is given', () => {
+  const checks = [(call: Call, context: Context) => {
+    const ran = JSON.stringify(context.run('git', ['status']));
+
+    return { note: `${ call.tool } ${ String(context.cwd) } ${ ran }` };
+  }];
+
+  assert.deepEqual(
+    getVerdict({ stdinText: bashCall('git status'), home: HOME }, undefined, checks),
+    { kind: 'allow', notes: ['git /tmp {"failure":"the gate runs nothing here"}'] },
+  );
+});
+
+test('runs no check for a rule refusal', () => {
+  const checks = [() => ({ note: 'never' })];
+  const stdinText = bashCall('git push --force');
+  const verdict = getVerdict({ stdinText, home: HOME }, CONTEXT, checks);
+
+  assert.equal(verdict.kind, 'deny');
 });

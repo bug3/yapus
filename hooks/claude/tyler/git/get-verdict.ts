@@ -1,4 +1,5 @@
 import { type Call, getCalls } from './calls/get-calls.ts';
+import type { Context } from './context/make-context.ts';
 import { parsePayload } from './input/parse-payload.ts';
 import { mentionsGit } from './mentions-git.ts';
 import { getBranchRefusal } from './rules/branch/get-branch-refusal.ts';
@@ -19,8 +20,10 @@ export interface Input {
   readonly home: string | undefined;
 }
 
+// `notes` is absent when there are none; the hook shows them to Claude.
 export interface Allow {
   readonly kind: 'allow';
+  readonly notes?: readonly string[];
 }
 
 export interface Deny {
@@ -32,6 +35,12 @@ export type Verdict = Allow | Deny;
 
 // A refusal reason for the call, or undefined when the rule has no objection.
 export type Rule = (call: Call) => string | undefined;
+
+// What a check finds in a call: a refusal, a note that lets the call run, or nothing.
+export type CheckResult = { readonly refusal: string } | { readonly note: string } | undefined;
+
+// A rule that needs the world (the working directory, git, gh) or may only note.
+export type Check = (call: Call, context: Context) => CheckResult;
 
 // One rule per slice.
 export const RULES: readonly Rule[] = [
@@ -47,11 +56,23 @@ export const RULES: readonly Rule[] = [
   getGhWriteRefusal,
 ];
 
+// The checks run after RULES, for each call.
+export const CHECKS: readonly Check[] = [];
+
 const ALLOW: Allow = { kind: 'allow' };
+
+// The context of a caller that gives none: nothing runs.
+function makeNothingRuns(cwd: string | undefined): Context {
+  return { cwd, run: () => ({ failure: 'the gate runs nothing here' }) };
+}
 
 // Whether the Bash call in stdin may run. A call the gate cannot read is
 // refused only when its text mentions git or gh.
-export function getVerdict(input: Input): Verdict {
+export function getVerdict(
+  input: Input,
+  given?: Context,
+  checks: readonly Check[] = CHECKS,
+): Verdict {
   const payload = parsePayload(input.stdinText);
 
   if (payload.kind === 'other') {
@@ -63,6 +84,8 @@ export function getVerdict(input: Input): Verdict {
   }
 
   const { command } = payload;
+  const context = given ?? makeNothingRuns(payload.cwd);
+  const notes: string[] = [];
   const split = splitCommands(command, input.home);
 
   if (split.kind === 'failure') {
@@ -92,9 +115,21 @@ export function getVerdict(input: Input): Verdict {
         return deny(reason);
       }
     }
+
+    for (const check of checks) {
+      const result = check(call, context);
+
+      if (result !== undefined && 'refusal' in result) {
+        return deny(result.refusal);
+      }
+
+      if (result !== undefined) {
+        notes.push(result.note);
+      }
+    }
   }
 
-  return ALLOW;
+  return notes.length === 0 ? ALLOW : { kind: 'allow', notes };
 }
 
 function deny(detail: string): Deny {
