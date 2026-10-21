@@ -3,11 +3,13 @@
     "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
     "exactOptionalPropertyTypes": true,
+    "incremental": true,
     "module": "nodenext",
     "noEmit": true,
     "noUncheckedIndexedAccess": true,
     "strict": true,
     "target": "esnext",
+    "tsBuildInfoFile": "node_modules/.cache/yapus/tsbuildinfo",
     "types": [
       "node"
     ],
