@@ -49,7 +49,7 @@ function getApiRefusal(words: readonly Word[]): string | undefined {
 
   const scan = scanApi(words);
 
-  if (scan.operands.some(({ text }) => text === writes.graphqlOperand)) {
+  if (scan.operands[0] !== undefined && isGraphql(scan.operands[0])) {
     return reasons.apiGraphql;
   }
 
@@ -120,6 +120,15 @@ function takeValue(scan: Scan, long: string, value: Word | undefined): void {
   if (long === writes.methodOption && value !== undefined) {
     scan.methods.push(value);
   }
+}
+
+// Whether the endpoint ends in the segment `graphql`, in any case: `graphql`,
+// `/graphql`, `https://api.github.com/graphql`.
+function isGraphql({ text }: Word): boolean {
+  const path = text.split(/[?#]/u)[0] ?? text;
+  const segment = path.split('/').filter((part) => part !== '').at(-1) ?? '';
+
+  return segment.toLowerCase() === writes.graphqlOperand;
 }
 
 // A method the gate cannot read may be a write.

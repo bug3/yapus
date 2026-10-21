@@ -104,6 +104,20 @@ test('refuses graphql whatever else is written', () => {
   assert.equal(refusalOf('api', '--hostname', 'h', 'graphql'), GRAPHQL);
 });
 
+test('refuses a graphql endpoint written as a path or a URL, in any case', () => {
+  assert.equal(refusalOf('api', '/graphql'), GRAPHQL);
+  assert.equal(refusalOf('api', 'https://api.github.com/graphql', '-f', 'query=x'), GRAPHQL);
+  assert.equal(refusalOf('api', 'GraphQL'), GRAPHQL);
+  assert.equal(refusalOf('api', '-X', 'GET', '/graphql/'), GRAPHQL);
+  assert.equal(refusalOf('api', 'graphql?x=1'), GRAPHQL);
+});
+
+test('passes an endpoint that only contains graphql', () => {
+  assert.equal(refusalOf('api', 'repos/o/graphql-x'), undefined);
+  assert.equal(refusalOf('api', 'repos/o/r/graphql/issues'), undefined);
+  assert.equal(refusalOf('api', 'user', '-q', 'graphql'), undefined);
+});
+
 test('refuses a word the shell may split', () => {
   assert.equal(getGhWriteRefusal(callOf('gh', [
     word('api'),
