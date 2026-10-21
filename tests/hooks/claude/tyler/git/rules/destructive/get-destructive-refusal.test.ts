@@ -502,7 +502,7 @@ test('allows git remote subcommands other than set-head', () => {
   assert.equal(getDestructiveRefusal(gitCall('remote', 'add', 'origin', 'u')), undefined);
 });
 
-test('refuses git symbolic-ref with two operands, with or without -m', () => {
+test('refuses git symbolic-ref with two operands or a -m reason', () => {
   const { reason } = destructiveCommands.symbolicRefWrite;
 
   assert.equal(
@@ -513,13 +513,21 @@ test('refuses git symbolic-ref with two operands, with or without -m', () => {
     getDestructiveRefusal(gitCall('symbolic-ref', '-m', 'why', 'HEAD', 'refs/heads/x')),
     reason,
   );
+  assert.equal(
+    getDestructiveRefusal(gitCall('symbolic-ref', '-mwhy', 'refs/remotes/origin/HEAD', 'x')),
+    reason,
+  );
+  assert.equal(
+    getDestructiveRefusal(gitCall('symbolic-ref', '--message=why', 'HEAD', 'refs/heads/x')),
+    reason,
+  );
+  assert.equal(getDestructiveRefusal(gitCall('symbolic-ref', '-m', 'why', 'HEAD')), reason);
 });
 
-test('allows git symbolic-ref reads, deletes and a -m value alone', () => {
+test('allows git symbolic-ref reads and deletes', () => {
   assert.equal(getDestructiveRefusal(gitCall('symbolic-ref', 'HEAD')), undefined);
   assert.equal(getDestructiveRefusal(gitCall('symbolic-ref', '--short', 'HEAD')), undefined);
   assert.equal(getDestructiveRefusal(gitCall('symbolic-ref', '-d', 'refs/x')), undefined);
-  assert.equal(getDestructiveRefusal(gitCall('symbolic-ref', '-m', 'why', 'HEAD')), undefined);
 });
 
 test('refuses an unquoted variable in git remote and git symbolic-ref', () => {

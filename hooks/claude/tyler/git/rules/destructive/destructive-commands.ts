@@ -164,11 +164,11 @@ function restoresIndexOnly(args: Arguments): boolean {
   return hasStaged && [...args.flags].every((flag) => RESTORE_INDEX_OPTIONS.includes(flag));
 }
 
-// Two operands (a ref and its target) write; one reads. The `-m` value is not an operand.
+// Two operands (a ref and its target) write; one reads. A separate `-m` value
+// counts as an operand too: a reason is only for a write, and an attached one
+// (`-mwhy`) cannot be told apart from it.
 function writesSymbolicRef(args: Arguments): boolean {
-  const operands = args.operands.length - (hasFlag(args, '-m') ? 1 : 0);
-
-  return operands >= 2;
+  return args.operands.length >= 2;
 }
 
 function hasForceOption(args: Arguments): boolean {
