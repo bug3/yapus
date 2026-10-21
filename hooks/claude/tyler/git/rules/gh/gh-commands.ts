@@ -21,6 +21,8 @@ export interface BodyRules {
 
 const MAX_ISSUE_TITLE = 72;
 
+const COMMENT_ACTIONS = ['pr comment', 'issue comment', 'pr review'] as const;
+
 const REPO: OptionSpec = { long: 'repo', short: 'R', kind: 'value' };
 
 const prCreate: ActionSpec = {
@@ -289,9 +291,21 @@ export const ghCommands = {
   // `--body` is read by the gate, so it is no forbidden option; these two are
   // (an editor or a browser is where the gate cannot read the text).
   comments: {
-    actions: ['pr comment', 'issue comment', 'pr review'],
+    actions: COMMENT_ACTIONS,
     forbiddenOptions: ['editor', 'web'],
   },
+  // The options whose text goes through the secret scanner, by action: the title
+  // and the body file of a create or edit (`--body` is forbidden there), the body
+  // and the body file of a comment or review.
+  scanned: new Map<string, readonly string[]>([
+    ['pr create', ['title', 'body-file']],
+    ['pr edit', ['title', 'body-file']],
+    ['issue create', ['title', 'body-file']],
+    ['issue edit', ['title', 'body-file']],
+    ...COMMENT_ACTIONS.map(
+      (action): [string, readonly string[]] => [action, ['body', 'body-file']],
+    ),
+  ]),
   // The option that uploads a file; no action that has it may use it.
   attachOption: 'attach',
   // A body file is read whole, up to this size.
@@ -326,6 +340,11 @@ export const ghCommands = {
       + 'give --body or --body-file with an absolute path',
     attachUpload: (command: string, shown: string): string =>
       `\`${ command } --${ shown }\` uploads a file the gate cannot read; a person attaches it`,
+    scanSecret: (rule: string, line: number): string =>
+      `the text holds a secret (${ rule }, line ${ String(line) }); remove it; `
+      + 'stop and tell the person',
+    scanFailed: 'cannot scan the text; retry it',
+    scanMissing: 'the secret scanner is not installed; the text was not scanned',
     literalValue: (command: string, what: string): string =>
       `the ${ what } of \`${ command }\` is not literal; write the ${ what } literally, `
       + 'the gate reads it',

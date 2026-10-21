@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 import { getGitEnv } from '../../../../helpers/run-git.ts';
+import { CLEAN_ANSWER, makeFakeScanner } from '../../../../helpers/scanner/make-fake-scanner.ts';
+import { withScanner } from '../../../../helpers/scanner/with-scanner.ts';
 import { makeSizeBranch } from '../../../../helpers/size/make-size-branch.ts';
 
 const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', '..', 'hooks');
@@ -75,7 +77,7 @@ function makeCreateCommand(env: NodeJS.ProcessEnv): string {
 }
 
 test('prints the notes of an allowed call as hook context on stdout', (t) => {
-  const env = makeHookEnv(t);
+  const env = withScanner(makeHookEnv(t), makeFakeScanner(t, CLEAN_ANSWER));
   const hookRun = runHook(env, JSON.stringify({
     tool_name: 'Bash',
     tool_input: { command: makeCreateCommand(env) },
@@ -90,6 +92,19 @@ test('prints the notes of an allowed call as hook context on stdout', (t) => {
         + 'Reviewers lose track of a change this size; consider splitting it.',
     },
   });
+});
+
+test('refuses a gh comment whose text the scanner finds a secret in', (t) => {
+  const report = '[{"RuleID":"aws-access-token","File":"","StartLine":1}]';
+  const scanner = makeFakeScanner(t, { exitCode: 3, stdout: report, stderr: '' });
+  const hookRun = runHook(withScanner(makeHookEnv(t), scanner), JSON.stringify({
+    tool_name: 'Bash',
+    tool_input: { command: 'gh issue comment 12 --body "hello"' },
+    cwd: '/tmp',
+  }));
+
+  assert.deepEqual([hookRun.status, hookRun.stdout], [2, '']);
+  assert.match(hookRun.stderr, /the text holds a secret \(aws-access-token, line 1\); remove it/);
 });
 
 test('refuses a gh pr create when the payload names no working directory', (t) => {

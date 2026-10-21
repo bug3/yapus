@@ -1,8 +1,9 @@
 import { spawnSync } from 'node:child_process';
-import { dirname, join } from 'node:path';
 import { getFirstLine } from '../get-first-line.ts';
+import { makeScannerArguments } from './make-scanner-arguments.ts';
 import { readScannerReport, type Finding } from './read-scanner-report.ts';
 import { readScanner, SCANNER_PATH } from './read-scanner.ts';
+import { removeScannerVariables } from './remove-scanner-variables.ts';
 
 export interface ScanRequest {
   // The scanner's own subcommand and arguments, such as git --staged.
@@ -32,24 +33,9 @@ export async function runScanner(request: ScanRequest): Promise<ScanOutcome> {
     return { kind: 'failure', reason: scanner.violation };
   }
 
-  const scannerDirectory = dirname(SCANNER_PATH);
-  const run = spawnSync(scanner.program, [
-    ...request.subcommand,
-    ...scanner.commonArguments,
-    '--config',
-    join(scannerDirectory, scanner.configFile),
-    // The scanner's own directory holds no .gitleaksignore.
-    '--gitleaks-ignore-path',
-    scannerDirectory,
-    '--exit-code',
-    String(scanner.findingsExitCode),
-    '--timeout',
-    String(scanner.hookTimeoutSeconds),
-  ], {
+  const run = spawnSync(scanner.program, makeScannerArguments(scanner, request.subcommand), {
     cwd: request.cwd,
-    env: Object.fromEntries(
-      Object.entries(request.env).filter(([name]) => !scanner.removedVariables.includes(name)),
-    ),
+    env: removeScannerVariables(scanner, request.env),
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
     timeout: scanner.hookSpawnSeconds * 1000,

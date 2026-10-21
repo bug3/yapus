@@ -1,7 +1,11 @@
 import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { getFirstLine } from '../../../../shared/get-first-line.ts';
+import { removeScannerVariables } from '../../../../shared/scanner/remove-scanner-variables.ts';
+import { gateScanner } from './gate-scanner.ts';
 
-export type Program = 'git' | 'gh';
+// `scanner` runs the program that scanner.json names.
+export type Program = 'git' | 'gh' | 'scanner';
 
 export interface RunOutput {
   readonly status: number;
@@ -11,6 +15,8 @@ export interface RunOutput {
 
 export interface RunFailure {
   readonly failure: string;
+  // Set when the program is not installed (absent means it is).
+  readonly isMissing?: boolean;
 }
 
 export type RunResult = RunOutput | RunFailure;
@@ -38,7 +44,7 @@ export interface Place {
 
 // Each call ends within its program's limit and what is left of the deadline,
 // all inside the 10 s of the hook.
-const LIMITS_MS: Record<Program, number> = { git: 3000, gh: 5000 };
+const LIMITS_MS: Record<Program, number> = { git: 3000, gh: 5000, scanner: 2000 };
 
 const MAX_OUTPUT_BYTES = 4 * 1024 * 1024;
 
@@ -60,18 +66,34 @@ export function run(request: Request, place: Place): RunResult {
     return failed(program, args, 'ran out of its time budget');
   }
 
+  const scanner = program === 'scanner' ? gateScanner : undefined;
+
+  if (scanner !== undefined && 'violation' in scanner) {
+    return failed(program, args, scanner.violation);
+  }
+
+  // The scanner's environment lacks the variables that could name another config.
+  const baseEnv = scanner === undefined
+    ? process.env
+    : removeScannerVariables(scanner, process.env);
+
   try {
-    const result = spawnSync(program, [...args], {
+    const result = spawnSync(scanner?.program ?? program, [...args], {
       cwd,
       encoding: 'utf8',
       maxBuffer: MAX_OUTPUT_BYTES,
-      env: { ...process.env, ...env },
+      env: { ...baseEnv, ...env },
       input: input ?? '',
       timeout,
     });
 
     if (result.error !== undefined) {
-      return failed(program, args, result.error.message);
+      const failure = failed(program, args, result.error.message);
+
+      // A missing program is told from a missing directory, which also gives ENOENT.
+      return 'code' in result.error && result.error.code === 'ENOENT' && existsSync(cwd)
+        ? { ...failure, isMissing: true }
+        : failure;
     }
 
     return result.status === null

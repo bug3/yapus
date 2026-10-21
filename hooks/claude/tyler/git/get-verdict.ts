@@ -17,6 +17,7 @@ import { getMisplacedOptionRefusal } from './rules/gh/get-misplaced-option-refus
 import { getPrRefusal } from './rules/gh/get-pr-refusal.ts';
 import { getAttachRefusal } from './rules/gh/scan/get-attach-refusal.ts';
 import { getCommentRefusal } from './rules/gh/scan/get-comment-refusal.ts';
+import { getScanCheck } from './rules/gh/scan/get-scan-check.ts';
 import { getPushRefusal } from './rules/push/get-push-refusal.ts';
 import { getSecretFileRefusal } from './rules/secrets/get-secret-file-refusal.ts';
 import { getUnreadableSecretRefusal } from './rules/secrets/get-unreadable-secret-refusal.ts';
@@ -66,7 +67,12 @@ export const RULES: readonly Rule[] = [
 ];
 
 // The checks run after RULES, for each call.
-export const CHECKS: readonly Check[] = [getSizeCheck, getReadyCheck, getSquashCheck];
+export const CHECKS: readonly Check[] = [
+  getSizeCheck,
+  getReadyCheck,
+  getSquashCheck,
+  getScanCheck,
+];
 
 const ALLOW: Allow = { kind: 'allow' };
 

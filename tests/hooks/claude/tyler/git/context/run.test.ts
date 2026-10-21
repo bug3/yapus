@@ -5,7 +5,14 @@ import {
   type Place,
   type RunResult,
 } from '../../../../../../hooks/claude/tyler/git/context/run.ts';
+import { makeTempDir } from '../../../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../../../helpers/make-temp-repo.ts';
+import {
+  CLEAN_ANSWER,
+  makeFakeScanner,
+} from '../../../../../helpers/scanner/make-fake-scanner.ts';
+import { makeToolDir } from '../../../../../helpers/scanner/make-tool-dir.ts';
+import { withScanner } from '../../../../../helpers/scanner/with-scanner.ts';
 
 const FAR_DEADLINE = Date.now() + 600_000;
 
@@ -65,4 +72,45 @@ test('fails instead of throwing when the working directory holds a NUL', () => {
   const result = runGit(['status'], { cwd: '/tmp\0x', deadline: FAR_DEADLINE });
 
   assert.match('failure' in result ? result.failure : '', /^git status: /);
+});
+
+test('runs the program that scanner.json names for the scanner', (t) => {
+  const scanner = makeFakeScanner(t, CLEAN_ANSWER);
+  const env = { PATH: withScanner(process.env, scanner).PATH ?? '' };
+  const place = { cwd: makeTempDir(t), deadline: FAR_DEADLINE };
+  const result = run({ program: 'scanner', args: ['stdin', '--x'], input: 'text', env }, place);
+
+  assert.deepEqual(result, { status: 0, stdout: '[]\n', stderr: '' });
+  assert.deepEqual(scanner.readCalls(), ['stdin --x']);
+});
+
+test('removes the variables that name another scanner config for the scanner only', (t) => {
+  const scanner = makeFakeScanner(t, CLEAN_ANSWER);
+  const env = { PATH: withScanner(process.env, scanner).PATH ?? '' };
+  const place = { cwd: makeTempDir(t), deadline: FAR_DEADLINE };
+
+  process.env.GITLEAKS_CONFIG = '/evil.toml';
+  t.after(() => {
+    delete process.env.GITLEAKS_CONFIG;
+  });
+  run({ program: 'scanner', args: ['stdin'], env }, place);
+
+  assert.deepEqual(scanner.readVariables(), []);
+});
+
+test('marks a program that is not installed as missing', (t) => {
+  const env = { PATH: makeToolDir(t, []) };
+  const place = { cwd: makeTempDir(t), deadline: FAR_DEADLINE };
+  const result = run({ program: 'scanner', args: ['stdin'], env }, place);
+
+  assert.deepEqual(result, {
+    failure: 'scanner stdin: spawnSync gitleaks ENOENT',
+    isMissing: true,
+  });
+});
+
+test('does not mark a missing working directory as a missing program', () => {
+  const result = runGit(['status'], { cwd: '/nonexistent/yapus', deadline: FAR_DEADLINE });
+
+  assert.equal('isMissing' in result, false);
 });
