@@ -50,17 +50,6 @@ test('registers every providens hook', () => {
           hooks: [
             {
               type: 'command',
-              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/git',
-              timeout: 10,
-              onFailure: 'block',
-            },
-          ],
-        },
-        {
-          matcher: 'Bash',
-          hooks: [
-            {
-              type: 'command',
               command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/gh',
               timeout: 10,
               onFailure: 'block',
