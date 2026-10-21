@@ -141,3 +141,39 @@ test('refuses a create that shares its line, with the body file reason', () => {
 
   assert.equal(getOwnLineRefusal(callOf(...CREATE.slice(1)), items), REFUSAL);
 });
+
+const READY_REFUSAL = 'run `gh pr ready` on a line of its own; the gate judges it against the '
+  + 'directory and repository the line starts in';
+
+test('refuses a ready that shares its line', () => {
+  const ready = ['pr', 'ready', '3'];
+  const items = [commandItem('cd', '/other'), commandItem('gh', ...ready)];
+
+  assert.equal(getOwnLineRefusal(callOf(...ready), items), READY_REFUSAL);
+});
+
+test('passes a ready that is the one command of its line', () => {
+  const ready = ['pr', 'ready', '3'];
+
+  assert.equal(getOwnLineRefusal(callOf(...ready), [commandItem('gh', ...ready)]), undefined);
+});
+
+test('passes a ready --undo wherever it stands', () => {
+  const ready = ['pr', 'ready', '--undo'];
+  const items = [commandItem('cd', '/other'), commandItem('gh', ...ready)];
+
+  assert.equal(getOwnLineRefusal(callOf(...ready), items), undefined);
+});
+
+test('refuses a ready whose --undo is false or cannot be read', () => {
+  const items = [commandItem('cd', '/other'), commandItem('gh', 'pr', 'ready')];
+
+  assert.equal(getOwnLineRefusal(callOf('pr', 'ready', '--undo=false'), items), READY_REFUSAL);
+
+  const call = callOf('pr', 'ready', '--undo');
+  const opaque = { text: '$X', isOpaque: true, canSplit: false };
+
+  const unreadable = { ...call, words: [...call.words, opaque] };
+
+  assert.equal(getOwnLineRefusal(unreadable, items), READY_REFUSAL);
+});

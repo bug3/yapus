@@ -2,7 +2,7 @@ import type { Call } from '../../calls/get-calls.ts';
 import type { Item } from '../../shell/split-commands.ts';
 import { getGhAction } from './get-gh-action.ts';
 import { ghCommands } from './gh-commands.ts';
-import { readGhArguments } from './read-gh-arguments.ts';
+import { readGhArguments, type GhArguments, type GhRefusal } from './read-gh-arguments.ts';
 
 // A reason to refuse a gh call that must be the one command of its line, or
 // undefined. A call that reads a body file is read before the line runs, so
@@ -23,9 +23,15 @@ export function getOwnLineRefusal(call: Call, items: readonly Item[]): string | 
     return ghCommands.reasons.bodyLine(action);
   }
 
+  return isOwnLineAction(action, args) ? ghCommands.reasons.ownLine(action) : undefined;
+}
+
+// An action with arguments the gate cannot read is not known to have the flag on.
+function isOwnLineAction(action: string, args: GhArguments | GhRefusal): boolean {
+  const flag = ghCommands.ownLine.unlessFlag.get(action);
+
   return ghCommands.ownLine.actions.some((own) => own === action)
-    ? ghCommands.reasons.ownLine(action)
-    : undefined;
+    || flag !== undefined && !('flags' in args && args.flags.get(flag) === true);
 }
 
 // Whether the line is one command that is gh itself, written as `gh` or a path

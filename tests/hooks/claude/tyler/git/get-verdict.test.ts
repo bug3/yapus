@@ -473,3 +473,29 @@ test('runs no check for a rule refusal', () => {
 
   assert.equal(verdict.kind, 'deny');
 });
+
+function ghContext(stdout: string): Context {
+  return { cwd: '/repo', run: () => ({ status: 0, stdout, stderr: '' }) };
+}
+
+test('allows gh pr ready when the checks passed and denies it while one waits', () => {
+  const stdinText = bashCall('gh pr ready 3');
+  const passed = ghContext('[{"name":"ci","bucket":"pass"}]');
+  const waiting = ghContext('[{"name":"ci","bucket":"pending"}]');
+
+  assert.deepEqual(getVerdict({ stdinText, home: HOME }, passed), ALLOW);
+  assert.match(
+    JSON.stringify(getVerdict({ stdinText, home: HOME }, waiting)),
+    /needs every check to pass; these have not: ci \(pending\)/,
+  );
+});
+
+test('denies gh pr ready on a line shared with another command', () => {
+  const stdinText = bashCall('cd /other && gh pr ready 3');
+  const verdict = getVerdict({ stdinText, home: HOME }, ghContext('[]'));
+
+  assert.match(
+    'detail' in verdict ? verdict.detail : '',
+    /^run `gh pr ready` on a line of its own/,
+  );
+});

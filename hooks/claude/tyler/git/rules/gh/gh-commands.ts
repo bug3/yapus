@@ -149,6 +149,15 @@ const prMerge: ActionSpec = {
   ],
 };
 
+const prReady: ActionSpec = {
+  command: 'gh pr ready',
+  source: 'gh v2.102.0 pkg/cmd/pr/ready/ready.go:62 (--undo) and `gh pr ready --help` (-R)',
+  options: [
+    { long: 'undo', kind: 'flag' },
+    REPO,
+  ],
+};
+
 // The options of `gh api` that take a value.
 const API_VALUE_OPTIONS: readonly { readonly long: string; readonly short?: string }[] = [
   { long: 'cache' },
@@ -178,6 +187,7 @@ export const ghCommands = {
     ['issue create', issueCreate],
     ['issue edit', issueEdit],
     ['pr merge', prMerge],
+    ['pr ready', prReady],
   ]),
   // `gh pr merge` makes a merge commit and deletes the branch: these flags must be
   // on, and these must not be.
@@ -186,9 +196,11 @@ export const ghCommands = {
     forbidden: ['admin', 'squash', 'rebase', 'auto', 'disable-auto'],
   },
   // Actions judged against the directory and repository the line starts in: each is
-  // the one command of its line (as is any call that reads a body file).
+  // the one command of its line (as is any call that reads a body file), `unlessFlag`
+  // when the action does not need it with that flag on.
   ownLine: {
     actions: ['pr create', 'pr merge'],
+    unlessFlag: new Map([['pr ready', 'undo']]),
   },
   // What `gh api` and `gh label` write with, read by words. The options of `gh api`
   // that take a value (gh v2.102.0 pkg/cmd/api/api.go; its only flag with a short
