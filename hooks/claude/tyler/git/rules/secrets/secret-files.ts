@@ -1,3 +1,4 @@
+import { runnerSpecs } from '../../calls/runner-specs.ts';
 import neverCommit from '../../../../../shared/catalogs/never-commit.json' with { type: 'json' };
 
 const patterns: readonly string[] = neverCommit;
@@ -6,12 +7,29 @@ const patterns: readonly string[] = neverCommit;
 const programs: readonly string[] = ['[', 'chmod', 'ls', 'mkdir', 'test', 'touch'];
 const gitSubcommands: readonly string[] = ['check-ignore', 'status'];
 
+// Programs that run code written in their arguments: the interpreters the gate already
+// lists, and the text tools whose script can open a file.
+const interpreters: readonly string[] = [
+  ...runnerSpecs.runners
+    .filter((group) => group.kind === 'interpreter')
+    .flatMap((group) => group.names),
+  'awk',
+  'gawk',
+  'jq',
+  'mawk',
+  'nawk',
+  'sed',
+];
+
 // What the secret-file rule judges by: the never-commit patterns (a leading `!` marks
 // an exception), the programs that never show a file's content, and the reasons.
 export const secretFiles = {
   patterns,
   // How many strings a shell runs (`bash -c`) are read inside one another.
   maxNesting: 2,
+  interpreters,
+  // What a name may be made of when it is cut out of the code of an interpreter.
+  nameBreaks: /[^A-Za-z0-9._/-]+/,
   allowed: {
     programs,
     gitSubcommands,

@@ -1,7 +1,13 @@
 import { getCalls } from '../../calls/get-calls.ts';
 import { programName } from '../../calls/program-name.ts';
 import { isRunner, readRunner } from '../../calls/read-runner.ts';
-import { type CommandItem, type Item, splitCommands } from '../../shell/split-commands.ts';
+import { runnerSpecs } from '../../calls/runner-specs.ts';
+import {
+  type CommandItem,
+  type Item,
+  splitCommands,
+  type Word,
+} from '../../shell/split-commands.ts';
 import { isSecretFile } from './is-secret-file.ts';
 import { secretFiles } from './secret-files.ts';
 
@@ -28,8 +34,7 @@ export function getSecretFileRefusal(
 
 function getItemRefusal(item: CommandItem, home: string | undefined): string | undefined {
   const [program] = item.words;
-  const file = [...item.words, ...item.inputTargets]
-    .find((word) => !word.isOpaque && isSecretFile(word.text));
+  const file = findSecretFile(item);
 
   if (file === undefined || isAllowed(item, home)) {
     return undefined;
@@ -39,6 +44,25 @@ function getItemRefusal(item: CommandItem, home: string | undefined): string | u
   return program === undefined
     ? secretFiles.reasons.groupShown(file.text)
     : secretFiles.reasons.shown(programName(program.text), file.text);
+}
+
+// The first literal word or input target that names a secret file. The code of an
+// interpreter is cut into names, since the file is a string inside it.
+function findSecretFile(item: CommandItem): Word | undefined {
+  const isInterpreted = item.words.some(isInterpreter);
+  const names = (word: Word): boolean =>
+    isSecretFile(word.text)
+    || isInterpreted && word.text.split(secretFiles.nameBreaks).some(isSecretFile);
+
+  return [...item.words, ...item.inputTargets].find((word) => !word.isOpaque && names(word));
+}
+
+function isInterpreter(word: Word): boolean {
+  const base = programName(word.text);
+  const unversioned = runnerSpecs.versionedName.exec(base)?.[1] ?? base;
+
+  return !word.isOpaque
+    && (secretFiles.interpreters.includes(base) || secretFiles.interpreters.includes(unversioned));
 }
 
 // The strings a program in the command runs as a shell (`env bash -c STRING`); a

@@ -78,6 +78,40 @@ test('gives a git call the reader cannot read no allowance', () => {
   assert.equal(refusalOf('git --exec-path=x status .env'), shown('git', '.env'));
 });
 
+test('refuses a secret file named inside python code', () => {
+  assert.equal(
+    refusalOf('python3 -c "print(open(\'.env\').read())"'),
+    shown('python3', "print(open('.env').read())"),
+  );
+});
+
+test('refuses a secret file named inside node code behind a wrapper', () => {
+  assert.equal(
+    refusalOf('env A=1 node -e "fs.readFileSync(\'.env\')"'),
+    shown('env', "fs.readFileSync('.env')"),
+  );
+});
+
+test('refuses a secret file named inside a jq filter', () => {
+  assert.equal(refusalOf("jq 'input' .env"), shown('jq', '.env'));
+});
+
+test('refuses a secret file named inside a sed script', () => {
+  assert.equal(refusalOf("sed 'r .env' x"), shown('sed', 'r .env'));
+});
+
+test('refuses awk over .env', () => {
+  assert.equal(refusalOf("awk '{print}' .env"), shown('awk', '.env'));
+});
+
+test('passes a message that mentions .env to a program that runs no code', () => {
+  assert.equal(refusalOf('git commit -m "add .env to the ignore file"'), undefined);
+});
+
+test('passes an interpreter script that names no secret file', () => {
+  assert.equal(refusalOf('python3 -c "print(1)"'), undefined);
+});
+
 test('refuses git rm of .env without --cached', () => {
   assert.equal(refusalOf('git rm .env'), shown('git', '.env'));
 });
