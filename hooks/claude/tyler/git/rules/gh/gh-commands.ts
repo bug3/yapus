@@ -74,8 +74,12 @@ const prEdit: ActionSpec = {
 };
 
 export const ghCommands = {
-  // The gh commands the gate reads the action of: the word after the command.
-  actionCommands: ['pr', 'issue', 'label'],
+  // The known gh commands (known-commands.ts) with no action word: the word after
+  // one is an operand or an option of its own (`gh copilot` passes its flags on).
+  // Every other gh command has subcommands, and the gate reads the second word as one.
+  actionlessCommands: [
+    'api', 'browse', 'co', 'completion', 'copilot', 'help', 'licenses', 'status', 'version',
+  ],
   // Spellings of an action that gh treats as another.
   aliases: new Map([['pr new', 'pr create']]),
   actions: new Map([['pr create', prCreate], ['pr edit', prEdit]]),

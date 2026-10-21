@@ -27,9 +27,10 @@ test('refuses an option between the command and its action', () => {
   assert.equal(refusalOf('pr', '--repo=o/r', 'create'), reason);
 });
 
-test('refuses it for issue and label too', () => {
+test('refuses it for every command that has subcommands', () => {
   assert.match(refusalOf('issue', '-R', 'o/r', 'create') ?? '', /`gh issue`/);
   assert.match(refusalOf('label', '--repo', 'o/r', 'create') ?? '', /`gh label`/);
+  assert.match(refusalOf('repo', '-R', 'x', 'delete', 'y') ?? '', /`gh repo`/);
 });
 
 test('refuses a word the shell expands where the action should be', () => {
@@ -45,8 +46,10 @@ test('refuses a word the shell expands where the action should be', () => {
 test('passes an action, a command alone, and a command with no actions', () => {
   assert.equal(refusalOf('pr', 'create', '-R', 'o/r'), undefined);
   assert.equal(refusalOf('pr'), undefined);
-  assert.equal(refusalOf('api', '-H', 'x', 'user'), undefined);
+  assert.equal(refusalOf('api', '-H', 'x', '/user'), undefined);
   assert.equal(refusalOf('browse', '-n'), undefined);
+  assert.equal(refusalOf('status'), undefined);
+  assert.equal(refusalOf('copilot', '-p', 'x'), undefined);
 });
 
 test('passes a git call', () => {

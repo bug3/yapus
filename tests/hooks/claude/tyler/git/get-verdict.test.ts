@@ -312,11 +312,15 @@ test('denies a pull request created without a draft or a subject title', () => {
   assert.match('detail' in verdict ? verdict.detail : '', /^the title of `gh pr create`/);
 });
 
-test('denies a pull request create with an option before its action', () => {
-  const verdict = getVerdict({ stdinText: bashCall('gh pr -R o/r create -d'), home: HOME });
+test('denies a gh command with an option before its action', () => {
+  const verdict = getVerdict({ stdinText: bashCall('gh repo -R o/r delete x'), home: HOME });
 
   assert.equal(verdict.kind, 'deny');
-  assert.match('detail' in verdict ? verdict.detail : '', /^the word after `gh pr`/);
+  assert.match('detail' in verdict ? verdict.detail : '', /^the word after `gh repo`/);
+});
+
+test('allows a gh api call that starts with an option', () => {
+  assert.deepEqual(getVerdict({ stdinText: bashCall('gh api -H x /user'), home: HOME }), ALLOW);
 });
 
 test('denies a pull request create on a line that writes its body file', () => {

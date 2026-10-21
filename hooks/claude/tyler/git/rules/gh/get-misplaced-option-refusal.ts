@@ -10,8 +10,8 @@ export function getMisplacedOptionRefusal(call: Call): string | undefined {
     return undefined;
   }
 
-  const actionCommands: readonly string[] = ghCommands.actionCommands;
-  const isMisplaced = actionCommands.includes(command.text)
+  const actionless: readonly string[] = ghCommands.actionlessCommands;
+  const isMisplaced = !actionless.includes(command.text)
     && (action.isOpaque || action.text.startsWith('-'));
 
   return isMisplaced ? ghCommands.reasons.optionBeforeAction(command.text) : undefined;
