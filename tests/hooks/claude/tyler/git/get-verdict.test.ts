@@ -152,6 +152,17 @@ test('denies git branch -D in a for body', () => {
   });
 });
 
+test('denies a badly named new branch and allows a well named one', () => {
+  const stdinText = bashCall('git fetch && git checkout -b wip');
+  const badName = getVerdict({ stdinText, home: HOME });
+
+  assert.equal(badName.kind, 'deny');
+  assert.deepEqual(
+    getVerdict({ stdinText: bashCall('git checkout -b feat/x'), home: HOME }),
+    { kind: 'allow' },
+  );
+});
+
 test('denies git remote set-head in a compound line', () => {
   const stdinText = bashCall('git fetch && git remote set-head origin x');
 

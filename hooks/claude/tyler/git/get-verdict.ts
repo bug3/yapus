@@ -1,6 +1,7 @@
 import { type Call, getCalls } from './calls/get-calls.ts';
 import { parsePayload } from './input/parse-payload.ts';
 import { mentionsGit } from './mentions-git.ts';
+import { getBranchRefusal } from './rules/branch/get-branch-refusal.ts';
 import { getBypassRefusal } from './rules/bypass/get-bypass-refusal.ts';
 import { getDestructiveRefusal } from './rules/destructive/get-destructive-refusal.ts';
 import { getUnknownRefusal } from './rules/known/get-unknown-refusal.ts';
@@ -32,6 +33,7 @@ export const RULES: readonly Rule[] = [
   getDestructiveRefusal,
   getBypassRefusal,
   getPushRefusal,
+  getBranchRefusal,
 ];
 
 const ALLOW: Allow = { kind: 'allow' };
