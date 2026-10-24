@@ -1,4 +1,5 @@
 import { labelNames } from '../../../../../shared/labels/read-labels.ts';
+import type { GhCatalogs } from '../read-gh-catalogs.ts';
 import { ghCommands, type BodyRules } from '../gh-commands.ts';
 import { getUnknownLabelRefusal } from '../labels/get-unknown-label-refusal.ts';
 import { readLabelNames } from '../labels/read-label-names.ts';
@@ -18,6 +19,7 @@ export interface IssueLabels {
 export function readIssueLabels(
   args: GhArguments,
   command: string,
+  catalogs: GhCatalogs,
 ): IssueLabels | GhRefusal {
   const named = readLabelNames(args, command, 'label');
   const titles = readLiteralValues(args, command, 'title');
@@ -26,7 +28,7 @@ export function readIssueLabels(
     return named;
   }
 
-  const unknown = getUnknownLabelRefusal(named.names, command);
+  const unknown = getUnknownLabelRefusal(named.names, catalogs.labels, command);
 
   if (unknown !== undefined) {
     return { refusal: unknown };

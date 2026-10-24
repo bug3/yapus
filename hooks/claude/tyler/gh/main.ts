@@ -15,13 +15,13 @@ async function main(): Promise<void> {
 
     stop(stdinText === undefined
       ? refuse(`stdin did not arrive within ${ String(LIMIT_SECONDS) } s; retry the call`)
-      : judge(stdinText));
+      : await judge(stdinText));
   } catch (error) {
     stop(refuse(`crashed: ${ getFirstLine(error) }; retry the call, or a person fixes the hook`));
   }
 }
 
-function judge(stdinText: string): Verdict {
+async function judge(stdinText: string): Promise<Verdict> {
   const payload = parsePayload(stdinText);
 
   switch (payload.kind) {

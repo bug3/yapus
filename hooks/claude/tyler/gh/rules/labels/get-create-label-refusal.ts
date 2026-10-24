@@ -1,5 +1,6 @@
 import { readSubjectParts } from '../../../../../shared/subject/read-subject-parts.ts';
 import { labelNames } from '../../../../../shared/labels/read-labels.ts';
+import type { GhCatalogs } from '../read-gh-catalogs.ts';
 import { ghCommands } from '../gh-commands.ts';
 import { readLiteralValues } from '../options/read-literal-values.ts';
 import type { GhArguments } from '../read-gh-arguments.ts';
@@ -9,7 +10,11 @@ import { readLabelNames } from './read-label-names.ts';
 
 // A reason to refuse the labels of a pull request create that are not catalog
 // labels, or that do not state exactly what its title says, or undefined.
-export function getCreateLabelRefusal(args: GhArguments, command: string): string | undefined {
+export function getCreateLabelRefusal(
+  args: GhArguments,
+  command: string,
+  catalogs: GhCatalogs,
+): string | undefined {
   const named = readLabelNames(args, command, 'label');
   const titles = readLiteralValues(args, command, 'title');
   const parts = 'texts' in titles ? readSubjectParts(titles.texts.at(-1) ?? '') : undefined;
@@ -18,7 +23,7 @@ export function getCreateLabelRefusal(args: GhArguments, command: string): strin
     return named.refusal;
   }
 
-  const unknown = getUnknownLabelRefusal(named.names, command);
+  const unknown = getUnknownLabelRefusal(named.names, catalogs.labels, command);
 
   if (unknown !== undefined || parts === undefined) {
     return unknown;
