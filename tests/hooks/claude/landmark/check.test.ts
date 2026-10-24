@@ -13,6 +13,7 @@ const PLUGIN_VERSION = getPluginVersion();
 interface Arrangement {
   readonly stamp?: string;
   readonly hooksPath?: string;
+  readonly env?: NodeJS.ProcessEnv;
 }
 
 test('names /landmark:install when there is no stamp', (t) => {
@@ -42,11 +43,52 @@ test('names /landmark:upgrade when the global hooks path is unset', (t) => {
   );
 });
 
+test('names the conflict without a command when the global hooks path is foreign', (t) => {
+  const { stdout } = runCheck(t, { stamp: PLUGIN_VERSION, hooksPath: '/elsewhere/hooks' });
+
+  assert.equal(
+    getContext(stdout),
+    'yapus landmark: the global core.hooksPath is /elsewhere/hooks, not its own; resolve it by hand.',
+  );
+});
+
+test('names the conflict without a command when the environment injects a hooks path', (t) => {
+  const env = {
+    GIT_CONFIG_COUNT: '1',
+    GIT_CONFIG_KEY_0: 'core.hooksPath',
+    GIT_CONFIG_VALUE_0: '/old',
+  };
+  const { stdout } = runCheck(t, { stamp: PLUGIN_VERSION, hooksPath: 'own', env });
+
+  assert.equal(
+    getContext(stdout),
+    'yapus landmark: GIT_CONFIG_* sets core.hooksPath in this session; retire that injection by hand.',
+  );
+});
+
+test('stays silent when the stamp matches and the hooks path is its own', (t) => {
+  const { status, stdout } = runCheck(t, { stamp: PLUGIN_VERSION, hooksPath: 'own' });
+
+  assert.deepEqual([status, stdout], [0, '']);
+});
+
+test('exits 2 with a one-line error on stderr when the plugin manifest is unreadable', (t) => {
+  const { status, stdout, stderr } = runCheck(t, {
+    stamp: PLUGIN_VERSION,
+    hooksPath: 'own',
+    breakManifest: true,
+  });
+
+  assert.equal(status, 2);
+  assert.equal(stdout, '');
+  assert.match(stderr, /^yapus landmark check: crashed: [^\n]*; fix the hook\n$/);
+});
+
 // Runs the registered command as the harness would, with a copy of the plugin
 // as its root; hooksPath 'own' is the path an install sets.
 function runCheck(
   t: TestContext,
-  arrangement: Arrangement,
+  arrangement: Arrangement & { readonly breakManifest?: boolean },
 ): { status: number | null; stdout: string; stderr: string } {
   const tempDir = makeTempDir(t);
   const home = join(tempDir, 'home');
@@ -67,6 +109,10 @@ function runCheck(
     writeFileSync(join(home, '.claude', 'landmark', 'version'), arrangement.stamp);
   }
 
+  if (arrangement.breakManifest === true) {
+    writeFileSync(join(root, '.claude-plugin', 'plugin.json'), '{');
+  }
+
   const sessionEnv = Object.fromEntries(
     Object.entries(process.env).filter(([name]) => !name.startsWith('GIT_')),
   );
@@ -74,6 +120,7 @@ function runCheck(
     encoding: 'utf8',
     env: {
       ...sessionEnv,
+      ...arrangement.env,
       CLAUDE_PLUGIN_ROOT: root,
       HOME: home,
       GIT_CONFIG_GLOBAL: gitConfig,
