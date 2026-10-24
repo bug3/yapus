@@ -1,0 +1,15 @@
+{
+  "map": {
+    "hooks/git/commit-msg": null,
+    "hooks/git/reference-transaction": null,
+    "hooks/git/**": null,
+    "tests/repository/**": null
+  },
+  "keep": [
+    ".claude/**/*.md",
+    ".github/**",
+    ".github/workflows/**",
+    "package.json",
+    "standards/**"
+  ]
+}
