@@ -1,5 +1,6 @@
 {
   "name": "yapus",
+  "description": "The foundation for building software with AI: the rules that keep the work sound and the mechanisms that hold them.",
   "owner": {
     "name": "bug3"
   },
