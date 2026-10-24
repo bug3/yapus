@@ -5,6 +5,7 @@ paths:
   - "**/*.json"
   - "hooks/git/commit-msg"
   - "hooks/git/reference-transaction"
+  - "hooks/git/forward"
 ---
 
 # Identifiers

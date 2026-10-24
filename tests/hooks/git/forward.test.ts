@@ -11,6 +11,7 @@ const HOOKS = join(import.meta.dirname, '..', '..', '..', 'hooks', 'git');
 const SUBPROCESS_TIMEOUT_MS = 60000;
 const EXECUTABLE = 0o755;
 const NOT_EXECUTABLE = 0o644;
+const NOT_FORWARDED = ['commit-msg', 'reference-transaction'];
 
 // A temporary repository whose git runs the hooks of this repository, with
 // a local commit-msg hook of the given text when there is one.
@@ -35,6 +36,11 @@ function commit(t: TestContext, repository: string, extraEnv: NodeJS.ProcessEnv)
     env: { ...getGitEnv(process.env), HOME: makeTempDir(t), TMPDIR: makeTempDir(t), ...extraEnv },
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
+}
+
+function isWordList(list: unknown): list is string[] {
+  return Array.isArray(list)
+    && list.every((word) => typeof word === 'string' && /^[a-z]+(-[a-z]+)*$/.test(word));
 }
 
 function runForward(cwd: string, args: readonly string[]) {
@@ -87,4 +93,12 @@ test('passes the arguments to the local hook', (t) => {
 
 test('exits 0 outside a repository', (t) => {
   assert.equal(runForward(makeTempDir(t), ['commit-msg']).status, 0);
+});
+
+test('forward-names.json is a sorted distinct list that leaves out the unforwarded hooks', () => {
+  const names: unknown = JSON.parse(readFileSync(join(HOOKS, 'forward-names.json'), 'utf8'));
+
+  assert.ok(isWordList(names));
+  assert.deepEqual(names, [...new Set(names)].sort());
+  assert.deepEqual(names.filter((name) => NOT_FORWARDED.includes(name)), []);
 });

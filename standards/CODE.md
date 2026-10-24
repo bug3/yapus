@@ -4,6 +4,7 @@ paths:
   - "**/*.sh"
   - "hooks/git/commit-msg"
   - "hooks/git/reference-transaction"
+  - "hooks/git/forward"
 ---
 
 # Code

@@ -1,6 +1,7 @@
 {
   "map": {
     "hooks/git/commit-msg": null,
+    "hooks/git/forward": null,
     "hooks/git/reference-transaction": null,
     "hooks/git/**": null,
     "tests/repository/**": null
