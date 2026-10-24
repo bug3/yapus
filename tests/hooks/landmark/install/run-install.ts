@@ -1,5 +1,6 @@
+import assert from 'node:assert/strict';
 import { type SpawnSyncReturns, spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync } from 'node:fs';
+import { mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
@@ -27,7 +28,7 @@ export function runInstall(
   const root = join(temp, 'plugin');
   const home = join(temp, 'home');
 
-  cpSync(PLUGIN, root, { recursive: true, dereference: true });
+  copyPlugin(root);
   mkdirSync(home);
   arrange?.(home);
 
@@ -42,6 +43,20 @@ export function runInstall(
   );
 
   return { home, installRun };
+}
+
+// cp -RL resolves every link, as the plugin cache does; the copy must hold none,
+// or a test could write through a link into the repository.
+function copyPlugin(root: string): void {
+  const copyRun = spawnSync('cp', ['-RL', PLUGIN, root], { encoding: 'utf8' });
+
+  assert.equal(copyRun.status, 0, copyRun.stderr);
+  assert.deepEqual(
+    readdirSync(root, { recursive: true, withFileTypes: true })
+      .filter((entry) => entry.isSymbolicLink())
+      .map((entry) => join(entry.parentPath, entry.name)),
+    [],
+  );
 }
 
 export function makeEnv(home: string, extraEnv: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
