@@ -64,7 +64,11 @@ test('lets any word scope through when the repository has no catalog', (t) => {
 });
 
 test('lets a merge git writes through with and without an agent', (t) => {
-  assert.deepEqual([mergeStatus(t, true), mergeStatus(t, false)], [0, 0]);
+  assert.deepEqual([runMerge(t, true).status, runMerge(t, false).status], [0, 0]);
+});
+
+test('adds the two trailers of the catalog to a merge commit of an agent', (t) => {
+  assert.deepEqual(runMerge(t, true).trailers, JSON.parse(readFileSync(TRAILERS, 'utf8')));
 });
 
 // A real git revert does not run commit-msg, so the subject goes through a commit.
@@ -95,8 +99,12 @@ test('stops a commit the repository commit-msg hook refuses, agent or not', (t) 
 });
 
 // The exit status of a real git merge (the editor is a no-op, as git runs the commit-msg hook
-// only on an edited message) --no-ff of a side branch.
-function mergeStatus(t: TestContext, isAgent: boolean): number | null {
+// only on an edited message) --no-ff of a side branch; returns the status and the trailers of
+// the merge commit.
+function runMerge(
+  t: TestContext,
+  isAgent: boolean,
+): { readonly status: number | null; readonly trailers: readonly string[] } {
   const setup = installAndInit(t);
 
   runGit(setup, [...COMMIT, 'feat(src): add greet'], false);
@@ -104,9 +112,12 @@ function mergeStatus(t: TestContext, isAgent: boolean): number | null {
   runGit(setup, [...COMMIT, 'feat(src): add side'], false);
   runGit(setup, ['switch', '-'], false);
 
-  return runGit(
+  const { status } = runGit(
     setup, ['-c', 'core.editor=true', 'merge', '--no-ff', '--edit', 'x'], isAgent,
-  ).status;
+  );
+  const log = runGit(setup, ['log', '-1', '--format=%(trailers:only,unfold)'], false);
+
+  return { status, trailers: log.stdout.trim().split('\n') };
 }
 
 // Installs from a copy of the plugin into a temporary home; returns a new repository.
