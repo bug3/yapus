@@ -30,8 +30,8 @@ test('names every unknown part of the subject', async (t) => {
   assert.deepEqual(
     await getMessages({ messagePath, isEditorUsed: false, catalogPaths: programCatalogs }),
     [
-      `yapus subject: type "feet" is not in ${ programCatalogs.types }; use a listed one or add it there`,
-      `yapus subject: verb "added" is not in ${ programCatalogs.verbs }; use a listed one or add it there`,
+      `yapus subject: type "feet" is not in ${ programCatalogs.types }; use a listed one`,
+      `yapus subject: verb "added" is not in ${ programCatalogs.verbs }; use a listed one`,
     ],
   );
 });

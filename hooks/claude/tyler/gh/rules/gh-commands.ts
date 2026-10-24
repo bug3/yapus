@@ -151,14 +151,14 @@ export const ghCommands = {
       + 'rewrite it',
     unknownLabel: (command: string, label: string): string =>
       `\`${ command }\` names the label ${ JSON.stringify(label) }, which is not in the label `
-      + 'catalog; use a label from hooks/shared/catalogs',
+      + 'catalog; use a label the catalog labels.json lists',
     titleLabels: (command: string, expected: readonly string[]): string =>
       `the type, scope and breaking-change labels of \`${ command }\` must be exactly `
       + `${ expected.map((label) => `\`${ label }\``).join(', ') }, as its title says, `
       + 'besides any hand-kept extra label; fix --label',
     issueTitle: (command: string, title: string): string =>
       `the title ${ JSON.stringify(title) } of \`${ command }\` must be \`<scope>: <symptom>\`, `
-      + 'a scope from hooks/shared/catalogs/scopes.json, a symptom, and at most '
+      + 'a scope the catalog scopes.json lists, a symptom, and at most '
       + `${ String(MAX_ISSUE_TITLE) } characters; rewrite it`,
     issueLabels: (command: string, scope: string): string =>
       `the labels of \`${ command }\` must be exactly one \`type: <type>\` label and `

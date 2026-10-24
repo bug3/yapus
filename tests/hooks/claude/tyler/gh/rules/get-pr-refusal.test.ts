@@ -139,7 +139,7 @@ test('refuses a label outside the catalog', (t) => {
   assert.equal(
     getPrRefusal(words('-t', TITLE, '-l', `${ LABELS },nope`, '-F', 'body.md'), bodyDir(t)),
     '`gh pr create` names the label "nope", which is not in the label catalog; '
-    + 'use a label from hooks/shared/catalogs',
+    + 'use a label the catalog labels.json lists',
   );
 });
 

@@ -23,7 +23,7 @@ esac
 shift
 
 if ! dir=$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd); then
-  fail 'cannot find its own directory; reinstall yapus'
+  fail 'cannot find its own directory; reinstall it'
 fi
 
 entry="$dir/$name/main.ts"

@@ -67,8 +67,8 @@ test('refuses a body that does not follow its kind', (t) => {
 test('refuses a title without a catalog scope', (t) => {
   assert.equal(
     getIssueRefusal(words('-t', 'nope: crashes', '-l', LABELS, '-F', 'body.md'), bodyDir(t)),
-    'the title "nope: crashes" of `gh issue create` must be `<scope>: <symptom>`, a scope from '
-    + 'hooks/shared/catalogs/scopes.json, a symptom, and at most 72 characters; rewrite it',
+    'the title "nope: crashes" of `gh issue create` must be `<scope>: <symptom>`, a scope '
+    + 'the catalog scopes.json lists, a symptom, and at most 72 characters; rewrite it',
   );
 });
 

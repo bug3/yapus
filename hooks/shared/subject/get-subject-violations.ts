@@ -67,5 +67,5 @@ function getUnknownWordViolations(
 ): string[] {
   return words.includes(word)
     ? []
-    : [`${ partName } "${ word }" is not in ${ path }; use a listed one or add it there`];
+    : [`${ partName } "${ word }" is not in ${ path }; use a listed one`];
 }

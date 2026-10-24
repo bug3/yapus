@@ -20,27 +20,27 @@ test('passes a subject that is a verb alone', () => {
 
 test('names the catalog of an unknown type', () => {
   assert.deepEqual(getSubjectViolations('fix(hooks): add a check', CATALOGS), [
-    'type "fix" is not in c/types.json; use a listed one or add it there',
+    'type "fix" is not in c/types.json; use a listed one',
   ]);
 });
 
 test('names the catalog of an unknown scope', () => {
   assert.deepEqual(getSubjectViolations('feat(lint): add a check', CATALOGS), [
-    'scope "lint" is not in c/scopes.json; use a listed one or add it there',
+    'scope "lint" is not in c/scopes.json; use a listed one',
   ]);
 });
 
 test('names the catalog of an unknown verb', () => {
   assert.deepEqual(getSubjectViolations('feat(hooks): drop a check', CATALOGS), [
-    'verb "drop" is not in c/verbs.json; use a listed one or add it there',
+    'verb "drop" is not in c/verbs.json; use a listed one',
   ]);
 });
 
 test('names every unknown part at once', () => {
   assert.deepEqual(getSubjectViolations('fix(lint-2): drop a check', CATALOGS), [
-    'type "fix" is not in c/types.json; use a listed one or add it there',
-    'scope "lint-2" is not in c/scopes.json; use a listed one or add it there',
-    'verb "drop" is not in c/verbs.json; use a listed one or add it there',
+    'type "fix" is not in c/types.json; use a listed one',
+    'scope "lint-2" is not in c/scopes.json; use a listed one',
+    'verb "drop" is not in c/verbs.json; use a listed one',
   ]);
 });
 
