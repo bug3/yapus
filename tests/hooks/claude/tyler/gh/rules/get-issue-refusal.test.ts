@@ -172,3 +172,20 @@ test('passes --help, which creates nothing', (t) => {
 test('passes -h, which creates nothing', (t) => {
   assert.equal(getIssueRefusal(words('-h'), bodyDir(t), CATALOGS), undefined);
 });
+
+test('passes any title and labels with a Summary in a repository without catalogs', (t) => {
+  const dir = bodyDir(t, '## Summary\na\n');
+
+  assert.equal(
+    getIssueRefusal(words('-t', 'It crashes', '-l', 'bug', '-F', 'body.md'), dir, undefined),
+    undefined,
+  );
+});
+
+test('refuses a body without a Summary in a repository without catalogs', (t) => {
+  assert.match(
+    getIssueRefusal(words('-t', 'It crashes', '-F', 'body.md'), bodyDir(t, 'a\n'), undefined)
+    ?? '',
+    /^the body must have the `##` headings Summary/,
+  );
+});

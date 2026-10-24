@@ -360,6 +360,29 @@ test('passes -h, which creates nothing', (t) => {
   assert.equal(getPrRefusal(words('-h'), bodyDir(t), CATALOGS), undefined);
 });
 
+test('passes any title and label with a headed body in a repository without catalogs', (t) => {
+  const dir = bodyDir(t, '## Summary\na\n\n## Test plan\nb\n');
+
+  assert.equal(
+    getPrRefusal(words('-t', 'Add a check', '-l', 'bug', '-F', 'body.md'), dir, undefined),
+    undefined,
+  );
+});
+
+test('refuses a missing title in a repository without catalogs', (t) => {
+  assert.match(
+    getPrRefusal(words('-F', 'body.md'), bodyDir(t), undefined) ?? '',
+    /--title/,
+  );
+});
+
+test('refuses a body without the headings in a repository without catalogs', (t) => {
+  assert.match(
+    getPrRefusal(words('-t', 'Add a check', '-F', 'body.md'), bodyDir(t, 'a\n'), undefined) ?? '',
+    /^the body must have the `##` headings Summary, Test plan/,
+  );
+});
+
 test('refuses -h taken as the value of --title', (t) => {
   assert.match(getPrRefusal(words('-t', '-h'), bodyDir(t), CATALOGS) ?? '', /^the title of `gh pr create`/);
 });

@@ -1,8 +1,9 @@
 import { findGhCalls } from './calls/find-gh-calls.ts';
 import { getIssueRefusal } from './rules/get-issue-refusal.ts';
 import { getPrRefusal } from './rules/get-pr-refusal.ts';
-import { CATALOGS_DIRECTORY, readGhCatalogs, type GhCatalogs } from './rules/read-gh-catalogs.ts';
 import { ghCommands, type GhAction } from './rules/gh-commands.ts';
+import type { GhCatalogs } from './rules/read-gh-catalogs.ts';
+import { readRepositoryCatalogs } from './rules/read-repository-catalogs.ts';
 import { splitCommands, type Word } from './shell/split-commands.ts';
 
 export interface Pass {
@@ -17,11 +18,12 @@ export interface Refuse {
 export type Verdict = Pass | Refuse;
 
 // A reason to refuse one action's call, given the words after the action, the
-// directory it runs in (undefined when unknown) and the catalogs, or undefined.
+// directory it runs in (undefined when unknown) and the catalogs of its
+// repository (undefined when it has none), or undefined.
 type ActionRefusal = (
   words: readonly Word[],
   cwd: string | undefined,
-  catalogs: GhCatalogs,
+  catalogs: GhCatalogs | undefined,
 ) => string | undefined;
 
 export const PASS: Pass = { kind: 'pass' };
@@ -40,8 +42,9 @@ const MENTIONS: readonly RegExp[] = Object.values(ghCommands.actions)
   )));
 
 // Whether a Bash command may run, judged from `cwd`, the absolute directory it
-// starts in. Only the gh actions in the catalog are judged; a command that
-// cannot be split is refused only when it mentions one of them.
+// starts in. Only the gh actions in the catalog are judged, each by the
+// catalogs of the repository it runs in; a command that cannot be split is
+// refused only when it mentions one of them.
 export async function getVerdict(command: string, cwd: string): Promise<Verdict> {
   const split = splitCommands(command);
 
@@ -51,19 +54,13 @@ export async function getVerdict(command: string, cwd: string): Promise<Verdict>
       : PASS;
   }
 
-  const calls = findGhCalls(split, cwd);
+  for (const call of findGhCalls(split, cwd)) {
+    const catalogs = await readRepositoryCatalogs(call.cwd);
 
-  if (calls.length === 0) {
-    return PASS;
-  }
+    if (catalogs !== undefined && 'violation' in catalogs) {
+      return refuse(catalogs.violation);
+    }
 
-  const catalogs = await readGhCatalogs(CATALOGS_DIRECTORY);
-
-  if ('violation' in catalogs) {
-    return refuse(catalogs.violation);
-  }
-
-  for (const call of calls) {
     const reason = REFUSALS[call.action](call.argumentWords, call.cwd, catalogs);
 
     if (reason !== undefined) {

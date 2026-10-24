@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { getVerdict } from '../../../../../hooks/claude/tyler/gh/get-verdict.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
+import { makeCatalogRoot } from './make-catalog-root.ts';
 
 const BODY = '## Summary\na\n\n## Test plan\nb\n\nBuilt with yapus\n'
   + 'Co-authored-by: yapus <noreply@yapus.dev>\n';
@@ -14,15 +15,26 @@ const UNKNOWN_CWD = {
     + 'cannot tell; give an absolute --body-file',
 };
 
-// A directory with x/b.md holding a good body.
+// A repository root with the catalogs and x/b.md holding a good body.
 function makeRoot(t: TestContext): string {
-  const root = makeTempDir(t);
+  const root = makeCatalogRoot(t);
 
   mkdirSync(join(root, 'x'));
   writeFileSync(join(root, 'x', 'b.md'), BODY);
 
   return root;
 }
+
+test('judges only the body headings in a repository without catalogs', async (t) => {
+  const root = makeTempDir(t);
+
+  writeFileSync(join(root, 'b.md'), '## Summary\na\n\n## Test plan\nb\n');
+
+  assert.deepEqual(
+    await getVerdict('gh pr create -t "Add a check" -l bug -F b.md', root),
+    { kind: 'pass' },
+  );
+});
 
 test('reads a relative body file in the directory a cd moved to', async (t) => {
   assert.deepEqual(await getVerdict(`cd x && ${ CREATE } --body-file b.md`, makeRoot(t)), {
