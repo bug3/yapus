@@ -1,13 +1,11 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { type TestContext, test } from 'node:test';
+import { test } from 'node:test';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
-import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
+import { runInstall } from './run-install.ts';
 
 const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'landmark');
-const SUBPROCESS_TIMEOUT_MS = 20000;
 
 test('writes 13 rendered rule files and the version stamp', (t) => {
   const { home, installRun } = runInstall(t, 'install');
@@ -60,21 +58,3 @@ test('refuses an unknown mode and writes nothing', (t) => {
   assert.equal(installRun.status, 2);
   assert.equal(existsSync(join(home, '.claude')), false);
 });
-
-function runInstall(t: TestContext, mode: string, arrange?: (home: string) => void) {
-  const temp = makeTempDir(t);
-  const root = join(temp, 'plugin');
-  const home = join(temp, 'home');
-
-  cpSync(PLUGIN, root, { recursive: true, dereference: true });
-  mkdirSync(home);
-  arrange?.(home);
-
-  const installRun = spawnSync(
-    'bash',
-    [join(root, 'runtime', 'run.sh'), 'landmark/install', root, mode],
-    { encoding: 'utf8', env: { ...process.env, HOME: home }, timeout: SUBPROCESS_TIMEOUT_MS },
-  );
-
-  return { home, installRun };
-}
