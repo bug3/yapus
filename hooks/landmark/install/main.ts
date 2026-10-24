@@ -1,6 +1,7 @@
 import { writeSync } from 'node:fs';
 import { getFirstLine } from '../../shared/get-first-line.ts';
 import { getConflicts } from './get-conflicts.ts';
+import { readGlobalHooksPath } from './hooks-path/read-global-hooks-path.ts';
 import { readPlugin } from './read-plugin.ts';
 import { writeHooks } from './write-hooks.ts';
 import { writeInstall } from './write-install.ts';
@@ -22,7 +23,7 @@ function main(): void {
   }
 
   try {
-    const conflicts = getConflicts(home);
+    const conflicts = getConflicts(home, process.env, readGlobalHooksPath());
 
     if (conflicts.length > 0) {
       stop(2, ['yapus landmark install: refused, nothing written', ...conflicts]);
