@@ -1,13 +1,16 @@
 import { writeSync } from 'node:fs';
 import { getFirstLine } from '../../shared/get-first-line.ts';
 import { getConflicts } from './get-conflicts.ts';
+import { getHooksPath } from './hooks-path/get-hooks-path.ts';
 import { readGlobalHooksPath } from './hooks-path/read-global-hooks-path.ts';
 import { readPlugin } from './read-plugin.ts';
+import { writeGlobalHooksPath } from './hooks-path/write-global-hooks-path.ts';
 import { writeHooks } from './write-hooks.ts';
 import { writeInstall } from './write-install.ts';
 
 const UNDO = [
   'To undo:',
+  '  git config --global --unset core.hooksPath',
   '  remove ~/.claude/landmark/',
   '  remove ~/.claude/rules/landmark-*.md',
 ];
@@ -30,6 +33,8 @@ function main(): void {
     }
 
     const written = [...writeInstall(home, readPlugin(root)), ...writeHooks(home, root)];
+
+    writeGlobalHooksPath(getHooksPath(home));
 
     stop(0, ['yapus landmark install: wrote', ...written, ...UNDO]);
   } catch (error) {

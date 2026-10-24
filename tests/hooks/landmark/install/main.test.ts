@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
-import { runInstall } from './run-install.ts';
+import { makeEnv, runInstall } from './run-install.ts';
 
 const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'landmark');
 
@@ -57,6 +58,16 @@ test('refuses an unknown mode and writes nothing', (t) => {
 
   assert.equal(installRun.status, 2);
   assert.equal(existsSync(join(home, '.claude')), false);
+});
+
+test('sets the global hooks path to the installed directory and prints its undo', (t) => {
+  const { home, installRun } = runInstall(t, 'install');
+  const hooksPath = spawnSync('git', ['config', '--global', '--get', 'core.hooksPath'], {
+    encoding: 'utf8', env: makeEnv(home),
+  });
+
+  assert.equal(hooksPath.stdout.trim(), join(home, '.claude', 'landmark', 'hooks', 'git'));
+  assert.match(installRun.stdout, /git config --global --unset core\.hooksPath/);
 });
 
 test('refuses a foreign global hooks path and writes nothing', (t) => {
