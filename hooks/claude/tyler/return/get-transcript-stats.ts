@@ -24,6 +24,24 @@ const USAGE_FIELDS = [
   'cache_read_input_tokens',
 ] as const;
 
+// The stats of the transcript file at path; undefined when there is no path,
+// the file cannot be read or it holds no assistant message.
+export function readTranscriptStats(path: string | undefined): TranscriptStats | undefined {
+  if (path === undefined) {
+    return undefined;
+  }
+
+  let text: string;
+
+  try {
+    text = readFileSync(path, 'utf8');
+  } catch {
+    return undefined;
+  }
+
+  return getTranscriptStats(text);
+}
+
 // Totals over the text of a transcript file; undefined when it holds no
 // assistant message with an id.
 export function getTranscriptStats(text: string): TranscriptStats | undefined {
@@ -44,20 +62,6 @@ export function getTranscriptStats(text: string): TranscriptStats | undefined {
     durationMs: getDurationMs(lines),
     model: typeof last.model === 'string' ? last.model : undefined,
   };
-}
-
-// The stats of the transcript file at path; undefined when there is no path,
-// the file cannot be read or it holds no assistant message.
-export function readTranscriptStats(path: string | undefined): TranscriptStats | undefined {
-  if (path === undefined) {
-    return undefined;
-  }
-
-  try {
-    return getTranscriptStats(readFileSync(path, 'utf8'));
-  } catch {
-    return undefined;
-  }
 }
 
 function parseLine(text: string): Line | undefined {

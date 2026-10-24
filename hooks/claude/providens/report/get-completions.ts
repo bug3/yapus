@@ -15,10 +15,8 @@ export interface Completion {
 
 export function getCompletions(rows: readonly Row[]): Completion[] {
   const ends = rows.filter(isCompletedEnd);
-  const returns = rows.filter(hasAgentId);
-  const agentIds = [...new Set(rows.flatMap((row) => (isCompletedEnd(row) || hasAgentId(row)
-    ? [row.agentId]
-    : [])))];
+  const returns = rows.filter(isReturnWithAgentId);
+  const agentIds = [...new Set([...ends, ...returns].map((row) => row.agentId))];
 
   return agentIds.flatMap((agentId) => {
     const end = ends.find((row) => row.agentId === agentId);
@@ -42,7 +40,7 @@ export function getCompletions(rows: readonly Row[]): Completion[] {
 // End rows that did not complete and whose agent never returned: a subagent
 // that stopped in silence.
 export function getSilentEnds(rows: readonly Row[]): EndRow[] {
-  const returned = new Set(rows.filter(hasAgentId).map((row) => row.agentId));
+  const returned = new Set(rows.filter(isReturnWithAgentId).map((row) => row.agentId));
 
   return rows.filter((row): row is EndRow =>
     row.hook === 'end' && row.status !== 'completed' && !returned.has(row.agentId));
@@ -52,6 +50,6 @@ function isCompletedEnd(row: Row): row is EndRow {
   return row.hook === 'end' && row.status === 'completed';
 }
 
-function hasAgentId(row: Row): row is ReturnRow & { readonly agentId: string } {
+function isReturnWithAgentId(row: Row): row is ReturnRow & { readonly agentId: string } {
   return row.hook === 'return' && row.agentId !== undefined;
 }

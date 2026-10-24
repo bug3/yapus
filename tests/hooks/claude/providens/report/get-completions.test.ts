@@ -95,16 +95,22 @@ test('takes the source and the totals from the last return of an agent sent back
   );
 });
 
-test('counts an async_launched end with a return as no silent end and one completion', () => {
+test('counts an async_launched end with a return as no silent end', () => {
+  assert.deepEqual(getSilentEnds([{ ...END, status: 'async_launched' }, RETURN]), []);
+});
+
+test('counts an async_launched end with a return as one completion', () => {
   const rows = [{ ...END, status: 'async_launched' }, RETURN];
 
-  assert.deepEqual(getSilentEnds(rows), []);
   assert.deepEqual(getCompletions(rows).map((entry) => entry.agentId), ['a']);
 });
 
-test('counts an async_launched end without a return as a silent end and no completion', () => {
+test('counts an async_launched end without a return as a silent end', () => {
   const end = { ...END, status: 'async_launched' };
 
   assert.deepEqual(getSilentEnds([end]), [end]);
-  assert.deepEqual(getCompletions([end]), []);
+});
+
+test('counts an async_launched end without a return as no completion', () => {
+  assert.deepEqual(getCompletions([{ ...END, status: 'async_launched' }]), []);
 });

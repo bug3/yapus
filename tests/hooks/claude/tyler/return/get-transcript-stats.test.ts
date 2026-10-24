@@ -63,7 +63,11 @@ test('counts turns, tool uses, last usage, duration and model', () => {
   assert.deepEqual(getTranscriptStats(TRANSCRIPT), TRANSCRIPT_STATS);
 });
 
-test('skips malformed lines and returns undefined without an assistant line', () => {
+test('returns undefined without an assistant line', () => {
+  assert.equal(getTranscriptStats('{"type":"user"}'), undefined);
+});
+
+test('skips malformed lines', () => {
   assert.equal(getTranscriptStats('not json\n[1,2]\n{"type":"user"}'), undefined);
 });
 
