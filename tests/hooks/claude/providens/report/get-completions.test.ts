@@ -170,3 +170,9 @@ test('counts a launch as capped when a resume follows a refused return only', ()
 test('counts a resume of another agent id as no cap stop', () => {
   assert.equal(isCapped(ASYNC_END, { ...RESUME, agentId: 'b' }, RETURN), false);
 });
+
+test('counts a resumed foreground launch of another agent type as not capped', () => {
+  const foreground = { ...END, subject: 'general-purpose' };
+
+  assert.equal(isCapped(foreground, RESUME), false);
+});

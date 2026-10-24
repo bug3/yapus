@@ -35,9 +35,17 @@ export function getCompletions(rows: readonly Row[]): Completion[] {
         ?? own.findLast((row) => row.durationMs !== undefined)?.durationMs,
       tokens: end?.tokens ?? own.findLast((row) => row.tokens !== undefined)?.tokens,
       toolUses: end?.toolUses ?? own.findLast((row) => row.toolUses !== undefined)?.toolUses,
-      capped: (end?.capped ?? false) || isResumedAfterCapStop(rows, agentId),
+      capped: (end?.capped ?? false)
+        || (isBackgroundLaunch(rows, agentId) && isResumedAfterCapStop(rows, agentId)),
     }];
   });
+}
+
+// Only a background launch needs the resume rule: a foreground one carries the
+// cap note on its end, and return rows exist for providens agents alone.
+function isBackgroundLaunch(rows: readonly Row[], agentId: string): boolean {
+  return rows.some((row) =>
+    row.hook === 'end' && row.agentId === agentId && row.status === 'async_launched');
 }
 
 // A background subagent that hits its turn cap fires no stop hook, so the
