@@ -20,25 +20,29 @@ function main(): void {
   const home = process.env.HOME;
 
   const hasHome = home !== undefined && home !== '';
+  const isMode = mode === 'install' || mode === 'upgrade';
 
-  if (root === undefined || mode !== 'install' || extra.length > 0 || !hasHome) {
-    stop(2, ['usage: landmark/install <plugin root> install, with HOME set']);
+  if (root === undefined || !isMode || extra.length > 0 || !hasHome) {
+    stop(2, ['usage: landmark/install <plugin root> install|upgrade, with HOME set']);
   }
 
   try {
-    const conflicts = getConflicts(home, process.env, readGlobalHooksPath());
+    const hooksPath = readGlobalHooksPath();
+    const conflicts = getConflicts(mode, { home, env: process.env, globalHooksPath: hooksPath });
 
     if (conflicts.length > 0) {
-      stop(2, ['yapus landmark install: refused, nothing written', ...conflicts]);
+      stop(2, [`yapus landmark ${ mode }: refused, nothing written`, ...conflicts]);
     }
 
     const written = [...writeInstall(home, readPlugin(root)), ...writeHooks(home, root)];
 
-    writeGlobalHooksPath(getHooksPath(home));
+    if (hooksPath === undefined) {
+      writeGlobalHooksPath(getHooksPath(home));
+    }
 
-    stop(0, ['yapus landmark install: wrote', ...written, ...UNDO]);
+    stop(0, [`yapus landmark ${ mode }: wrote`, ...written, ...UNDO]);
   } catch (error) {
-    stop(2, [`yapus landmark install: crashed: ${ getFirstLine(error) }`]);
+    stop(2, [`yapus landmark ${ mode }: crashed: ${ getFirstLine(error) }`]);
   }
 }
 

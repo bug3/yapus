@@ -54,7 +54,7 @@ test('refuses an existing landmark rule file and lists every conflict', (t) => {
 });
 
 test('refuses an unknown mode and writes nothing', (t) => {
-  const { home, installRun } = runInstall(t, 'upgrade');
+  const { home, installRun } = runInstall(t, 'repair');
 
   assert.equal(installRun.status, 2);
   assert.equal(existsSync(join(home, '.claude')), false);
