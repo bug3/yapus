@@ -38,7 +38,25 @@ export interface ReturnRow extends Decision {
   readonly length: number;
 }
 
-export type Row = LaunchRow | ReturnRow;
+// What the Agent tool reported when a launch ended: the keys that join the
+// launch row and the subagent's files, and the totals a completed launch
+// carries (a background launch is reported at once, without them).
+export interface EndRow extends Base {
+  readonly hook: 'end';
+  readonly promptId: string | undefined;
+  readonly toolUseId: string | undefined;
+  readonly agentId: string;
+  readonly status: string;
+  readonly model: string | undefined;
+  readonly durationMs: number | undefined;
+  readonly tokens: number | undefined;
+  readonly toolUses: number | undefined;
+  readonly word: string | undefined;
+  readonly length: number | undefined;
+  readonly capped: boolean;
+}
+
+export type Row = LaunchRow | ReturnRow | EndRow;
 
 export const RECORD_FILE = 'decisions.jsonl';
 
