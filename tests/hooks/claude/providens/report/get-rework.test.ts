@@ -38,25 +38,44 @@ const JUDGE: ReturnRow = {
   model: undefined,
 };
 
-test('counts a builder end followed by REWORK or REVISE in its session as reworked', () => {
+test('lands one REWORK on the latest builder before it, not on every builder', () => {
   const rework = getRework([
-    END,
-    { ...END, agentId: 'c', time: '2026-10-24T10:10:00Z' },
-    { ...END, agentId: 'd', sessionId: 's2' },
-    { ...END, agentId: 'e', status: 'async_launched' },
-    JUDGE,
-    { ...JUDGE, sessionId: 's2', verdict: 'APPROVE' },
+    { ...END, time: 't1' },
+    { ...END, agentId: 'c', time: 't3' },
+    { ...JUDGE, time: 't4' },
   ]);
 
-  assert.deepEqual(rework, { builders: 3, reworked: 1 });
+  assert.deepEqual(rework, { builders: 2, reworked: 1 });
 });
 
-test('counts REVISE and ignores a judge before the builder ended', () => {
-  const earlier = { ...JUDGE, time: '2026-10-24T09:00:00Z', verdict: 'REVISE' };
+test('counts a builder once however many returns land on it', () => {
+  const rework = getRework([
+    { ...END, time: 't1' },
+    { ...JUDGE, time: 't2' },
+    { ...JUDGE, agentId: 'f', time: 't3', verdict: 'REVISE' },
+  ]);
 
-  assert.deepEqual(getRework([END, earlier]), { builders: 1, reworked: 0 });
+  assert.deepEqual(rework, { builders: 1, reworked: 1 });
+});
+
+test('keeps sessions apart and ignores other builders statuses and verdicts', () => {
+  const rework = getRework([
+    { ...END, time: 't1' },
+    { ...END, agentId: 'd', sessionId: 's2', time: 't1' },
+    { ...END, agentId: 'e', status: 'async_launched', time: 't2' },
+    { ...JUDGE, time: 't4' },
+    { ...JUDGE, sessionId: 's2', time: 't5', verdict: 'APPROVE' },
+  ]);
+
+  assert.deepEqual(rework, { builders: 2, reworked: 1 });
+});
+
+test('counts REVISE and counts nothing for a return before any builder in its session', () => {
+  const earlier = { ...JUDGE, time: 't0', verdict: 'REVISE' };
+
+  assert.deepEqual(getRework([{ ...END, time: 't1' }, earlier]), { builders: 1, reworked: 0 });
   assert.deepEqual(
-    getRework([END, { ...JUDGE, verdict: 'REVISE' }]),
+    getRework([{ ...END, time: 't1' }, { ...JUDGE, time: 't2', verdict: 'REVISE' }]),
     { builders: 1, reworked: 1 },
   );
 });
