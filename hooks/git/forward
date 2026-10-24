@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -u
+
+# forward <hook-name> [args...] runs the hook of that name from the
+# repository's own hooks directory, with the same arguments and stdin, and
+# exits with its status. A global core.hooksPath hides that directory from
+# git. It exits 0 when there is nothing to run: no hook name, no repository,
+# no such hook, a hook that is not executable, or a hooks directory that is
+# this script's own, which would call itself.
+
+[ "$#" -ge 1 ] || exit 0
+name=$1
+shift
+
+if ! dir=$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd); then
+  printf '%s\n' 'yapus forward: cannot find its own directory; reinstall yapus' >&2
+  exit 2
+fi
+
+# The common directory, not --git-path hooks: that answers with core.hooksPath
+# once it is set, which is this directory.
+common=$(git rev-parse --git-common-dir 2>/dev/null) || exit 0
+[ -n "$common" ] || exit 0
+
+hooks="$common/hooks"
+hook="$hooks/$name"
+[ -f "$hook" ] && [ -x "$hook" ] || exit 0
+
+there=$(cd -P "$hooks" 2>/dev/null && pwd) || exit 0
+[ "$there" != "$dir" ] || exit 0
+
+"$hook" "$@"
+exit $?

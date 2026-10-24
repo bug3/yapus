@@ -9,6 +9,7 @@ const KEPT_NAMES: readonly string[] = ['.gitignore', 'LICENSE'];
 const SHELL_ENTRIES: readonly string[] = [
   'hooks/run.sh',
   'hooks/git/commit-msg',
+  'hooks/git/forward',
   'hooks/git/reference-transaction',
 ];
 // YAML only where GitHub reads it (DATA-1).

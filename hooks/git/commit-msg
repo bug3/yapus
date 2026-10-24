@@ -2,7 +2,9 @@
 set -u
 
 # git runs this with the path of the commit message file; the subject check
-# judges the message, and a refusal stops the commit. On an agent's commit
+# judges the message, and a refusal stops the commit. The repository's own
+# commit-msg hook, which a global hooks path hides, runs next through
+# git/forward, and its refusal stops the commit too. On an agent's commit
 # (CLAUDECODE=1) a message that passes then gets the trailers of
 # git/trailer/trailers.json, and a failure to add them stops the commit too.
 
@@ -12,6 +14,13 @@ if ! dir=$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd); then
 fi
 
 bash "$dir/../run.sh" git/subject "$@"
+status=$?
+
+if [ "$status" -ne 0 ]; then
+  exit "$status"
+fi
+
+bash "$dir/forward" commit-msg "$@"
 status=$?
 
 if [ "$status" -ne 0 ]; then
