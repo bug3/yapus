@@ -1,5 +1,6 @@
 import { chmodSync, copyFileSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { getHooksPath } from '../../shared/hooks-path/get-hooks-path.ts';
 import { readNameList } from './read-name-list.ts';
 import { swapDirectory } from './swap-directory.ts';
 
@@ -13,7 +14,7 @@ const SOURCE_EXTENSIONS = ['.ts', '.json'];
 // in at the end, so a failure leaves the previous hooks directory as it was.
 export function writeHooks(home: string, root: string): string[] {
   const source = join(root, 'runtime');
-  const target = join(home, '.claude', 'landmark', 'hooks');
+  const target = dirname(getHooksPath(home));
   const staging = `${ target }.new`;
   const files = readNameList(join(source, 'landmark', 'install', 'hook-files.json'));
   const names = readNameList(join(source, 'git', 'forward-names.json'));
