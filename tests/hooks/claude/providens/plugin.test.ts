@@ -59,6 +59,16 @@ test('registers every providens hook', () => {
             },
           ],
         },
+        {
+          matcher: 'SendMessage',
+          hooks: [
+            {
+              type: 'command',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/resume',
+              timeout: 10,
+            },
+          ],
+        },
       ],
       SubagentStart: [
         {
