@@ -88,3 +88,13 @@ test('names every roster agent never launched, acting only after 30 sessions', (
   ]);
   assert.deepEqual([unused[0]?.state, early[0]?.state], ['act', 'wait']);
 });
+
+test('applies the rate rules to roster agents only, not to a refused launch', () => {
+  const explore = { ...BUILDER, agent: 'Explore', launches: 0, refused: 1, completed: 0,
+    capped: 0, returns: 0, sentBack: 0, contractWords: 0 };
+  const findings = getFindings({ ...MEASURED, stats: [explore, BUILDER] });
+  const agents = new Set(findings.filter((finding) => finding.rule === 'cap-stop rate')
+    .map((finding) => finding.agent));
+
+  assert.deepEqual([...agents], ['providens:builder']);
+});

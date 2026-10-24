@@ -37,6 +37,7 @@ export const MIN_SESSIONS = 30;
 
 const CRITIC = 'providens:critic';
 const PERCENT = 100;
+const ROSTER_AGENTS: readonly string[] = ROSTER.map((name) => `providens:${ name }`);
 
 const RATE_RULES: readonly RateRule[] = [
   // A background subagent that hits its turn cap fires no stop hook, so a
@@ -77,7 +78,8 @@ const CRITIC_RULE: RateRule = {
 // Every reading rule applied to the measured record, agents sorted as given.
 export function getFindings(measured: Measured): Finding[] {
   return [
-    ...measured.stats.flatMap((stats) => RATE_RULES.map((rule) => getRateFinding(rule, stats))),
+    ...measured.stats.filter((stats) => ROSTER_AGENTS.includes(stats.agent))
+      .flatMap((stats) => RATE_RULES.map((rule) => getRateFinding(rule, stats))),
     ...measured.stats.filter((stats) => stats.agent === CRITIC)
       .map((stats) => getRateFinding(CRITIC_RULE, stats)),
     getReworkFinding(measured.rework),
@@ -123,7 +125,7 @@ function getUnusedFindings(measured: Measured): Finding[] {
   const launched = new Set(measured.stats.filter((stats) => stats.launches > 0)
     .map((stats) => stats.agent));
 
-  return ROSTER.map((name) => `providens:${ name }`)
+  return ROSTER_AGENTS
     .filter((agent) => !launched.has(agent))
     .map((agent) => ({
       rule: 'unused agent',
