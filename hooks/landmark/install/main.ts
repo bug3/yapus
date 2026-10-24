@@ -36,8 +36,8 @@ function main(): void {
     }
 
     const plugin = readPlugin(root);
-    const rules = writeRules(home, plugin);
     const hooks = writeHooks(home, root);
+    const rules = writeRules(home, plugin);
 
     if (hooksPath === undefined) {
       writeGlobalHooksPath(getHooksPath(home));

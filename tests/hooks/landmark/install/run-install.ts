@@ -8,6 +8,7 @@ import { getGitEnv } from '../../../helpers/run-git.ts';
 
 interface InstallOptions {
   readonly arrange?: (home: string) => void;
+  readonly arrangePlugin?: (root: string) => void;
   readonly extraEnv?: NodeJS.ProcessEnv;
 }
 
@@ -16,13 +17,14 @@ const SUBPROCESS_TIMEOUT_MS = 20000;
 
 // Runs the landmark install in mode from a copy of the plugin with its links
 // followed, as an installed plugin is, and a temporary HOME that arrange may
-// fill first. The environment has no GIT_* variable of the caller, the global
-// git config is the file .gitconfig in the home, and extraEnv comes last.
+// fill first and arrangePlugin may change the plugin copy. The environment has
+// no GIT_* variable of the caller, the global git config is the file
+// .gitconfig in the home, and extraEnv comes last.
 // Returns the plugin copy, the home and the run.
 export function runInstall(
   t: TestContext,
   mode: string,
-  { arrange, extraEnv = {} }: InstallOptions = {},
+  { arrange, arrangePlugin, extraEnv = {} }: InstallOptions = {},
 ): {
   readonly root: string;
   readonly home: string;
@@ -35,6 +37,7 @@ export function runInstall(
   copyPlugin(root);
   mkdirSync(home);
   arrange?.(home);
+  arrangePlugin?.(root);
 
   return { root, home, installRun: spawnInstall({ root, home, mode, extraEnv }) };
 }

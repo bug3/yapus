@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { readNameList } from '../../../../hooks/landmark/install/read-name-list.ts';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
-import { makeEnv, runInstall } from './run-install.ts';
+import { makeEnv, runInstall, spawnInstall } from './run-install.ts';
 
 const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'landmark');
 
@@ -97,4 +100,25 @@ test('refuses a hooks path injected through the environment and writes nothing',
   assert.match(installRun.stderr, /retire it first/);
   assert.equal(existsSync(join(home, '.claude')), false);
   assert.equal(existsSync(join(home, '.gitconfig')), false);
+});
+
+test('leaves no rule, stamp or git config when hooks fail, and a re-run installs', (t) => {
+  const listed = readNameList(
+    join(PLUGIN, 'runtime', 'landmark', 'install', 'hook-files.json'),
+  )[0] ?? '';
+  const { root, home, installRun } = runInstall(t, 'install', { arrangePlugin: (pluginRoot) => {
+    rmSync(join(pluginRoot, 'runtime', listed));
+  } });
+
+  assert.equal(installRun.status, 2);
+  assert.equal(existsSync(join(home, '.claude', 'rules')), false);
+  assert.equal(existsSync(join(home, '.claude', 'landmark', 'version')), false);
+  assert.equal(existsSync(join(home, '.gitconfig')), false);
+
+  copyFileSync(join(PLUGIN, 'runtime', listed), join(root, 'runtime', listed));
+
+  const rerun = spawnInstall({ root, home, mode: 'install' });
+
+  assert.equal(rerun.status, 0, rerun.stderr);
+  assert.equal(readdirSync(join(home, '.claude', 'rules')).length, 13);
 });
