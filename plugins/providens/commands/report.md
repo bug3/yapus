@@ -1,5 +1,5 @@
 ---
-description: Report the record of subagent launches, ends and returns against the reading rules
+description: Report the record of subagent launches, ends, resumes and returns against the reading rules
 allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/runtime/run.sh claude/providens/report:*)
 ---
 
