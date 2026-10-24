@@ -1,9 +1,9 @@
 const HOOKS_PATH_KEY = 'core.hookspath';
+const KEY_VARIABLE = /^GIT_CONFIG_KEY_[0-9]+$/;
 
-// Whether GIT_CONFIG_COUNT with GIT_CONFIG_KEY_<n> names core.hooksPath.
+// Whether any GIT_CONFIG_KEY_<n> variable names core.hooksPath. GIT_CONFIG_COUNT
+// is not read: a stricter reading than git's could miss an injection git accepts.
 export function hasInjectedHooksPath(env: NodeJS.ProcessEnv): boolean {
-  const count = Number(env.GIT_CONFIG_COUNT ?? 0);
-
-  return [...Array(Number.isInteger(count) ? count : 0).keys()]
-    .some((index) => env[`GIT_CONFIG_KEY_${ String(index) }`]?.toLowerCase() === HOOKS_PATH_KEY);
+  return Object.entries(env)
+    .some(([name, value]) => KEY_VARIABLE.test(name) && value?.toLowerCase() === HOOKS_PATH_KEY);
 }
