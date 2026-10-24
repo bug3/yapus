@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 
-const GIT_TIMEOUT_MS = 10000;
+const GIT_TIMEOUT_MS = 5000;
 const READ_ARGS = ['config', '--global', '--type=path', '--get', 'core.hooksPath'];
 const UNSET_STATUS = 1;
 
