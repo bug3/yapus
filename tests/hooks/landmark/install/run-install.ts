@@ -18,12 +18,16 @@ const SUBPROCESS_TIMEOUT_MS = 20000;
 // followed, as an installed plugin is, and a temporary HOME that arrange may
 // fill first. The environment has no GIT_* variable of the caller, the global
 // git config is the file .gitconfig in the home, and extraEnv comes last.
-// Returns the home and the run.
+// Returns the plugin copy, the home and the run.
 export function runInstall(
   t: TestContext,
   mode: string,
   { arrange, extraEnv = {} }: InstallOptions = {},
-): { readonly home: string; readonly installRun: SpawnSyncReturns<string> } {
+): {
+  readonly root: string;
+  readonly home: string;
+  readonly installRun: SpawnSyncReturns<string>;
+} {
   const temp = makeTempDir(t);
   const root = join(temp, 'plugin');
   const home = join(temp, 'home');
@@ -32,7 +36,19 @@ export function runInstall(
   mkdirSync(home);
   arrange?.(home);
 
-  const installRun = spawnSync(
+  return { root, home, installRun: spawnInstall({ root, home, mode, extraEnv }) };
+}
+
+// The install of the plugin copy at root into home, in mode.
+export function spawnInstall(
+  { root, home, mode, extraEnv = {} }: {
+    readonly root: string;
+    readonly home: string;
+    readonly mode: string;
+    readonly extraEnv?: NodeJS.ProcessEnv;
+  },
+): SpawnSyncReturns<string> {
+  return spawnSync(
     'bash',
     [join(root, 'runtime', 'run.sh'), 'landmark/install', root, mode],
     {
@@ -41,8 +57,6 @@ export function runInstall(
       timeout: SUBPROCESS_TIMEOUT_MS,
     },
   );
-
-  return { home, installRun };
 }
 
 // cp -RL resolves every link, as the plugin cache does; the copy must hold none,
