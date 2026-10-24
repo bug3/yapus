@@ -1,5 +1,8 @@
 import { RETURN_CAP_CHARACTERS } from '../../providens/contract/get-context.ts';
+import type { ReturnRow } from '../../providens/record-row.ts';
 import { recordRow } from '../../providens/record-row.ts';
+import type { TranscriptStats } from './get-transcript-stats.ts';
+import { readTranscriptStats } from './get-transcript-stats.ts';
 import { parseStop } from './parse-stop.ts';
 
 export interface Input {
@@ -40,6 +43,7 @@ export function getReturnVerdict(input: Input): ReturnVerdict {
       status: getFirstWord(stop.message, 0) ?? '',
       verdict: getFirstWord(stop.message, 1),
       length,
+      ...getTotals(readTranscriptStats(stop.transcriptPath)),
     });
   }
 
@@ -59,4 +63,14 @@ function getFirstWord(message: string, index: number): string | undefined {
   const lines = message.split('\n').map((line) => line.trim()).filter((line) => line !== '');
 
   return lines[index]?.split(/\s+/u)[0];
+}
+
+function getTotals(stats: TranscriptStats | undefined): Pick<ReturnRow, keyof TranscriptStats> {
+  return {
+    turns: stats?.turns,
+    toolUses: stats?.toolUses,
+    tokens: stats?.tokens,
+    durationMs: stats?.durationMs,
+    model: stats?.model,
+  };
 }

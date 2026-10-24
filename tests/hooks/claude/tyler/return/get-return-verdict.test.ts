@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import {
@@ -38,6 +38,63 @@ test('logs no verdict for a return of one line', (t) => {
   getReturnVerdict({ stdinText: SHORT, dataDir, time: 't' });
 
   assert.doesNotMatch(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /verdict/);
+});
+
+test('logs the totals of the transcript the payload names', (t) => {
+  const dataDir = makeTempDir(t);
+  const transcriptPath = join(dataDir, 'agent.jsonl');
+  const first = {
+    type: 'assistant',
+    timestamp: '2026-01-01T00:00:00.000Z',
+    message: {
+      id: 'm1',
+      model: 'model-a',
+      usage: {
+        input_tokens: 1,
+        output_tokens: 2,
+        cache_creation_input_tokens: 3,
+        cache_read_input_tokens: 4,
+      },
+      content: [{ type: 'tool_use', id: 't1' }],
+    },
+  };
+  const second = {
+    type: 'assistant',
+    timestamp: '2026-01-01T00:00:01.500Z',
+    message: {
+      id: 'm2',
+      model: 'model-b',
+      usage: {
+        input_tokens: 1,
+        output_tokens: 1,
+        cache_creation_input_tokens: 1,
+        cache_read_input_tokens: 1,
+      },
+      content: [{ type: 'text', text: 'done' }],
+    },
+  };
+
+  writeFileSync(transcriptPath, `${ JSON.stringify(first) }\n${ JSON.stringify(second) }\n`);
+  const stop = JSON.stringify({
+    ...FIELDS,
+    last_assistant_message: 'DONE',
+    agent_transcript_path: transcriptPath,
+  });
+
+  getReturnVerdict({ stdinText: stop, dataDir, time: 't' });
+
+  assert.match(
+    readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'),
+    /"turns":2,"toolUses":1,"tokens":4,"durationMs":1500,"model":"model-b"/,
+  );
+});
+
+test('logs no totals when the payload names no transcript', (t) => {
+  const dataDir = makeTempDir(t);
+
+  getReturnVerdict({ stdinText: SHORT, dataDir, time: 't' });
+
+  assert.doesNotMatch(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /turns/);
 });
 
 test('sends back a first return over the cap and says why', (t) => {

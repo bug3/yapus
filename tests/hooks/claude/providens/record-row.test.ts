@@ -16,6 +16,11 @@ const RETURN: ReturnRow = {
   status: 'DONE',
   verdict: undefined,
   length: 4,
+  turns: undefined,
+  toolUses: undefined,
+  tokens: undefined,
+  durationMs: undefined,
+  model: undefined,
 };
 
 test('appends each row as one JSON line, creating the directory', (t) => {

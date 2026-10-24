@@ -58,6 +58,11 @@ const RETURN: ReturnRow = {
   status: 'DONE',
   verdict: undefined,
   length: 5,
+  turns: undefined,
+  toolUses: undefined,
+  tokens: undefined,
+  durationMs: undefined,
+  model: undefined,
 };
 
 test('counts launches, ends and returns of one agent and takes the medians', () => {

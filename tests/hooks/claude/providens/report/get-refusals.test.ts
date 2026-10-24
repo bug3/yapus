@@ -27,6 +27,11 @@ const RETURN: ReturnRow = {
   status: 'DONE',
   verdict: undefined,
   length: 12001,
+  turns: undefined,
+  toolUses: undefined,
+  tokens: undefined,
+  durationMs: undefined,
+  model: undefined,
 };
 
 test('counts refused launches by reason and sent-back returns as one reason, most first', () => {

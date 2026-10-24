@@ -31,6 +31,11 @@ const JUDGE: ReturnRow = {
   status: 'DONE',
   verdict: 'REWORK',
   length: 9,
+  turns: undefined,
+  toolUses: undefined,
+  tokens: undefined,
+  durationMs: undefined,
+  model: undefined,
 };
 
 test('counts a builder end followed by REWORK or REVISE in its session as reworked', () => {

@@ -84,6 +84,11 @@ function readReturn(fields: Readonly<Record<string, unknown>>): ReturnRow | unde
       status,
       verdict: getString(fields.verdict),
       length,
+      turns: getNumber(fields.turns),
+      toolUses: getNumber(fields.toolUses),
+      tokens: getNumber(fields.tokens),
+      durationMs: getNumber(fields.durationMs),
+      model: getString(fields.model),
     }
     : undefined;
 }

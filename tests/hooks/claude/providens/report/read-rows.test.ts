@@ -46,7 +46,15 @@ test('reads a launch, a return and an end row, with absent fields undefined', ()
   assert.equal(skipped, 0);
   assert.deepEqual(rows, [
     { ...LAUNCH, promptId: undefined, model: undefined },
-    { ...RETURN, verdict: undefined },
+    {
+      ...RETURN,
+      verdict: undefined,
+      turns: undefined,
+      toolUses: undefined,
+      tokens: undefined,
+      durationMs: undefined,
+      model: undefined,
+    },
     {
       ...END,
       promptId: undefined,
@@ -56,6 +64,14 @@ test('reads a launch, a return and an end row, with absent fields undefined', ()
       word: undefined,
       length: undefined,
     },
+  ]);
+});
+
+test('reads the totals of a return row', () => {
+  const totals = { turns: 3, toolUses: 2, tokens: 90, durationMs: 1500, model: 'model-a' };
+
+  assert.deepEqual(readRows(toText({ ...RETURN, ...totals })).rows, [
+    { ...RETURN, verdict: undefined, ...totals },
   ]);
 });
 

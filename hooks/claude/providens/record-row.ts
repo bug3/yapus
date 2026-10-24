@@ -31,13 +31,19 @@ export interface LaunchRow extends Decision {
 // The return verdict with the subagent's id (joins its transcript and meta
 // file), the first word of the return (the status the contract asks for),
 // the first word of the next line (the verdict a judge puts there) and the
-// return's length in characters.
+// return's length in characters. The totals are the subagent transcript's,
+// undefined when the payload names no transcript or the file cannot be read.
 export interface ReturnRow extends Decision {
   readonly hook: 'return';
   readonly agentId: string | undefined;
   readonly status: string;
   readonly verdict: string | undefined;
   readonly length: number;
+  readonly turns: number | undefined;
+  readonly toolUses: number | undefined;
+  readonly tokens: number | undefined;
+  readonly durationMs: number | undefined;
+  readonly model: string | undefined;
 }
 
 // What the Agent tool reported when a launch ended: the keys that join the
