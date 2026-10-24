@@ -39,9 +39,11 @@ const CRITIC = 'providens:critic';
 const PERCENT = 100;
 
 const RATE_RULES: readonly RateRule[] = [
+  // A background subagent that hits its turn cap fires no stop hook, so a
+  // launch that ended without a return is counted with the capped ones.
   {
     rule: 'cap-stop rate',
-    getCounts: (stats) => [stats.capped, stats.completed],
+    getCounts: (stats) => [stats.capped + stats.noReturn, stats.completed + stats.noReturn],
     isOver: (percent) => percent > 30,
     threshold: `over 30 percent at n ${ String(MIN_SAMPLE) }: split slices, change the cap or `
       + 'the model',

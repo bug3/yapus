@@ -14,8 +14,8 @@ export interface Report {
 }
 
 const AGENT_HEAD: readonly string[] = [
-  'agent', 'launches', 'refused', 'completed', 'capped', 'returns', 'sent back', 'contract words',
-  'verdicts', 'wall median s', 'tokens median', 'tool calls median',
+  'agent', 'launches', 'refused', 'completed', 'capped', 'no return', 'returns', 'sent back',
+  'contract words', 'verdicts', 'wall median s', 'tokens median', 'tool calls median',
 ];
 const FINDING_HEAD: readonly string[] = ['rule', 'agent', 'value', 'n', 'threshold', 'state'];
 const REFUSAL_HEAD: readonly string[] = ['reason', 'count'];
@@ -57,6 +57,7 @@ function formatStats(stats: AgentStats): string[] {
     String(stats.refused),
     String(stats.completed),
     String(stats.capped),
+    String(stats.noReturn),
     String(stats.returns),
     String(stats.sentBack),
     String(stats.contractWords),

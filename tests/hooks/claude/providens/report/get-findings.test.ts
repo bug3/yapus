@@ -54,6 +54,13 @@ test('waits while the sample is under 20', () => {
   assert.deepEqual([finding?.rule, finding?.state, finding?.n], ['cap-stop rate', 'wait', 19]);
 });
 
+test('counts launches that ended without a return with the capped ones', () => {
+  const stats = [{ ...BUILDER, completed: 12, capped: 0, noReturn: 8 }];
+  const [finding] = getFindings({ ...MEASURED, stats });
+
+  assert.deepEqual([finding?.value, finding?.state], ['8 of 20, 40 percent', 'act']);
+});
+
 test('acts on a critic GO rate over 90 percent and only for the critic', () => {
   const findings = getFindings(MEASURED).filter((finding) => finding.rule === 'GO rate');
 
