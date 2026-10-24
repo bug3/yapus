@@ -1,8 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { getHooksPath } from './hooks-path/get-hooks-path.ts';
-
-const HOOKS_PATH_KEY = 'core.hookspath';
+import { getHooksPath } from '../../shared/hooks-path/get-hooks-path.ts';
+import { hasInjectedHooksPath } from '../../shared/hooks-path/has-injected-hooks-path.ts';
 
 // What stops an install into home, one sentence each; empty when nothing does.
 // globalHooksPath is the global core.hooksPath as git reads it, if set.
@@ -26,12 +25,4 @@ export function getConflicts(
       ? ['GIT_CONFIG_* sets core.hooksPath (the old agent layer); retire it first']
       : [],
   ];
-}
-
-// Whether GIT_CONFIG_COUNT with GIT_CONFIG_KEY_<n> names core.hooksPath.
-function hasInjectedHooksPath(env: NodeJS.ProcessEnv): boolean {
-  const count = Number(env.GIT_CONFIG_COUNT ?? 0);
-
-  return [...Array(Number.isInteger(count) ? count : 0).keys()]
-    .some((index) => env[`GIT_CONFIG_KEY_${ String(index) }`]?.toLowerCase() === HOOKS_PATH_KEY);
 }
