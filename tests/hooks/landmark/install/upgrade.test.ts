@@ -41,6 +41,12 @@ function runUpgrade(home: string, extraEnv: NodeJS.ProcessEnv = {}): SpawnSyncRe
   });
 }
 
+function gitConfig(home: string, args: string[]): string {
+  return spawnSync('git', ['config', '--global', ...args], {
+    encoding: 'utf8', env: makeEnv(home),
+  }).stdout.trim();
+}
+
 // Every file under dir with its content, as one string.
 function snapshot(dir: string): string {
   return readdirSync(dir, { recursive: true, withFileTypes: true })
@@ -87,4 +93,45 @@ test('upgrade without a stamp is refused and writes nothing', (t) => {
   assert.match(upgradeRun.stderr, /use \/landmark:install/);
   assert.equal(existsSync(join(home, '.claude', 'rules', 'landmark-git.md')), false);
   assert.equal(existsSync(join(home, '.claude', 'landmark', 'version')), false);
+});
+
+test('upgrade sets the global hooks path when it is unset', (t) => {
+  const { home } = runInstall(t, 'install');
+
+  gitConfig(home, ['--unset', 'core.hooksPath']);
+
+  const upgradeRun = runUpgrade(home);
+
+  assert.equal(upgradeRun.status, 0, upgradeRun.stderr);
+  assert.equal(
+    gitConfig(home, ['--get', 'core.hooksPath']),
+    join(home, '.claude', 'landmark', 'hooks', 'git'),
+  );
+});
+
+test('upgrade refuses a foreign global hooks path and writes nothing', (t) => {
+  const { home } = runInstall(t, 'install');
+
+  gitConfig(home, ['core.hooksPath', '/elsewhere']);
+  rmSync(join(home, '.claude', 'rules', 'landmark-git.md'));
+
+  const upgradeRun = runUpgrade(home);
+
+  assert.equal(upgradeRun.status, 2);
+  assert.match(upgradeRun.stderr, /\/elsewhere/);
+  assert.equal(existsSync(join(home, '.claude', 'rules', 'landmark-git.md')), false);
+});
+
+test('upgrade refuses a hooks path injected through the environment', (t) => {
+  const { home } = runInstall(t, 'install');
+
+  rmSync(join(home, '.claude', 'rules', 'landmark-git.md'));
+
+  const upgradeRun = runUpgrade(home, {
+    GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'core.hooksPath', GIT_CONFIG_VALUE_0: '/old',
+  });
+
+  assert.equal(upgradeRun.status, 2);
+  assert.match(upgradeRun.stderr, /retire it first/);
+  assert.equal(existsSync(join(home, '.claude', 'rules', 'landmark-git.md')), false);
 });
