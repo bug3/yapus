@@ -15,7 +15,8 @@ export interface AgentStats {
   readonly returns: number;
   readonly sentBack: number;
   readonly contractWords: number;
-  // The verdict words of the returns, each with its count.
+  // The verdicts of the returns, each with its count; a second line that
+  // opens with another word is not a verdict.
   readonly verdicts: Readonly<Record<string, number>>;
   readonly durationMedianMs: number | undefined;
   readonly tokensMedian: number | undefined;
@@ -24,6 +25,10 @@ export interface AgentStats {
 
 // The words contract.md asks every return to open with.
 export const CONTRACT_WORDS: readonly string[] = ['DONE', 'PARTIAL', 'QUESTIONS', 'BLOCKED'];
+
+// The words the judges' definitions (critic.md, warden.md) put on the line
+// after the status.
+export const VERDICT_WORDS: readonly string[] = ['GO', 'REVISE', 'APPROVE', 'REWORK'];
 
 const COMPLETED = 'completed';
 
@@ -56,10 +61,14 @@ function getStats(agent: string, rows: readonly Row[]): AgentStats {
 }
 
 function countWords(words: readonly (string | undefined)[]): Record<string, number> {
-  return words.filter((word) => word !== undefined).reduce<Record<string, number>>(
+  return words.filter(isVerdictWord).reduce<Record<string, number>>(
     (counts, word) => ({ ...counts, [word]: (counts[word] ?? 0) + 1 }),
     {},
   );
+}
+
+function isVerdictWord(word: string | undefined): word is string {
+  return word !== undefined && VERDICT_WORDS.includes(word);
 }
 
 function isNumber(value: number | undefined): value is number {

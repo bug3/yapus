@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import {
   CONTRACT_WORDS,
   getAgentStats,
+  VERDICT_WORDS,
 } from '../../../../../hooks/claude/providens/report/get-agent-stats.ts';
 import type {
   EndRow,
@@ -12,10 +13,9 @@ import type {
   ReturnRow,
 } from '../../../../../hooks/claude/providens/record-row.ts';
 
-const CONTRACT = join(
-  import.meta.dirname, '..', '..', '..', '..', '..', 'hooks', 'claude', 'providens', 'contract',
-  'contract.md',
-);
+const ROOT = join(import.meta.dirname, '..', '..', '..', '..', '..');
+const CONTRACT = join(ROOT, 'hooks', 'claude', 'providens', 'contract', 'contract.md');
+const AGENTS = join(ROOT, 'plugins', 'providens', 'agents');
 const BUILDER = 'providens:builder';
 const LAUNCH: LaunchRow = {
   time: 't',
@@ -67,7 +67,7 @@ test('counts launches, ends and returns of one agent and takes the medians', () 
     END,
     { ...END, capped: true, durationMs: 300, tokens: undefined },
     { ...END, status: 'async_launched', durationMs: 9000 },
-    RETURN,
+    { ...RETURN, verdict: 'Command:' },
     { ...RETURN, allowed: false, status: 'Here', verdict: 'REWORK' },
     { ...RETURN, status: 'PARTIAL', verdict: 'REWORK' },
   ]);
@@ -102,4 +102,13 @@ test('names only words the return contract asks for', () => {
   const contract = readFileSync(CONTRACT, 'utf8');
 
   assert.deepEqual(CONTRACT_WORDS.filter((word) => !contract.includes(word)), []);
+});
+
+test('names only verdict words an agent definition asks for', () => {
+  const definitions = readdirSync(AGENTS).map((file) => readFileSync(join(AGENTS, file), 'utf8'));
+
+  assert.deepEqual(
+    VERDICT_WORDS.filter((word) => !definitions.some((text) => text.includes(word))),
+    [],
+  );
 });
