@@ -102,6 +102,22 @@ test('refuses a revert subject when generated subjects are not allowed', () => {
   ]);
 });
 
+test('refuses a reapply subject when generated subjects are not allowed', () => {
+  const subject = 'Reapply "feat(hooks): add a check"';
+
+  assert.deepEqual(getSubjectViolations(subject, CATALOGS, PULL_REQUEST_TITLE), [
+    `${ JSON.stringify(subject) } ${ FORM_REFUSAL }`,
+  ]);
+});
+
+test('refuses a squash subject when generated subjects are not allowed', () => {
+  const subject = 'Squashed commit of the following:';
+
+  assert.deepEqual(getSubjectViolations(subject, CATALOGS, PULL_REQUEST_TITLE), [
+    `${ JSON.stringify(subject) } ${ FORM_REFUSAL }`,
+  ]);
+});
+
 test('judges the subject after a fixup prefix', () => {
   assert.deepEqual(getSubjectViolations('fixup! feat(hooks): add a check', CATALOGS), []);
 });
@@ -144,12 +160,22 @@ test('passes the subject git writes for a revert', () => {
   assert.deepEqual(getSubjectViolations('Revert "feat(hooks): add a check"', CATALOGS), []);
 });
 
+test('passes the subject git writes for a reapply', () => {
+  assert.deepEqual(getSubjectViolations('Reapply "feat(hooks): add a check"', CATALOGS), []);
+});
+
+test('passes the subject git writes for a squash merge', () => {
+  assert.deepEqual(getSubjectViolations('Squashed commit of the following:', CATALOGS), []);
+});
+
 test('refuses a merge or revert subject that git would not write', () => {
   for (const subject of [
     'Merge the calibration fix',
     'Merge branch of nouns',
     'Merge pull request fix',
     'Revert "x" because y',
+    'Reapply "x" because y',
+    'Squashed commit of the following: x',
   ]) {
     assert.deepEqual(getSubjectViolations(subject, CATALOGS), [
       `${ JSON.stringify(subject) } ${ FORM_REFUSAL }`,

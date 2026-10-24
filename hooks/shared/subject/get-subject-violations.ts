@@ -4,12 +4,15 @@ import { readSubjectParts } from './read-subject-parts.ts';
 // git's autosquash prefixes, which may stack.
 const AUTOSQUASH_PREFIXES = /^(?:(?:fixup|squash|amend)! )*/;
 // What git and GitHub write themselves. Only the generated forms pass: a bare
-// "Merge" prefix would be a free bypass. A revert subject must end at its closing quote.
+// "Merge" prefix would be a free bypass. A revert or reapply subject must end at
+// its closing quote.
 const GENERATED_SUBJECTS = new RegExp(
   [
     "^Merge (?:branch(?:es)?|tags?|commits?|remote-tracking branch(?:es)?) '",
     '^Merge pull request #[0-9]+ from \\S',
     '^Revert ".*"$',
+    '^Reapply ".*"$',
+    '^Squashed commit of the following:$',
   ].join('|'),
 );
 const MAX_LENGTH = 72;
