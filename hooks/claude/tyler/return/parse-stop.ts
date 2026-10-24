@@ -11,6 +11,9 @@ export interface Stop {
   // The id that names the subagent's transcript and meta file; undefined
   // when the payload lacks it.
   readonly agentId: string | undefined;
+  // The path of the subagent's transcript, a JSONL file; undefined when the
+  // payload lacks it.
+  readonly transcriptPath: string | undefined;
 }
 
 export type Parsed =
@@ -36,6 +39,7 @@ export function parseStop(stdinText: string): Parsed {
     last_assistant_message: message,
     stop_hook_active: isRetry = false,
     agent_id: agentId,
+    agent_transcript_path: transcriptPath,
   } = payload;
 
   if (!isSafeId(sessionId)) {
@@ -56,6 +60,7 @@ export function parseStop(stdinText: string): Parsed {
       message,
       isRetry,
       agentId: typeof agentId === 'string' ? agentId : undefined,
+      transcriptPath: typeof transcriptPath === 'string' ? transcriptPath : undefined,
     },
   };
 }

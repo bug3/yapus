@@ -17,6 +17,7 @@ test('reads a stop without stop_hook_active as a first stop', () => {
       message: 'DONE',
       isRetry: false,
       agentId: undefined,
+      transcriptPath: undefined,
     },
   });
 });
@@ -26,6 +27,18 @@ test('reads the agent id when the payload carries it', () => {
 
   assert.ok(parsed.kind === 'stop');
   assert.equal(parsed.stop.agentId, 'a1');
+});
+
+test('reads the transcript path when the payload carries it', () => {
+  const path = '/tmp/x/agent-a1.jsonl';
+  const withPath = parseStop(JSON.stringify({ ...FIELDS, agent_transcript_path: path }));
+  const without = parseStop(JSON.stringify(FIELDS));
+
+  assert.ok(withPath.kind === 'stop' && without.kind === 'stop');
+  assert.deepEqual(
+    [withPath.stop.transcriptPath, without.stop.transcriptPath],
+    [path, undefined],
+  );
 });
 
 test('reads a stop with stop_hook_active as a retry', () => {
