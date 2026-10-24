@@ -8,6 +8,8 @@ import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const PLUGIN = join(ROOT, 'plugins', 'landmark');
 const COMMAND = 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/dashes';
+const CHECK_COMMAND =
+  'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/landmark/check "${CLAUDE_PLUGIN_ROOT}"';
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const EM_DASH = String.fromCodePoint(0x2014);
 const EM_DASH_WRITE = JSON.stringify({
@@ -15,11 +17,17 @@ const EM_DASH_WRITE = JSON.stringify({
   tool_input: { file_path: '/r/a.md', content: `a ${ EM_DASH } b\n` },
 });
 
-test('registers the dashes hook', () => {
+test('registers the session check and the dashes hook', () => {
   const hooks: unknown = JSON.parse(readFileSync(join(PLUGIN, 'hooks', 'hooks.json'), 'utf8'));
 
   assert.deepEqual(hooks, {
     hooks: {
+      SessionStart: [
+        {
+          matcher: 'startup|resume|clear|compact',
+          hooks: [{ type: 'command', command: CHECK_COMMAND, timeout: 10 }],
+        },
+      ],
       PreToolUse: [
         {
           matcher: 'Write|Edit',
@@ -53,7 +61,7 @@ test('exits 2 when the registered command runs on a Write that adds a dash', (t)
 // The command string of the hooks.json entry, as the harness would run it.
 function getRegisteredCommand(): string {
   const hooksText = readFileSync(join(PLUGIN, 'hooks', 'hooks.json'), 'utf8');
-  const commandJson = /"command": ("(?:[^"\\]|\\.)*")/.exec(hooksText)?.[1] ?? '""';
+  const commandJson = /"command": ("(?:[^"\\]|\\.)*claude\/dashes")/.exec(hooksText)?.[1] ?? '""';
   const command: unknown = JSON.parse(commandJson);
 
   return typeof command === 'string' ? command : '';
