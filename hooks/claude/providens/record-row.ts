@@ -28,8 +28,14 @@ export interface LaunchRow extends Decision {
   readonly effort: string | undefined;
 }
 
+// The return verdict with the subagent's id (joins its transcript and meta
+// file), the first word of the return (the status the contract asks for) and
+// the return's length in characters.
 export interface ReturnRow extends Decision {
   readonly hook: 'return';
+  readonly agentId: string | undefined;
+  readonly status: string;
+  readonly length: number;
 }
 
 export type Row = LaunchRow | ReturnRow;

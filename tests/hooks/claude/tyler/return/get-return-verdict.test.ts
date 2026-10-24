@@ -19,6 +19,18 @@ test('passes a return at the cap and logs it', (t) => {
   assert.match(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /"hook":"return".*"allowed":true/);
 });
 
+test('logs the agent id, the first word of the return and its length', (t) => {
+  const dataDir = makeTempDir(t);
+  const stop = JSON.stringify({ ...FIELDS, agent_id: 'a1', last_assistant_message: 'DONE\nx' });
+
+  getReturnVerdict({ stdinText: stop, dataDir, time: 't' });
+
+  assert.match(
+    readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'),
+    /"agentId":"a1","status":"DONE","length":6/,
+  );
+});
+
 test('sends back a first return over the cap and says why', (t) => {
   const dataDir = makeTempDir(t);
 

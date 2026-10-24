@@ -12,6 +12,9 @@ const RETURN: ReturnRow = {
   subject: 'providens:deacon',
   allowed: true,
   reason: '',
+  agentId: 'a1',
+  status: 'DONE',
+  length: 4,
 };
 
 test('appends each row as one JSON line, creating the directory', (t) => {
@@ -23,8 +26,8 @@ test('appends each row as one JSON line, creating the directory', (t) => {
   assert.equal(
     readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'),
     '{"time":"t","hook":"return","sessionId":"s","subject":"providens:deacon","allowed":true,'
-      + '"reason":""}\n'
+      + '"reason":"","agentId":"a1","status":"DONE","length":4}\n'
       + '{"time":"t","hook":"return","sessionId":"s","subject":"providens:deacon","allowed":false,'
-      + '"reason":"r"}\n',
+      + '"reason":"r","agentId":"a1","status":"DONE","length":4}\n',
   );
 });

@@ -8,6 +8,9 @@ export interface Stop {
   // Claude Code sets stop_hook_active when a stop hook already sent the
   // subagent back once.
   readonly isRetry: boolean;
+  // The id that names the subagent's transcript and meta file; undefined
+  // when the payload lacks it.
+  readonly agentId: string | undefined;
 }
 
 export type Parsed =
@@ -32,6 +35,7 @@ export function parseStop(stdinText: string): Parsed {
     agent_type: agentType,
     last_assistant_message: message,
     stop_hook_active: isRetry = false,
+    agent_id: agentId,
   } = payload;
 
   if (!isSafeId(sessionId)) {
@@ -44,7 +48,16 @@ export function parseStop(stdinText: string): Parsed {
     return makeFailure('agent_type, last_assistant_message or stop_hook_active is missing');
   }
 
-  return { kind: 'stop', stop: { sessionId, agentType, message, isRetry } };
+  return {
+    kind: 'stop',
+    stop: {
+      sessionId,
+      agentType,
+      message,
+      isRetry,
+      agentId: typeof agentId === 'string' ? agentId : undefined,
+    },
+  };
 }
 
 function makeFailure(reason: string): Parsed {

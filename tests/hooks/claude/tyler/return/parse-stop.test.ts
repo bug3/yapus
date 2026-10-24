@@ -11,8 +11,21 @@ const FIELDS = {
 test('reads a stop without stop_hook_active as a first stop', () => {
   assert.deepEqual(parseStop(JSON.stringify(FIELDS)), {
     kind: 'stop',
-    stop: { sessionId: 's1', agentType: 'providens:deacon', message: 'DONE', isRetry: false },
+    stop: {
+      sessionId: 's1',
+      agentType: 'providens:deacon',
+      message: 'DONE',
+      isRetry: false,
+      agentId: undefined,
+    },
   });
+});
+
+test('reads the agent id when the payload carries it', () => {
+  const parsed = parseStop(JSON.stringify({ ...FIELDS, agent_id: 'a1' }));
+
+  assert.ok(parsed.kind === 'stop');
+  assert.equal(parsed.stop.agentId, 'a1');
 });
 
 test('reads a stop with stop_hook_active as a retry', () => {

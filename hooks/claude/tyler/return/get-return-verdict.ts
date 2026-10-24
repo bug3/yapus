@@ -36,6 +36,9 @@ export function getReturnVerdict(input: Input): ReturnVerdict {
       subject: stop.agentType,
       allowed: !isSentBack,
       reason: isOver ? `${ String(length) } characters` : '',
+      agentId: stop.agentId,
+      status: getFirstWord(stop.message),
+      length,
     });
   }
 
@@ -47,4 +50,8 @@ export function getReturnVerdict(input: Input): ReturnVerdict {
         + 'and name the follow-up questions',
     }
     : { kind: 'pass' };
+}
+
+function getFirstWord(message: string): string {
+  return message.trim().split(/\s+/u)[0] ?? '';
 }
