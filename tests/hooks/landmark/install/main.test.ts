@@ -35,6 +35,7 @@ test('refuses an existing stamp and writes nothing', (t) => {
   assert.equal(installRun.status, 2);
   assert.match(installRun.stderr, /use \/landmark:upgrade/);
   assert.equal(existsSync(join(home, '.claude', 'rules')), false);
+  assert.equal(existsSync(join(home, '.gitconfig')), false);
 });
 
 test('refuses an existing landmark rule file and lists every conflict', (t) => {
@@ -51,6 +52,7 @@ test('refuses an existing landmark rule file and lists every conflict', (t) => {
     ['landmark-code.md', 'landmark-git.md'],
   );
   assert.equal(existsSync(join(home, '.claude', 'landmark')), false);
+  assert.equal(existsSync(join(home, '.gitconfig')), false);
 });
 
 test('refuses an unknown mode and writes nothing', (t) => {

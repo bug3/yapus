@@ -11,7 +11,6 @@ const TRAILERS = join(
   import.meta.dirname, '..', '..', '..', '..', 'hooks', 'git', 'trailer', 'trailers.json',
 );
 const COMMIT = ['commit', '--allow-empty', '-m'];
-const MERGE_SUBJECT = "Merge branch 'x'";
 
 interface Setup {
   readonly home: string;
@@ -40,7 +39,10 @@ test('refuses to create a branch for an agent', (t) => {
 
   runGit(setup, [...COMMIT, 'feat(src): add greet']);
 
-  assert.notEqual(runGit(setup, ['branch', 'foo']).status, 0);
+  const branchRun = runGit(setup, ['branch', 'foo']);
+
+  assert.notEqual(branchRun.status, 0);
+  assert.match(branchRun.stderr, /^yapus branch: /m);
 });
 
 test('refuses a scope the repository catalog does not list', (t) => {
@@ -49,7 +51,10 @@ test('refuses a scope the repository catalog does not list', (t) => {
   mkdirSync(join(setup.repository, '.landmark'));
   writeFileSync(join(setup.repository, '.landmark', 'scopes.json'), '["src"]\n');
 
-  assert.notEqual(runGit(setup, [...COMMIT, 'feat(xyz): add greet']).status, 0);
+  const commitRun = runGit(setup, [...COMMIT, 'feat(xyz): add greet']);
+
+  assert.notEqual(commitRun.status, 0);
+  assert.match(commitRun.stderr, /^yapus subject: /m);
 });
 
 test('lets any word scope through when the repository has no catalog', (t) => {
@@ -58,9 +63,14 @@ test('lets any word scope through when the repository has no catalog', (t) => {
   assert.equal(commitRun.status, 0, commitRun.stderr);
 });
 
-test('lets a merge subject through with and without an agent', (t) => {
+test('lets a merge git writes through with and without an agent', (t) => {
+  assert.deepEqual([mergeStatus(t, true), mergeStatus(t, false)], [0, 0]);
+});
+
+// A real git revert does not run commit-msg, so the subject goes through a commit.
+test('lets a revert subject through with and without an agent', (t) => {
+  const args = [...COMMIT, 'Revert "x"'];
   const setup = installAndInit(t);
-  const args = [...COMMIT, MERGE_SUBJECT];
 
   assert.deepEqual(
     [runGit(setup, args).status, runGit(setup, args, false).status],
@@ -83,6 +93,21 @@ test('stops a commit the repository commit-msg hook refuses, agent or not', (t) 
     [1, 1],
   );
 });
+
+// The exit status of a real git merge (the editor is a no-op, as git runs the commit-msg hook
+// only on an edited message) --no-ff of a side branch.
+function mergeStatus(t: TestContext, isAgent: boolean): number | null {
+  const setup = installAndInit(t);
+
+  runGit(setup, [...COMMIT, 'feat(src): add greet'], false);
+  runGit(setup, ['switch', '-c', 'x'], false);
+  runGit(setup, [...COMMIT, 'feat(src): add side'], false);
+  runGit(setup, ['switch', '-'], false);
+
+  return runGit(
+    setup, ['-c', 'core.editor=true', 'merge', '--no-ff', '--edit', 'x'], isAgent,
+  ).status;
+}
 
 // Installs from a copy of the plugin into a temporary home; returns a new repository.
 function installAndInit(t: TestContext): Setup {

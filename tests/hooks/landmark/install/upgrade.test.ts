@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { type SpawnSyncReturns, spawnSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
 import { readPluginVersion } from '../../../../hooks/shared/read-plugin-version.ts';
@@ -81,17 +81,47 @@ test('upgrade on an unchanged plugin leaves every installed file byte-identical'
 test('upgrade after a plugin change rewrites the rule file and the stamp', (t) => {
   const { home, before, upgradeRun } = installThenUpgrade(t, (root) => {
     const standard = join(root, 'standards', 'GIT.md');
-    const manifest = join(root, '.claude-plugin', 'plugin.json');
 
     writeFileSync(standard, `${ readFileSync(standard, 'utf8') }\nAdded line.\n`);
-    writeFileSync(manifest, readFileSync(manifest, 'utf8').replace('"0.1.0"', '"0.2.0"'));
+    bumpVersion(root);
   });
   const rule = readFileSync(join(home, '.claude', 'rules', 'landmark-git.md'), 'utf8');
 
   assert.equal(upgradeRun.status, 0, upgradeRun.stderr);
-  assert.equal(readFileSync(join(home, '.claude', 'landmark', 'version'), 'utf8'), '0.2.0');
+  assert.equal(readFileSync(join(home, '.claude', 'landmark', 'version'), 'utf8'), NEXT_VERSION);
   assert.match(rule, /Added line\./);
   assert.notEqual(snapshot(home), before);
+});
+
+test('upgrade after a change to a hook file rewrites that installed hook file', (t) => {
+  const hook = join('shared', 'read-catalog.ts');
+  const { home, upgradeRun } = installThenUpgrade(t, (root) => {
+    const source = join(root, 'runtime', hook);
+
+    writeFileSync(source, `${ readFileSync(source, 'utf8') }\n// Changed.\n`);
+  });
+
+  assert.equal(upgradeRun.status, 0, upgradeRun.stderr);
+  assert.match(
+    readFileSync(join(home, '.claude', 'landmark', 'hooks', hook), 'utf8'),
+    /\/\/ Changed\.\n$/,
+  );
+});
+
+test('upgrade removes the hooks.new and hooks.old a killed run left', (t) => {
+  const { home } = runInstall(t, 'install');
+  const landmark = join(home, '.claude', 'landmark');
+  const leftovers = [join(landmark, 'hooks.new'), join(landmark, 'hooks.old')];
+
+  leftovers.forEach((leftover) => {
+    mkdirSync(leftover);
+    writeFileSync(join(leftover, 'stale'), 'x');
+  });
+
+  const upgradeRun = runUpgrade(home);
+
+  assert.equal(upgradeRun.status, 0, upgradeRun.stderr);
+  assert.deepEqual(leftovers.map((leftover) => existsSync(leftover)), [false, false]);
 });
 
 test('upgrade that fails in the hooks copy keeps the old hooks and the old stamp', (t) => {

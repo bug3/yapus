@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
@@ -98,7 +98,7 @@ function runCheck(
   const hooksPath = arrangement.hooksPath === 'own' ? ownHooksPath : arrangement.hooksPath;
 
   mkdirSync(home);
-  spawnSync('cp', ['-RL', PLUGIN, root]);
+  copyPlugin(root);
   writeFileSync(
     gitConfig,
     hooksPath === undefined ? '' : `[core]\n\thooksPath = ${ hooksPath }\n`,
@@ -129,6 +129,19 @@ function runCheck(
   });
 
   return { status: commandRun.status, stdout: commandRun.stdout, stderr: commandRun.stderr };
+}
+
+// cp -RL resolves every link, as the plugin cache does; the copy must hold none.
+function copyPlugin(root: string): void {
+  const copyRun = spawnSync('cp', ['-RL', PLUGIN, root], { encoding: 'utf8' });
+
+  assert.equal(copyRun.status, 0, copyRun.stderr);
+  assert.deepEqual(
+    readdirSync(root, { recursive: true, withFileTypes: true })
+      .filter((entry) => entry.isSymbolicLink())
+      .map((entry) => join(entry.parentPath, entry.name)),
+    [],
+  );
 }
 
 // The additionalContext of the SessionStart output, which must be one JSON line.
