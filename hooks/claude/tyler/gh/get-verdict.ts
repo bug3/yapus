@@ -43,8 +43,9 @@ const MENTIONS: readonly RegExp[] = Object.values(ghCommands.actions)
 
 // Whether a Bash command may run, judged from `cwd`, the absolute directory it
 // starts in. Only the gh actions in the catalog are judged, each by the
-// catalogs of the repository it runs in; a command that cannot be split is
-// refused only when it mentions one of them.
+// catalogs of the repository it runs in, or of the starting directory when a
+// `cd` hid where it runs; a command that cannot be split is refused only when
+// it mentions one of them.
 export async function getVerdict(command: string, cwd: string): Promise<Verdict> {
   const split = splitCommands(command);
 
@@ -55,7 +56,7 @@ export async function getVerdict(command: string, cwd: string): Promise<Verdict>
   }
 
   for (const call of findGhCalls(split, cwd)) {
-    const catalogs = await readRepositoryCatalogs(call.cwd);
+    const catalogs = await readRepositoryCatalogs(call.cwd ?? cwd);
 
     if (catalogs !== undefined && 'violation' in catalogs) {
       return refuse(catalogs.violation);

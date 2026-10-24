@@ -8,12 +8,12 @@ export const CATALOGS_PATH = join('hooks', 'shared', 'catalogs');
 
 // The catalogs of the repository `cwd` is in: those under the nearest directory,
 // `cwd` or an ancestor, that holds CATALOGS_PATH; the first one that cannot be
-// read; or undefined when no directory holds them or `cwd` is unknown, in
-// which case only the rules that need no catalog apply.
+// read; or undefined when no directory holds them, in which case only the
+// rules that need no catalog apply.
 export async function readRepositoryCatalogs(
-  cwd: string | undefined,
+  cwd: string,
 ): Promise<GhCatalogs | CatalogViolation | undefined> {
-  const directory = cwd === undefined ? undefined : await findCatalogsDirectory(cwd);
+  const directory = await findCatalogsDirectory(cwd);
 
   return directory === undefined ? undefined : readGhCatalogs(directory);
 }

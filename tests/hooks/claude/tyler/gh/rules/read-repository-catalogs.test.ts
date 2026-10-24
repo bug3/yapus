@@ -29,10 +29,6 @@ test('gives undefined for a directory with no catalogs above it', async (t) => {
   assert.equal(await readRepositoryCatalogs(makeTempDir(t)), undefined);
 });
 
-test('gives undefined for an unknown directory', async () => {
-  assert.equal(await readRepositoryCatalogs(undefined), undefined);
-});
-
 test('names a catalog that cannot be read', async (t) => {
   const root = makeCatalogRoot(t);
   const path = join(root, CATALOGS_PATH, 'scopes.json');

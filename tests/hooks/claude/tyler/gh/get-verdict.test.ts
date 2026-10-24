@@ -25,6 +25,14 @@ function makeRoot(t: TestContext): string {
   return root;
 }
 
+test('judges by the starting directory\'s catalogs after a cd to an expansion', async (t) => {
+  const root = makeRoot(t);
+  const body = join(root, 'x', 'b.md');
+  const verdict = await getVerdict(`cd "$D" && gh pr create -t "Add a check" -F ${ body }`, root);
+
+  assert.equal(verdict.kind, 'refuse');
+});
+
 test('judges only the body headings in a repository without catalogs', async (t) => {
   const root = makeTempDir(t);
 
