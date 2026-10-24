@@ -1,8 +1,8 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-// Launches a session may make when the person has written no limit (ledger,
-// providens decision 3): above the 37 the most active session made.
+// Launches a session may make when the person has written no limit: above
+// the 37 the busiest measured session made.
 export const DEFAULT_LIMIT = 41;
 
 const LIMIT_FILE = 'launch-limit';
