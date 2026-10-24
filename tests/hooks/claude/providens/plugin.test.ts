@@ -48,6 +48,18 @@ test('registers every providens hook', () => {
           ],
         },
       ],
+      PostToolUse: [
+        {
+          matcher: 'Agent',
+          hooks: [
+            {
+              type: 'command',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/end',
+              timeout: 10,
+            },
+          ],
+        },
+      ],
       SubagentStart: [
         {
           matcher: '^providens:',
