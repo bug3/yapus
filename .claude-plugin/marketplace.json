@@ -8,6 +8,10 @@
     {
       "name": "providens",
       "source": "./plugins/providens"
+    },
+    {
+      "name": "landmark",
+      "source": "./plugins/landmark"
     }
   ]
 }
