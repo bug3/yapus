@@ -4,7 +4,8 @@ import type { EndRow, ResumeRow, ReturnRow, Row } from '../record-row.ts';
 // completed. A total comes from the end row first, then from the last return
 // that has it: a sent-back agent returns twice, and a transcript the hook
 // could not read leaves a return without totals. A launch is capped when its
-// end carries the cap note or when a resume of it follows a cap stop.
+// end carries the cap note or, for a background launch, when a resume of it
+// follows a cap stop.
 export interface Completion {
   readonly agentId: string;
   readonly subject: string;
