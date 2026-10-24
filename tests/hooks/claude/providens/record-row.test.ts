@@ -14,6 +14,7 @@ const RETURN: ReturnRow = {
   reason: '',
   agentId: 'a1',
   status: 'DONE',
+  verdict: undefined,
   length: 4,
 };
 

@@ -37,7 +37,8 @@ export function getReturnVerdict(input: Input): ReturnVerdict {
       allowed: !isSentBack,
       reason: isOver ? `${ String(length) } characters` : '',
       agentId: stop.agentId,
-      status: getFirstWord(stop.message),
+      status: getFirstWord(stop.message, 0) ?? '',
+      verdict: getFirstWord(stop.message, 1),
       length,
     });
   }
@@ -52,6 +53,10 @@ export function getReturnVerdict(input: Input): ReturnVerdict {
     : { kind: 'pass' };
 }
 
-function getFirstWord(message: string): string {
-  return message.trim().split(/\s+/u)[0] ?? '';
+// The first word of the message's non-empty line at index, or undefined
+// when the message has fewer lines.
+function getFirstWord(message: string, index: number): string | undefined {
+  const lines = message.split('\n').map((line) => line.trim()).filter((line) => line !== '');
+
+  return lines[index]?.split(/\s+/u)[0];
 }
