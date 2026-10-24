@@ -129,7 +129,8 @@ test('applies the rate rules to roster agents only, not to a refused launch', ()
 
 test('reads a resumed launch without a return as 1 of 1 in the cap-stop rate', () => {
   const stats = getAgentStats([SILENT_END, RESUME]);
-  const [finding] = getFindings({ ...MEASURED, stats });
+  const finding = getFindings({ ...MEASURED, stats })
+    .find((entry) => entry.rule === 'cap-stop rate');
 
-  assert.deepEqual([finding?.rule, finding?.value], ['cap-stop rate', '1 of 1, 100 percent']);
+  assert.equal(finding?.value, '1 of 1, 100 percent');
 });

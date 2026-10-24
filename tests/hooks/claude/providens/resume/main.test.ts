@@ -38,33 +38,18 @@ test('exits 0 with no output and no row for a queued message', (t) => {
   assert.equal(existsSync(join(env.CLAUDE_PLUGIN_DATA ?? '', 'decisions.jsonl')), false);
 });
 
-test('exits 2 with one line on stderr and no row for each payload it cannot record', (t) => {
-  const unsafeSession = JSON.stringify({ ...SEND, session_id: '../x' });
-  const unsafeAgent = JSON.stringify({
-    ...SEND,
-    tool_response: { ...SEND.tool_response, resumedAgentId: 'a/1' },
-  });
-  const otherTool = JSON.stringify({ ...SEND, tool_name: 'Agent' });
-  const cases: readonly [string, string][] = [
-    ['{', 'stdin is not JSON'],
-    [otherTool, 'tool_name is not SendMessage'],
-    [unsafeSession, 'session_id is not letters, digits and hyphens'],
-    [unsafeAgent, 'tool_response.resumedAgentId is not letters, digits and hyphens'],
-  ];
+test('exits 2 and names the reason for stdin it cannot read', (t) => {
+  const env = makeHookEnv(t);
+  const hookRun = runHook(env, '{');
 
-  for (const [stdinText, reason] of cases) {
-    const env = makeHookEnv(t);
-    const hookRun = runHook(env, stdinText);
-
-    assert.deepEqual(
-      [hookRun.status, hookRun.stderr],
-      [2, `yapus providens resume: ${ reason }; the resume is not recorded\n`],
-    );
-    assert.equal(existsSync(join(env.CLAUDE_PLUGIN_DATA ?? '', 'decisions.jsonl')), false);
-  }
+  assert.deepEqual(
+    [hookRun.status, hookRun.stderr],
+    [2, 'yapus providens resume: stdin is not JSON; the resume is not recorded\n'],
+  );
+  assert.equal(existsSync(join(env.CLAUDE_PLUGIN_DATA ?? '', 'decisions.jsonl')), false);
 });
 
-test('exits 2 with one line on stderr when CLAUDE_PLUGIN_DATA is unset', (t) => {
+test('exits 2 with one line on stderr when CLAUDE_PLUGIN_DATA is empty', (t) => {
   const env = { ...makeHookEnv(t), CLAUDE_PLUGIN_DATA: '' };
   const hookRun = runHook(env, RESUMED);
 

@@ -103,10 +103,16 @@ test('counts launches, ends and returns of one agent and takes the medians', () 
   }]);
 });
 
-test('counts a resume row in no stats and gives it no entry', () => {
+test('leaves the stats of a completed foreground launch unchanged by a resume row', () => {
   const rows = [LAUNCH, END, RETURN];
 
   assert.deepEqual(getAgentStats([...rows, RESUME]), getAgentStats(rows));
+});
+
+test('ignores a resume of an agent id with no end or return row', () => {
+  const rows = [LAUNCH, END, RETURN];
+
+  assert.deepEqual(getAgentStats([...rows, { ...RESUME, agentId: 'zzz' }]), getAgentStats(rows));
 });
 
 test('counts a background launch with a return as completed with the return medians', () => {
@@ -125,10 +131,20 @@ test('counts a background launch with a return as completed with the return medi
   );
 });
 
-test('counts a resume as a cap stop under the agent type of its launch', () => {
-  const [stats] = getAgentStats([{ ...END, status: 'async_launched' }, RESUME, RETURN]);
+test('counts a resume as a cap stop under the agent type of its launch only', () => {
+  const warden = { ...END, subject: 'providens:warden', agentId: 'b', status: 'async_launched' };
+  const [builder, other] = getAgentStats([
+    { ...END, status: 'async_launched' },
+    RESUME,
+    RETURN,
+    warden,
+    { ...RETURN, subject: 'providens:warden', agentId: 'b' },
+  ]);
 
-  assert.deepEqual([stats?.completed, stats?.capped, stats?.noReturn], [1, 1, 0]);
+  assert.deepEqual(
+    [builder?.agent, builder?.capped, other?.agent, other?.capped],
+    [BUILDER, 1, 'providens:warden', 0],
+  );
 });
 
 test('counts a resume of a launch without a return as no return and not capped', () => {
