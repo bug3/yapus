@@ -1,8 +1,8 @@
 import { writeSync } from 'node:fs';
 import { getFirstLine } from '../../shared/get-first-line.ts';
 import { getHooksPath } from '../../shared/hooks-path/get-hooks-path.ts';
+import { readGlobalHooksPath } from '../../shared/hooks-path/read-global-hooks-path.ts';
 import { getConflicts } from './get-conflicts.ts';
-import { readGlobalHooksPath } from './hooks-path/read-global-hooks-path.ts';
 import { readPlugin } from './read-plugin.ts';
 import { writeGlobalHooksPath } from './hooks-path/write-global-hooks-path.ts';
 import { writeHooks } from './write-hooks.ts';

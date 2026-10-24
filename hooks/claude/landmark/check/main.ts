@@ -1,15 +1,12 @@
-import { spawnSync } from 'node:child_process';
 import { readFileSync, writeSync } from 'node:fs';
-import { join } from 'node:path';
 import { formatMessage } from '../../../shared/format-message.ts';
 import { getFirstLine } from '../../../shared/get-first-line.ts';
-import { isRecord } from '../../../shared/is-record.ts';
+import { getStampPath } from '../../../shared/hooks-path/get-stamp-path.ts';
+import { readGlobalHooksPath } from '../../../shared/hooks-path/read-global-hooks-path.ts';
+import { readPluginVersion } from '../../../shared/read-plugin-version.ts';
 import { getLine } from './get-line.ts';
 
 const PROGRAM = 'landmark check';
-
-const GIT_TIMEOUT_MS = 5000;
-const UNSET_STATUS = 1;
 
 // A state to report is a line on stdout and exit 0; a crash is a line on stderr
 // and exit 2, which at SessionStart shows the person the error and blocks nothing.
@@ -31,41 +28,12 @@ function main(): void {
   }
 }
 
-function readPluginVersion(root: string): string {
-  const manifestPath = join(root, '.claude-plugin', 'plugin.json');
-  const manifest: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
-
-  if (!isRecord(manifest) || typeof manifest.version !== 'string') {
-    throw new Error('plugin.json has no version string');
-  }
-
-  return manifest.version;
-}
-
 function readStamp(home: string): string | undefined {
   try {
-    return readFileSync(join(home, '.claude', 'landmark', 'version'), 'utf8').trim();
+    return readFileSync(getStampPath(home), 'utf8').trim();
   } catch {
     return undefined;
   }
-}
-
-function readGlobalHooksPath(): string | undefined {
-  const readRun = spawnSync(
-    'git',
-    ['config', '--global', '--type=path', '--get', 'core.hooksPath'],
-    { encoding: 'utf8', timeout: GIT_TIMEOUT_MS },
-  );
-
-  if (readRun.status === UNSET_STATUS) {
-    return undefined;
-  }
-
-  if (readRun.status !== 0) {
-    throw new Error(`git config could not read core.hooksPath: ${ readRun.stderr.trim() }`);
-  }
-
-  return readRun.stdout.trimEnd();
 }
 
 // writeSync, because process.exit can drop a pending write to a pipe.

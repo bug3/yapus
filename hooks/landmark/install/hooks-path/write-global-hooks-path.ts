@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { readGlobalHooksPath } from './read-global-hooks-path.ts';
+import { readGlobalHooksPath } from '../../../shared/hooks-path/read-global-hooks-path.ts';
 
 const GIT_TIMEOUT_MS = 10000;
 

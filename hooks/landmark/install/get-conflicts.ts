@@ -1,6 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { getHooksPath } from '../../shared/hooks-path/get-hooks-path.ts';
+import { getStampPath } from '../../shared/hooks-path/get-stamp-path.ts';
 import { hasInjectedHooksPath } from '../../shared/hooks-path/has-injected-hooks-path.ts';
 
 // What stops an install or an upgrade into home, one sentence each; empty when
@@ -15,7 +16,7 @@ export function getConflicts(
   },
 ): string[] {
   const rulesDir = join(home, '.claude', 'rules');
-  const stamp = join(home, '.claude', 'landmark', 'version');
+  const stamp = getStampPath(home);
   const isUpgrade = mode === 'upgrade';
   const ruleFiles = !isUpgrade && existsSync(rulesDir)
     ? readdirSync(rulesDir).filter((name) => /^landmark-.*\.md$/.test(name))

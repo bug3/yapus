@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { isRecord } from '../../shared/is-record.ts';
+import { readPluginVersion } from '../../shared/read-plugin-version.ts';
 import { renderStandard } from './render-standard.ts';
 
 export interface Rule {
@@ -17,12 +18,8 @@ export interface Plugin {
 // the rule file it becomes; throws when the manifest or the catalog is not
 // the expected JSON.
 export function readPlugin(root: string): Plugin {
-  const manifest: unknown = readJson(join(root, '.claude-plugin', 'plugin.json'));
+  const version = readPluginVersion(root);
   const catalog: unknown = readJson(join(root, 'paths.json'));
-
-  if (!isRecord(manifest) || typeof manifest.version !== 'string') {
-    throw new Error('plugin.json has no version string');
-  }
 
   if (!isRecord(catalog) || !isRecord(catalog.map)) {
     throw new Error('paths.json has no map object');
@@ -38,7 +35,7 @@ export function readPlugin(root: string): Plugin {
       text: renderStandard(readFileSync(join(standardsDir, fileName), 'utf8'), rendering),
     }));
 
-  return { version: manifest.version, rules };
+  return { version, rules };
 }
 
 function readJson(path: string): unknown {
