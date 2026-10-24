@@ -10,6 +10,7 @@ import {
 import type {
   EndRow,
   LaunchRow,
+  ResumeRow,
   ReturnRow,
 } from '../../../../../hooks/claude/providens/record-row.ts';
 
@@ -65,6 +66,14 @@ const RETURN: ReturnRow = {
   model: undefined,
 };
 
+const RESUME: ResumeRow = {
+  time: 't',
+  hook: 'resume',
+  sessionId: 's',
+  agentId: 'a',
+  toolUseId: 'toolu_1',
+};
+
 test('counts launches, ends and returns of one agent and takes the medians', () => {
   const stats = getAgentStats([
     LAUNCH,
@@ -92,6 +101,12 @@ test('counts launches, ends and returns of one agent and takes the medians', () 
     tokensMedian: 10,
     toolUsesMedian: 3,
   }]);
+});
+
+test('counts a resume row in no stats and gives it no entry', () => {
+  const rows = [LAUNCH, END, RETURN];
+
+  assert.deepEqual(getAgentStats([...rows, RESUME]), getAgentStats(rows));
 });
 
 test('counts a background launch with a return as completed with the return medians', () => {

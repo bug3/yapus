@@ -36,6 +36,14 @@ const END = {
   capped: false,
 };
 
+const RESUME = {
+  time: 't4',
+  hook: 'resume',
+  sessionId: 's',
+  agentId: 'a1',
+  toolUseId: 'toolu_2',
+};
+
 function toText(...lines: readonly unknown[]): string {
   return lines.map((line) => (typeof line === 'string' ? line : JSON.stringify(line))).join('\n');
 }
@@ -73,6 +81,16 @@ test('reads the totals of a return row', () => {
   assert.deepEqual(readRows(toText({ ...RETURN, ...totals })).rows, [
     { ...RETURN, verdict: undefined, ...totals },
   ]);
+});
+
+test('reads a resume row', () => {
+  assert.deepEqual(readRows(toText(RESUME)), { rows: [RESUME], skipped: 0 });
+});
+
+test('skips a resume row without an agent id or a call id', () => {
+  const text = toText({ ...RESUME, agentId: undefined }, { ...RESUME, toolUseId: 3 });
+
+  assert.deepEqual(readRows(text), { rows: [], skipped: 2 });
 });
 
 test('skips a line that is not JSON, not a row and a row of an unknown hook', () => {

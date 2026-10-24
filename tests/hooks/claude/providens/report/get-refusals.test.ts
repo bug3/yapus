@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { getRefusals } from '../../../../../hooks/claude/providens/report/get-refusals.ts';
-import type { LaunchRow, ReturnRow } from '../../../../../hooks/claude/providens/record-row.ts';
+import type {
+  LaunchRow,
+  ResumeRow,
+  ReturnRow,
+} from '../../../../../hooks/claude/providens/record-row.ts';
 
 const LAUNCH: LaunchRow = {
   time: 't',
@@ -44,6 +48,14 @@ test('counts refused launches by reason and sent-back returns as one reason, mos
   ]);
 
   assert.deepEqual(refusals, [['return over the cap', 2], [LAUNCH.reason, 1], ['other', 1]]);
+});
+
+test('counts a resume row as no refusal', () => {
+  const resume: ResumeRow = {
+    time: 't', hook: 'resume', sessionId: 's', agentId: 'a', toolUseId: 'toolu_1',
+  };
+
+  assert.deepEqual(getRefusals([resume]), []);
 });
 
 test('gives no refusals for admitted rows', () => {

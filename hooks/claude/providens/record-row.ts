@@ -64,7 +64,18 @@ export interface EndRow extends Base {
   readonly capped: boolean;
 }
 
-export type Row = LaunchRow | ReturnRow | EndRow;
+// A SendMessage that resumed a subagent that had stopped: the resumed agent's
+// id (joins the end and return rows) and the call id. It names no agent type,
+// so it has no subject: the report joins it to its launch through the agent id.
+export interface ResumeRow {
+  readonly time: string;
+  readonly hook: 'resume';
+  readonly sessionId: string;
+  readonly agentId: string;
+  readonly toolUseId: string;
+}
+
+export type Row = LaunchRow | ReturnRow | EndRow | ResumeRow;
 
 export const RECORD_FILE = 'decisions.jsonl';
 

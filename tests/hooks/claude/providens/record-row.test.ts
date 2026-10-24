@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { recordRow, type ReturnRow } from '../../../../hooks/claude/providens/record-row.ts';
+import {
+  recordRow,
+  type ResumeRow,
+  type ReturnRow,
+} from '../../../../hooks/claude/providens/record-row.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 
 const RETURN: ReturnRow = {
@@ -35,5 +39,23 @@ test('appends each row as one JSON line, creating the directory', (t) => {
       + '"reason":"","agentId":"a1","status":"DONE","length":4}\n'
       + '{"time":"t","hook":"return","sessionId":"s","subject":"providens:deacon","allowed":false,'
       + '"reason":"r","agentId":"a1","status":"DONE","length":4}\n',
+  );
+});
+
+test('appends a resume row as one JSON line', (t) => {
+  const dataDir = makeTempDir(t);
+  const resume: ResumeRow = {
+    time: 't',
+    hook: 'resume',
+    sessionId: 's',
+    agentId: 'a1',
+    toolUseId: 'toolu_1',
+  };
+
+  recordRow(dataDir, resume);
+
+  assert.equal(
+    readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'),
+    '{"time":"t","hook":"resume","sessionId":"s","agentId":"a1","toolUseId":"toolu_1"}\n',
   );
 });

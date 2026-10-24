@@ -15,5 +15,5 @@ export function getRefusals(rows: readonly Row[]): [string, number][] {
 }
 
 function isRefused(row: Row): row is LaunchRow | ReturnRow {
-  return row.hook !== 'end' && !row.allowed;
+  return (row.hook === 'launch' || row.hook === 'return') && !row.allowed;
 }

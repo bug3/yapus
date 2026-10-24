@@ -1,4 +1,4 @@
-import type { LaunchRow, ReturnRow, Row } from '../record-row.ts';
+import type { LaunchRow, ResumeRow, ReturnRow, Row } from '../record-row.ts';
 import { getCompletions, getSilentEnds } from './get-completions.ts';
 import { getMedian } from './get-median.ts';
 
@@ -36,9 +36,15 @@ export const VERDICT_WORDS: readonly string[] = ['GO', 'REVISE', 'APPROVE', 'REW
 
 // One entry per agent type in the rows, sorted by name.
 export function getAgentStats(rows: readonly Row[]): AgentStats[] {
-  const agents = [...new Set(rows.map((row) => row.subject))].sort();
+  const named = rows.filter(hasSubject);
+  const agents = [...new Set(named.map((row) => row.subject))].sort();
 
-  return agents.map((agent) => getStats(agent, rows.filter((row) => row.subject === agent)));
+  return agents.map((agent) => getStats(agent, named.filter((row) => row.subject === agent)));
+}
+
+// A resume row names no agent type, so it counts for no agent yet.
+function hasSubject(row: Row): row is Exclude<Row, ResumeRow> {
+  return row.hook !== 'resume';
 }
 
 function getStats(agent: string, rows: readonly Row[]): AgentStats {

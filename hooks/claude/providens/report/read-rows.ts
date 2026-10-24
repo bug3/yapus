@@ -1,5 +1,5 @@
 import { isRecord } from '../../../shared/is-record.ts';
-import type { EndRow, LaunchRow, ReturnRow, Row } from '../record-row.ts';
+import type { EndRow, LaunchRow, ResumeRow, ReturnRow, Row } from '../record-row.ts';
 
 export interface Rows {
   readonly rows: readonly Row[];
@@ -15,6 +15,7 @@ const READERS: Readonly<Record<string, Reader>> = {
   launch: readLaunch,
   return: readReturn,
   end: readEnd,
+  resume: readResume,
 };
 
 // The rows in the text of the record file, one JSON line each.
@@ -118,6 +119,14 @@ function readEnd(fields: Readonly<Record<string, unknown>>): EndRow | undefined 
       capped,
     }
     : undefined;
+}
+
+function readResume(fields: Readonly<Record<string, unknown>>): ResumeRow | undefined {
+  const { time, sessionId, agentId, toolUseId } = fields;
+  const hasFields = typeof time === 'string' && typeof sessionId === 'string'
+    && typeof agentId === 'string' && typeof toolUseId === 'string';
+
+  return hasFields ? { hook: 'resume', time, sessionId, agentId, toolUseId } : undefined;
 }
 
 function getString(value: unknown): string | undefined {
