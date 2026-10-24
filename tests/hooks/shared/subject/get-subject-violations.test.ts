@@ -7,6 +7,7 @@ const CATALOGS = {
   scopes: { path: 'c/scopes.json', words: ['hooks'] },
   verbs: { path: 'c/verbs.json', words: ['add'] },
 };
+const PULL_REQUEST_TITLE = { allowAutosquash: false, allowGenerated: false };
 const FORM_REFUSAL =
   'is not in the form "type(scope): verb ...", such as "feat(hooks): add a check"; rewrite the subject';
 
@@ -85,14 +86,18 @@ test('counts the subject in characters, not UTF-16 units', () => {
   assert.deepEqual(getSubjectViolations(subject, CATALOGS), []);
 });
 
-test('refuses a merge subject', () => {
-  assert.deepEqual(getSubjectViolations("Merge branch 'x'", CATALOGS), [
+test('refuses a merge subject when generated subjects are not allowed', () => {
+  const subject = "Merge branch 'x'";
+
+  assert.deepEqual(getSubjectViolations(subject, CATALOGS, PULL_REQUEST_TITLE), [
     `"Merge branch 'x'" ${ FORM_REFUSAL }`,
   ]);
 });
 
-test('refuses a revert subject', () => {
-  assert.deepEqual(getSubjectViolations('Revert "feat(hooks): add a check"', CATALOGS), [
+test('refuses a revert subject when generated subjects are not allowed', () => {
+  const subject = 'Revert "feat(hooks): add a check"';
+
+  assert.deepEqual(getSubjectViolations(subject, CATALOGS, PULL_REQUEST_TITLE), [
     `"Revert \\"feat(hooks): add a check\\"" ${ FORM_REFUSAL }`,
   ]);
 });
@@ -110,7 +115,7 @@ test('judges the subject after stacked autosquash prefixes', () => {
 test('refuses a fixup prefix when autosquash is not allowed', () => {
   const subject = 'fixup! feat(hooks): add a check';
 
-  assert.deepEqual(getSubjectViolations(subject, CATALOGS, { allowAutosquash: false }), [
+  assert.deepEqual(getSubjectViolations(subject, CATALOGS, PULL_REQUEST_TITLE), [
     `${ JSON.stringify(subject) } ${ FORM_REFUSAL }`,
   ]);
 });
@@ -119,4 +124,39 @@ test('refuses a fixup prefix before a subject out of form', () => {
   assert.deepEqual(getSubjectViolations('fixup! Fixed it', CATALOGS), [
     `"fixup! Fixed it" ${ FORM_REFUSAL }`,
   ]);
+});
+
+test('passes the subjects git writes for a merge', () => {
+  for (const subject of [
+    "Merge branch 'x'",
+    "Merge branch 'x' into main",
+    "Merge branches 'x' and 'y'",
+    "Merge remote-tracking branch 'origin/x'",
+    "Merge tag 'v1'",
+    "Merge commit 'abc'",
+    'Merge pull request #12 from owner/branch',
+  ]) {
+    assert.deepEqual(getSubjectViolations(subject, CATALOGS), [], subject);
+  }
+});
+
+test('passes the subject git writes for a revert', () => {
+  assert.deepEqual(getSubjectViolations('Revert "feat(hooks): add a check"', CATALOGS), []);
+});
+
+test('refuses a merge or revert subject that git would not write', () => {
+  for (const subject of [
+    'Merge the calibration fix',
+    'Merge branch of nouns',
+    'Merge pull request fix',
+    'Revert "x" because y',
+  ]) {
+    assert.deepEqual(getSubjectViolations(subject, CATALOGS), [
+      `${ JSON.stringify(subject) } ${ FORM_REFUSAL }`,
+    ], subject);
+  }
+});
+
+test('does not limit the length of a generated subject', () => {
+  assert.deepEqual(getSubjectViolations(`Revert "${ 'x'.repeat(70) }"`, CATALOGS), []);
 });

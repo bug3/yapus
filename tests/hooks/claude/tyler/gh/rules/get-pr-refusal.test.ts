@@ -322,6 +322,19 @@ test('refuses a title with an autosquash prefix', (t) => {
   );
 });
 
+test('refuses a title that git writes for a merge', (t) => {
+  assert.equal(
+    getPrRefusal(
+      words('-t', "Merge branch 'x'", '-l', LABELS, '-F', 'body.md'),
+      bodyDir(t),
+      CATALOGS,
+    ),
+    'the title of `gh pr create` breaks the subject rule: "Merge branch \'x\'" is not in '
+    + 'the form "type(scope): verb ...", such as "feat(hooks): add a check"; '
+    + 'rewrite the subject; rewrite it',
+  );
+});
+
 test('refuses an option it does not know', (t) => {
   assert.equal(
     getPrRefusal(words('--nope'), bodyDir(t), CATALOGS),

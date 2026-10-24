@@ -59,7 +59,10 @@ function getTitleRefusal(args: GhArguments, catalogs: GhCatalogs | undefined): s
     return undefined;
   }
 
-  const violations = getSubjectViolations(title, catalogs, { allowAutosquash: false });
+  const violations = getSubjectViolations(title, catalogs, {
+    allowAutosquash: false,
+    allowGenerated: false,
+  });
 
   return violations.length === 0 ? undefined : reasons.title(spec.command, violations);
 }

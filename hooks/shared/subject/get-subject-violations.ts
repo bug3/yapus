@@ -3,6 +3,15 @@ import { readSubjectParts } from './read-subject-parts.ts';
 
 // git's autosquash prefixes, which may stack.
 const AUTOSQUASH_PREFIXES = /^(?:(?:fixup|squash|amend)! )*/;
+// What git and GitHub write themselves. Only the generated forms pass: a bare
+// "Merge" prefix would be a free bypass. A revert subject must end at its closing quote.
+const GENERATED_SUBJECTS = new RegExp(
+  [
+    "^Merge (?:branch(?:es)?|tags?|commits?|remote-tracking branch(?:es)?) '",
+    '^Merge pull request #[0-9]+ from \\S',
+    '^Revert ".*"$',
+  ].join('|'),
+);
 const MAX_LENGTH = 72;
 const CHARACTERS = new Intl.Segmenter();
 
@@ -16,15 +25,21 @@ export interface Catalogs {
 export interface SubjectOptions {
   // A commit may start with git's autosquash prefixes; a pull request title may not.
   readonly allowAutosquash: boolean;
+  // A commit may be a merge or a revert that git wrote; a pull request title may not.
+  readonly allowGenerated: boolean;
 }
 
-const COMMIT_OPTIONS: SubjectOptions = { allowAutosquash: true };
+const COMMIT_OPTIONS: SubjectOptions = { allowAutosquash: true, allowGenerated: true };
 
 export function getSubjectViolations(
   subject: string,
   catalogs: Catalogs,
   options: SubjectOptions = COMMIT_OPTIONS,
 ): string[] {
+  if (options.allowGenerated && GENERATED_SUBJECTS.test(subject)) {
+    return [];
+  }
+
   return [
     ...getLengthViolations(subject),
     ...getFormViolations(subject, catalogs, options),
