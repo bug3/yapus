@@ -95,6 +95,19 @@ test('takes the source and the totals from the last return of an agent sent back
   );
 });
 
+test('keeps the totals of an earlier return when the last return has none', () => {
+  const first = { ...RETURN, tokens: 50, durationMs: 100, toolUses: 1, time: 't1' };
+  const last = {
+    ...RETURN, tokens: undefined, durationMs: undefined, toolUses: undefined, time: 't2',
+  };
+  const completions = getCompletions([first, last]);
+
+  assert.deepEqual(
+    completions.map((entry) => [entry.tokens, entry.durationMs, entry.toolUses, entry.time]),
+    [[50, 100, 1, 't2']],
+  );
+});
+
 test('counts an async_launched end with a return as no silent end', () => {
   assert.deepEqual(getSilentEnds([{ ...END, status: 'async_launched' }, RETURN]), []);
 });

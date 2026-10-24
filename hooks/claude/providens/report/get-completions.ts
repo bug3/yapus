@@ -1,7 +1,9 @@
 import type { EndRow, ReturnRow, Row } from '../record-row.ts';
 
 // One subagent that finished: it has a return row, or an end row that
-// completed. The totals come from the end row first, then from the return.
+// completed. A total comes from the end row first, then from the last return
+// that has it: a sent-back agent returns twice, and a transcript the hook
+// could not read leaves a return without totals.
 export interface Completion {
   readonly agentId: string;
   readonly subject: string;
