@@ -2,6 +2,7 @@ import { writeSync } from 'node:fs';
 import { getFirstLine } from '../../shared/get-first-line.ts';
 import { getConflicts } from './get-conflicts.ts';
 import { readPlugin } from './read-plugin.ts';
+import { writeHooks } from './write-hooks.ts';
 import { writeInstall } from './write-install.ts';
 
 const UNDO = [
@@ -27,7 +28,7 @@ function main(): void {
       stop(2, ['yapus landmark install: refused, nothing written', ...conflicts]);
     }
 
-    const written = writeInstall(home, readPlugin(root));
+    const written = [...writeInstall(home, readPlugin(root)), ...writeHooks(home, root)];
 
     stop(0, ['yapus landmark install: wrote', ...written, ...UNDO]);
   } catch (error) {
