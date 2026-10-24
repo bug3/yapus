@@ -54,14 +54,14 @@ function isBackgroundLaunch(rows: readonly Row[], agentId: string): boolean {
 // stop when the run before it holds no allowed return (a refused return keeps
 // the subagent running).
 function isResumedAfterCapStop(rows: readonly Row[], agentId: string): boolean {
-  const { isStopped } = rows.filter((row) => isRunEvent(row, agentId)).reduce(
+  const { hasCapStop } = rows.filter((row) => isRunEvent(row, agentId)).reduce(
     (state, row) => (row.hook === 'resume'
-      ? { hasReturn: false, isStopped: state.isStopped || !state.hasReturn }
-      : { hasReturn: state.hasReturn || row.allowed, isStopped: state.isStopped }),
-    { hasReturn: false, isStopped: false },
+      ? { hasReturn: false, hasCapStop: state.hasCapStop || !state.hasReturn }
+      : { hasReturn: state.hasReturn || row.allowed, hasCapStop: state.hasCapStop }),
+    { hasReturn: false, hasCapStop: false },
   );
 
-  return isStopped;
+  return hasCapStop;
 }
 
 function isRunEvent(row: Row, agentId: string): row is ResumeRow | ReturnRow {
