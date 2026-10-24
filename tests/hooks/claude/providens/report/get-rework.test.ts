@@ -48,6 +48,26 @@ test('lands one REWORK on the latest builder before it, not on every builder', (
   assert.deepEqual(rework, { builders: 2, reworked: 1 });
 });
 
+test('lands each REWORK on the latest builder before it when judges interleave', () => {
+  const rework = getRework([
+    { ...END, time: 't1' },
+    { ...JUDGE, time: 't2' },
+    { ...END, agentId: 'c', time: 't3' },
+    { ...JUDGE, agentId: 'f', time: 't4' },
+  ]);
+
+  assert.deepEqual(rework, { builders: 2, reworked: 2 });
+});
+
+test('lands no REWORK on a builder of another session', () => {
+  const rework = getRework([
+    { ...END, sessionId: 's2', time: 't1' },
+    { ...JUDGE, time: 't2' },
+  ]);
+
+  assert.deepEqual(rework, { builders: 1, reworked: 0 });
+});
+
 test('counts a builder once however many returns land on it', () => {
   const rework = getRework([
     { ...END, time: 't1' },
