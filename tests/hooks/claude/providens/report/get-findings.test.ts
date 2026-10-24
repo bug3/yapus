@@ -9,6 +9,7 @@ const BUILDER: AgentStats = {
   refused: 0,
   completed: 40,
   capped: 14,
+  noReturn: 0,
   returns: 40,
   sentBack: 2,
   contractWords: 40,

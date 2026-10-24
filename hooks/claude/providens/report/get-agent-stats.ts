@@ -1,4 +1,5 @@
-import type { EndRow, LaunchRow, ReturnRow, Row } from '../record-row.ts';
+import type { LaunchRow, ReturnRow, Row } from '../record-row.ts';
+import { getCompletions, getSilentEnds } from './get-completions.ts';
 import { getMedian } from './get-median.ts';
 
 // The counts and medians of one agent type over the record.
@@ -7,9 +8,12 @@ export interface AgentStats {
   // Launch rows: admitted and refused.
   readonly launches: number;
   readonly refused: number;
-  // End rows of completed launches, and those that ran out of turns.
+  // Completions (a return row or a completed end row), and those that ran out
+  // of turns.
   readonly completed: number;
   readonly capped: number;
+  // End rows of launches that neither completed nor returned: a cap or a kill in the background.
+  readonly noReturn: number;
   // Return rows: all, sent back over the cap, and opening with a word the
   // return contract names.
   readonly returns: number;
@@ -30,8 +34,6 @@ export const CONTRACT_WORDS: readonly string[] = ['DONE', 'PARTIAL', 'QUESTIONS'
 // after the status.
 export const VERDICT_WORDS: readonly string[] = ['GO', 'REVISE', 'APPROVE', 'REWORK'];
 
-const COMPLETED = 'completed';
-
 // One entry per agent type in the rows, sorted by name.
 export function getAgentStats(rows: readonly Row[]): AgentStats[] {
   const agents = [...new Set(rows.map((row) => row.subject))].sort();
@@ -41,22 +43,23 @@ export function getAgentStats(rows: readonly Row[]): AgentStats[] {
 
 function getStats(agent: string, rows: readonly Row[]): AgentStats {
   const launches = rows.filter((row): row is LaunchRow => row.hook === 'launch');
-  const ends = rows.filter((row): row is EndRow => row.hook === 'end' && row.status === COMPLETED);
+  const completions = getCompletions(rows);
   const returns = rows.filter((row): row is ReturnRow => row.hook === 'return');
 
   return {
     agent,
     launches: launches.filter((row) => row.allowed).length,
     refused: launches.filter((row) => !row.allowed).length,
-    completed: ends.length,
-    capped: ends.filter((row) => row.capped).length,
+    completed: completions.length,
+    capped: completions.filter((entry) => entry.capped).length,
+    noReturn: getSilentEnds(rows).length,
     returns: returns.length,
     sentBack: returns.filter((row) => !row.allowed).length,
     contractWords: returns.filter((row) => CONTRACT_WORDS.includes(row.status)).length,
     verdicts: countWords(returns.map((row) => row.verdict)),
-    durationMedianMs: getMedian(ends.map((row) => row.durationMs).filter(isNumber)),
-    tokensMedian: getMedian(ends.map((row) => row.tokens).filter(isNumber)),
-    toolUsesMedian: getMedian(ends.map((row) => row.toolUses).filter(isNumber)),
+    durationMedianMs: getMedian(completions.map((entry) => entry.durationMs).filter(isNumber)),
+    tokensMedian: getMedian(completions.map((entry) => entry.tokens).filter(isNumber)),
+    toolUsesMedian: getMedian(completions.map((entry) => entry.toolUses).filter(isNumber)),
   };
 }
 

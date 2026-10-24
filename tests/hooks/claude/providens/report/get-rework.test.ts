@@ -41,9 +41,9 @@ const JUDGE: ReturnRow = {
 test('counts a builder end followed by REWORK or REVISE in its session as reworked', () => {
   const rework = getRework([
     END,
-    { ...END, time: '2026-10-24T10:10:00Z' },
-    { ...END, sessionId: 's2' },
-    { ...END, status: 'async_launched' },
+    { ...END, agentId: 'c', time: '2026-10-24T10:10:00Z' },
+    { ...END, agentId: 'd', sessionId: 's2' },
+    { ...END, agentId: 'e', status: 'async_launched' },
     JUDGE,
     { ...JUDGE, sessionId: 's2', verdict: 'APPROVE' },
   ]);
@@ -59,4 +59,16 @@ test('counts REVISE and ignores a judge before the builder ended', () => {
     getRework([END, { ...JUDGE, verdict: 'REVISE' }]),
     { builders: 1, reworked: 1 },
   );
+});
+
+test('counts a builder that only returned as reworked by a later REWORK', () => {
+  const builderReturn: ReturnRow = {
+    ...JUDGE,
+    time: '2026-10-24T10:00:00Z',
+    subject: 'providens:builder',
+    agentId: 'a',
+    verdict: undefined,
+  };
+
+  assert.deepEqual(getRework([builderReturn, JUDGE]), { builders: 1, reworked: 1 });
 });

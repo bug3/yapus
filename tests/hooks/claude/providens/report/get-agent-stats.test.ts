@@ -70,8 +70,8 @@ test('counts launches, ends and returns of one agent and takes the medians', () 
     LAUNCH,
     { ...LAUNCH, allowed: false, reason: 'r' },
     END,
-    { ...END, capped: true, durationMs: 300, tokens: undefined },
-    { ...END, status: 'async_launched', durationMs: 9000 },
+    { ...END, agentId: 'b', capped: true, durationMs: 300, tokens: undefined },
+    { ...END, agentId: 'c', status: 'async_launched', durationMs: 9000 },
     { ...RETURN, verdict: 'Command:' },
     { ...RETURN, allowed: false, status: 'Here', verdict: 'REWORK' },
     { ...RETURN, status: 'PARTIAL', verdict: 'REWORK' },
@@ -83,6 +83,7 @@ test('counts launches, ends and returns of one agent and takes the medians', () 
     refused: 1,
     completed: 2,
     capped: 1,
+    noReturn: 1,
     returns: 3,
     sentBack: 1,
     contractWords: 2,
@@ -91,6 +92,28 @@ test('counts launches, ends and returns of one agent and takes the medians', () 
     tokensMedian: 10,
     toolUsesMedian: 3,
   }]);
+});
+
+test('counts a background launch with a return as completed with the return medians', () => {
+  const [stats] = getAgentStats([
+    { ...END, status: 'async_launched' },
+    { ...RETURN, tokens: 70, toolUses: 7, durationMs: 700 },
+  ]);
+
+  assert.deepEqual(
+    [stats?.completed, stats?.capped, stats?.noReturn],
+    [1, 0, 0],
+  );
+  assert.deepEqual(
+    [stats?.durationMedianMs, stats?.tokensMedian, stats?.toolUsesMedian],
+    [700, 70, 7],
+  );
+});
+
+test('counts a background launch without a return as no return and not completed', () => {
+  const [stats] = getAgentStats([{ ...END, status: 'async_launched' }]);
+
+  assert.deepEqual([stats?.completed, stats?.noReturn], [0, 1]);
 });
 
 test('gives one entry per agent, sorted by name, with undefined medians without ends', () => {

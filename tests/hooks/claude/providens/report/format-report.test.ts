@@ -18,6 +18,7 @@ const REPORT: Report = {
     refused: 0,
     completed: 1,
     capped: 0,
+    noReturn: 0,
     returns: 1,
     sentBack: 0,
     contractWords: 1,
