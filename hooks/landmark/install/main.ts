@@ -36,15 +36,14 @@ function main(): void {
     }
 
     const plugin = readPlugin(root);
-    const written = [
-      ...writeRules(home, plugin),
-      writeStamp(home, plugin.version),
-      ...writeHooks(home, root),
-    ];
+    const rules = writeRules(home, plugin);
+    const hooks = writeHooks(home, root);
 
     if (hooksPath === undefined) {
       writeGlobalHooksPath(getHooksPath(home));
     }
+
+    const written = [...rules, ...hooks, writeStamp(home, plugin.version)];
 
     stop(0, [`yapus landmark ${ mode }: wrote`, ...written, ...UNDO]);
   } catch (error) {

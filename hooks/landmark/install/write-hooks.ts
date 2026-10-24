@@ -1,6 +1,7 @@
-import { chmodSync, copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { readNameList } from './read-name-list.ts';
+import { swapDirectory } from './swap-directory.ts';
 
 const EXECUTABLE = 0o755;
 const SOURCE_EXTENSIONS = ['.ts', '.json'];
@@ -8,35 +9,46 @@ const SOURCE_EXTENSIONS = ['.ts', '.json'];
 // Copies the hook files of the plugin at root into <home>/.claude/landmark/hooks,
 // keeping the layout, and writes one stub per forwarded hook name; returns the
 // paths. What is neither a source file nor JSON is a bash entry and runs.
+// Everything is written into a staging directory beside the target and swapped
+// in at the end, so a failure leaves the previous hooks directory as it was.
 export function writeHooks(home: string, root: string): string[] {
   const source = join(root, 'runtime');
   const target = join(home, '.claude', 'landmark', 'hooks');
+  const staging = `${ target }.new`;
   const files = readNameList(join(source, 'landmark', 'install', 'hook-files.json'));
   const names = readNameList(join(source, 'git', 'forward-names.json'));
 
-  const copied = files.map((file) => {
-    const path = join(target, file);
+  rmSync(staging, { recursive: true, force: true });
 
-    mkdirSync(dirname(path), { recursive: true });
-    copyFileSync(join(source, file), path);
+  try {
+    files.forEach((file) => {
+      copyHook(join(source, file), join(staging, file));
+    });
+    names.forEach((name) => {
+      writeStub(join(staging, 'git', name), name);
+    });
+    swapDirectory(staging, target);
+  } catch (error) {
+    rmSync(staging, { recursive: true, force: true });
 
-    if (!SOURCE_EXTENSIONS.some((extension) => file.endsWith(extension))) {
-      chmodSync(path, EXECUTABLE);
-    }
+    throw error;
+  }
 
-    return path;
-  });
+  return [...files, ...names.map((name) => join('git', name))].map((file) => join(target, file));
+}
 
-  const stubs = names.map((name) => {
-    const path = join(target, 'git', name);
+function copyHook(from: string, to: string): void {
+  mkdirSync(dirname(to), { recursive: true });
+  copyFileSync(from, to);
 
-    writeFileSync(path, makeStub(name), { mode: EXECUTABLE });
-    chmodSync(path, EXECUTABLE);
+  if (!SOURCE_EXTENSIONS.some((extension) => to.endsWith(extension))) {
+    chmodSync(to, EXECUTABLE);
+  }
+}
 
-    return path;
-  });
-
-  return [...copied, ...stubs];
+function writeStub(path: string, name: string): void {
+  writeFileSync(path, makeStub(name), { mode: EXECUTABLE });
+  chmodSync(path, EXECUTABLE);
 }
 
 function makeStub(name: string): string {

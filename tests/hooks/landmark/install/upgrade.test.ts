@@ -3,9 +3,13 @@ import { type SpawnSyncReturns, spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type TestContext } from 'node:test';
+import { readPluginVersion } from '../../../../hooks/shared/read-plugin-version.ts';
 import { makeEnv, runInstall } from './run-install.ts';
 
 const UPGRADE_TIMEOUT_MS = 20000;
+const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'landmark');
+const PLUGIN_VERSION = readPluginVersion(PLUGIN);
+const NEXT_VERSION = '99.0.0';
 
 interface Upgraded {
   readonly home: string;
@@ -39,6 +43,15 @@ function runUpgrade(home: string, extraEnv: NodeJS.ProcessEnv = {}): SpawnSyncRe
   return spawnSync('bash', [entry, 'landmark/install', root, 'upgrade'], {
     encoding: 'utf8', env: makeEnv(home, extraEnv), timeout: UPGRADE_TIMEOUT_MS,
   });
+}
+
+function bumpVersion(root: string): void {
+  const manifest = join(root, '.claude-plugin', 'plugin.json');
+
+  writeFileSync(
+    manifest,
+    readFileSync(manifest, 'utf8').replace(`"${ PLUGIN_VERSION }"`, `"${ NEXT_VERSION }"`),
+  );
 }
 
 function gitConfig(home: string, args: string[]): string {
@@ -79,6 +92,24 @@ test('upgrade after a plugin change rewrites the rule file and the stamp', (t) =
   assert.equal(readFileSync(join(home, '.claude', 'landmark', 'version'), 'utf8'), '0.2.0');
   assert.match(rule, /Added line\./);
   assert.notEqual(snapshot(home), before);
+});
+
+test('upgrade that fails in the hooks copy keeps the old hooks and the old stamp', (t) => {
+  const { home, before, upgradeRun } = installThenUpgrade(t, (root) => {
+    bumpVersion(root);
+    rmSync(join(root, 'runtime', 'shared', 'read-catalog.ts'));
+  });
+  const checkRun = spawnSync(
+    'bash',
+    [join(getRoot(home), 'runtime', 'run.sh'), 'claude/landmark/check', getRoot(home)],
+    { encoding: 'utf8', env: makeEnv(home), timeout: UPGRADE_TIMEOUT_MS },
+  );
+
+  assert.equal(upgradeRun.status, 2);
+  assert.match(upgradeRun.stderr, /crashed/);
+  assert.equal(snapshot(home), before);
+  assert.equal(readFileSync(join(home, '.claude', 'landmark', 'version'), 'utf8'), PLUGIN_VERSION);
+  assert.match(checkRun.stdout, /run \/landmark:upgrade/);
 });
 
 test('upgrade without a stamp is refused and writes nothing', (t) => {
