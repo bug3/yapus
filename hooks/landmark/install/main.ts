@@ -6,7 +6,8 @@ import { getConflicts } from './get-conflicts.ts';
 import { readPlugin } from './read-plugin.ts';
 import { writeGlobalHooksPath } from './hooks-path/write-global-hooks-path.ts';
 import { writeHooks } from './write-hooks.ts';
-import { writeInstall } from './write-install.ts';
+import { writeRules } from './write-rules.ts';
+import { writeStamp } from './write-stamp.ts';
 
 const UNDO = [
   'To undo:',
@@ -34,7 +35,12 @@ function main(): void {
       stop(2, [`yapus landmark ${ mode }: refused, nothing written`, ...conflicts]);
     }
 
-    const written = [...writeInstall(home, readPlugin(root)), ...writeHooks(home, root)];
+    const plugin = readPlugin(root);
+    const written = [
+      ...writeRules(home, plugin),
+      writeStamp(home, plugin.version),
+      ...writeHooks(home, root),
+    ];
 
     if (hooksPath === undefined) {
       writeGlobalHooksPath(getHooksPath(home));
