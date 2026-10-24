@@ -5,10 +5,11 @@ import { readUtf8 } from '../../helpers/read-utf8.ts';
 const MARKETPLACE = '.claude-plugin/marketplace.json';
 const MANIFEST = '.claude-plugin/plugin.json';
 const LOCAL_SOURCE = /^\.\/[a-z0-9/-]+$/;
+const SEMVER = /^\d+\.\d+\.\d+$/;
 
 // Every way the marketplace under root fails to list a plugin of this
-// repository that carries its own manifest; the commit sha versions the
-// plugins, so neither file may carry a version.
+// repository that carries its own manifest; the manifest is the one home of
+// the version, `major.minor.patch`, so the entry may not carry one.
 export function getMarketplaceProblems(root: string): string[] {
   const plugins = getField(readJson(join(root, MARKETPLACE)), 'plugins');
 
@@ -37,13 +38,19 @@ function getEntryProblems(root: string, entry: unknown): string[] {
 
   return [
     ...hasVersion(entry) ? [`${ name }: the marketplace entry carries a version`] : [],
-    ...hasVersion(manifest) ? [`${ name }: ${ MANIFEST } carries a version`] : [],
+    ...hasSemver(manifest) ? [] : [`${ name }: ${ MANIFEST } has no major.minor.patch version`],
     ...isNamedAlike ? [] : [`${ name }: ${ MANIFEST } names another plugin`],
   ];
 }
 
 function hasVersion(value: unknown): boolean {
   return getField(value, 'version') !== undefined;
+}
+
+function hasSemver(value: unknown): boolean {
+  const version = getField(value, 'version');
+
+  return typeof version === 'string' && SEMVER.test(version);
 }
 
 // The parsed file, or undefined when it is missing or not JSON.

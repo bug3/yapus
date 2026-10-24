@@ -6,9 +6,9 @@ import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
 import { getMarketplaceProblems } from './get-marketplace-problems.ts';
 
 const ENTRY = '{ "name": "a", "source": "./plugins/a" }';
-const MANIFEST = '{ "name": "a" }';
+const MANIFEST = '{ "name": "a", "version": "1.0.0" }';
 
-test('finds nothing when each entry has a matching manifest and no version', (t) => {
+test('finds nothing when each entry has a matching manifest with a version', (t) => {
   assert.deepEqual(getMarketplaceProblems(makeTree(t, ENTRY, MANIFEST)), []);
 });
 
@@ -34,16 +34,16 @@ test('names a missing manifest', (t) => {
   ]);
 });
 
-test('names a version in either file and a manifest of another name', (t) => {
+test('names a version in the entry, a manifest without one and another name', (t) => {
   const root = makeTree(
     t,
     '{ "name": "a", "source": "./plugins/a", "version": "1.0.0" }',
-    '{ "name": "b", "version": "1.0.0" }',
+    '{ "name": "b", "version": "1.0" }',
   );
 
   assert.deepEqual(getMarketplaceProblems(root), [
     'a: the marketplace entry carries a version',
-    'a: .claude-plugin/plugin.json carries a version',
+    'a: .claude-plugin/plugin.json has no major.minor.patch version',
     'a: .claude-plugin/plugin.json names another plugin',
   ]);
 });
