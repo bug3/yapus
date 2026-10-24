@@ -4,7 +4,12 @@ import {
   getCompletions,
   getSilentEnds,
 } from '../../../../../hooks/claude/providens/report/get-completions.ts';
-import type { EndRow, ReturnRow } from '../../../../../hooks/claude/providens/record-row.ts';
+import type {
+  EndRow,
+  ResumeRow,
+  ReturnRow,
+  Row,
+} from '../../../../../hooks/claude/providens/record-row.ts';
 
 const BUILDER = 'providens:builder';
 const END: EndRow = {
@@ -41,6 +46,18 @@ const RETURN: ReturnRow = {
   durationMs: 700,
   model: undefined,
 };
+const RESUME: ResumeRow = {
+  time: 'tu',
+  hook: 'resume',
+  sessionId: 's',
+  agentId: 'a',
+  toolUseId: 'toolu_1',
+};
+const ASYNC_END: EndRow = { ...END, status: 'async_launched' };
+
+function isCapped(...rows: readonly Row[]): boolean | undefined {
+  return getCompletions(rows)[0]?.capped;
+}
 
 test('makes a completion of a return alone with the return totals', () => {
   assert.deepEqual(getCompletions([RETURN]), [{
@@ -126,4 +143,30 @@ test('counts an async_launched end without a return as a silent end', () => {
 
 test('counts an async_launched end without a return as no completion', () => {
   assert.deepEqual(getCompletions([{ ...END, status: 'async_launched' }]), []);
+});
+
+test('counts a launch as capped when a resume follows an end and no return', () => {
+  assert.equal(isCapped(ASYNC_END, RESUME, RETURN), true);
+});
+
+test('counts a launch as not capped when a resume follows a return', () => {
+  assert.equal(isCapped(ASYNC_END, RETURN, RESUME, RETURN), false);
+});
+
+test('counts a foreground launch, whose return precedes its end, as not capped', () => {
+  assert.equal(isCapped(RETURN, END, RESUME, RETURN), false);
+});
+
+test('counts a launch as capped when a second resume follows a run without a return', () => {
+  assert.equal(isCapped(ASYNC_END, RETURN, RESUME, RESUME, RETURN), true);
+});
+
+test('counts a launch as capped when a resume follows a refused return only', () => {
+  const refused = { ...RETURN, allowed: false };
+
+  assert.equal(isCapped(ASYNC_END, refused, RESUME, RETURN), true);
+});
+
+test('counts a resume of another agent id as no cap stop', () => {
+  assert.equal(isCapped(ASYNC_END, { ...RESUME, agentId: 'b' }, RETURN), false);
 });

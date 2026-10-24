@@ -1,9 +1,10 @@
-import type { EndRow, ReturnRow, Row } from '../record-row.ts';
+import type { EndRow, ResumeRow, ReturnRow, Row } from '../record-row.ts';
 
 // One subagent that finished: it has a return row, or an end row that
 // completed. A total comes from the end row first, then from the last return
 // that has it: a sent-back agent returns twice, and a transcript the hook
-// could not read leaves a return without totals.
+// could not read leaves a return without totals. A launch is capped when its
+// end carries the cap note or when a resume of it follows a cap stop.
 export interface Completion {
   readonly agentId: string;
   readonly subject: string;
@@ -34,9 +35,29 @@ export function getCompletions(rows: readonly Row[]): Completion[] {
         ?? own.findLast((row) => row.durationMs !== undefined)?.durationMs,
       tokens: end?.tokens ?? own.findLast((row) => row.tokens !== undefined)?.tokens,
       toolUses: end?.toolUses ?? own.findLast((row) => row.toolUses !== undefined)?.toolUses,
-      capped: end?.capped ?? false,
+      capped: (end?.capped ?? false) || isResumedAfterCapStop(rows, agentId),
     }];
   });
+}
+
+// A background subagent that hits its turn cap fires no stop hook, so the
+// record shows it only when the session resumes it. The rows of one agent id,
+// in append order, are cut by its resumes into runs; a resume follows a cap
+// stop when the run before it holds no allowed return (a refused return keeps
+// the subagent running).
+function isResumedAfterCapStop(rows: readonly Row[], agentId: string): boolean {
+  const { isStopped } = rows.filter((row) => isRunEvent(row, agentId)).reduce(
+    (state, row) => (row.hook === 'resume'
+      ? { hasReturn: false, isStopped: state.isStopped || !state.hasReturn }
+      : { hasReturn: state.hasReturn || row.allowed, isStopped: state.isStopped }),
+    { hasReturn: false, isStopped: false },
+  );
+
+  return isStopped;
+}
+
+function isRunEvent(row: Row, agentId: string): row is ResumeRow | ReturnRow {
+  return (row.hook === 'resume' || row.hook === 'return') && row.agentId === agentId;
 }
 
 // End rows that did not complete and whose agent never returned: a subagent

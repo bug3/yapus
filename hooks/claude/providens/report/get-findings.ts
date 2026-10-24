@@ -40,8 +40,9 @@ const PERCENT = 100;
 const ROSTER_AGENTS: readonly string[] = ROSTER.map((name) => `providens:${ name }`);
 
 const RATE_RULES: readonly RateRule[] = [
-  // A background subagent that hits its turn cap fires no stop hook, so a
-  // launch that ended without a return is counted with the capped ones.
+  // A background subagent that hits its turn cap fires no stop hook: one
+  // resumed after a run without a return is counted as capped, and a launch
+  // that ended without a return is counted with the capped ones.
   {
     rule: 'cap-stop rate',
     getCounts: (stats) => [stats.capped + stats.noReturn, stats.completed + stats.noReturn],

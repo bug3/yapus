@@ -38,11 +38,26 @@ export const VERDICT_WORDS: readonly string[] = ['GO', 'REVISE', 'APPROVE', 'REW
 export function getAgentStats(rows: readonly Row[]): AgentStats[] {
   const named = rows.filter(hasSubject);
   const agents = [...new Set(named.map((row) => row.subject))].sort();
+  const subjects = getSubjects(named);
 
-  return agents.map((agent) => getStats(agent, named.filter((row) => row.subject === agent)));
+  return agents.map((agent) =>
+    getStats(agent, rows.filter((row) => getSubject(row, subjects) === agent)));
 }
 
-// A resume row names no agent type, so it counts for no agent yet.
+// The agent type of each agent id that has an end or a return row.
+function getSubjects(rows: readonly Exclude<Row, ResumeRow>[]): ReadonlyMap<string, string> {
+  return new Map(rows.flatMap((row): [string, string][] =>
+    (row.hook === 'end' || row.hook === 'return') && row.agentId !== undefined
+      ? [[row.agentId, row.subject]]
+      : []));
+}
+
+// A resume row names no agent type: it counts under the type of its launch,
+// found through the agent id, and under none when the id has no end or return.
+function getSubject(row: Row, subjects: ReadonlyMap<string, string>): string | undefined {
+  return row.hook === 'resume' ? subjects.get(row.agentId) : row.subject;
+}
+
 function hasSubject(row: Row): row is Exclude<Row, ResumeRow> {
   return row.hook !== 'resume';
 }

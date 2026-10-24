@@ -1,8 +1,36 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import type { AgentStats } from '../../../../../hooks/claude/providens/report/get-agent-stats.ts';
+import {
+  type AgentStats,
+  getAgentStats,
+} from '../../../../../hooks/claude/providens/report/get-agent-stats.ts';
+import type { EndRow, ResumeRow } from '../../../../../hooks/claude/providens/record-row.ts';
 import { getFindings } from '../../../../../hooks/claude/providens/report/get-findings.ts';
 
+const SILENT_END: EndRow = {
+  time: 't',
+  hook: 'end',
+  sessionId: 's',
+  subject: 'providens:builder',
+  promptId: undefined,
+  toolUseId: undefined,
+  agentId: 'a',
+  status: 'async_launched',
+  model: undefined,
+  durationMs: undefined,
+  tokens: undefined,
+  toolUses: undefined,
+  word: undefined,
+  length: undefined,
+  capped: false,
+};
+const RESUME: ResumeRow = {
+  time: 't',
+  hook: 'resume',
+  sessionId: 's',
+  agentId: 'a',
+  toolUseId: 'toolu_1',
+};
 const BUILDER: AgentStats = {
   agent: 'providens:builder',
   launches: 40,
@@ -97,4 +125,11 @@ test('applies the rate rules to roster agents only, not to a refused launch', ()
     .map((finding) => finding.agent));
 
   assert.deepEqual([...agents], ['providens:builder']);
+});
+
+test('reads a resumed launch without a return as 1 of 1 in the cap-stop rate', () => {
+  const stats = getAgentStats([SILENT_END, RESUME]);
+  const [finding] = getFindings({ ...MEASURED, stats });
+
+  assert.deepEqual([finding?.rule, finding?.value], ['cap-stop rate', '1 of 1, 100 percent']);
 });
