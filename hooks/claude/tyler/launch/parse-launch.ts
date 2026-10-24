@@ -7,6 +7,12 @@ export interface Launch {
   readonly isNested: boolean;
   readonly subagentType: string;
   readonly description: string;
+  // The keys and settings the record keeps; undefined when the payload
+  // lacks them.
+  readonly toolUseId: string | undefined;
+  readonly promptId: string | undefined;
+  readonly model: string | undefined;
+  readonly effort: string | undefined;
 }
 
 export type Parsed =
@@ -34,6 +40,9 @@ export function parseLaunch(stdinText: string): Parsed {
     agent_id: agentId,
     tool_name: toolName,
     tool_input: toolInput,
+    tool_use_id: toolUseId,
+    prompt_id: promptId,
+    effort,
   } = payload;
 
   if (toolName !== 'Agent') {
@@ -48,15 +57,28 @@ export function parseLaunch(stdinText: string): Parsed {
     return makeFailure('tool_input is not a JSON object');
   }
 
-  const { subagent_type: subagentType = DEFAULT_TYPE, description } = toolInput;
+  const { subagent_type: subagentType = DEFAULT_TYPE, description, model } = toolInput;
 
   if (typeof subagentType !== 'string' || typeof description !== 'string') {
     return makeFailure('tool_input.subagent_type or tool_input.description is not a string');
   }
 
-  const launch = { sessionId, isNested: agentId !== undefined, subagentType, description };
+  const launch: Launch = {
+    sessionId,
+    isNested: agentId !== undefined,
+    subagentType,
+    description,
+    toolUseId: getString(toolUseId),
+    promptId: getString(promptId),
+    model: getString(model),
+    effort: isRecord(effort) ? getString(effort.level) : undefined,
+  };
 
   return { kind: 'launch', launch };
+}
+
+function getString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
 }
 
 function makeFailure(reason: string): Parsed {

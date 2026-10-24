@@ -20,6 +20,18 @@ test('allows a roster launch, counts it and logs it', (t) => {
   assert.match(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /"allowed":true/);
 });
 
+test('logs the description and the keys the payload carries, and no absent key', (t) => {
+  const dataDir = makeTempDir(t);
+  const call = JSON.stringify({ ...FIELDS, tool_use_id: 'toolu_1', effort: { level: 'high' } });
+
+  getVerdict({ stdinText: call, dataDir, time: 't' });
+
+  const line = readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8');
+
+  assert.match(line, /"description":"\[deep\] Find x","toolUseId":"toolu_1","effort":"high"/);
+  assert.doesNotMatch(line, /promptId|model/);
+});
+
 test('denies a nested launch, logs why and leaves the budget alone', (t) => {
   const dataDir = makeTempDir(t);
   const nested = JSON.stringify({ ...FIELDS, agent_id: 'a1' });

@@ -38,6 +38,11 @@ export function getVerdict(input: Input): Verdict {
     subject: launch.subagentType,
     allowed: reason === undefined,
     reason: reason ?? '',
+    description: launch.description,
+    toolUseId: launch.toolUseId,
+    promptId: launch.promptId,
+    model: launch.model,
+    effort: launch.effort,
   });
 
   return reason === undefined ? { kind: 'allow' } : { kind: 'deny', detail: reason };

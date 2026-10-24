@@ -16,8 +16,28 @@ test('reads a launch from the main session', () => {
       isNested: false,
       subagentType: 'providens:deacon',
       description: '[deep] Find x',
+      toolUseId: undefined,
+      promptId: undefined,
+      model: undefined,
+      effort: undefined,
     },
   });
+});
+
+test('reads the join keys, the model override and the effort', () => {
+  const parsed = parseLaunch(JSON.stringify({
+    ...MAIN_CALL,
+    tool_use_id: 'toolu_1',
+    prompt_id: 'p1',
+    effort: { level: 'high' },
+    tool_input: { ...MAIN_CALL.tool_input, model: 'opus' },
+  }));
+
+  assert.ok(parsed.kind === 'launch');
+  assert.deepEqual(
+    [parsed.launch.toolUseId, parsed.launch.promptId, parsed.launch.model, parsed.launch.effort],
+    ['toolu_1', 'p1', 'opus', 'high'],
+  );
 });
 
 test('marks a launch from inside a subagent as nested', () => {

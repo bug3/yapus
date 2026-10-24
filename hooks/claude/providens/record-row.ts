@@ -10,13 +10,29 @@ interface Base {
 }
 
 // A hook's verdict on a launch or on a return.
-export interface Decision extends Base {
-  readonly hook: 'launch' | 'return';
+interface Decision extends Base {
   readonly allowed: boolean;
   readonly reason: string;
 }
 
-export type Row = Decision;
+// The launch verdict with the description and the keys the payload carries:
+// the call id (joins the subagent's meta file), the prompt id (groups the
+// launches of one prompt), the model override and the effort level. A key
+// the payload lacks is undefined and left out of the line.
+export interface LaunchRow extends Decision {
+  readonly hook: 'launch';
+  readonly description: string;
+  readonly toolUseId: string | undefined;
+  readonly promptId: string | undefined;
+  readonly model: string | undefined;
+  readonly effort: string | undefined;
+}
+
+export interface ReturnRow extends Decision {
+  readonly hook: 'return';
+}
+
+export type Row = LaunchRow | ReturnRow;
 
 export const RECORD_FILE = 'decisions.jsonl';
 

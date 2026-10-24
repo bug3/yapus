@@ -7,6 +7,10 @@ const LAUNCH = {
   isNested: false,
   subagentType: 'providens:deacon',
   description: '[standard] Find x',
+  toolUseId: undefined,
+  promptId: undefined,
+  model: undefined,
+  effort: undefined,
 };
 
 test('passes a roster launch tagged standard or deep', () => {
