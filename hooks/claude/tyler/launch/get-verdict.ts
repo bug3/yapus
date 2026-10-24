@@ -1,6 +1,6 @@
 import { admitLaunch } from './admit-launch.ts';
 import { getRefusal } from './get-refusal.ts';
-import { logDecision } from '../../providens/log-decision.ts';
+import { recordRow } from '../../providens/record-row.ts';
 import { parseLaunch } from './parse-launch.ts';
 
 export interface Input {
@@ -31,7 +31,7 @@ export function getVerdict(input: Input): Verdict {
   const { launch } = parsed;
   const reason = getRefusal(launch) ?? admitLaunch(input.dataDir, launch.sessionId);
 
-  logDecision(input.dataDir, {
+  recordRow(input.dataDir, {
     time: input.time,
     hook: 'launch',
     sessionId: launch.sessionId,

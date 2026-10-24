@@ -1,5 +1,5 @@
 import { RETURN_CAP_CHARACTERS } from '../../providens/contract/get-context.ts';
-import { logDecision } from '../../providens/log-decision.ts';
+import { recordRow } from '../../providens/record-row.ts';
 import { parseStop } from './parse-stop.ts';
 
 export interface Input {
@@ -29,7 +29,7 @@ export function getReturnVerdict(input: Input): ReturnVerdict {
   const isSentBack = isOver && !stop.isRetry;
 
   if (input.dataDir !== undefined && input.dataDir !== '') {
-    logDecision(input.dataDir, {
+    recordRow(input.dataDir, {
       time: input.time,
       hook: 'return',
       sessionId: stop.sessionId,
