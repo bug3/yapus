@@ -5,25 +5,28 @@ import { test } from 'node:test';
 import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
 import { getForeignFiles } from './get-foreign-files.ts';
 
-test('finds nothing among TypeScript, markdown, JSON, the license and the shell entries', (t) => {
+test('finds nothing among kept formats, shell entries and YAML under .github', (t) => {
   const root = makeTempRepo(t);
 
   mkdirSync(join(root, 'hooks'));
+  mkdirSync(join(root, '.github'));
   writeFileSync(join(root, 'a.ts'), '');
   writeFileSync(join(root, 'b.md'), '');
   writeFileSync(join(root, 'c.json'), '');
   writeFileSync(join(root, '.gitignore'), '');
   writeFileSync(join(root, 'LICENSE'), '');
   writeFileSync(join(root, 'hooks', 'run.sh'), '');
+  writeFileSync(join(root, '.github', 'd.yml'), '');
 
   assert.deepEqual(getForeignFiles(root), []);
 });
 
-test('names a file in another language and a shell script that is not an entry', (t) => {
+test('names another language, a stray shell script and YAML outside .github', (t) => {
   const root = makeTempRepo(t);
 
   writeFileSync(join(root, 'a.py'), '');
   writeFileSync(join(root, 'b.sh'), '');
+  writeFileSync(join(root, 'c.yml'), '');
 
-  assert.deepEqual(getForeignFiles(root).sort(), ['a.py', 'b.sh']);
+  assert.deepEqual(getForeignFiles(root).sort(), ['a.py', 'b.sh', 'c.yml']);
 });

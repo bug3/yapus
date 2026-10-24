@@ -11,6 +11,8 @@ const SHELL_ENTRIES: readonly string[] = [
   'hooks/git/commit-msg',
   'hooks/git/reference-transaction',
 ];
+// YAML only where GitHub reads it (DATA-1).
+const YAML_DIRECTORY = '.github/';
 
 // Every kept file under root in a language or format the repository does
 // not use.
@@ -21,5 +23,10 @@ export function getForeignFiles(root: string): string[] {
 function isKept(path: string): boolean {
   return KEPT_EXTENSIONS.includes(extname(path))
     || KEPT_NAMES.includes(basename(path))
-    || SHELL_ENTRIES.includes(path);
+    || SHELL_ENTRIES.includes(path)
+    || isGitHubYaml(path);
+}
+
+function isGitHubYaml(path: string): boolean {
+  return extname(path) === '.yml' && path.startsWith(YAML_DIRECTORY);
 }
