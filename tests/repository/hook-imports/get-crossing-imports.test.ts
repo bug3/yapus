@@ -37,6 +37,18 @@ test('passes an import from a hook group into the shared modules', (t) => {
   assert.deepEqual(getCrossingImports(root, [SHARED_USER]), []);
 });
 
+test('names an import from the landmark hooks into the git hooks', (t) => {
+  const root = makeHookTree(t);
+  const modulePath = 'hooks/landmark/install/get-e.ts';
+
+  mkdirSync(join(root, 'hooks', 'landmark', 'install'), { recursive: true });
+  writeFileSync(join(root, modulePath), "import { getB } from '../../git/push/get-b.ts';\n");
+
+  assert.deepEqual(getCrossingImports(root, [modulePath]), [
+    'hooks/landmark/install/get-e.ts imports hooks/git/push/get-b.ts',
+  ]);
+});
+
 function makeHookTree(t: TestContext): string {
   const root = makeTempDir(t);
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
@@ -25,6 +25,40 @@ test('writes 13 rendered rule files and the version stamp', (t) => {
     isRecord(manifest) ? manifest.version : undefined,
   );
   assert.match(installRun.stdout, /remove ~\/\.claude\/landmark\//);
+});
+
+test('refuses an existing stamp and writes nothing', (t) => {
+  const { home, installRun } = runInstall(t, 'install', (homeDir) => {
+    mkdirSync(join(homeDir, '.claude', 'landmark'), { recursive: true });
+    writeFileSync(join(homeDir, '.claude', 'landmark', 'version'), '0.0.1');
+  });
+
+  assert.equal(installRun.status, 2);
+  assert.match(installRun.stderr, /use \/landmark:upgrade/);
+  assert.equal(existsSync(join(home, '.claude', 'rules')), false);
+});
+
+test('refuses an existing landmark rule file and lists every conflict', (t) => {
+  const { home, installRun } = runInstall(t, 'install', (homeDir) => {
+    mkdirSync(join(homeDir, '.claude', 'rules'), { recursive: true });
+    writeFileSync(join(homeDir, '.claude', 'rules', 'landmark-git.md'), 'mine');
+    writeFileSync(join(homeDir, '.claude', 'rules', 'landmark-code.md'), 'mine');
+  });
+
+  assert.equal(installRun.status, 2);
+  assert.match(installRun.stderr, /landmark-code\.md[\s\S]*landmark-git\.md/);
+  assert.deepEqual(
+    readdirSync(join(home, '.claude', 'rules')).sort(),
+    ['landmark-code.md', 'landmark-git.md'],
+  );
+  assert.equal(existsSync(join(home, '.claude', 'landmark')), false);
+});
+
+test('refuses an unknown mode and writes nothing', (t) => {
+  const { home, installRun } = runInstall(t, 'upgrade');
+
+  assert.equal(installRun.status, 2);
+  assert.equal(existsSync(join(home, '.claude')), false);
 });
 
 function runInstall(t: TestContext, mode: string, arrange?: (home: string) => void) {
