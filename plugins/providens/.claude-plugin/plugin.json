@@ -1,6 +1,6 @@
 {
   "name": "providens",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "An orchestrator that divides work among a fixed roster of subagents, with launch limits and a cap on what returns to the main session.",
   "author": {
     "name": "bug3"
