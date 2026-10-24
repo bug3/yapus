@@ -8,7 +8,8 @@ const CHARACTERS = new Intl.Segmenter();
 
 export interface Catalogs {
   readonly types: Catalog;
-  readonly scopes: Catalog;
+  // Undefined: any scope of the word form passes.
+  readonly scopes: Catalog | undefined;
   readonly verbs: Catalog;
 }
 
@@ -55,7 +56,9 @@ function getFormViolations(
 
   return [
     ...getUnknownWordViolations('type', parts.type, catalogs.types),
-    ...getUnknownWordViolations('scope', parts.scope, catalogs.scopes),
+    ...(catalogs.scopes === undefined
+      ? []
+      : getUnknownWordViolations('scope', parts.scope, catalogs.scopes)),
     ...getUnknownWordViolations('verb', parts.verb, catalogs.verbs),
   ];
 }

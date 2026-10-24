@@ -10,7 +10,8 @@ import { formatMessage } from './output/format-message.ts';
 // The path of each catalog; the catalogs are shared with the other hooks.
 export interface CatalogPaths {
   readonly types: string;
-  readonly scopes: string;
+  // Undefined: no scope catalog exists, and any scope of the word form passes.
+  readonly scopes: string | undefined;
   readonly verbs: string;
 }
 
@@ -59,16 +60,19 @@ async function readMessage(messagePath: string): Promise<string | undefined> {
 async function readCatalogs(paths: CatalogPaths): Promise<Catalogs | CatalogViolation[]> {
   const [types, scopes, verbs] = await Promise.all([
     readCatalog(paths.types, 'type'),
-    readCatalog(paths.scopes, 'scope'),
+    paths.scopes === undefined ? undefined : readCatalog(paths.scopes, 'scope'),
     readCatalog(paths.verbs, 'verb'),
   ]);
-  const isEveryCatalogRead = 'words' in types && 'words' in scopes && 'words' in verbs;
+  const isScopesRead = scopes === undefined || 'words' in scopes;
+  const isEveryCatalogRead = 'words' in types && isScopesRead && 'words' in verbs;
 
   return isEveryCatalogRead
     ? { types, scopes, verbs }
     : [types, scopes, verbs].filter(isViolation);
 }
 
-function isViolation(catalogRead: Catalog | CatalogViolation): catalogRead is CatalogViolation {
-  return 'violation' in catalogRead;
+function isViolation(
+  catalogRead: Catalog | CatalogViolation | undefined,
+): catalogRead is CatalogViolation {
+  return catalogRead !== undefined && 'violation' in catalogRead;
 }

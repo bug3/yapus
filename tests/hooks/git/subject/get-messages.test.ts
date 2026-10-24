@@ -45,6 +45,22 @@ test('judges the subject left after the comments of an editor message', async (t
   );
 });
 
+test('passes any scope of the word form when there is no scope catalog', async (t) => {
+  const messagePath = writeMessage(t, 'feat(any-scope-2): add a check\n');
+  const catalogPaths = { ...programCatalogs, scopes: undefined };
+
+  assert.deepEqual(await getMessages({ messagePath, isEditorUsed: false, catalogPaths }), []);
+});
+
+test('still judges the form of a scope when there is no scope catalog', async (t) => {
+  const messagePath = writeMessage(t, 'feat(Any): add a check\n');
+  const catalogPaths = { ...programCatalogs, scopes: undefined };
+
+  assert.deepEqual(await getMessages({ messagePath, isEditorUsed: false, catalogPaths }), [
+    'yapus subject: "feat(Any): add a check" is not in the form "type(scope): verb ...", such as "feat(hooks): add a check"; rewrite the subject',
+  ]);
+});
+
 test('reports a message whose second line is not blank', async (t) => {
   const messagePath = writeMessage(t, 'feat(hooks): add a check\nThe body.\n');
 

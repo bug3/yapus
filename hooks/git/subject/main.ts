@@ -1,11 +1,13 @@
 import { writeSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { getFirstLine } from '../../shared/get-first-line.ts';
+import { findScopesPath } from './find-scopes-path.ts';
 import type { HookInput } from './get-messages.ts';
 import { getMessagesWithinLimit } from './get-messages-within-limit.ts';
 import { formatMessage } from './output/format-message.ts';
 
 const LIMIT_SECONDS = 5;
+const CATALOGS = join(import.meta.dirname, '..', '..', 'shared', 'catalogs');
 
 async function main(): Promise<void> {
   try {
@@ -26,16 +28,20 @@ function readHookInput(): HookInput {
     isEditorUsed: process.env.GIT_EDITOR !== ':',
     catalogPaths: {
       types: getCatalogPath('types.json'),
-      scopes: getCatalogPath('scopes.json'),
+      scopes: getScopesPath(),
       verbs: getCatalogPath('verbs.json'),
     },
   };
 }
 
 function getCatalogPath(file: string): string {
-  const catalogs = join(import.meta.dirname, '..', '..', 'shared', 'catalogs');
+  return relative(process.cwd(), join(CATALOGS, file));
+}
 
-  return relative(process.cwd(), join(catalogs, file));
+function getScopesPath(): string | undefined {
+  const path = findScopesPath(CATALOGS, process.cwd());
+
+  return path === undefined ? undefined : relative(process.cwd(), path);
 }
 
 // writeSync, because process.exit can drop a pending write to a pipe.
