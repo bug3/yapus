@@ -65,18 +65,20 @@ test('fails on an unsafe session_id or resumedAgentId', () => {
   });
 });
 
-test('fails on a tool_input, tool_response or tool_use_id of the wrong type', () => {
-  const noInput = { ...RESUMED, tool_input: 'x' };
+test('reads a resume whatever tool_input holds', () => {
+  assert.deepEqual(parseResume(JSON.stringify({ ...RESUMED, tool_input: 'x' })), {
+    kind: 'resume',
+    resume: { sessionId: 's1', agentId: 'a1', toolUseId: 'toolu_1' },
+  });
+});
+
+test('fails on a tool_response or tool_use_id of the wrong type', () => {
   const noResponse = { ...RESUMED, tool_response: 'x' };
   const noCall = { ...RESUMED, tool_use_id: 1 };
 
-  assert.deepEqual(parseResume(JSON.stringify(noInput)), {
-    kind: 'failure',
-    reason: 'tool_input or tool_response is not a JSON object',
-  });
   assert.deepEqual(parseResume(JSON.stringify(noResponse)), {
     kind: 'failure',
-    reason: 'tool_input or tool_response is not a JSON object',
+    reason: 'tool_response is not a JSON object',
   });
   assert.deepEqual(parseResume(JSON.stringify(noCall)), {
     kind: 'failure',

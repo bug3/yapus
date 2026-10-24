@@ -8,8 +8,8 @@ export interface Resume {
   readonly toolUseId: string;
 }
 
-// 'none' is a message that resumed nothing: one queued to a running agent,
-// or a send that failed. Neither carries resumedAgentId.
+// 'none' is a message that resumed nothing. A resume carries resumedAgentId;
+// a message queued to a running agent does not.
 export type Parsed =
   | { readonly kind: 'resume'; readonly resume: Resume }
   | { readonly kind: 'none' }
@@ -32,7 +32,6 @@ export function parseResume(stdinText: string): Parsed {
     session_id: sessionId,
     tool_name: toolName,
     tool_use_id: toolUseId,
-    tool_input: toolInput,
     tool_response: response,
   } = payload;
 
@@ -44,8 +43,8 @@ export function parseResume(stdinText: string): Parsed {
     return makeFailure('session_id is not letters, digits and hyphens');
   }
 
-  if (!isRecord(toolInput) || !isRecord(response)) {
-    return makeFailure('tool_input or tool_response is not a JSON object');
+  if (!isRecord(response)) {
+    return makeFailure('tool_response is not a JSON object');
   }
 
   if (typeof toolUseId !== 'string') {
