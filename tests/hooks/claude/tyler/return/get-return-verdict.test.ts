@@ -97,6 +97,18 @@ test('logs no totals when the payload names no transcript', (t) => {
   assert.doesNotMatch(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /turns/);
 });
 
+test('passes and logs no totals when the named transcript does not exist', (t) => {
+  const dataDir = makeTempDir(t);
+  const stop = JSON.stringify({
+    ...FIELDS,
+    last_assistant_message: 'DONE',
+    agent_transcript_path: join(dataDir, 'missing.jsonl'),
+  });
+
+  assert.deepEqual(getReturnVerdict({ stdinText: stop, dataDir, time: 't' }), { kind: 'pass' });
+  assert.doesNotMatch(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /"turns"/);
+});
+
 test('sends back a first return over the cap and says why', (t) => {
   const dataDir = makeTempDir(t);
 

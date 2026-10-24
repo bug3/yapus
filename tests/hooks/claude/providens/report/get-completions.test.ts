@@ -80,6 +80,21 @@ test('takes a total the end lacks from the return', () => {
   assert.deepEqual([entry?.durationMs, entry?.tokens, entry?.toolUses], [100, 70, 3]);
 });
 
+test('takes the source and the totals from the last return of an agent sent back', () => {
+  const first = {
+    ...RETURN, allowed: false, tokens: 50, durationMs: 100, toolUses: 1, time: 't1',
+  };
+  const second = {
+    ...RETURN, allowed: true, tokens: 70, durationMs: 300, toolUses: 4, time: 't2',
+  };
+  const completions = getCompletions([first, second]);
+
+  assert.deepEqual(
+    completions.map((entry) => [entry.tokens, entry.durationMs, entry.toolUses, entry.time]),
+    [[70, 300, 4, 't2']],
+  );
+});
+
 test('counts an async_launched end with a return as no silent end and one completion', () => {
   const rows = [{ ...END, status: 'async_launched' }, RETURN];
 

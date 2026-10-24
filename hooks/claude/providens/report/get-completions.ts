@@ -23,16 +23,17 @@ export function getCompletions(rows: readonly Row[]): Completion[] {
   return agentIds.flatMap((agentId) => {
     const end = ends.find((row) => row.agentId === agentId);
     const own = returns.filter((row) => row.agentId === agentId);
-    const source = end ?? own[0];
+    const source = end ?? own.at(-1);
 
     return source === undefined ? [] : [{
       agentId,
       subject: source.subject,
       sessionId: source.sessionId,
       time: source.time,
-      durationMs: end?.durationMs ?? own.find((row) => row.durationMs !== undefined)?.durationMs,
-      tokens: end?.tokens ?? own.find((row) => row.tokens !== undefined)?.tokens,
-      toolUses: end?.toolUses ?? own.find((row) => row.toolUses !== undefined)?.toolUses,
+      durationMs: end?.durationMs
+        ?? own.findLast((row) => row.durationMs !== undefined)?.durationMs,
+      tokens: end?.tokens ?? own.findLast((row) => row.tokens !== undefined)?.tokens,
+      toolUses: end?.toolUses ?? own.findLast((row) => row.toolUses !== undefined)?.toolUses,
       capped: end?.capped ?? false,
     }];
   });
