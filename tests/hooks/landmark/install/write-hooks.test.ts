@@ -68,5 +68,5 @@ function installHooks(t: TestContext): string {
 
   assert.equal(installRun.status, 0, installRun.stderr);
 
-  return join(home, '.claude', 'landmark', 'hooks');
+  return join(home, '.claude', 'yapus', 'landmark', 'hooks');
 }

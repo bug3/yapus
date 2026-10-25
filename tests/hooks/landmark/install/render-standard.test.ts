@@ -4,7 +4,7 @@ import { isRecord } from '../../../../hooks/shared/is-record.ts';
 import { renderStandard } from '../../../../hooks/landmark/install/render-standard.ts';
 
 const MAP: unknown = JSON.parse(
-  '{"hooks/git/**": ".landmark/hooks/git/**", "tests/repository/**": null}',
+  '{"hooks/git/**": "fixture/git/**", "tests/repository/**": null}',
 );
 const CATALOG = { map: isRecord(MAP) ? MAP : {} };
 const BODY = '\n# Title\n\n## X-1. Keep "hooks/git/**" as written.\n';
@@ -12,7 +12,7 @@ const BODY = '\n# Title\n\n## X-1. Keep "hooks/git/**" as written.\n';
 test('replaces a mapped paths entry by its adopter path', () => {
   const text = `---\npaths:\n  - "hooks/git/**"\n---\n${ BODY }`;
 
-  const rendered = `---\npaths:\n  - ".landmark/hooks/git/**"\n---\n${ BODY }`;
+  const rendered = `---\npaths:\n  - "fixture/git/**"\n---\n${ BODY }`;
 
   assert.equal(renderStandard(text, CATALOG), rendered);
 });

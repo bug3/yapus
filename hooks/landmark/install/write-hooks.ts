@@ -7,7 +7,7 @@ import { swapDirectory } from './swap-directory.ts';
 const EXECUTABLE = 0o755;
 const SOURCE_EXTENSIONS = ['.ts', '.json'];
 
-// Copies the hook files of the plugin at root into <home>/.claude/landmark/hooks,
+// Copies the hook files of the plugin at root into <home>/.claude/yapus/landmark/hooks,
 // keeping the layout, and writes one stub per forwarded hook name; returns the
 // paths. What is neither a source file nor JSON is a bash entry and runs.
 // Everything is written into a staging directory beside the target and swapped

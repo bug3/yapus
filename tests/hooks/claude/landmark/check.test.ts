@@ -94,7 +94,7 @@ function runCheck(
   const home = join(tempDir, 'home');
   const root = join(tempDir, 'plugin');
   const gitConfig = join(tempDir, 'gitconfig');
-  const ownHooksPath = join(home, '.claude', 'landmark', 'hooks', 'git');
+  const ownHooksPath = join(home, '.claude', 'yapus', 'landmark', 'hooks', 'git');
   const hooksPath = arrangement.hooksPath === 'own' ? ownHooksPath : arrangement.hooksPath;
 
   mkdirSync(home);
@@ -105,8 +105,8 @@ function runCheck(
   );
 
   if (arrangement.stamp !== undefined) {
-    mkdirSync(join(home, '.claude', 'landmark'), { recursive: true });
-    writeFileSync(join(home, '.claude', 'landmark', 'version'), arrangement.stamp);
+    mkdirSync(join(home, '.claude', 'yapus', 'landmark'), { recursive: true });
+    writeFileSync(join(home, '.claude', 'yapus', 'landmark', 'version'), arrangement.stamp);
   }
 
   if (arrangement.breakManifest === true) {

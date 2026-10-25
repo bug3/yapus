@@ -6,10 +6,10 @@ interface PathsCatalog {
   readonly map: Readonly<Record<string, unknown>>;
 }
 
-// The standard as landmark installs it into ~/.claude/rules: each paths
-// entry named in the catalog map is replaced by its value, or dropped when
-// the value is not a string; every other line, the body included, stays as
-// it is.
+// The standard as landmark installs it into ~/.claude/rules/yapus/landmark:
+// each paths entry named in the catalog map is replaced by its value, or
+// dropped when the value is not a string; every other line, the body included,
+// stays as it is.
 export function renderStandard(text: string, catalog: PathsCatalog): string {
   const lines = text.split('\n');
   const headEnd = lines[0] === FENCE ? lines.indexOf(FENCE, 1) : -1;

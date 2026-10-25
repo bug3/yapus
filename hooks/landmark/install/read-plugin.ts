@@ -31,7 +31,7 @@ export function readPlugin(root: string): Plugin {
     .filter((fileName) => fileName.endsWith('.md'))
     .sort()
     .map((fileName) => ({
-      fileName: `landmark-${ fileName.toLowerCase() }`,
+      fileName: fileName.toLowerCase(),
       text: renderStandard(readFileSync(join(standardsDir, fileName), 'utf8'), rendering),
     }));
 

@@ -1,8 +1,8 @@
-import { existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync } from 'node:fs';
 import { getHooksPath } from '../../shared/hooks-path/get-hooks-path.ts';
 import { getStampPath } from '../../shared/hooks-path/get-stamp-path.ts';
 import { hasInjectedHooksPath } from '../../shared/hooks-path/has-injected-hooks-path.ts';
+import { getRulesDir } from '../../shared/hooks-path/get-rules-dir.ts';
 
 // What stops an install or an upgrade into home, one sentence each; empty when
 // nothing does. An upgrade needs the stamp and ignores the rule files.
@@ -15,18 +15,16 @@ export function getConflicts(
     readonly globalHooksPath: string | undefined;
   },
 ): string[] {
-  const rulesDir = join(home, '.claude', 'rules');
+  const rulesDir = getRulesDir(home);
   const stamp = getStampPath(home);
   const isUpgrade = mode === 'upgrade';
-  const ruleFiles = !isUpgrade && existsSync(rulesDir)
-    ? readdirSync(rulesDir).filter((name) => /^landmark-.*\.md$/.test(name))
-    : [];
+  const hasRulesDir = !isUpgrade && existsSync(rulesDir);
   const isForeign = globalHooksPath !== undefined && globalHooksPath !== getHooksPath(home);
 
   return [
     ...isUpgrade && !existsSync(stamp) ? [`${ stamp } is absent; use /landmark:install`] : [],
     ...!isUpgrade && existsSync(stamp) ? [`${ stamp } exists; use /landmark:upgrade`] : [],
-    ...ruleFiles.map((name) => `${ join(rulesDir, name) } exists; remove it first`),
+    ...hasRulesDir ? [`${ rulesDir } exists; remove it first`] : [],
     ...isForeign ? [`the global core.hooksPath is ${ globalHooksPath }; unset it first`] : [],
     ...hasInjectedHooksPath(env)
       ? ['GIT_CONFIG_* sets core.hooksPath (the old agent layer); retire it first']
