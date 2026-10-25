@@ -1,24 +1,24 @@
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { getRulesDir } from '../../shared/hooks-path/get-rules-dir.ts';
+import { getRulesDirectory } from '../../shared/hooks-path/get-rules-directory.ts';
 import type { Plugin } from './read-plugin.ts';
 
 // Writes the rule files under home and removes every other .md file of the
 // directory, so the rule of a dropped standard leaves; returns the paths.
 export function writeRules(home: string, plugin: Plugin): string[] {
-  const rulesDir = getRulesDir(home);
+  const rulesDirectory = getRulesDirectory(home);
   const current = new Set(plugin.rules.map(({ fileName }) => fileName));
 
-  mkdirSync(rulesDir, { recursive: true });
+  mkdirSync(rulesDirectory, { recursive: true });
 
-  readdirSync(rulesDir)
+  readdirSync(rulesDirectory)
     .filter((name) => name.endsWith('.md') && !current.has(name))
     .forEach((name) => {
-      rmSync(join(rulesDir, name));
+      rmSync(join(rulesDirectory, name));
     });
 
   return plugin.rules.map(({ fileName, text }) => {
-    const path = join(rulesDir, fileName);
+    const path = join(rulesDirectory, fileName);
 
     writeFileSync(path, text);
 

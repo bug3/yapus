@@ -27,6 +27,7 @@ test('writes 13 rendered rule files and the version stamp', (t) => {
     isRecord(manifest) ? manifest.version : undefined,
   );
   assert.match(installRun.stdout, /remove ~\/\.claude\/yapus\/landmark\//);
+  assert.ok(installRun.stdout.includes('  remove ~/.claude/rules/yapus/landmark/\n'));
 });
 
 test('refuses an existing stamp and writes nothing', (t) => {
@@ -45,11 +46,11 @@ test('refuses an existing rules directory and writes nothing', (t) => {
   const { home, installRun } = runInstall(t, 'install', { arrange: (homeDir) => {
     mkdirSync(join(homeDir, '.claude', 'rules', 'yapus', 'landmark'), { recursive: true });
   } });
-  const rulesDir = join(home, '.claude', 'rules', 'yapus', 'landmark');
+  const rulesDirectory = join(home, '.claude', 'rules', 'yapus', 'landmark');
 
   assert.equal(installRun.status, 2);
-  assert.match(installRun.stderr, new RegExp(`${ rulesDir }.* exists; remove it first\n`));
-  assert.deepEqual(readdirSync(rulesDir), []);
+  assert.ok(installRun.stderr.includes(`\n${ rulesDirectory } exists; remove it first\n`));
+  assert.deepEqual(readdirSync(rulesDirectory), []);
   assert.equal(existsSync(join(home, '.claude', 'yapus', 'landmark')), false);
   assert.equal(existsSync(join(home, '.gitconfig')), false);
 });
