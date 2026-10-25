@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { getVerdict } from '../../../../../hooks/claude/tyler/launch/get-verdict.ts';
@@ -62,4 +62,91 @@ test('denies stdin it cannot read, without a log line', (t) => {
     detail: 'stdin is not JSON; the launch is blocked',
   });
   assert.equal(existsSync(join(dataDir, 'decisions.jsonl')), false);
+});
+
+test('allows in off a launch every rule would refuse, records it and counts nothing', (t) => {
+  const dataDir = makeTempDir(t);
+  const launches = [
+    { ...FIELDS, tool_input: { subagent_type: 'Explore', description: 'Find x' } },
+    { ...FIELDS, agent_id: 'a1' },
+    { ...FIELDS, tool_input: { ...FIELDS.tool_input, description: 'Find x' } },
+    { ...FIELDS, tool_input: { ...FIELDS.tool_input, description: '[quick] Find x' } },
+  ];
+
+  writeFileSync(join(dataDir, 'mode'), 'off\n');
+
+  const verdicts = launches.map((launch) => (
+    getVerdict({ stdinText: JSON.stringify(launch), dataDir, time: 't' })
+  ));
+  const log = readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8');
+
+  assert.deepEqual(verdicts, launches.map(() => ({ kind: 'allow' })));
+  assert.equal(log.trim().split('\n').length, 4);
+  assert.match(log, /"hook":"launch"/);
+  assert.doesNotMatch(log, /"allowed":false/);
+  assert.equal(existsSync(join(dataDir, 'launches')), false);
+});
+
+test('allows in off a session already at its limit and leaves its log alone', (t) => {
+  const dataDir = makeTempDir(t);
+
+  mkdirSync(join(dataDir, 'launches'));
+  writeFileSync(join(dataDir, 'launches', 's1.log'), '+\n');
+  writeFileSync(join(dataDir, 'launch-limit'), '1');
+  writeFileSync(join(dataDir, 'mode'), 'off');
+
+  assert.deepEqual(getVerdict({ stdinText: CALL, dataDir, time: 't' }), { kind: 'allow' });
+  assert.equal(readFileSync(join(dataDir, 'launches', 's1.log'), 'utf8'), '+\n');
+});
+
+test('keeps denying in off the unset data dir and the unparsable payload', (t) => {
+  const dataDir = makeTempDir(t);
+
+  writeFileSync(join(dataDir, 'mode'), 'off');
+
+  assert.deepEqual(getVerdict({ stdinText: CALL, dataDir: undefined, time: 't' }), {
+    kind: 'deny',
+    detail: 'CLAUDE_PLUGIN_DATA is not set; reinstall the plugin',
+  });
+  assert.deepEqual(getVerdict({ stdinText: '{', dataDir, time: 't' }), {
+    kind: 'deny',
+    detail: 'stdin is not JSON; the launch is blocked',
+  });
+});
+
+test('obeys the session mode over the global mode', (t) => {
+  const dataDir = makeTempDir(t);
+  const nested = JSON.stringify({ ...FIELDS, agent_id: 'a1' });
+
+  mkdirSync(join(dataDir, 'sessions'));
+  writeFileSync(join(dataDir, 'mode'), 'off');
+  writeFileSync(join(dataDir, 'sessions', 's1.mode'), 'on');
+
+  assert.equal(getVerdict({ stdinText: nested, dataDir, time: 't' }).kind, 'deny');
+
+  writeFileSync(join(dataDir, 'mode'), 'on');
+  writeFileSync(join(dataDir, 'sessions', 's1.mode'), 'off');
+
+  assert.equal(getVerdict({ stdinText: nested, dataDir, time: 't' }).kind, 'allow');
+});
+
+test('denies every launch naming an invalid mode file', (t) => {
+  const sessionDir = makeTempDir(t);
+  const globalDir = makeTempDir(t);
+  const sessionFile = join(sessionDir, 'sessions', 's1.mode');
+  const globalFile = join(globalDir, 'mode');
+
+  mkdirSync(join(sessionDir, 'sessions'));
+  writeFileSync(join(sessionDir, 'sessions', 's1.mode'), 'maybe');
+  writeFileSync(join(globalDir, 'mode'), '');
+
+  assert.deepEqual(getVerdict({ stdinText: CALL, dataDir: sessionDir, time: 't' }), {
+    kind: 'deny',
+    detail: `${ sessionFile } holds no mode; the person writes on or off there`,
+  });
+  assert.deepEqual(getVerdict({ stdinText: CALL, dataDir: globalDir, time: 't' }), {
+    kind: 'deny',
+    detail: `${ globalFile } holds no mode; the person writes on or off there`,
+  });
+  assert.equal(existsSync(join(sessionDir, 'launches')), false);
 });

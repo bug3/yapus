@@ -1,7 +1,8 @@
 import { admitLaunch } from './admit-launch.ts';
 import { getRefusal } from './get-refusal.ts';
 import { recordRow } from '../../providens/record-row.ts';
-import { parseLaunch } from './parse-launch.ts';
+import { type Launch, parseLaunch } from './parse-launch.ts';
+import { readMode } from '../../providens/settings/read-mode.ts';
 
 export interface Input {
   readonly stdinText: string;
@@ -29,7 +30,7 @@ export function getVerdict(input: Input): Verdict {
   }
 
   const { launch } = parsed;
-  const reason = getRefusal(launch) ?? admitLaunch(input.dataDir, launch.sessionId);
+  const reason = getReason(input.dataDir, launch);
 
   recordRow(input.dataDir, {
     time: input.time,
@@ -46,4 +47,20 @@ export function getVerdict(input: Input): Verdict {
   });
 
   return reason === undefined ? { kind: 'allow' } : { kind: 'deny', detail: reason };
+}
+
+// Why the launch is refused, or undefined. In off nothing is checked or
+// counted, so the session keeps its budget for when the person switches on.
+function getReason(dataDir: string, launch: Launch): string | undefined {
+  const mode = readMode(dataDir, launch.sessionId);
+
+  if (mode.kind === 'invalid') {
+    return `${ mode.path } holds no mode; the person writes on or off there`;
+  }
+
+  if (mode.value === 'off') {
+    return undefined;
+  }
+
+  return getRefusal(launch) ?? admitLaunch(dataDir, launch.sessionId);
 }
