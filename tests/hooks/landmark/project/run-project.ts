@@ -28,11 +28,22 @@ export function copyPlugin(t: TestContext): string {
   return root;
 }
 
-// The program landmark/project run through the plugin copy's run.sh on repo.
-export function runProject(root: string, repo: string): SpawnSyncReturns<string> {
+// The program landmark/project run through the plugin copy's run.sh on repo,
+// with the language argument when one is given.
+export function runProject(
+  root: string,
+  repo: string,
+  language?: string,
+): SpawnSyncReturns<string> {
   return spawnSync(
     'bash',
-    [join(root, 'runtime', 'run.sh'), 'landmark/project', root, repo],
+    [
+      join(root, 'runtime', 'run.sh'),
+      'landmark/project',
+      root,
+      repo,
+      ...language === undefined ? [] : [language],
+    ],
     { encoding: 'utf8', env: getGitEnv(process.env), timeout: SUBPROCESS_TIMEOUT_MS },
   );
 }

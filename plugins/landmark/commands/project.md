@@ -3,6 +3,6 @@ description: Install the yapus repository setup (ESLint, tsconfig, scripts, CI w
 allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/runtime/run.sh landmark/project:*)
 ---
 
-!`bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" landmark/project "${CLAUDE_PLUGIN_ROOT}" "${CLAUDE_PROJECT_DIR}"`
+!`bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" landmark/project "${CLAUDE_PLUGIN_ROOT}" "${CLAUDE_PROJECT_DIR}" $ARGUMENTS`
 
 Show the output above to the person as it is; add nothing.

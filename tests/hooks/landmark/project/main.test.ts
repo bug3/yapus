@@ -10,6 +10,7 @@ import { readTemplates } from '../../../../hooks/landmark/project/files/read-tem
 import { commitFiles } from './plan/commit-files.ts';
 import { copyPlugin, PLUGIN, runProject } from './run-project.ts';
 
+const USAGE = 'usage: landmark/project <plugin root> <project dir> [typescript|go]';
 const OWNED = '.claude/yapus/landmark/eslint.config.ts';
 const WRAPPER = 'eslint.config.ts';
 const OWNED_TSCONFIG = '.claude/yapus/landmark/tsconfig.json';
@@ -182,7 +183,66 @@ test('prints the usage and exits 2 without two arguments', (t) => {
   });
 
   assert.equal(run.status, 2);
-  assert.equal(run.stderr, 'usage: landmark/project <plugin root> <project dir>\n');
+  assert.equal(run.stderr, `${ USAGE }\n`);
+});
+
+const GO_FILES = [
+  ['go.mod', 'module x\n'],
+  ['.golangci.yml', 'old\n'],
+  ['.golangci.yaml', 'old\n'],
+] as const;
+
+test('go refuses without a root go.mod and writes nothing', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [['README.md', 'x']]);
+
+  const before = runGit(['status', '--porcelain'], repo);
+  const run = runProject(copyPlugin(t), repo, 'go');
+
+  assert.equal(run.status, 2);
+  assert.equal(run.stdout, '');
+  assert.equal(run.stderr, [
+    'yapus landmark project: refused, nothing written',
+    'go.mod is not at the root; run go mod init first',
+    '',
+  ].join('\n'));
+  assert.equal(runGit(['status', '--porcelain'], repo), before);
+});
+
+test('typescript refuses in a repository set up for go and writes nothing', (t) => {
+  const repo = makeTempRepo(t);
+  const root = copyPlugin(t);
+
+  commitFiles(repo, GO_FILES);
+  assert.equal(runProject(root, repo, 'go').status, 0);
+  commitAll(repo);
+
+  const before = runGit(['status', '--porcelain'], repo);
+  const run = runProject(root, repo, 'typescript');
+
+  assert.equal(run.status, 2);
+  assert.equal(run.stdout, '');
+  assert.equal(run.stderr, [
+    'yapus landmark project: refused, nothing written',
+    'this repository is set up for go; run /landmark:project go',
+    '',
+  ].join('\n'));
+  assert.equal(runGit(['status', '--porcelain'], repo), before);
+});
+
+test('an unknown language prints the usage, exits 2 and writes nothing', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [['README.md', 'x']]);
+
+  const before = runGit(['status', '--porcelain'], repo);
+  const run = runProject(copyPlugin(t), repo, 'rust');
+
+  assert.equal(run.status, 2);
+  assert.equal(run.stdout, '');
+  assert.equal(run.stderr, `${ USAGE }\n`);
+  assert.equal(runGit(['status', '--porcelain'], repo), before);
 });
 
 const GO_RECORD = '.claude/yapus/landmark/language';

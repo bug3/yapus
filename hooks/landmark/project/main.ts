@@ -1,17 +1,20 @@
 import { writeSync } from 'node:fs';
+import { languages } from './language/languages.ts';
 import { runProject } from './apply/run-project.ts';
 
 function main(): void {
-  const [pluginRoot, projectDir, ...extra] = process.argv.slice(2);
+  const [pluginRoot, projectDir, requested, ...extra] = process.argv.slice(2);
 
   const hasBoth = pluginRoot !== undefined && pluginRoot !== ''
     && projectDir !== undefined && projectDir !== '';
 
-  if (!hasBoth || extra.length > 0) {
-    stop(2, ['usage: landmark/project <plugin root> <project dir>']);
+  const language = languages.find((name) => name === requested);
+
+  if (!hasBoth || extra.length > 0 || (requested !== undefined && language === undefined)) {
+    stop(2, ['usage: landmark/project <plugin root> <project dir> [typescript|go]']);
   }
 
-  const request = { env: process.env, requested: undefined };
+  const request = { env: process.env, requested: language };
   const { status, lines } = runProject(pluginRoot, projectDir, request);
 
   stop(status, lines);
