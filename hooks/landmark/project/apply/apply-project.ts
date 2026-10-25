@@ -39,5 +39,5 @@ export function applyProject(
   const packageText = merge.text === existing ? undefined : merge.text;
   const written = writeProject(projectDir, { plan, packageText, version });
 
-  return { status: 0, lines: formatReport(plan, merge, written) };
+  return { status: 0, lines: formatReport(plan, written, { language: 'typescript', merge }) };
 }
