@@ -21,11 +21,13 @@ const REQUIREMENTS: Readonly<Record<Language, (root: string) => string | undefin
 // A record that names no known language is refused: nothing is written.
 export function getLanguage(root: string, requested: Language | undefined): LanguageResult {
   const isUpgrade = existsSync(join(root, STAMP));
-  const language = isUpgrade ? readRecord(root) : requested ?? DEFAULT_LANGUAGE;
+  const chosen = isUpgrade ? readRecord(root) : { language: requested ?? DEFAULT_LANGUAGE };
 
-  if (typeof language !== 'string') {
-    return language;
+  if ('refusal' in chosen) {
+    return chosen;
   }
+
+  const { language } = chosen;
 
   const isConflict = isUpgrade && requested !== undefined && requested !== language;
 
@@ -44,21 +46,23 @@ export function getLanguage(root: string, requested: Language | undefined): Lang
   return { language };
 }
 
-function readRecord(root: string): Language | { readonly refusal: string } {
+function readRecord(root: string): LanguageResult {
   const path = join(root, LANGUAGE_RECORD);
 
   if (!existsSync(path)) {
-    return DEFAULT_LANGUAGE;
+    return { language: DEFAULT_LANGUAGE };
   }
 
   const text = readFileSync(path, 'utf8').trim();
   const language = languages.find((name) => name === text);
 
   if (language === undefined) {
-    const holds = `${ LANGUAGE_RECORD } holds ${ JSON.stringify(text) }`;
+    const shown = JSON.stringify(text);
+
+    const holds = `${ LANGUAGE_RECORD } holds ${ shown }`;
 
     return { refusal: `${ holds }, not a language; set it to typescript or go` };
   }
 
-  return language;
+  return { language };
 }
