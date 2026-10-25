@@ -130,12 +130,10 @@ test('installs the exported golangci-lint version in the Go workflow', () => {
   );
 });
 
-function readGolangciConfig(): string {
-  return readTemplates('go')[0]?.text ?? '';
-}
-
-test('the golangci config enables the standard linters plus the nine named ones', () => {
-  const block = [
+test('writes the approved golangci config for go', () => {
+  assert.equal(findGoText('.golangci.yml'), `${ [
+    'version: "2"',
+    'linters:',
     '  default: "standard"',
     '  enable:',
     '    - "depguard"',
@@ -147,56 +145,39 @@ test('the golangci config enables the standard linters plus the nine named ones'
     '    - "noctx"',
     '    - "testpackage"',
     '    - "wsl_v5"',
-  ].join('\n');
-
-  assert.ok(readGolangciConfig().includes(block));
-});
-
-test('the golangci config enables the three formatters', () => {
-  const block = [
+    '  settings:',
+    '    depguard:',
+    '      rules:',
+    '        main:',
+    '          deny:',
+    '            - pkg: "github.com/stretchr/testify"',
+    '              desc: "TEST-7: write tests with the testing package"',
+    '    errorlint:',
+    '      errorf: true',
+    '      asserts: false',
+    '      comparison: false',
+    '    exhaustive:',
+    '      default-signifies-exhaustive: false',
+    '    forbidigo:',
+    '      forbid:',
+    '        - pattern: "^log\\\\.Fatal"',
+    '          msg: "CODE-4: log.Fatal exits 1; return the error to main"',
+    '    goconst:',
+    '      min-occurrences: 3',
+    '    gocritic:',
+    '      disable-all: true',
+    '      enabled-checks:',
+    '        - "ifElseChain"',
     'formatters:',
     '  enable:',
     '    - "gofumpt"',
     '    - "goimports"',
     '    - "golines"',
-  ].join('\n');
-
-  assert.ok(readGolangciConfig().includes(block));
-});
-
-test('the golangci config sets the line length to 99', () => {
-  assert.ok(readGolangciConfig().includes('      max-len: 99\n'));
-});
-
-test('the golangci config sets goconst to three occurrences', () => {
-  assert.ok(readGolangciConfig().includes('      min-occurrences: 3\n'));
-});
-
-test('the golangci config does not let a default case make a switch exhaustive', () => {
-  assert.ok(readGolangciConfig().includes('      default-signifies-exhaustive: false\n'));
-});
-
-test('the golangci config keeps errorlint from flagging comparisons', () => {
-  assert.ok(readGolangciConfig().includes('      comparison: false\n'));
-});
-
-test('the golangci config forbids log.Fatal', () => {
-  assert.ok(readGolangciConfig().includes('        - pattern: "^log\\\\.Fatal"\n'));
-});
-
-test('the golangci config denies testify', () => {
-  assert.ok(readGolangciConfig().includes('            - pkg: "github.com/stretchr/testify"\n'));
-});
-
-test('the golangci config enables only the ifElseChain check of gocritic', () => {
-  const block = ['      disable-all: true', '      enabled-checks:', '        - "ifElseChain"']
-    .join('\n');
-
-  assert.ok(readGolangciConfig().includes(block));
-});
-
-test('the golangci config lifts both issue caps', () => {
-  const block = ['issues:', '  max-issues-per-linter: 0', '  max-same-issues: 0'].join('\n');
-
-  assert.ok(readGolangciConfig().includes(block));
+    '  settings:',
+    '    golines:',
+    '      max-len: 99',
+    'issues:',
+    '  max-issues-per-linter: 0',
+    '  max-same-issues: 0',
+  ].join('\n') }\n`);
 });

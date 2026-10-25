@@ -19,6 +19,7 @@ const WRAPPER = 'eslint.config.ts';
 const OWNED_TSCONFIG = '.claude/yapus/landmark/tsconfig.json';
 const WRAPPER_TSCONFIG = 'tsconfig.json';
 const SCOPES = '.claude/yapus/landmark/scopes.json';
+const LANGUAGE_RECORD = '.claude/yapus/landmark/language';
 const BASE_DIR = join(
   import.meta.dirname,
   ...['..', '..', '..', '..', 'hooks', 'landmark', 'project', 'files', 'typescript'],
@@ -194,7 +195,6 @@ const GO_FILES = [
   ['.golangci.yml', 'old\n'],
   ['.golangci.yaml', 'old\n'],
 ] as const;
-const GO_RECORD = '.claude/yapus/landmark/language';
 const GO_WORKFLOW = '.github/workflows/yapus.yml';
 
 function readGoTemplate(target: string): string {
@@ -236,7 +236,7 @@ test('go installs into a Go repository and prints the approved lines', (t) => {
   ].join('\n'));
   assert.equal(readRepoFile(repo, '.golangci.yml'), readGoTemplate('.golangci.yml'));
   assert.equal(readRepoFile(repo, GO_WORKFLOW), readGoTemplate(GO_WORKFLOW));
-  assert.equal(readRepoFile(repo, GO_RECORD), 'go\n');
+  assert.equal(readRepoFile(repo, LANGUAGE_RECORD), 'go\n');
   assert.ok(!existsSync(join(repo, 'package.json')));
   assert.ok(!existsSync(join(repo, '.gitignore')));
   assert.ok(!existsSync(join(repo, '.golangci.yaml')));
@@ -265,7 +265,7 @@ test('upgrade follows the recorded Go language and keeps the record and scopes',
   assert.equal(readRepoFile(repo, GO_WORKFLOW), readGoTemplate(GO_WORKFLOW));
   assert.equal(readRepoFile(repo, '.claude/yapus/landmark/version'), readVersion());
   assert.equal(readRepoFile(repo, SCOPES), scopes);
-  assert.equal(readRepoFile(repo, GO_RECORD), 'go\n');
+  assert.equal(readRepoFile(repo, LANGUAGE_RECORD), 'go\n');
   assert.ok(!existsSync(join(repo, 'package.json')));
   assert.ok(!existsSync(join(repo, OWNED)));
 });
@@ -328,7 +328,7 @@ test('refuses an upgrade whose language record is unknown and writes nothing', (
 
   commitFiles(repo, [
     ['.claude/yapus/landmark/version', '0.3.0'],
-    [GO_RECORD, 'rust\n'],
+    [LANGUAGE_RECORD, 'rust\n'],
   ]);
 
   const before = runGit(['status', '--porcelain'], repo);
@@ -352,5 +352,6 @@ test('installs typescript when it is named on a fresh repository', (t) => {
   const run = runProject(copyPlugin(t), repo, 'typescript');
 
   assert.equal(run.status, 0, run.stderr);
-  assert.equal(readRepoFile(repo, GO_RECORD), 'typescript\n');
+  assert.equal(readRepoFile(repo, LANGUAGE_RECORD), 'typescript\n');
+  assert.equal(readRepoFile(repo, OWNED), readBase('eslint.config.ts'));
 });
