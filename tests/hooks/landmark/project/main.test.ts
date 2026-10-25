@@ -9,11 +9,11 @@ import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
 import { commitFiles } from './plan/commit-files.ts';
 import { copyPlugin, PLUGIN, runProject } from './run-project.ts';
 
-const OWNED = '.landmark/eslint.config.ts';
+const OWNED = '.claude/yapus/landmark/eslint.config.ts';
 const WRAPPER = 'eslint.config.ts';
-const OWNED_TSCONFIG = '.landmark/tsconfig.json';
+const OWNED_TSCONFIG = '.claude/yapus/landmark/tsconfig.json';
 const WRAPPER_TSCONFIG = 'tsconfig.json';
-const SCOPES = '.landmark/scopes.json';
+const SCOPES = '.claude/yapus/landmark/scopes.json';
 const BASE_DIR = join(
   import.meta.dirname,
   ...['..', '..', '..', '..', 'hooks', 'landmark', 'project', 'files'],
@@ -52,15 +52,15 @@ test('installs into a fresh repository and prints the approved lines', (t) => {
   assert.equal(run.status, 0, run.stderr);
   assert.equal(run.stdout, [
     'yapus landmark project install: wrote',
-    '  .landmark/eslint.config.ts',
-    '  .landmark/tsconfig.json',
-    '  .github/workflows/landmark.yml',
+    '  .claude/yapus/landmark/eslint.config.ts',
+    '  .claude/yapus/landmark/tsconfig.json',
+    '  .github/workflows/yapus.yml',
     '  eslint.config.ts',
     '  tsconfig.json',
-    '  .landmark/scopes.json',
+    '  .claude/yapus/landmark/scopes.json',
     '  .gitignore',
     '  package.json',
-    '  .landmark/version',
+    '  .claude/yapus/landmark/version',
     'package.json: set scripts.check, devDependencies.@eslint/js, '
     + 'devDependencies.@stylistic/eslint-plugin, devDependencies.@types/node, '
     + 'devDependencies.eslint, devDependencies.typescript, devDependencies.typescript-eslint, '
@@ -70,16 +70,16 @@ test('installs into a fresh repository and prints the approved lines', (t) => {
     '  npm test',
     '  commit the changes',
     'To undo:',
-    '  remove .landmark/eslint.config.ts .landmark/tsconfig.json .github/workflows/landmark.yml '
-    + 'eslint.config.ts tsconfig.json .landmark/scopes.json .gitignore package.json '
-    + '.landmark/version',
+    '  remove .claude/yapus/landmark/eslint.config.ts .claude/yapus/landmark/tsconfig.json .github/workflows/yapus.yml '
+    + 'eslint.config.ts tsconfig.json .claude/yapus/landmark/scopes.json .gitignore package.json '
+    + '.claude/yapus/landmark/version',
     '',
   ].join('\n'));
   assert.equal(readRepoFile(repo, OWNED), readBase('eslint.config.ts'));
   assert.equal(readRepoFile(repo, OWNED_TSCONFIG), readBase('tsconfig.json'));
-  assert.match(readRepoFile(repo, WRAPPER), /from '\.\/\.landmark\/eslint\.config\.ts'/);
-  assert.match(readRepoFile(repo, WRAPPER_TSCONFIG), /"extends": "\.\/\.landmark\/tsconfig\.json"/);
-  assert.equal(readRepoFile(repo, '.landmark/version'), readVersion());
+  assert.match(readRepoFile(repo, WRAPPER), /from '\.\/\.claude\/yapus\/landmark\/eslint\.config\.ts'/);
+  assert.match(readRepoFile(repo, WRAPPER_TSCONFIG), /"extends": "\.\/\.claude\/yapus\/landmark\/tsconfig\.json"/);
+  assert.equal(readRepoFile(repo, '.claude/yapus/landmark/version'), readVersion());
 });
 
 test('upgrade rewrites owned files and the stamp and keeps wrapper files', (t) => {
@@ -100,7 +100,7 @@ test('upgrade rewrites owned files and the stamp and keeps wrapper files', (t) =
   writeFileSync(join(repo, 'package.json'), customPackage);
   writeFileSync(join(repo, OWNED), 'changed owned\n');
   writeFileSync(join(repo, OWNED_TSCONFIG), '{}\n');
-  writeFileSync(join(repo, '.landmark', 'version'), '0.0.1');
+  writeFileSync(join(repo, '.claude', 'yapus', 'landmark', 'version'), '0.0.1');
   writeFileSync(join(repo, WRAPPER), customWrapper);
   writeFileSync(join(repo, WRAPPER_TSCONFIG), customTsconfig);
   writeFileSync(join(repo, SCOPES), customScopes);
@@ -112,7 +112,7 @@ test('upgrade rewrites owned files and the stamp and keeps wrapper files', (t) =
   assert.match(run.stdout, /^yapus landmark project upgrade: wrote\n/);
   assert.equal(readRepoFile(repo, OWNED), readBase('eslint.config.ts'));
   assert.equal(readRepoFile(repo, OWNED_TSCONFIG), readBase('tsconfig.json'));
-  assert.equal(readRepoFile(repo, '.landmark/version'), readVersion());
+  assert.equal(readRepoFile(repo, '.claude/yapus/landmark/version'), readVersion());
   assert.doesNotMatch(run.stdout, /remove /);
   assert.doesNotMatch(run.stdout, /package\.json/);
   assert.equal(readRepoFile(repo, WRAPPER), customWrapper);
@@ -168,7 +168,7 @@ test('crashes on an unparsable package.json and writes nothing', (t) => {
   assert.equal(run.stdout, '');
   assert.match(run.stderr, /^yapus landmark project: crashed: [^\n]*package\.json[^\n]*\n$/);
   assert.equal(runGit(['status', '--porcelain'], repo), '');
-  assert.ok(!existsSync(join(repo, '.landmark')));
+  assert.ok(!existsSync(join(repo, '.claude', 'yapus', 'landmark')));
 });
 
 test('prints the usage and exits 2 without two arguments', (t) => {

@@ -18,9 +18,9 @@ test('lists exactly the five targets with their kinds', () => {
   assert.deepEqual(
     readTemplates().map(({ target, kind }) => ({ target, kind })),
     [
-      { target: '.landmark/eslint.config.ts', kind: 'owned' },
-      { target: '.landmark/tsconfig.json', kind: 'owned' },
-      { target: '.github/workflows/landmark.yml', kind: 'owned' },
+      { target: '.claude/yapus/landmark/eslint.config.ts', kind: 'owned' },
+      { target: '.claude/yapus/landmark/tsconfig.json', kind: 'owned' },
+      { target: '.github/workflows/yapus.yml', kind: 'owned' },
       { target: 'eslint.config.ts', kind: 'wrapper' },
       { target: 'tsconfig.json', kind: 'wrapper' },
     ],
@@ -29,14 +29,14 @@ test('lists exactly the five targets with their kinds', () => {
 
 test('carries the bytes of the base ESLint config', () => {
   assert.equal(
-    findText('.landmark/eslint.config.ts'),
+    findText('.claude/yapus/landmark/eslint.config.ts'),
     readFileSync(join(BASE, 'eslint.config.ts'), 'utf8'),
   );
 });
 
 test('carries the bytes of the base tsconfig', () => {
   assert.equal(
-    findText('.landmark/tsconfig.json'),
+    findText('.claude/yapus/landmark/tsconfig.json'),
     readFileSync(join(BASE, 'tsconfig.json'), 'utf8'),
   );
 });
@@ -48,19 +48,19 @@ test('makes the workflow equal to test.yml without its ShellCheck step', () => {
     ...lines.slice(SHELLCHECK_LAST_LINE),
   ].join('\n');
 
-  assert.equal(findText('.github/workflows/landmark.yml'), expected);
+  assert.equal(findText('.github/workflows/yapus.yml'), expected);
 });
 
 test('keeps the ShellCheck step out of the workflow', () => {
-  assert.doesNotMatch(findText('.github/workflows/landmark.yml') ?? '', /shellcheck/i);
+  assert.doesNotMatch(findText('.github/workflows/yapus.yml') ?? '', /shellcheck/i);
 });
 
 test('makes the wrapper tsconfig extend the base and name the build info file', () => {
   const text = findText('tsconfig.json') ?? '';
 
   assert.deepEqual(JSON.parse(text), {
-    extends: './.landmark/tsconfig.json',
-    compilerOptions: { tsBuildInfoFile: 'node_modules/.cache/landmark/tsbuildinfo' },
+    extends: './.claude/yapus/landmark/tsconfig.json',
+    compilerOptions: { tsBuildInfoFile: 'node_modules/.cache/yapus/landmark/tsbuildinfo' },
   });
   assert.ok(text.endsWith('}\n'));
 });
@@ -70,7 +70,7 @@ test('makes the wrapper ESLint config import the base with its extension', () =>
     findText('eslint.config.ts'),
     [
       'import { defineConfig } from \'eslint/config\';',
-      'import base from \'./.landmark/eslint.config.ts\';',
+      'import base from \'./.claude/yapus/landmark/eslint.config.ts\';',
       '',
       'export default defineConfig(base);',
       '',

@@ -10,6 +10,6 @@ export function findScopesPath(
 ): string | undefined {
   return [
     join(catalogsDirectory, 'scopes.json'),
-    join(repositoryRoot, '.landmark', 'scopes.json'),
+    join(repositoryRoot, '.claude', 'yapus', 'landmark', 'scopes.json'),
   ].find((path) => existsSync(path));
 }

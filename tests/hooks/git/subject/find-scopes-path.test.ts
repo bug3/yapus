@@ -9,8 +9,8 @@ test('prefers the scope catalog next to the code', (t) => {
   const { catalogs, repository } = makeLayout(t);
 
   writeFileSync(join(catalogs, 'scopes.json'), '[]');
-  mkdirSync(join(repository, '.landmark'));
-  writeFileSync(join(repository, '.landmark', 'scopes.json'), '[]');
+  mkdirSync(join(repository, '.claude', 'yapus', 'landmark'), { recursive: true });
+  writeFileSync(join(repository, '.claude', 'yapus', 'landmark', 'scopes.json'), '[]');
 
   assert.equal(findScopesPath(catalogs, repository), join(catalogs, 'scopes.json'));
 });
@@ -18,12 +18,12 @@ test('prefers the scope catalog next to the code', (t) => {
 test('falls back to the scope catalog of the repository', (t) => {
   const { catalogs, repository } = makeLayout(t);
 
-  mkdirSync(join(repository, '.landmark'));
-  writeFileSync(join(repository, '.landmark', 'scopes.json'), '[]');
+  mkdirSync(join(repository, '.claude', 'yapus', 'landmark'), { recursive: true });
+  writeFileSync(join(repository, '.claude', 'yapus', 'landmark', 'scopes.json'), '[]');
 
   assert.equal(
     findScopesPath(catalogs, repository),
-    join(repository, '.landmark', 'scopes.json'),
+    join(repository, '.claude', 'yapus', 'landmark', 'scopes.json'),
   );
 });
 

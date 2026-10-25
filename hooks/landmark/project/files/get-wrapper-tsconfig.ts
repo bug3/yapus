@@ -1,11 +1,13 @@
+import { getProjectDirectory } from './get-project-directory.ts';
+
 // The adopter's tsconfig.json: it extends the base and sets the one path the
-// base cannot, because a path in the base resolves inside .landmark. It has
-// no include, so the compiler takes every TypeScript file under the root.
+// base cannot, because a path in the base resolves inside the base directory. It
+// has no include, so the compiler takes every TypeScript file under the root.
 export function getWrapperTsconfig(): string {
   return `${ JSON.stringify(
     {
-      extends: './.landmark/tsconfig.json',
-      compilerOptions: { tsBuildInfoFile: 'node_modules/.cache/landmark/tsbuildinfo' },
+      extends: `./${ getProjectDirectory() }/tsconfig.json`,
+      compilerOptions: { tsBuildInfoFile: 'node_modules/.cache/yapus/landmark/tsbuildinfo' },
     },
     undefined,
     2,

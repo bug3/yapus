@@ -39,21 +39,21 @@ test('installs every template, the seed and the gitignore into a fresh repositor
     plan: {
       mode: 'install',
       writes: [
-        { target: '.landmark/eslint.config.ts', text: 'base lint' },
-        { target: '.github/workflows/landmark.yml', text: 'workflow' },
+        { target: '.claude/yapus/landmark/eslint.config.ts', text: 'base lint' },
+        { target: '.github/workflows/yapus.yml', text: 'workflow' },
         { target: 'eslint.config.ts', text: 'wrapper lint' },
-        { target: '.landmark/scopes.json', text: '[\n  "project"\n]\n' },
+        { target: '.claude/yapus/landmark/scopes.json', text: '[\n  "project"\n]\n' },
         { target: '.gitignore', text: 'node_modules/\n' },
       ],
       removals: [],
       created: [
-        '.landmark/eslint.config.ts',
-        '.github/workflows/landmark.yml',
+        '.claude/yapus/landmark/eslint.config.ts',
+        '.github/workflows/yapus.yml',
         'eslint.config.ts',
-        '.landmark/scopes.json',
+        '.claude/yapus/landmark/scopes.json',
         '.gitignore',
         'package.json',
-        '.landmark/version',
+        '.claude/yapus/landmark/version',
       ],
       changed: [],
     },
@@ -64,10 +64,10 @@ test('plans an install in a repository with no commits', (t) => {
   const repo = makeTempRepo(t);
 
   assert.deepEqual(targetsOf(getProjectPlan(repo, templates, makeGitEnv(t))), [
-    '.landmark/eslint.config.ts',
-    '.github/workflows/landmark.yml',
+    '.claude/yapus/landmark/eslint.config.ts',
+    '.github/workflows/yapus.yml',
     'eslint.config.ts',
-    '.landmark/scopes.json',
+    '.claude/yapus/landmark/scopes.json',
     '.gitignore',
   ]);
 });
@@ -76,7 +76,7 @@ test('upgrades with the owned templates only when the stamp exists', (t) => {
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['.landmark/version', '0.3.0'],
+    ['.claude/yapus/landmark/version', '0.3.0'],
     ['eslint.config.js', 'old'],
     ['package.json', '{}'],
   ]);
@@ -85,12 +85,12 @@ test('upgrades with the owned templates only when the stamp exists', (t) => {
     plan: {
       mode: 'upgrade',
       writes: [
-        { target: '.landmark/eslint.config.ts', text: 'base lint' },
-        { target: '.github/workflows/landmark.yml', text: 'workflow' },
+        { target: '.claude/yapus/landmark/eslint.config.ts', text: 'base lint' },
+        { target: '.github/workflows/yapus.yml', text: 'workflow' },
       ],
       removals: [],
-      created: ['.landmark/eslint.config.ts', '.github/workflows/landmark.yml'],
-      changed: ['package.json', '.landmark/version'],
+      created: ['.claude/yapus/landmark/eslint.config.ts', '.github/workflows/yapus.yml'],
+      changed: ['package.json', '.claude/yapus/landmark/version'],
     },
   });
 });
@@ -137,7 +137,7 @@ test('does not remove a lint file on an upgrade', (t) => {
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['.landmark/version', '0.3.0'],
+    ['.claude/yapus/landmark/version', '0.3.0'],
     ['.eslintrc', 'old'],
   ]);
 
@@ -160,8 +160,11 @@ test('seeds scopes from tracked directories, sorted, without .github and __tests
   const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
 
   assert.deepEqual(
-    findWrite(planOrRefusals, '.landmark/scopes.json'),
-    { target: '.landmark/scopes.json', text: '[\n  "project",\n  "src",\n  "tests"\n]\n' },
+    findWrite(planOrRefusals, '.claude/yapus/landmark/scopes.json'),
+    {
+      target: '.claude/yapus/landmark/scopes.json',
+      text: '[\n  "project",\n  "src",\n  "tests"\n]\n',
+    },
   );
 });
 
@@ -169,26 +172,29 @@ test('does not seed scopes on an upgrade', (t) => {
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['.landmark/version', '0.3.0'],
+    ['.claude/yapus/landmark/version', '0.3.0'],
     ['src/a.ts', 'x'],
   ]);
 
   const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
 
-  assert.equal(targetsOf(planOrRefusals).includes('.landmark/scopes.json'), false);
+  assert.equal(targetsOf(planOrRefusals).includes('.claude/yapus/landmark/scopes.json'), false);
 });
 
 test('keeps an existing scopes file', (t) => {
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['.landmark/scopes.json', '["mine"]\n'],
+    ['.claude/yapus/landmark/scopes.json', '["mine"]\n'],
   ]);
 
   const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
 
-  assert.equal(targetsOf(planOrRefusals).includes('.landmark/scopes.json'), false);
-  assert.equal(getPlan(planOrRefusals).changed.includes('.landmark/scopes.json'), false);
+  assert.equal(targetsOf(planOrRefusals).includes('.claude/yapus/landmark/scopes.json'), false);
+  assert.equal(
+    getPlan(planOrRefusals).changed.includes('.claude/yapus/landmark/scopes.json'),
+    false,
+  );
 });
 
 test('adds node_modules to a gitignore that lacks it, after a missing final newline', (t) => {
@@ -305,15 +311,15 @@ test('refuses a gitignored file inside an ignored directory on a touched path', 
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['.gitignore', '.landmark/\n'],
+    ['.gitignore', '.claude/yapus/landmark/\n'],
   ]);
   writeFiles(repo, [
-    ['.landmark/version', '0.0.1'],
+    ['.claude/yapus/landmark/version', '0.0.1'],
   ]);
 
   assert.deepEqual(getProjectPlan(repo, templates, makeGitEnv(t)), {
     refusals: [
-      '.landmark/version has an uncommitted or untracked change; commit or stash it first',
+      '.claude/yapus/landmark/version has an uncommitted or untracked change; commit or stash it first',
     ],
   });
 });
@@ -380,11 +386,11 @@ test('splits created and changed by what exists now', (t) => {
     [getPlan(planOrRefusals).created, getPlan(planOrRefusals).changed],
     [
       [
-        '.landmark/eslint.config.ts',
-        '.github/workflows/landmark.yml',
-        '.landmark/scopes.json',
+        '.claude/yapus/landmark/eslint.config.ts',
+        '.github/workflows/yapus.yml',
+        '.claude/yapus/landmark/scopes.json',
         '.gitignore',
-        '.landmark/version',
+        '.claude/yapus/landmark/version',
       ],
       ['eslint.config.ts', 'tsconfig.json', 'package.json'],
     ],
@@ -395,7 +401,7 @@ test('throws when git status fails instead of reading it as no change', (t) => {
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['.landmark/scopes.json', '[]\n'],
+    ['.claude/yapus/landmark/scopes.json', '[]\n'],
   ]);
   writeFileSync(join(repo, '.git', 'index'), 'not an index');
 

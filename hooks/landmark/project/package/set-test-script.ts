@@ -4,7 +4,7 @@ import { setValue } from './set-value.ts';
 const CHECK_PREFIX = 'npm run check && ';
 const INIT_DEFAULT = 'echo "Error: no test specified" && exit 1';
 const YAPUS_TEST =
-  'NODE_COMPILE_CACHE="$PWD/node_modules/.cache/landmark/node" node --test \'tests/**/*.test.ts\'';
+  'NODE_COMPILE_CACHE="$PWD/node_modules/.cache/yapus/landmark/node" node --test \'tests/**/*.test.ts\'';
 
 // scripts.test at install: the old test runs after the check, and the node
 // test runner replaces a missing or npm init default test.

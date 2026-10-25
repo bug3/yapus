@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { getProjectDirectory } from '../files/get-project-directory.ts';
 import type { Template } from '../files/read-templates.ts';
 import { getGitignoreText } from './get-gitignore-text.ts';
 import { getRefusals } from './get-refusals.ts';
@@ -16,11 +17,11 @@ export interface ProjectPlan {
 
 export type PlanResult = { readonly plan: ProjectPlan } | { readonly refusals: readonly string[] };
 
-export const STAMP = '.landmark/version';
+export const STAMP = `${ getProjectDirectory() }/version`;
 
 export const PACKAGE = 'package.json';
 
-const SCOPES = '.landmark/scopes.json';
+const SCOPES = `${ getProjectDirectory() }/scopes.json`;
 const GITIGNORE = '.gitignore';
 const LEGACY_LINT_FILES: readonly string[] = [
   'eslint.config.js',

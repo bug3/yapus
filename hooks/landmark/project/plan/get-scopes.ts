@@ -3,7 +3,7 @@ import { runGit } from './run-git.ts';
 const SCOPE_FORM = /^[a-z0-9-]+$/;
 const FIXED_SCOPE = 'project';
 
-// The seed of .landmark/scopes.json as canonical JSON: the first segment of
+// The seed of the project scopes.json as canonical JSON: the first segment of
 // every tracked path that has a slash, if it is of the scope form, plus
 // "project", unique and sorted by <. A failed git read throws: seeded from
 // nothing, the catalog would hold only "project".

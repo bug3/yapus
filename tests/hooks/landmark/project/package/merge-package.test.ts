@@ -4,7 +4,7 @@ import { mergePackage } from '../../../../../hooks/landmark/project/package/merg
 
 const CHECK = 'tsc -p . && eslint --max-warnings 0 --flag unstable_native_nodejs_ts_config .';
 const YAPUS_TEST =
-  'npm run check && NODE_COMPILE_CACHE="$PWD/node_modules/.cache/landmark/node" '
+  'npm run check && NODE_COMPILE_CACHE="$PWD/node_modules/.cache/yapus/landmark/node" '
   + 'node --test \'tests/**/*.test.ts\'';
 const OWNED_KEYS: readonly string[] = [
   'scripts.check',

@@ -48,8 +48,11 @@ test('refuses to create a branch for an agent', (t) => {
 test('refuses a scope the repository catalog does not list', (t) => {
   const setup = installAndInit(t);
 
-  mkdirSync(join(setup.repository, '.landmark'));
-  writeFileSync(join(setup.repository, '.landmark', 'scopes.json'), '["src"]\n');
+  mkdirSync(join(setup.repository, '.claude', 'yapus', 'landmark'), { recursive: true });
+  writeFileSync(
+    join(setup.repository, '.claude', 'yapus', 'landmark', 'scopes.json'),
+    '["src"]\n',
+  );
 
   const commitRun = runGit(setup, [...COMMIT, 'feat(xyz): add greet']);
 
