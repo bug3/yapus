@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { getProjectPlan } from '../../../../../hooks/landmark/project/plan/get-project-plan.ts';
@@ -327,4 +327,15 @@ test('splits created and changed by what exists now', (t) => {
       ['eslint.config.ts', 'tsconfig.json', 'package.json'],
     ],
   );
+});
+
+test('throws when git status fails instead of reading it as no change', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [
+    ['README.md', 'x'],
+  ]);
+  writeFileSync(join(repo, '.git', 'index'), 'not an index');
+
+  assert.throws(() => getProjectPlan(repo, templates), /^Error: git status exited \d+$/);
 });

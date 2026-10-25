@@ -11,12 +11,18 @@ export function getRefusals(root: string, touched: readonly string[]): string[] 
 }
 
 // The paths in the porcelain -z status of the given ones. An entry is "XY path";
-// a rename or a copy is followed by one more entry holding the source path.
+// a rename or a copy is followed by one more entry holding the source path. A
+// failed status throws: read as no change, it would let a write go over one.
 function findChanged(root: string, touched: readonly string[]): string[] {
   const status = runGit(
     ['status', '--porcelain', '-z', '--untracked-files=all', '--', ...touched],
     root,
   );
+
+  if (status.status !== 0) {
+    throw new Error(`git status exited ${ String(status.status) }`);
+  }
+
   const entries = status.stdout.split('\0').filter((entry) => entry !== '');
   const paths: string[] = [];
 
