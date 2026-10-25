@@ -1,0 +1,29 @@
+import { getGolangciLintVersion } from './get-golangci-lint-version.ts';
+
+// The text of the Go .github/workflows/yapus.yml template. It is a list of
+// lines because a .yml file outside .github is refused.
+export function getGoWorkflow(): string {
+  return `${ [
+    'name: "test"',
+    '',
+    'on:',
+    '  pull_request:',
+    '',
+    'permissions:',
+    '  contents: "read"',
+    '',
+    'jobs:',
+    '  test:',
+    '    runs-on: "ubuntu-latest"',
+    '    timeout-minutes: 10',
+    '    steps:',
+    '      - uses: "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" # v7.0.1',
+    '      - uses: "actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e" # v7.0.0',
+    '        with:',
+    '          go-version-file: "go.mod"',
+    '      - uses: "golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a" # v9.3.0',
+    '        with:',
+    `          version: "${ getGolangciLintVersion() }"`,
+    '      - run: "go test ./..."',
+  ].join('\n') }\n`;
+}

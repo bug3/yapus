@@ -3,6 +3,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { readTemplates } from '../../../../../hooks/landmark/project/files/read-templates.ts';
+import {
+  getGolangciLintVersion,
+} from '../../../../../hooks/landmark/project/files/go/get-golangci-lint-version.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..', '..');
 const BASE = join(ROOT, 'hooks', 'landmark', 'project', 'files', 'typescript');
@@ -75,5 +78,54 @@ test('makes the wrapper ESLint config import the base with its extension', () =>
       'export default defineConfig(base);',
       '',
     ].join('\n'),
+  );
+});
+
+function findGoText(target: string): string {
+  return readTemplates('go').find((template) => template.target === target)?.text ?? '';
+}
+
+test('lists exactly the two Go targets with their kinds', () => {
+  assert.deepEqual(
+    readTemplates('go').map(({ target, kind }) => ({ target, kind })),
+    [
+      { target: '.golangci.yml', kind: 'owned' },
+      { target: '.github/workflows/yapus.yml', kind: 'owned' },
+    ],
+  );
+});
+
+test('lists the TypeScript targets when no language is given', () => {
+  assert.deepEqual(readTemplates(), readTemplates('typescript'));
+});
+
+test('pins every Go workflow action to a commit SHA with a version comment', () => {
+  const uses = findGoText('.github/workflows/yapus.yml')
+    .split('\n')
+    .filter((line) => line.includes('uses:'));
+
+  assert.equal(uses.length, 3);
+  assert.equal(uses.filter((line) => /uses: "[^"@]+@[0-9a-f]{40}" # v\d+\.\d+\.\d+$/.test(line)).length, 3);
+});
+
+test('limits the Go workflow token to read access on contents', () => {
+  assert.match(findGoText('.github/workflows/yapus.yml'), /^permissions:\n {2}contents: "read"\n/m);
+});
+
+test('triggers the Go workflow on pull_request only', () => {
+  const text = findGoText('.github/workflows/yapus.yml');
+
+  assert.match(text, /^on:\n {2}pull_request:\n\n/m);
+  assert.doesNotMatch(text, /pull_request_target|workflow_run/);
+});
+
+test('gives the Go workflow job a timeout', () => {
+  assert.match(findGoText('.github/workflows/yapus.yml'), /^ {4}timeout-minutes: \d+$/m);
+});
+
+test('installs the exported golangci-lint version in the Go workflow', () => {
+  assert.match(
+    findGoText('.github/workflows/yapus.yml'),
+    new RegExp(`^ {10}version: "${ getGolangciLintVersion() }"$`, 'm'),
   );
 });
