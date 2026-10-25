@@ -1,15 +1,10 @@
 import { defineConfig } from 'eslint/config';
-import base from './hooks/landmark/project/files/eslint.config.ts';
-
-// The entry file of a hook ends the process, so only number parsing stays
-// restricted there.
-const NUMBER_PARSING = [
-  { object: 'Number', property: 'parseInt', message: 'Convert with Number().' },
-  { object: 'Number', property: 'parseFloat', message: 'Convert with Number().' },
-] as const;
+import base, { NUMBER_PARSING } from './hooks/landmark/project/files/eslint.config.ts';
 
 export default defineConfig(
   base,
+  // The entry file of a hook ends the process, so only number parsing stays
+  // restricted there.
   {
     files: ['hooks/**/main.ts'],
     rules: {

@@ -24,7 +24,8 @@ const NO_NULL = {
   message: 'Use undefined for absence.',
 } as const;
 
-const NUMBER_PARSING = [
+// Exported so a wrapper config can restrict number parsing alone.
+export const NUMBER_PARSING = [
   { object: 'Number', property: 'parseInt', message: 'Convert with Number().' },
   { object: 'Number', property: 'parseFloat', message: 'Convert with Number().' },
 ] as const;
