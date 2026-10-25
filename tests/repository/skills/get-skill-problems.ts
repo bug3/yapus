@@ -7,10 +7,11 @@ const FRONTMATTER = /^---\n([\s\S]*?)\n---\n/;
 const FIELD_SEPARATOR = ': ';
 const REQUIRED_FIELDS: readonly string[] = ['name', 'description'];
 
-// Every way a plugin skill under root leaves the frontmatter rule: a missing
-// name or description, or a name that is not its directory's. Claude Code
-// would fall back to the directory and the body's first line instead. A
-// directory outside [a-z0-9-] is not seen; a block description reads as none.
+// Every way a plugin skill under root leaves its frontmatter limits: a missing
+// name or description, or a name that is not its directory's. For a missing
+// field Claude Code falls back to the directory or the body's first line. A
+// directory outside [a-z0-9-] is not seen; a description that starts on the
+// line after its key reads as none.
 export function getSkillProblems(root: string): string[] {
   return listFiles(root, '.md')
     .filter((path) => SKILL_FILE.test(path))

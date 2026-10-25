@@ -5,6 +5,6 @@ import { getSkillProblems } from './get-skill-problems.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 
-test('keeps every plugin skill within the frontmatter rule', () => {
+test('keeps every plugin skill within its frontmatter limits', () => {
   assert.deepEqual(getSkillProblems(ROOT), []);
 });

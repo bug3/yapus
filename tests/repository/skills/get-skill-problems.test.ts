@@ -7,7 +7,7 @@ import { getSkillProblems } from './get-skill-problems.ts';
 
 const SKILL = 'plugins/p/skills/blueprint/SKILL.md';
 
-interface File {
+interface SkillFile {
   readonly path: string;
   readonly text: string;
 }
@@ -62,7 +62,7 @@ function makeHead(head: string): string {
   return `---\n${ head }\n---\n\nbody\n`;
 }
 
-function makeFiles(t: TestContext, files: readonly File[]): string {
+function makeFiles(t: TestContext, files: readonly SkillFile[]): string {
   const root = makeTempRepo(t);
 
   for (const { path, text } of files) {
