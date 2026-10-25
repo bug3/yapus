@@ -112,6 +112,7 @@ test('upgrade rewrites owned files and the stamp and keeps wrapper files', (t) =
   assert.equal(readRepoFile(repo, OWNED_TSCONFIG), readBase('tsconfig.json'));
   assert.equal(readRepoFile(repo, '.landmark/version'), readVersion());
   assert.doesNotMatch(run.stdout, /remove /);
+  assert.doesNotMatch(run.stdout, /package\.json/);
   assert.equal(readRepoFile(repo, WRAPPER), customWrapper);
   assert.equal(readRepoFile(repo, WRAPPER_TSCONFIG), customTsconfig);
   assert.equal(readRepoFile(repo, SCOPES), customScopes);
