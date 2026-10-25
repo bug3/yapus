@@ -10,12 +10,21 @@ export function getRefusals(root: string, touched: readonly string[]): string[] 
     .map((path) => `${ path } has an uncommitted or untracked change; commit or stash it first`);
 }
 
-// The paths in the porcelain -z status of the given ones. An entry is "XY path";
-// a rename or a copy is followed by one more entry holding the source path. A
-// failed status throws: read as no change, it would let a write go over one.
+// The paths in the porcelain -z status of the given ones, ignored files
+// included (git cannot restore those). An entry is "XY path"; a rename or a
+// copy is followed by one more entry holding the source path. A failed status
+// throws: read as no change, it would let a write go over one.
 function findChanged(root: string, touched: readonly string[]): string[] {
   const status = runGit(
-    ['status', '--porcelain', '-z', '--untracked-files=all', '--', ...touched],
+    [
+      'status',
+      '--porcelain',
+      '-z',
+      '--untracked-files=all',
+      '--ignored=traditional',
+      '--',
+      ...touched,
+    ],
     root,
   );
 

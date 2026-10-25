@@ -280,6 +280,54 @@ test('refuses a modified tracked package.json', (t) => {
   });
 });
 
+test('refuses a gitignored file on a touched path', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [
+    ['.gitignore', 'eslint.config.ts\n'],
+  ]);
+  writeFiles(repo, [
+    ['eslint.config.ts', 'mine'],
+  ]);
+
+  assert.deepEqual(getProjectPlan(repo, templates), {
+    refusals: [
+      'eslint.config.ts has an uncommitted or untracked change; commit or stash it first',
+    ],
+  });
+});
+
+test('refuses a gitignored file inside an ignored directory on a touched path', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [
+    ['.gitignore', '.landmark/\n'],
+  ]);
+  writeFiles(repo, [
+    ['.landmark/version', '0.0.1'],
+  ]);
+
+  assert.deepEqual(getProjectPlan(repo, templates), {
+    refusals: [
+      '.landmark/version has an uncommitted or untracked change; commit or stash it first',
+    ],
+  });
+});
+
+test('does not refuse for an unrelated gitignored file', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [
+    ['.gitignore', 'dist/\n*.log\n'],
+  ]);
+  writeFiles(repo, [
+    ['dist/out.js', 'x'],
+    ['debug.log', 'x'],
+  ]);
+
+  getPlan(getProjectPlan(repo, templates));
+});
+
 test('refuses an uncommitted lint file that install would remove', (t) => {
   const repo = makeTempRepo(t);
 
