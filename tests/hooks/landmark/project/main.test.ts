@@ -24,7 +24,9 @@ function readVersion(): unknown {
     readFileSync(join(PLUGIN, '.claude-plugin', 'plugin.json'), 'utf8'),
   );
 
-  return isRecord(manifest) ? manifest.version : undefined;
+  assert.ok(isRecord(manifest));
+
+  return manifest.version;
 }
 
 function readBase(name: string): string {
