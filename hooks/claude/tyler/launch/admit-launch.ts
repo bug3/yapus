@@ -1,5 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { readSettingFile } from '../../providens/settings/read-setting-file.ts';
 
 // Launches a session may make when the person has written no limit: above
 // the 37 the busiest measured session made.
@@ -14,14 +15,15 @@ const WHOLE_NUMBER = /^\d+$/;
 // in <dataDir>/launch-limit; a file that holds no whole number refuses.
 export function admitLaunch(dataDir: string, sessionId: string): string | undefined {
   const limitPath = join(dataDir, LIMIT_FILE);
-  const limit = readLimit(limitPath);
+  const setting = readSettingFile(limitPath, parseWholeNumber);
 
-  if (limit === undefined) {
+  if (setting.kind === 'invalid') {
     return `${ limitPath } holds no whole number; the person writes one there, such as 41`;
   }
 
   const logPath = join(dataDir, LAUNCHES_DIR, `${ sessionId }.log`);
   const count = countLaunches(logPath);
+  const limit = setting.kind === 'value' ? setting.value : DEFAULT_LIMIT;
 
   if (count >= limit) {
     return `this session has launched ${ String(count) } subagents, its limit; the person can `
@@ -34,13 +36,7 @@ export function admitLaunch(dataDir: string, sessionId: string): string | undefi
   return undefined;
 }
 
-function readLimit(path: string): number | undefined {
-  if (!existsSync(path)) {
-    return DEFAULT_LIMIT;
-  }
-
-  const text = readFileSync(path, 'utf8').trim();
-
+function parseWholeNumber(text: string): number | undefined {
   return WHOLE_NUMBER.test(text) ? Number(text) : undefined;
 }
 
