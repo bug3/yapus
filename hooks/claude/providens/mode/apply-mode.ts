@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { getContext, POLICY_PATH } from '../policy/get-context.ts';
+import { POLICY_PATH, readPolicy } from '../policy/get-context.ts';
 import { MODE, readMode } from '../settings/read-mode.ts';
 import { getSettingPath } from '../settings/resolve-setting.ts';
 import type { ModeChange } from './parse-args.ts';
@@ -26,10 +26,10 @@ export function applyMode(dataDir: string, sessionId: string, change: ModeChange
     return { kind: 'text', text: `${ first }\n${ readFileSync(OFF_PATH, 'utf8') }` };
   }
 
-  const context = getContext(POLICY_PATH);
+  const policy = readPolicy(POLICY_PATH);
 
-  if (context.kind === 'failure') {
-    return context;
+  if (policy.kind === 'failure') {
+    return policy;
   }
 
   const state = inForce.kind === 'value'
@@ -38,7 +38,7 @@ export function applyMode(dataDir: string, sessionId: string, change: ModeChange
 
   return {
     kind: 'text',
-    text: `${ describeWrite(path, state) }\n${ readFileSync(POLICY_PATH, 'utf8') }`,
+    text: `${ describeWrite(path, state) }\n${ policy.text }`,
   };
 }
 
