@@ -11,7 +11,7 @@ import { makeEnv, runInstall, spawnInstall } from './run-install.ts';
 
 const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'landmark');
 
-test('writes 13 rendered rule files and the version stamp', (t) => {
+test('writes 14 rendered rule files and the version stamp', (t) => {
   const { home, installRun } = runInstall(t, 'install');
   const rules = join(home, '.claude', 'rules', 'yapus', 'landmark');
   const manifest: unknown = JSON.parse(
@@ -19,7 +19,7 @@ test('writes 13 rendered rule files and the version stamp', (t) => {
   );
 
   assert.equal(installRun.status, 0, installRun.stderr);
-  assert.equal(readdirSync(rules).length, 13);
+  assert.equal(readdirSync(rules).length, 14);
   assert.ok(!readFileSync(join(rules, 'principles.md'), 'utf8').startsWith('---'));
   assert.ok(!readFileSync(join(rules, 'git.md'), 'utf8').includes('hooks/git/'));
   assert.equal(
@@ -120,5 +120,5 @@ test('leaves no rule, stamp or git config when hooks fail, and a re-run installs
   const rerun = spawnInstall({ root, home, mode: 'install' });
 
   assert.equal(rerun.status, 0, rerun.stderr);
-  assert.equal(readdirSync(join(home, '.claude', 'rules', 'yapus', 'landmark')).length, 13);
+  assert.equal(readdirSync(join(home, '.claude', 'rules', 'yapus', 'landmark')).length, 14);
 });

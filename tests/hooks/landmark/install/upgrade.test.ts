@@ -109,7 +109,7 @@ test('upgrade removes a stale rule file and keeps the current ones', (t) => {
 
   assert.equal(upgradeRun.status, 0, upgradeRun.stderr);
   assert.equal(existsSync(join(rulesDirectory, 'dropped.md')), false);
-  assert.equal(readdirSync(rulesDirectory).length, 13);
+  assert.equal(readdirSync(rulesDirectory).length, 14);
   assert.equal(existsSync(join(rulesDirectory, 'git.md')), true);
 });
 
