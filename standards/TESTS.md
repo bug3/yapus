@@ -21,3 +21,5 @@ paths:
 ## TEST-5. In a Node program, write tests with `node:test` and `node:assert/strict`; add no test framework.
 
 ## TEST-6. In a Python program, write tests with `unittest`; add no test framework.
+
+## TEST-7. In a Go program, write tests with the `testing` package; add no test framework or assertion library.
