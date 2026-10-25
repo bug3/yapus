@@ -14,18 +14,18 @@ import { commitFiles, writeFiles } from './commit-files.ts';
 import { makeGitEnv } from './make-git-env.ts';
 import { templates } from './templates.ts';
 
-function getPlan(planResult: PlanResult): ProjectPlan {
-  assert.ok('plan' in planResult, 'expected a plan');
+function getPlan(planOrRefusals: PlanResult): ProjectPlan {
+  assert.ok('plan' in planOrRefusals, 'expected a plan');
 
-  return planResult.plan;
+  return planOrRefusals.plan;
 }
 
-function targetsOf(planResult: PlanResult): string[] {
-  return getPlan(planResult).writes.map(({ target }) => target);
+function targetsOf(planOrRefusals: PlanResult): string[] {
+  return getPlan(planOrRefusals).writes.map(({ target }) => target);
 }
 
-function findWrite(planResult: PlanResult, target: string): unknown {
-  return getPlan(planResult).writes.find((write) => write.target === target);
+function findWrite(planOrRefusals: PlanResult, target: string): unknown {
+  return getPlan(planOrRefusals).writes.find((write) => write.target === target);
 }
 
 test('installs every template, the seed and the gitignore into a fresh repository', (t) => {
@@ -113,7 +113,7 @@ test('removes every legacy lint file present and lists each as changed', (t) => 
     ['.eslintignore', 'old'],
   ]);
 
-  const planResult = getProjectPlan(repo, templates, makeGitEnv(t));
+  const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
   const expected = [
     'eslint.config.js',
     'eslint.config.mjs',
@@ -129,8 +129,8 @@ test('removes every legacy lint file present and lists each as changed', (t) => 
     '.eslintignore',
   ];
 
-  assert.deepEqual(getPlan(planResult).removals, expected);
-  assert.deepEqual(getPlan(planResult).changed.slice(0, 12), expected);
+  assert.deepEqual(getPlan(planOrRefusals).removals, expected);
+  assert.deepEqual(getPlan(planOrRefusals).changed.slice(0, 12), expected);
 });
 
 test('does not remove a lint file on an upgrade', (t) => {
@@ -141,9 +141,9 @@ test('does not remove a lint file on an upgrade', (t) => {
     ['.eslintrc', 'old'],
   ]);
 
-  const planResult = getProjectPlan(repo, templates, makeGitEnv(t));
+  const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
 
-  assert.deepEqual(getPlan(planResult).removals, []);
+  assert.deepEqual(getPlan(planOrRefusals).removals, []);
 });
 
 test('seeds scopes from tracked directories, sorted, without .github and __tests__', (t) => {
@@ -157,10 +157,10 @@ test('seeds scopes from tracked directories, sorted, without .github and __tests
     ['top.ts', 'x'],
   ]);
 
-  const planResult = getProjectPlan(repo, templates, makeGitEnv(t));
+  const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
 
   assert.deepEqual(
-    findWrite(planResult, '.landmark/scopes.json'),
+    findWrite(planOrRefusals, '.landmark/scopes.json'),
     { target: '.landmark/scopes.json', text: '[\n  "project",\n  "src",\n  "tests"\n]\n' },
   );
 });
@@ -173,9 +173,9 @@ test('does not seed scopes on an upgrade', (t) => {
     ['src/a.ts', 'x'],
   ]);
 
-  const planResult = getProjectPlan(repo, templates, makeGitEnv(t));
+  const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
 
-  assert.equal(targetsOf(planResult).includes('.landmark/scopes.json'), false);
+  assert.equal(targetsOf(planOrRefusals).includes('.landmark/scopes.json'), false);
 });
 
 test('keeps an existing scopes file', (t) => {
@@ -185,10 +185,10 @@ test('keeps an existing scopes file', (t) => {
     ['.landmark/scopes.json', '["mine"]\n'],
   ]);
 
-  const planResult = getProjectPlan(repo, templates, makeGitEnv(t));
+  const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
 
-  assert.equal(targetsOf(planResult).includes('.landmark/scopes.json'), false);
-  assert.equal(getPlan(planResult).changed.includes('.landmark/scopes.json'), false);
+  assert.equal(targetsOf(planOrRefusals).includes('.landmark/scopes.json'), false);
+  assert.equal(getPlan(planOrRefusals).changed.includes('.landmark/scopes.json'), false);
 });
 
 test('adds node_modules to a gitignore that lacks it, after a missing final newline', (t) => {
@@ -198,10 +198,10 @@ test('adds node_modules to a gitignore that lacks it, after a missing final newl
     ['.gitignore', 'dist'],
   ]);
 
-  const planResult = getProjectPlan(repo, templates, makeGitEnv(t));
+  const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
 
   assert.deepEqual(
-    findWrite(planResult, '.gitignore'),
+    findWrite(planOrRefusals, '.gitignore'),
     { target: '.gitignore', text: 'dist\nnode_modules/\n' },
   );
 });
@@ -213,9 +213,9 @@ test('leaves a gitignore that already has a node_modules line', (t) => {
     ['.gitignore', 'dist\n  /node_modules  \n'],
   ]);
 
-  const planResult = getProjectPlan(repo, templates, makeGitEnv(t));
+  const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
 
-  assert.equal(targetsOf(planResult).includes('.gitignore'), false);
+  assert.equal(targetsOf(planOrRefusals).includes('.gitignore'), false);
 });
 
 test('adds node_modules to a gitignore that only mentions it in a longer line', (t) => {
@@ -225,10 +225,10 @@ test('adds node_modules to a gitignore that only mentions it in a longer line', 
     ['.gitignore', 'node_modules_old\n'],
   ]);
 
-  const planResult = getProjectPlan(repo, templates, makeGitEnv(t));
+  const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
 
   assert.deepEqual(
-    findWrite(planResult, '.gitignore'),
+    findWrite(planOrRefusals, '.gitignore'),
     { target: '.gitignore', text: 'node_modules_old\nnode_modules/\n' },
   );
 });
@@ -374,10 +374,10 @@ test('splits created and changed by what exists now', (t) => {
     ...templates,
     { target: 'tsconfig.json', kind: 'wrapper' as const, text: 'wrapper ts' },
   ];
-  const planResult = getProjectPlan(repo, extended, makeGitEnv(t));
+  const planOrRefusals = getProjectPlan(repo, extended, makeGitEnv(t));
 
   assert.deepEqual(
-    [getPlan(planResult).created, getPlan(planResult).changed],
+    [getPlan(planOrRefusals).created, getPlan(planOrRefusals).changed],
     [
       [
         '.landmark/eslint.config.ts',
