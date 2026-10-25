@@ -7,10 +7,6 @@ import {
 } from '../../../../../hooks/claude/providens/settings/read-setting-file.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
-function parseWord(text: string): string | undefined {
-  return text === '' ? undefined : text;
-}
-
 test('returns the parsed value of the trimmed text', (t) => {
   const path = join(makeTempDir(t), 'setting');
 
@@ -32,3 +28,7 @@ test('returns invalid when parse finds nothing', (t) => {
 
   assert.deepEqual(readSettingFile(path, parseWord), { kind: 'invalid' });
 });
+
+function parseWord(text: string): string | undefined {
+  return text === '' ? undefined : text;
+}

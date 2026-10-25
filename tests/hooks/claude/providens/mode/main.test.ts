@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
@@ -17,7 +16,7 @@ const SUBPROCESS_TIMEOUT_MS = 10000;
 test('writes on for the session and prints the policy', (t) => {
   const dataDir = makeTempDir(t);
   const path = join(dataDir, 'sessions', 's1.mode');
-  const run = runMode([dataDir, 's1', 'on']);
+  const run = runMode([dataDir, 's1', 'on'], makeTempDir(t));
 
   assert.deepEqual([run.status, run.stderr], [0, '']);
   assert.equal(readFileSync(path, 'utf8'), 'on\n');
@@ -27,7 +26,7 @@ test('writes on for the session and prints the policy', (t) => {
 test('writes off for the session and prints the off line', (t) => {
   const dataDir = makeTempDir(t);
   const path = join(dataDir, 'sessions', 's1.mode');
-  const run = runMode([dataDir, 's1', 'off']);
+  const run = runMode([dataDir, 's1', 'off'], makeTempDir(t));
 
   assert.deepEqual([run.status, run.stderr], [0, '']);
   assert.equal(readFileSync(path, 'utf8'), 'off\n');
@@ -37,7 +36,7 @@ test('writes off for the session and prints the off line', (t) => {
 test('writes the global file with --global after the value', (t) => {
   const dataDir = makeTempDir(t);
   const path = join(dataDir, 'mode');
-  const run = runMode([dataDir, 's1', 'off', '--global']);
+  const run = runMode([dataDir, 's1', 'off', '--global'], makeTempDir(t));
 
   assert.equal(run.status, 0);
   assert.equal(readFileSync(path, 'utf8'), 'off\n');
@@ -48,7 +47,7 @@ test('writes the global file with --global after the value', (t) => {
 test('writes the global file with --global before the value', (t) => {
   const dataDir = makeTempDir(t);
   const path = join(dataDir, 'mode');
-  const run = runMode([dataDir, 's1', '--global', 'on']);
+  const run = runMode([dataDir, 's1', '--global', 'on'], makeTempDir(t));
 
   assert.equal(run.status, 0);
   assert.equal(readFileSync(path, 'utf8'), 'on\n');
@@ -62,7 +61,7 @@ test('says a session file overrides a global write', (t) => {
   mkdirSync(join(dataDir, 'sessions'));
   writeFileSync(join(dataDir, 'sessions', 's1.mode'), 'off\n');
 
-  const run = runMode([dataDir, 's1', 'on', '--global']);
+  const run = runMode([dataDir, 's1', 'on', '--global'], makeTempDir(t));
 
   assert.equal(run.status, 0);
   assert.equal(readFileSync(path, 'utf8'), 'on\n');
@@ -77,7 +76,7 @@ test('prints the policy when the mode in force is invalid', (t) => {
   mkdirSync(join(dataDir, 'sessions'));
   writeFileSync(bad, 'maybe\n');
 
-  const run = runMode([dataDir, 's1', 'off', '--global']);
+  const run = runMode([dataDir, 's1', 'off', '--global'], makeTempDir(t));
 
   assert.equal(run.status, 0);
   assert.equal(readFileSync(path, 'utf8'), 'off\n');
@@ -90,7 +89,7 @@ test('prints the policy when the mode in force is invalid', (t) => {
 test('does not touch another session', (t) => {
   const dataDir = makeTempDir(t);
 
-  runMode([dataDir, 's1', 'off']);
+  runMode([dataDir, 's1', 'off'], makeTempDir(t));
 
   assert.deepEqual(readdirSync(join(dataDir, 'sessions')), ['s1.mode']);
 });
@@ -100,7 +99,7 @@ test('runs through run.sh', (t) => {
   const run = spawnSync(
     'bash',
     [RUN_SH, 'claude/providens/mode', dataDir, 's1', 'off'],
-    { cwd: tmpdir(), encoding: 'utf8', timeout: SUBPROCESS_TIMEOUT_MS },
+    { cwd: makeTempDir(t), encoding: 'utf8', timeout: SUBPROCESS_TIMEOUT_MS },
   );
 
   assert.deepEqual([run.status, run.stderr], [0, '']);
@@ -122,18 +121,20 @@ for (const [name, args] of [
 ] as const) {
   test(`refuses ${ name } with one usage line, exit 2 and nothing written`, (t) => {
     const dataDir = makeTempDir(t);
-    const run = runMode(args.map((arg) => (arg === 'DIR' ? dataDir : arg)));
+    const cwd = makeTempDir(t);
+    const run = runMode(args.map((arg) => (arg === 'DIR' ? dataDir : arg)), cwd);
 
     assert.equal(run.status, 2);
     assert.equal(run.stdout, '');
     assert.match(run.stderr, /^yapus providens mode: usage: [^\n]*\n$/u);
     assert.deepEqual(readdirSync(dataDir), []);
+    assert.deepEqual(readdirSync(cwd), []);
   });
 }
 
-function runMode(args: readonly string[]) {
+function runMode(args: readonly string[], cwd: string) {
   return spawnSync(process.execPath, [MAIN, ...args], {
-    cwd: tmpdir(),
+    cwd,
     encoding: 'utf8',
     timeout: SUBPROCESS_TIMEOUT_MS,
   });

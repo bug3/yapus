@@ -11,10 +11,6 @@ import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
 const WORD: Setting<string> = { name: 'word', parse: parseWord, fallback: 'fallback' };
 
-function parseWord(text: string): string | undefined {
-  return text === '' ? undefined : text;
-}
-
 test('returns the session file over the global file', (t) => {
   const dataDir = makeDataDir(t, 'global-word', 'session-word');
 
@@ -83,4 +79,8 @@ function makeDataDir(t: TestContext, globalText: string, sessionText: string | u
   }
 
   return dataDir;
+}
+
+function parseWord(text: string): string | undefined {
+  return text === '' ? undefined : text;
 }
