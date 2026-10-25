@@ -1,19 +1,7 @@
 {
+  "extends": "./hooks/landmark/project/files/tsconfig.json",
   "compilerOptions": {
-    "allowImportingTsExtensions": true,
-    "erasableSyntaxOnly": true,
-    "exactOptionalPropertyTypes": true,
-    "incremental": true,
-    "module": "nodenext",
-    "noEmit": true,
-    "noUncheckedIndexedAccess": true,
-    "strict": true,
-    "target": "esnext",
-    "tsBuildInfoFile": "node_modules/.cache/yapus/tsbuildinfo",
-    "types": [
-      "node"
-    ],
-    "verbatimModuleSyntax": true
+    "tsBuildInfoFile": "node_modules/.cache/yapus/tsbuildinfo"
   },
   "include": [
     "eslint.config.ts",

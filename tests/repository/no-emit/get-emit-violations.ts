@@ -1,4 +1,4 @@
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { listFiles } from '../../helpers/list-files.ts';
 import { readUtf8 } from '../../helpers/read-utf8.ts';
 
@@ -19,9 +19,38 @@ export function getEmitViolations(root: string): string[] {
 }
 
 function getTsconfigViolations(root: string): string[] {
-  const noEmit = getField(getField(readJson(root, TSCONFIG), 'compilerOptions'), 'noEmit');
+  return getNoEmit(root, TSCONFIG, []) === true ? [] : [`${ TSCONFIG }: noEmit is not true`];
+}
 
-  return noEmit === true ? [] : [`${ TSCONFIG }: noEmit is not true`];
+// The noEmit a tsconfig sets, else the one its relative `extends` set, the
+// last base first; `seen` stops a loop of bases.
+function getNoEmit(root: string, file: string, seen: readonly string[]): unknown {
+  const config = readJson(root, file);
+  const own = getField(getField(config, 'compilerOptions'), 'noEmit');
+
+  if (own !== undefined || seen.includes(file)) {
+    return own;
+  }
+
+  const extended = getField(config, 'extends');
+  const bases = (Array.isArray(extended) ? extended : [extended]).reverse();
+
+  for (const base of bases) {
+    if (typeof base === 'string' && base.startsWith('.')) {
+      const inherited = getNoEmit(root, getBaseFile(file, base), [...seen, file]);
+
+      if (inherited !== undefined) {
+        return inherited;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+// A base names its file with or without the extension.
+function getBaseFile(file: string, base: string): string {
+  return join(dirname(file), base.endsWith('.json') ? base : `${ base }.json`);
 }
 
 function getManifestViolations(root: string): string[] {

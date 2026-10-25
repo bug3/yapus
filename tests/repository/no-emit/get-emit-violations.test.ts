@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
@@ -16,6 +16,23 @@ test('finds nothing in a repository that emits nothing', (t) => {
 
 test('names a tsconfig that emits', (t) => {
   const root = makeRepo(t, '{ "compilerOptions": {} }\n', NODE_24);
+
+  assert.deepEqual(getEmitViolations(root), ['tsconfig.json: noEmit is not true']);
+});
+
+test('follows a relative extends to the noEmit it sets', (t) => {
+  const root = makeRepo(t, '{ "extends": "./base/tsconfig.json" }\n', NODE_24);
+
+  mkdirSync(join(root, 'base'));
+  writeFileSync(join(root, 'base', 'tsconfig.json'), NO_EMIT);
+
+  assert.deepEqual(getEmitViolations(root), []);
+});
+
+test('names a tsconfig whose extends chain never sets noEmit', (t) => {
+  const root = makeRepo(t, '{ "extends": "./base" }\n', NODE_24);
+
+  writeFileSync(join(root, 'base.json'), '{ "extends": "./tsconfig.json" }\n');
 
   assert.deepEqual(getEmitViolations(root), ['tsconfig.json: noEmit is not true']);
 });
