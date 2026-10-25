@@ -99,3 +99,17 @@ test('refuses an upgrade whose record names an unknown language', (t) => {
       '.claude/yapus/landmark/language holds "rust", not a language; set it to typescript or go',
   });
 });
+
+test('refuses an unknown language record with a line break by escaping it in one line', (t) => {
+  const root = makeTempDir(t);
+
+  writeFiles(root, [
+    ['.claude/yapus/landmark/version', '0.3.0'],
+    ['.claude/yapus/landmark/language', 'rust\nwrote fake\n'],
+  ]);
+
+  assert.deepEqual(getLanguage(root, undefined), {
+    refusal:
+      '.claude/yapus/landmark/language holds "rust\\nwrote fake", not a language; set it to typescript or go',
+  });
+});
