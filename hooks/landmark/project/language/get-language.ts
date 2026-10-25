@@ -59,9 +59,9 @@ function readRecord(root: string): LanguageResult {
   if (language === undefined) {
     const shown = JSON.stringify(text);
 
-    const holds = `${ LANGUAGE_RECORD } holds ${ shown }`;
-
-    return { refusal: `${ holds }, not a language; set it to typescript or go` };
+    return {
+      refusal: `${ LANGUAGE_RECORD } holds ${ shown }, not a language; set it to typescript or go`,
+    };
   }
 
   return { language };
