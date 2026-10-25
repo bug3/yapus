@@ -10,8 +10,8 @@ const REQUIRED_FIELDS: readonly string[] = ['name', 'description'];
 // Every way a plugin skill under root leaves its frontmatter limits: a missing
 // name or description, or a name that is not its directory's. A session lists
 // a skill by these two fields before it is used. A directory outside
-// [a-z0-9-] is not seen. A key with nothing after it on its line reads as
-// missing; a block scalar reads as present; a quoted value keeps its quotes.
+// [a-z0-9-] is not seen. A key with no ': ' after it reads as missing, one
+// with ': ' as present even when blank or a block scalar; quotes stay in values.
 export function getSkillProblems(root: string): string[] {
   return listFiles(root, '.md')
     .filter((path) => SKILL_FILE.test(path))
