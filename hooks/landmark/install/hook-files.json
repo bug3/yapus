@@ -28,6 +28,7 @@
   "shared/get-code-point-name.ts",
   "shared/get-first-line.ts",
   "shared/get-within-limit.ts",
+  "shared/hooks-path/get-project-directory.ts",
   "shared/part-forms.ts",
   "shared/read-catalog.ts",
   "shared/subject/get-subject-violations.ts",

@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { getProjectDirectory } from '../files/get-project-directory.ts';
+import { getProjectDirectory } from '../../../shared/hooks-path/get-project-directory.ts';
 import type { Template } from '../files/read-templates.ts';
 import { getGitignoreText } from './get-gitignore-text.ts';
 import { getRefusals } from './get-refusals.ts';

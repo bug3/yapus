@@ -1,4 +1,4 @@
-import { getProjectDirectory } from './get-project-directory.ts';
+import { getProjectDirectory } from '../../../shared/hooks-path/get-project-directory.ts';
 
 // The adopter's tsconfig.json: it extends the base and sets the one path the
 // base cannot, because a path in the base resolves inside the base directory. It

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { getProjectDirectory } from './get-project-directory.ts';
+import { getProjectDirectory } from '../../../shared/hooks-path/get-project-directory.ts';
 import { getWorkflow } from './get-workflow.ts';
 import { getWrapperEslintConfig } from './get-wrapper-eslint-config.ts';
 import { getWrapperTsconfig } from './get-wrapper-tsconfig.ts';
