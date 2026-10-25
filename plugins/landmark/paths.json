@@ -10,6 +10,7 @@
     ".claude/**/*.md",
     ".github/**",
     ".github/workflows/**",
+    "go.mod",
     "package.json",
     "pyproject.toml",
     "standards/**"
