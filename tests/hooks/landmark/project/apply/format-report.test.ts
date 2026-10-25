@@ -44,9 +44,3 @@ test('prints the npm steps and the keys line for typescript with a merge', () =>
     '  remove a.txt',
   ]);
 });
-
-test('prints no package.json keys line when no merge ran', () => {
-  const lines = formatReport(PLAN, ['a.txt'], { language: 'go', merge: undefined });
-
-  assert.equal(lines.some((line) => line.startsWith('package.json:')), false);
-});

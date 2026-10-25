@@ -267,8 +267,7 @@ test('upgrade follows the recorded Go language and keeps the record and scopes',
   assert.equal(readRepoFile(repo, SCOPES), scopes);
   assert.equal(readRepoFile(repo, GO_RECORD), 'go\n');
   assert.ok(!existsSync(join(repo, 'package.json')));
-  assert.ok(!existsSync(join(repo, 'eslint.config.ts')));
-  assert.ok(!existsSync(join(repo, 'tsconfig.json')));
+  assert.ok(!existsSync(join(repo, OWNED)));
 });
 
 test('go refuses without a root go.mod and writes nothing', (t) => {
@@ -343,4 +342,15 @@ test('refuses an upgrade whose language record is unknown and writes nothing', (
     '',
   ].join('\n'));
   assert.equal(runGit(['status', '--porcelain'], repo), before);
+});
+
+test('installs typescript when it is named on a fresh repository', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [['README.md', 'x']]);
+
+  const run = runProject(copyPlugin(t), repo, 'typescript');
+
+  assert.equal(run.status, 0, run.stderr);
+  assert.equal(readRepoFile(repo, GO_RECORD), 'typescript\n');
 });

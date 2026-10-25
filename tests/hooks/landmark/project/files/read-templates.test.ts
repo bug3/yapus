@@ -129,3 +129,74 @@ test('installs the exported golangci-lint version in the Go workflow', () => {
     new RegExp(`^ {10}version: "${ getGolangciLintVersion() }"$`, 'm'),
   );
 });
+
+function readGolangciConfig(): string {
+  return readTemplates('go')[0]?.text ?? '';
+}
+
+test('the golangci config enables the standard linters plus the nine named ones', () => {
+  const block = [
+    '  default: "standard"',
+    '  enable:',
+    '    - "depguard"',
+    '    - "errorlint"',
+    '    - "exhaustive"',
+    '    - "forbidigo"',
+    '    - "goconst"',
+    '    - "gocritic"',
+    '    - "noctx"',
+    '    - "testpackage"',
+    '    - "wsl_v5"',
+  ].join('\n');
+
+  assert.ok(readGolangciConfig().includes(block));
+});
+
+test('the golangci config enables the three formatters', () => {
+  const block = [
+    'formatters:',
+    '  enable:',
+    '    - "gofumpt"',
+    '    - "goimports"',
+    '    - "golines"',
+  ].join('\n');
+
+  assert.ok(readGolangciConfig().includes(block));
+});
+
+test('the golangci config sets the line length to 99', () => {
+  assert.ok(readGolangciConfig().includes('      max-len: 99\n'));
+});
+
+test('the golangci config sets goconst to three occurrences', () => {
+  assert.ok(readGolangciConfig().includes('      min-occurrences: 3\n'));
+});
+
+test('the golangci config does not let a default case make a switch exhaustive', () => {
+  assert.ok(readGolangciConfig().includes('      default-signifies-exhaustive: false\n'));
+});
+
+test('the golangci config keeps errorlint from flagging comparisons', () => {
+  assert.ok(readGolangciConfig().includes('      comparison: false\n'));
+});
+
+test('the golangci config forbids log.Fatal', () => {
+  assert.ok(readGolangciConfig().includes('        - pattern: "^log\\\\.Fatal"\n'));
+});
+
+test('the golangci config denies testify', () => {
+  assert.ok(readGolangciConfig().includes('            - pkg: "github.com/stretchr/testify"\n'));
+});
+
+test('the golangci config enables only the ifElseChain check of gocritic', () => {
+  const block = ['      disable-all: true', '      enabled-checks:', '        - "ifElseChain"']
+    .join('\n');
+
+  assert.ok(readGolangciConfig().includes(block));
+});
+
+test('the golangci config lifts both issue caps', () => {
+  const block = ['issues:', '  max-issues-per-linter: 0', '  max-same-issues: 0'].join('\n');
+
+  assert.ok(readGolangciConfig().includes(block));
+});
