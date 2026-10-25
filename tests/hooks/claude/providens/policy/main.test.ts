@@ -98,6 +98,14 @@ test('writes the policy when the plugin data directory is not set', (t) => {
   assert.deepEqual([hookRun.status, hookRun.stdout], [0, POLICY_OUTPUT]);
 });
 
+test('writes the policy when the plugin data directory is empty', (t) => {
+  const env: NodeJS.ProcessEnv = { ...makeHookEnv(t), CLAUDE_PLUGIN_DATA: '' };
+
+  writeFileSync(join(String(env.TMPDIR), 'mode'), 'off');
+
+  assert.deepEqual([runHook(env, SESSION_START).stdout], [POLICY_OUTPUT]);
+});
+
 function runHook(env: NodeJS.ProcessEnv, stdinText: string) {
   return spawnSync(process.execPath, [MAIN], {
     cwd: env.TMPDIR,
@@ -107,14 +115,6 @@ function runHook(env: NodeJS.ProcessEnv, stdinText: string) {
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
 }
-
-test('writes the policy when the plugin data directory is empty', (t) => {
-  const env: NodeJS.ProcessEnv = { ...makeHookEnv(t), CLAUDE_PLUGIN_DATA: '' };
-
-  writeFileSync(join(String(env.TMPDIR), 'mode'), 'off');
-
-  assert.deepEqual([runHook(env, SESSION_START).stdout], [POLICY_OUTPUT]);
-});
 
 // A data directory holding the mode files given: the global one and the
 // one of session s1.

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { readLimit } from '../../../../../hooks/claude/providens/settings/read-limit.ts';
@@ -102,7 +103,7 @@ test('runs through run.sh', (t) => {
   const run = spawnSync(
     'bash',
     [RUN_SH, 'claude/providens/limit', dataDir, 's1', '12'],
-    { encoding: 'utf8', timeout: SUBPROCESS_TIMEOUT_MS },
+    { cwd: tmpdir(), encoding: 'utf8', timeout: SUBPROCESS_TIMEOUT_MS },
   );
 
   assert.deepEqual([run.status, run.stderr], [0, '']);
@@ -138,6 +139,7 @@ for (const [name, args] of [
 
 function runLimit(args: readonly string[]) {
   return spawnSync(process.execPath, [MAIN, ...args], {
+    cwd: tmpdir(),
     encoding: 'utf8',
     timeout: SUBPROCESS_TIMEOUT_MS,
   });

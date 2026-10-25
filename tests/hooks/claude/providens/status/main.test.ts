@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
@@ -93,7 +94,7 @@ test('runs through run.sh', (t) => {
   const run = spawnSync(
     'bash',
     [RUN_SH, 'claude/providens/status', makeTempDir(t), 's1'],
-    { encoding: 'utf8', timeout: SUBPROCESS_TIMEOUT_MS },
+    { cwd: tmpdir(), encoding: 'utf8', timeout: SUBPROCESS_TIMEOUT_MS },
   );
 
   assert.deepEqual([run.status, run.stderr], [0, '']);
@@ -119,6 +120,7 @@ for (const [name, args] of [
 
 function runStatus(args: readonly string[]) {
   return spawnSync(process.execPath, [MAIN, ...args], {
+    cwd: tmpdir(),
     encoding: 'utf8',
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
