@@ -2,6 +2,7 @@
 paths:
   - "tests/repository/**"
   - "package.json"
+  - "pyproject.toml"
 ---
 
 # Repository

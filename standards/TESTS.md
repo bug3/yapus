@@ -1,7 +1,9 @@
 ---
 paths:
   - "**/*.test.ts"
+  - "**/test_*.py"
   - "package.json"
+  - "pyproject.toml"
 ---
 
 # Tests
