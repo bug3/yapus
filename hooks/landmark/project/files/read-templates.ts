@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { workflow } from './workflow.ts';
-import { wrapperEslintConfig } from './wrapper-eslint-config.ts';
-import { wrapperTsconfig } from './wrapper-tsconfig.ts';
+import { getWorkflow } from './get-workflow.ts';
+import { getWrapperEslintConfig } from './get-wrapper-eslint-config.ts';
+import { getWrapperTsconfig } from './get-wrapper-tsconfig.ts';
 
 // A file the project installer writes; target is relative to the adopter's
 // repository root. An owned file is rewritten on every upgrade, a wrapper
@@ -18,9 +18,9 @@ export function readTemplates(): readonly Template[] {
   return [
     { target: '.landmark/eslint.config.ts', kind: 'owned', text: readBase('eslint.config.ts') },
     { target: '.landmark/tsconfig.json', kind: 'owned', text: readBase('tsconfig.json') },
-    { target: '.github/workflows/landmark.yml', kind: 'owned', text: workflow() },
-    { target: 'eslint.config.ts', kind: 'wrapper', text: wrapperEslintConfig() },
-    { target: 'tsconfig.json', kind: 'wrapper', text: wrapperTsconfig() },
+    { target: '.github/workflows/landmark.yml', kind: 'owned', text: getWorkflow() },
+    { target: 'eslint.config.ts', kind: 'wrapper', text: getWrapperEslintConfig() },
+    { target: 'tsconfig.json', kind: 'wrapper', text: getWrapperTsconfig() },
   ];
 }
 

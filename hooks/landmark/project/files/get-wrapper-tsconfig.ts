@@ -1,7 +1,7 @@
 // The adopter's tsconfig.json: it extends the base and sets the one path the
 // base cannot, because a path in the base resolves inside .landmark. It has
 // no include, so the compiler takes every TypeScript file under the root.
-export function wrapperTsconfig(): string {
+export function getWrapperTsconfig(): string {
   return `${ JSON.stringify(
     {
       extends: './.landmark/tsconfig.json',

@@ -160,7 +160,7 @@ export default defineConfig(
           custom: { regex: '^I[A-Z]', match: false },
         },
         { selector: 'import', format: ['camelCase', 'PascalCase'] },
-        // Keys of an outside API keep its spelling: tool_input, PATH, PreToolUse.
+        // Keys an outside API names keep its spelling, whatever the case style.
         {
           selector: 'objectLiteralProperty',
           format: ['camelCase', 'snake_case', 'PascalCase', 'UPPER_CASE'],

@@ -1,7 +1,7 @@
 // The text of .github/workflows/test.yml without its ShellCheck step. It is a
 // list of lines because a .yml file outside .github is refused; a test keeps
 // it equal to the file.
-export function workflow(): string {
+export function getWorkflow(): string {
   return `${ [
     'name: "test"',
     '',
