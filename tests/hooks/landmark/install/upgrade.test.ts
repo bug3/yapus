@@ -101,16 +101,43 @@ test('upgrade after a plugin change rewrites the rule file and the stamp', (t) =
 
 test('upgrade removes a stale rule file and keeps the current ones', (t) => {
   const { home } = runInstall(t, 'install');
-  const rulesDir = join(home, '.claude', 'rules', 'yapus', 'landmark');
+  const rulesDirectory = join(home, '.claude', 'rules', 'yapus', 'landmark');
 
-  writeFileSync(join(rulesDir, 'dropped.md'), 'stale');
+  writeFileSync(join(rulesDirectory, 'dropped.md'), 'stale');
 
   const upgradeRun = runUpgrade(home);
 
   assert.equal(upgradeRun.status, 0, upgradeRun.stderr);
-  assert.equal(existsSync(join(rulesDir, 'dropped.md')), false);
-  assert.equal(readdirSync(rulesDir).length, 13);
-  assert.equal(existsSync(join(rulesDir, 'git.md')), true);
+  assert.equal(existsSync(join(rulesDirectory, 'dropped.md')), false);
+  assert.equal(readdirSync(rulesDirectory).length, 13);
+  assert.equal(existsSync(join(rulesDirectory, 'git.md')), true);
+});
+
+test('upgrade keeps a file of the rules directory that is not markdown', (t) => {
+  const { home } = runInstall(t, 'install');
+  const rulesDirectory = join(home, '.claude', 'rules', 'yapus', 'landmark');
+
+  writeFileSync(join(rulesDirectory, 'notes.txt'), 'mine');
+  writeFileSync(join(rulesDirectory, 'dropped.md'), 'stale');
+
+  const upgradeRun = runUpgrade(home);
+
+  assert.equal(upgradeRun.status, 0, upgradeRun.stderr);
+  assert.equal(readFileSync(join(rulesDirectory, 'notes.txt'), 'utf8'), 'mine');
+  assert.equal(existsSync(join(rulesDirectory, 'dropped.md')), false);
+});
+
+test('upgrade keeps a directory named like a rule file and still succeeds', (t) => {
+  const { home } = runInstall(t, 'install');
+  const folder = join(home, '.claude', 'rules', 'yapus', 'landmark', 'x.md');
+
+  mkdirSync(folder);
+  writeFileSync(join(folder, 'inner'), 'mine');
+
+  const upgradeRun = runUpgrade(home);
+
+  assert.equal(upgradeRun.status, 0, upgradeRun.stderr);
+  assert.equal(readFileSync(join(folder, 'inner'), 'utf8'), 'mine');
 });
 
 test('upgrade after a change to a hook file rewrites that installed hook file', (t) => {
