@@ -10,7 +10,7 @@ const LIMIT_FILE = 'launch-limit';
 const LAUNCHES_DIR = 'launches';
 const WHOLE_NUMBER = /^\d+$/;
 
-const LIMIT: Setting<number> = {
+export const LIMIT: Setting<number> = {
   name: LIMIT_FILE,
   parse: parseWholeNumber,
   fallback: DEFAULT_LIMIT,
