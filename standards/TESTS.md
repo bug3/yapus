@@ -17,3 +17,5 @@ paths:
 ## TEST-4. Write tests that reach no network and write no file outside their own temporary directory.
 
 ## TEST-5. In a Node program, write tests with `node:test` and `node:assert/strict`; add no test framework.
+
+## TEST-6. In a Python program, write tests with `unittest`; add no test framework.
