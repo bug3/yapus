@@ -1,0 +1,44 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { LANGUAGE_RECORD, STAMP } from '../plan/get-project-plan.ts';
+import { type Language, languages } from './languages.ts';
+
+export type LanguageResult = { readonly language: Language } | { readonly refusal: string };
+
+// The language of the run: an install takes the requested one (TypeScript by
+// default), an upgrade takes the recorded one (TypeScript when none is
+// recorded) and refuses a different request. Go also needs go.mod at root.
+// A record that names no known language throws: nothing is written.
+export function getLanguage(root: string, requested: Language | undefined): LanguageResult {
+  const isUpgrade = existsSync(join(root, STAMP));
+  const language = isUpgrade ? readRecord(root) : requested ?? 'typescript';
+
+  if (isUpgrade && requested !== undefined && requested !== language) {
+    return {
+      refusal: `this repository is set up for ${ language }; run /landmark:project ${ language }`,
+    };
+  }
+
+  if (language === 'go' && !existsSync(join(root, 'go.mod'))) {
+    return { refusal: 'go.mod is not at the root; run go mod init first' };
+  }
+
+  return { language };
+}
+
+function readRecord(root: string): Language {
+  const path = join(root, LANGUAGE_RECORD);
+
+  if (!existsSync(path)) {
+    return 'typescript';
+  }
+
+  const text = readFileSync(path, 'utf8').trim();
+  const language = languages.find((name) => name === text);
+
+  if (language === undefined) {
+    throw new Error(`${ LANGUAGE_RECORD } holds ${ JSON.stringify(text) }, not a known language`);
+  }
+
+  return language;
+}
