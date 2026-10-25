@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import {
+  getGoProjectPlan,
   getProjectPlan,
   type PlanResult,
   type ProjectPlan,
@@ -12,7 +13,7 @@ import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../../helpers/make-temp-repo.ts';
 import { commitFiles, writeFiles } from './commit-files.ts';
 import { makeGitEnv } from './make-git-env.ts';
-import { templates } from './templates.ts';
+import { goTemplates, templates } from './templates.ts';
 
 function getPlan(planOrRefusals: PlanResult): ProjectPlan {
   assert.ok('plan' in planOrRefusals, 'expected a plan');
@@ -44,6 +45,7 @@ test('installs every template, the seed and the gitignore into a fresh repositor
         { target: 'eslint.config.ts', text: 'wrapper lint' },
         { target: '.claude/yapus/landmark/scopes.json', text: '[\n  "project"\n]\n' },
         { target: '.gitignore', text: 'node_modules/\n' },
+        { target: '.claude/yapus/landmark/language', text: 'typescript\n' },
       ],
       removals: [],
       created: [
@@ -52,6 +54,7 @@ test('installs every template, the seed and the gitignore into a fresh repositor
         'eslint.config.ts',
         '.claude/yapus/landmark/scopes.json',
         '.gitignore',
+        '.claude/yapus/landmark/language',
         'package.json',
         '.claude/yapus/landmark/version',
       ],
@@ -69,6 +72,7 @@ test('plans an install in a repository with no commits', (t) => {
     'eslint.config.ts',
     '.claude/yapus/landmark/scopes.json',
     '.gitignore',
+    '.claude/yapus/landmark/language',
   ]);
 });
 
@@ -390,6 +394,7 @@ test('splits created and changed by what exists now', (t) => {
         '.github/workflows/yapus.yml',
         '.claude/yapus/landmark/scopes.json',
         '.gitignore',
+        '.claude/yapus/landmark/language',
         '.claude/yapus/landmark/version',
       ],
       ['eslint.config.ts', 'tsconfig.json', 'package.json'],
@@ -441,5 +446,92 @@ test('drops the GIT_ variables of the environment it is given', (t) => {
     refusals: [
       'eslint.config.ts has an uncommitted or untracked change; commit or stash it first',
     ],
+  });
+});
+
+test('plans a Go install with the Go templates, the seed and the record, no gitignore', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [
+    ['go.mod', 'module x'],
+  ]);
+
+  assert.deepEqual(getGoProjectPlan(repo, goTemplates, makeGitEnv(t)), {
+    plan: {
+      mode: 'install',
+      writes: [
+        { target: '.golangci.yml', text: 'golangci' },
+        { target: '.github/workflows/yapus.yml', text: 'go workflow' },
+        { target: '.claude/yapus/landmark/scopes.json', text: '[\n  "project"\n]\n' },
+        { target: '.claude/yapus/landmark/language', text: 'go\n' },
+      ],
+      removals: [],
+      created: [
+        '.golangci.yml',
+        '.github/workflows/yapus.yml',
+        '.claude/yapus/landmark/scopes.json',
+        '.claude/yapus/landmark/language',
+        '.claude/yapus/landmark/version',
+      ],
+      changed: [],
+    },
+  });
+});
+
+test('removes a golangci yaml file on a Go install and lists it as changed', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [
+    ['.golangci.yaml', 'old'],
+  ]);
+
+  const planOrRefusals = getGoProjectPlan(repo, goTemplates, makeGitEnv(t));
+
+  assert.deepEqual(getPlan(planOrRefusals).removals, ['.golangci.yaml']);
+  assert.deepEqual(getPlan(planOrRefusals).changed, ['.golangci.yaml']);
+});
+
+test('keeps a legacy ESLint file on a Go install', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [
+    ['.eslintrc', 'old'],
+  ]);
+
+  assert.deepEqual(getPlan(getGoProjectPlan(repo, goTemplates, makeGitEnv(t))).removals, []);
+});
+
+test('does not refuse a Go install for a modified package.json', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [
+    ['package.json', '{}'],
+  ]);
+  writeFiles(repo, [
+    ['package.json', '{"name":"x"}'],
+  ]);
+
+  assert.equal(getPlan(getGoProjectPlan(repo, goTemplates, makeGitEnv(t))).mode, 'install');
+});
+
+test('plans a Go upgrade with the owned templates only, no record and no removal', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [
+    ['.claude/yapus/landmark/version', '0.3.0'],
+    ['.golangci.yaml', 'old'],
+  ]);
+
+  assert.deepEqual(getGoProjectPlan(repo, goTemplates, makeGitEnv(t)), {
+    plan: {
+      mode: 'upgrade',
+      writes: [
+        { target: '.golangci.yml', text: 'golangci' },
+        { target: '.github/workflows/yapus.yml', text: 'go workflow' },
+      ],
+      removals: [],
+      created: ['.golangci.yml', '.github/workflows/yapus.yml'],
+      changed: ['.claude/yapus/landmark/version'],
+    },
   });
 });

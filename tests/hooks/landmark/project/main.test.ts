@@ -59,6 +59,7 @@ test('installs into a fresh repository and prints the approved lines', (t) => {
     '  tsconfig.json',
     '  .claude/yapus/landmark/scopes.json',
     '  .gitignore',
+    '  .claude/yapus/landmark/language',
     '  package.json',
     '  .claude/yapus/landmark/version',
     'package.json: set scripts.check, devDependencies.@eslint/js, '
@@ -71,8 +72,8 @@ test('installs into a fresh repository and prints the approved lines', (t) => {
     '  commit the changes',
     'To undo:',
     '  remove .claude/yapus/landmark/eslint.config.ts .claude/yapus/landmark/tsconfig.json .github/workflows/yapus.yml '
-    + 'eslint.config.ts tsconfig.json .claude/yapus/landmark/scopes.json .gitignore package.json '
-    + '.claude/yapus/landmark/version',
+    + 'eslint.config.ts tsconfig.json .claude/yapus/landmark/scopes.json .gitignore '
+    + '.claude/yapus/landmark/language package.json .claude/yapus/landmark/version',
     '',
   ].join('\n'));
   assert.equal(readRepoFile(repo, OWNED), readBase('eslint.config.ts'));

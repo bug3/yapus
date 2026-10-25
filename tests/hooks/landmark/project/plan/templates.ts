@@ -5,3 +5,8 @@ export const templates: readonly Template[] = [
   { target: '.github/workflows/yapus.yml', kind: 'owned', text: 'workflow' },
   { target: 'eslint.config.ts', kind: 'wrapper', text: 'wrapper lint' },
 ];
+
+export const goTemplates: readonly Template[] = [
+  { target: '.golangci.yml', kind: 'owned', text: 'golangci' },
+  { target: '.github/workflows/yapus.yml', kind: 'owned', text: 'go workflow' },
+];
