@@ -2,8 +2,10 @@ import { runGit } from './run-git.ts';
 
 // One line for each touched path with an uncommitted or untracked change, in
 // the order of touched; root must be the top level of a git work tree.
-export function getRefusals(root: string, touched: readonly string[]): string[] {
-  const changed = new Set(findChanged(root, touched));
+export function getRefusals(root: string, touched: readonly string[],
+  env: NodeJS.ProcessEnv,
+): string[] {
+  const changed = new Set(findChanged(root, touched, env));
 
   return touched
     .filter((path) => changed.has(path))
@@ -14,7 +16,7 @@ export function getRefusals(root: string, touched: readonly string[]): string[] 
 // included (git cannot restore those). An entry is "XY path"; a rename or a
 // copy is followed by one more entry holding the source path. A failed status
 // throws: read as no change, it would let a write go over one.
-function findChanged(root: string, touched: readonly string[]): string[] {
+function findChanged(root: string, touched: readonly string[], env: NodeJS.ProcessEnv): string[] {
   const status = runGit(
     [
       'status',
@@ -26,6 +28,7 @@ function findChanged(root: string, touched: readonly string[]): string[] {
       ...touched,
     ],
     root,
+    env,
   );
 
   if (status.status !== 0) {

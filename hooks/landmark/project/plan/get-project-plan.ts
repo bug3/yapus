@@ -37,11 +37,15 @@ const LEGACY_LINT_FILES = [
 
 // What the project installer will do in root, or why it refuses. Reads only;
 // the stamp and package.json are touched by the installer but not in writes.
-export function getProjectPlan(root: string, templates: readonly Template[]): PlanResult {
+export function getProjectPlan(
+  root: string,
+  templates: readonly Template[],
+  env: NodeJS.ProcessEnv,
+): PlanResult {
   const mode = existsSync(join(root, STAMP)) ? 'upgrade' : 'install';
   const isInstall = mode === 'install';
   const removals = isInstall ? LEGACY_LINT_FILES.filter((name) => exists(root, name)) : [];
-  const rootRefusal = getRootRefusal(root);
+  const rootRefusal = getRootRefusal(root, env);
 
   if (rootRefusal !== undefined) {
     return { refusals: [rootRefusal] };
@@ -51,11 +55,11 @@ export function getProjectPlan(root: string, templates: readonly Template[]): Pl
     ...templates
       .filter(({ kind }) => isInstall || kind === 'owned')
       .map(({ target, text }) => ({ target, text })),
-    ...isInstall && !exists(root, SCOPES) ? [{ target: SCOPES, text: getScopes(root) }] : [],
+    ...isInstall && !exists(root, SCOPES) ? [{ target: SCOPES, text: getScopes(root, env) }] : [],
     ...isInstall ? getGitignoreWrites(root) : [],
   ];
   const touched = [...writes.map(({ target }) => target), ...removals, PACKAGE, STAMP];
-  const refusals = getRefusals(root, touched);
+  const refusals = getRefusals(root, touched, env);
 
   if (refusals.length > 0) {
     return { refusals };

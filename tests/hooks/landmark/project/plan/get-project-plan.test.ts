@@ -7,9 +7,11 @@ import {
   type PlanResult,
   type ProjectPlan,
 } from '../../../../../hooks/landmark/project/plan/get-project-plan.ts';
+import { getScopes } from '../../../../../hooks/landmark/project/plan/get-scopes.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../../helpers/make-temp-repo.ts';
 import { commitFiles, writeFiles } from './commit-files.ts';
+import { gitEnv } from './git-env.ts';
 import { templates } from './templates.ts';
 
 function getPlan(result: PlanResult): ProjectPlan {
@@ -33,7 +35,7 @@ test('installs every template, the seed and the gitignore into a fresh repositor
     ['README.md', 'x'],
   ]);
 
-  assert.deepEqual(getProjectPlan(repo, templates), {
+  assert.deepEqual(getProjectPlan(repo, templates, gitEnv), {
     plan: {
       mode: 'install',
       writes: [
@@ -61,7 +63,7 @@ test('installs every template, the seed and the gitignore into a fresh repositor
 test('plans an install in a repository with no commits', (t) => {
   const repo = makeTempRepo(t);
 
-  assert.deepEqual(targetsOf(getProjectPlan(repo, templates)), [
+  assert.deepEqual(targetsOf(getProjectPlan(repo, templates, gitEnv)), [
     '.landmark/eslint.config.ts',
     '.github/workflows/landmark.yml',
     'eslint.config.ts',
@@ -79,7 +81,7 @@ test('upgrades with the owned templates only when the stamp exists', (t) => {
     ['package.json', '{}'],
   ]);
 
-  assert.deepEqual(getProjectPlan(repo, templates), {
+  assert.deepEqual(getProjectPlan(repo, templates, gitEnv), {
     plan: {
       mode: 'upgrade',
       writes: [
@@ -111,7 +113,7 @@ test('removes every legacy lint file present and lists each as changed', (t) => 
     ['.eslintignore', 'old'],
   ]);
 
-  const result = getProjectPlan(repo, templates);
+  const result = getProjectPlan(repo, templates, gitEnv);
   const expected = [
     'eslint.config.js',
     'eslint.config.mjs',
@@ -139,7 +141,7 @@ test('does not remove a lint file on an upgrade', (t) => {
     ['.eslintrc', 'old'],
   ]);
 
-  const result = getProjectPlan(repo, templates);
+  const result = getProjectPlan(repo, templates, gitEnv);
 
   assert.deepEqual(getPlan(result).removals, []);
 });
@@ -155,7 +157,7 @@ test('seeds scopes from tracked directories, sorted, without .github and __tests
     ['top.ts', 'x'],
   ]);
 
-  const result = getProjectPlan(repo, templates);
+  const result = getProjectPlan(repo, templates, gitEnv);
 
   assert.deepEqual(
     findWrite(result, '.landmark/scopes.json'),
@@ -171,7 +173,7 @@ test('does not seed scopes on an upgrade', (t) => {
     ['src/a.ts', 'x'],
   ]);
 
-  const result = getProjectPlan(repo, templates);
+  const result = getProjectPlan(repo, templates, gitEnv);
 
   assert.equal(targetsOf(result).includes('.landmark/scopes.json'), false);
 });
@@ -183,7 +185,7 @@ test('keeps an existing scopes file', (t) => {
     ['.landmark/scopes.json', '["mine"]\n'],
   ]);
 
-  const result = getProjectPlan(repo, templates);
+  const result = getProjectPlan(repo, templates, gitEnv);
 
   assert.equal(targetsOf(result).includes('.landmark/scopes.json'), false);
   assert.equal(getPlan(result).changed.includes('.landmark/scopes.json'), false);
@@ -196,7 +198,7 @@ test('adds node_modules to a gitignore that lacks it, after a missing final newl
     ['.gitignore', 'dist'],
   ]);
 
-  const result = getProjectPlan(repo, templates);
+  const result = getProjectPlan(repo, templates, gitEnv);
 
   assert.deepEqual(
     findWrite(result, '.gitignore'),
@@ -211,7 +213,7 @@ test('leaves a gitignore that already has a node_modules line', (t) => {
     ['.gitignore', 'dist\n  /node_modules  \n'],
   ]);
 
-  assert.equal(targetsOf(getProjectPlan(repo, templates)).includes('.gitignore'), false);
+  assert.equal(targetsOf(getProjectPlan(repo, templates, gitEnv)).includes('.gitignore'), false);
 });
 
 test('adds node_modules to a gitignore that only mentions it in a longer line', (t) => {
@@ -221,7 +223,7 @@ test('adds node_modules to a gitignore that only mentions it in a longer line', 
     ['.gitignore', 'node_modules_old\n'],
   ]);
 
-  const result = getProjectPlan(repo, templates);
+  const result = getProjectPlan(repo, templates, gitEnv);
 
   assert.deepEqual(
     findWrite(result, '.gitignore'),
@@ -232,7 +234,7 @@ test('adds node_modules to a gitignore that only mentions it in a longer line', 
 test('refuses a directory that is not a repository', (t) => {
   const dir = makeTempDir(t);
 
-  assert.deepEqual(getProjectPlan(dir, templates), {
+  assert.deepEqual(getProjectPlan(dir, templates, gitEnv), {
     refusals: [`${ dir } is not the root of a git work tree`],
   });
 });
@@ -243,7 +245,7 @@ test('refuses a subdirectory of a repository', (t) => {
 
   mkdirSync(sub);
 
-  assert.deepEqual(getProjectPlan(sub, templates), {
+  assert.deepEqual(getProjectPlan(sub, templates, gitEnv), {
     refusals: [`${ sub } is not the root of a git work tree`],
   });
 });
@@ -258,7 +260,7 @@ test('refuses an untracked file on a touched path', (t) => {
     ['eslint.config.ts', 'mine'],
   ]);
 
-  assert.deepEqual(getProjectPlan(repo, templates), {
+  assert.deepEqual(getProjectPlan(repo, templates, gitEnv), {
     refusals: [
       'eslint.config.ts has an uncommitted or untracked change; commit or stash it first',
     ],
@@ -275,7 +277,7 @@ test('refuses a modified tracked package.json', (t) => {
     ['package.json', '{"name":"x"}'],
   ]);
 
-  assert.deepEqual(getProjectPlan(repo, templates), {
+  assert.deepEqual(getProjectPlan(repo, templates, gitEnv), {
     refusals: ['package.json has an uncommitted or untracked change; commit or stash it first'],
   });
 });
@@ -290,7 +292,7 @@ test('refuses a gitignored file on a touched path', (t) => {
     ['eslint.config.ts', 'mine'],
   ]);
 
-  assert.deepEqual(getProjectPlan(repo, templates), {
+  assert.deepEqual(getProjectPlan(repo, templates, gitEnv), {
     refusals: [
       'eslint.config.ts has an uncommitted or untracked change; commit or stash it first',
     ],
@@ -307,7 +309,7 @@ test('refuses a gitignored file inside an ignored directory on a touched path', 
     ['.landmark/version', '0.0.1'],
   ]);
 
-  assert.deepEqual(getProjectPlan(repo, templates), {
+  assert.deepEqual(getProjectPlan(repo, templates, gitEnv), {
     refusals: [
       '.landmark/version has an uncommitted or untracked change; commit or stash it first',
     ],
@@ -325,7 +327,7 @@ test('does not refuse for an unrelated gitignored file', (t) => {
     ['debug.log', 'x'],
   ]);
 
-  getPlan(getProjectPlan(repo, templates));
+  getPlan(getProjectPlan(repo, templates, gitEnv));
 });
 
 test('refuses an uncommitted lint file that install would remove', (t) => {
@@ -338,7 +340,7 @@ test('refuses an uncommitted lint file that install would remove', (t) => {
     ['.eslintrc', 'edited'],
   ]);
 
-  assert.deepEqual(getProjectPlan(repo, templates), {
+  assert.deepEqual(getProjectPlan(repo, templates, gitEnv), {
     refusals: ['.eslintrc has an uncommitted or untracked change; commit or stash it first'],
   });
 });
@@ -354,7 +356,7 @@ test('does not refuse for an unrelated untracked file', (t) => {
     ['src/new.ts', 'x'],
   ]);
 
-  getPlan(getProjectPlan(repo, templates));
+  getPlan(getProjectPlan(repo, templates, gitEnv));
 });
 
 test('splits created and changed by what exists now', (t) => {
@@ -370,7 +372,7 @@ test('splits created and changed by what exists now', (t) => {
     ...templates,
     { target: 'tsconfig.json', kind: 'wrapper' as const, text: 'wrapper ts' },
   ];
-  const result = getProjectPlan(repo, extended);
+  const result = getProjectPlan(repo, extended, gitEnv);
 
   assert.deepEqual(
     [getPlan(result).created, getPlan(result).changed],
@@ -391,9 +393,31 @@ test('throws when git status fails instead of reading it as no change', (t) => {
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['README.md', 'x'],
+    ['.landmark/scopes.json', '[]\n'],
   ]);
   writeFileSync(join(repo, '.git', 'index'), 'not an index');
 
-  assert.throws(() => getProjectPlan(repo, templates), /^Error: git status exited \d+$/);
+  assert.throws(() => getProjectPlan(repo, templates, gitEnv), /^Error: git status exited \d+$/);
+});
+
+test('throws when git ls-files fails instead of seeding only project', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [
+    ['src/a.ts', 'x'],
+  ]);
+  writeFileSync(join(repo, '.git', 'index'), 'not an index');
+
+  assert.throws(() => getScopes(repo, gitEnv), /^Error: git ls-files exited \d+$/);
+});
+
+test('runs git with the environment it is given and drops its GIT_ variables', (t) => {
+  const repo = makeTempRepo(t);
+  const other = makeTempDir(t);
+
+  assert.throws(() => getProjectPlan(repo, templates, { PATH: '/nonexistent' }), /^Error: git rev-parse .*ENOENT/);
+  assert.deepEqual(
+    getProjectPlan(repo, templates, { ...gitEnv, GIT_DIR: join(other, 'none') }),
+    getProjectPlan(repo, templates, gitEnv),
+  );
 });

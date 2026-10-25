@@ -19,9 +19,13 @@ export interface Outcome {
 // Reads the plugin, the templates and the plan, then writes the plan into
 // projectDir. The package.json merge is computed before the first write, so
 // a package.json that cannot be merged throws with nothing written.
-export function applyProject(pluginRoot: string, projectDir: string): Outcome {
+export function applyProject(
+  pluginRoot: string,
+  projectDir: string,
+  env: NodeJS.ProcessEnv,
+): Outcome {
   const version = readPluginVersion(pluginRoot);
-  const result = getProjectPlan(projectDir, readTemplates());
+  const result = getProjectPlan(projectDir, readTemplates(), env);
 
   if ('refusals' in result) {
     return {

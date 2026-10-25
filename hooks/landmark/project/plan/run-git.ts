@@ -12,9 +12,9 @@ export interface GitRun {
 // Runs a reading git command in cwd within the time limit. A run that ends
 // with an exit code, zero or not, comes back for the caller to judge; a
 // timeout, a spawn error or a kill by signal throws. The GIT_* variables a
-// git hook exports are left out, as they would send the call elsewhere.
-export function runGit(args: readonly string[], cwd: string): GitRun {
-  const kept = Object.entries(process.env)
+// git hook exports are left out of env, as they would send the call elsewhere.
+export function runGit(args: readonly string[], cwd: string, env: NodeJS.ProcessEnv): GitRun {
+  const kept = Object.entries(env)
     .filter(([name]) => !name.startsWith(GIT_VARIABLE_PREFIX));
   const run = spawnSync('git', ['--literal-pathspecs', ...args], {
     cwd,
