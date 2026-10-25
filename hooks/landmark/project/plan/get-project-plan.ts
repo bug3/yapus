@@ -50,7 +50,6 @@ const INSTALL_REMOVALS: Readonly<Record<Language, readonly string[]>> = {
   typescript: LEGACY_LINT_FILES,
   go: GOLANGCI_FILES,
 };
-// Only a TypeScript run touches package.json and .gitignore.
 const PACKAGE_PATHS: Readonly<Record<Language, readonly string[]>> = {
   typescript: [PACKAGE],
   go: [],

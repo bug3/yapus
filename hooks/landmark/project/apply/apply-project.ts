@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { readPluginVersion } from '../../../shared/read-plugin-version.ts';
-import { readTemplates } from '../files/read-templates.ts';
+import { readTemplates, type Template } from '../files/read-templates.ts';
 import { getLanguage } from '../language/get-language.ts';
 import type { Language } from '../language/languages.ts';
 import { mergePackage, type PackageMerge } from '../package/merge-package.ts';
@@ -12,7 +12,6 @@ import {
   type PlanResult,
   type ProjectPlan,
 } from '../plan/get-project-plan.ts';
-import type { Template } from '../files/read-templates.ts';
 import { formatReport } from './format-report.ts';
 import { writeProject } from './write-project.ts';
 
@@ -31,6 +30,21 @@ const PLANNERS: Readonly<Record<
 >> = {
   typescript: getProjectPlan,
   go: getGoProjectPlan,
+};
+
+interface PackageStep {
+  readonly merge: PackageMerge | undefined;
+  readonly packageText: string | undefined;
+}
+
+// One package step per language; only TypeScript computes a package.json
+// merge. The Record type makes a missing language a compile error.
+const PACKAGE_STEPS: Readonly<Record<
+  Language,
+  (projectDir: string, mode: ProjectPlan['mode']) => PackageStep
+>> = {
+  typescript: mergeProjectPackage,
+  go: () => ({ merge: undefined, packageText: undefined }),
 };
 
 // What the person asked for: the environment and the language, which is
@@ -70,11 +84,7 @@ export function applyProject(
   }
 
   const { plan } = planned;
-  const merged = language === 'typescript'
-    ? mergeProjectPackage(projectDir, plan.mode)
-    : undefined;
-  const merge = merged?.merge;
-  const packageText = merged?.packageText;
+  const { merge, packageText } = PACKAGE_STEPS[language](projectDir, plan.mode);
   const written = writeProject(projectDir, { plan, packageText, version });
 
   return { status: 0, lines: formatReport(plan, written, { language, merge }) };
@@ -83,7 +93,7 @@ export function applyProject(
 function mergeProjectPackage(
   projectDir: string,
   mode: ProjectPlan['mode'],
-): { merge: PackageMerge; packageText: string | undefined } {
+): PackageStep {
   const packagePath = join(projectDir, PACKAGE);
   const existing = existsSync(packagePath) ? readFileSync(packagePath, 'utf8') : undefined;
   const merge = mergePackage(existing, mode);

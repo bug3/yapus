@@ -10,7 +10,9 @@ function main(): void {
 
   const language = languages.find((name) => name === requested);
 
-  if (!hasBoth || extra.length > 0 || (requested !== undefined && language === undefined)) {
+  const isUnknownLanguage = requested !== undefined && language === undefined;
+
+  if (!hasBoth || extra.length > 0 || isUnknownLanguage) {
     stop(2, ['usage: landmark/project <plugin root> <project dir> [typescript|go]']);
   }
 
