@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
 import { getGitEnv, runGit } from '../../../helpers/run-git.ts';
 import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
+import { readTemplates } from '../../../../hooks/landmark/project/files/read-templates.ts';
 import { commitFiles } from './plan/commit-files.ts';
 import { copyPlugin, PLUGIN, runProject } from './run-project.ts';
 
@@ -182,4 +183,36 @@ test('prints the usage and exits 2 without two arguments', (t) => {
 
   assert.equal(run.status, 2);
   assert.equal(run.stderr, 'usage: landmark/project <plugin root> <project dir>\n');
+});
+
+const GO_RECORD = '.claude/yapus/landmark/language';
+const GO_WORKFLOW = '.github/workflows/yapus.yml';
+
+function readGoTemplate(target: string): string {
+  const template = readTemplates('go').find((entry) => entry.target === target);
+
+  assert.ok(template !== undefined);
+
+  return template.text;
+}
+
+test('upgrade follows the recorded Go language', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [
+    ['go.mod', 'module x\n'],
+    ['.claude/yapus/landmark/version', '0.0.1'],
+    [GO_RECORD, 'go\n'],
+  ]);
+
+  const run = runProject(copyPlugin(t), repo);
+
+  assert.equal(run.status, 0, run.stderr);
+  assert.match(run.stdout, /^yapus landmark project upgrade: wrote\n/);
+  assert.equal(readRepoFile(repo, '.golangci.yml'), readGoTemplate('.golangci.yml'));
+  assert.equal(readRepoFile(repo, GO_WORKFLOW), readGoTemplate(GO_WORKFLOW));
+  assert.equal(readRepoFile(repo, GO_RECORD), 'go\n');
+  assert.ok(!existsSync(join(repo, 'package.json')));
+  assert.ok(!existsSync(join(repo, 'eslint.config.ts')));
+  assert.ok(!existsSync(join(repo, 'tsconfig.json')));
 });

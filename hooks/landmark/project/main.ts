@@ -11,7 +11,8 @@ function main(): void {
     stop(2, ['usage: landmark/project <plugin root> <project dir>']);
   }
 
-  const { status, lines } = runProject(pluginRoot, projectDir, process.env);
+  const request = { env: process.env, requested: undefined };
+  const { status, lines } = runProject(pluginRoot, projectDir, request);
 
   stop(status, lines);
 }
