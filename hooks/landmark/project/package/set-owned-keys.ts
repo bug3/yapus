@@ -1,5 +1,4 @@
 import { getSection, type Section } from './get-section.ts';
-import { readPins } from './read-pins.ts';
 import { setValue } from './set-value.ts';
 
 const CHECK_SCRIPT =
@@ -7,12 +6,12 @@ const CHECK_SCRIPT =
 
 // The keys both modes own: scripts.check, the devDependency pins,
 // engines.node and type.
-export function setOwnedKeys(root: Section): void {
+export function setOwnedKeys(root: Section, pins: Readonly<Record<string, string>>): void {
   setValue(getSection(root, 'scripts'), 'check', CHECK_SCRIPT);
 
   const devDependencies = getSection(root, 'devDependencies');
 
-  Object.entries(readPins()).forEach(([name, version]) => {
+  Object.entries(pins).forEach(([name, version]) => {
     setValue(devDependencies, name, version);
   });
 

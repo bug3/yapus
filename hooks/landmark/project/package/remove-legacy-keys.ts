@@ -1,5 +1,4 @@
 import { getPath, getSection, type Section } from './get-section.ts';
-import { readPins } from './read-pins.ts';
 
 // eslint-plugin-*, eslint-config-*, @scope/eslint-plugin[-*],
 // @scope/eslint-config[-*] and @typescript-eslint/*.
@@ -8,8 +7,7 @@ const OLD_ESLINT_PACKAGE =
 
 // What an install drops of the replaced ESLint setup: its devDependencies,
 // except the pins, and the top-level eslintConfig key.
-export function removeLegacyKeys(root: Section): void {
-  const pins = readPins();
+export function removeLegacyKeys(root: Section, pins: Readonly<Record<string, string>>): void {
   const devDependencies = getSection(root, 'devDependencies');
 
   Object.keys(devDependencies.object)

@@ -1,5 +1,6 @@
 import { type Changes, type Section } from './get-section.ts';
 import { parsePackage } from './parse-package.ts';
+import { readPins } from './read-pins.ts';
 import { removeLegacyKeys } from './remove-legacy-keys.ts';
 import { setOwnedKeys } from './set-owned-keys.ts';
 import { setTestScript } from './set-test-script.ts';
@@ -19,11 +20,13 @@ export function mergePackage(
   const changes: Changes = { set: [], removed: [] };
   const root: Section = { object: parsePackage(text ?? '{"private": true}'), path: '', changes };
 
-  setOwnedKeys(root);
+  const pins = readPins();
+
+  setOwnedKeys(root, pins);
 
   if (mode === 'install') {
     setTestScript(root);
-    removeLegacyKeys(root);
+    removeLegacyKeys(root, pins);
   }
 
   return {
