@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getProjectDirectory } from '../../../shared/hooks-path/get-project-directory.ts';
-import { getWorkflow } from './get-workflow.ts';
-import { getWrapperEslintConfig } from './get-wrapper-eslint-config.ts';
-import { getWrapperTsconfig } from './get-wrapper-tsconfig.ts';
+import { getWorkflow } from './typescript/get-workflow.ts';
+import { getWrapperEslintConfig } from './typescript/get-wrapper-eslint-config.ts';
+import { getWrapperTsconfig } from './typescript/get-wrapper-tsconfig.ts';
 
 // A file the project installer writes; target is relative to the adopter's
 // repository root. An owned file is rewritten on every upgrade, a wrapper
@@ -34,5 +34,5 @@ export function readTemplates(): readonly Template[] {
 }
 
 function readBase(name: string): string {
-  return readFileSync(join(import.meta.dirname, name), 'utf8');
+  return readFileSync(join(import.meta.dirname, 'typescript', name), 'utf8');
 }

@@ -16,7 +16,7 @@ const WRAPPER_TSCONFIG = 'tsconfig.json';
 const SCOPES = '.claude/yapus/landmark/scopes.json';
 const BASE_DIR = join(
   import.meta.dirname,
-  ...['..', '..', '..', '..', 'hooks', 'landmark', 'project', 'files'],
+  ...['..', '..', '..', '..', 'hooks', 'landmark', 'project', 'files', 'typescript'],
 );
 
 function readVersion(): unknown {

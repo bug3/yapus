@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import { readTemplates } from '../../../../../hooks/landmark/project/files/read-templates.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..', '..');
-const BASE = join(ROOT, 'hooks', 'landmark', 'project', 'files');
+const BASE = join(ROOT, 'hooks', 'landmark', 'project', 'files', 'typescript');
 // The ShellCheck step of test.yml and the comment above it, 1-based.
 const SHELLCHECK_FIRST_LINE = 18;
 const SHELLCHECK_LAST_LINE = 22;
