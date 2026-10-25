@@ -86,7 +86,7 @@ test('refuses a recorded Go upgrade when go.mod is not at the root', (t) => {
   });
 });
 
-test('throws on an upgrade whose record names an unknown language', (t) => {
+test('refuses an upgrade whose record names an unknown language', (t) => {
   const root = makeTempDir(t);
 
   writeFiles(root, [
@@ -94,5 +94,8 @@ test('throws on an upgrade whose record names an unknown language', (t) => {
     ['.claude/yapus/landmark/language', 'rust\n'],
   ]);
 
-  assert.throws(() => getLanguage(root, undefined), /not a known language/);
+  assert.deepEqual(getLanguage(root, undefined), {
+    refusal:
+      '.claude/yapus/landmark/language holds "rust", not a language; set it to typescript or go',
+  });
 });

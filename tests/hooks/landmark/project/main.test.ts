@@ -323,3 +323,24 @@ test('an unknown language prints the usage, exits 2 and writes nothing', (t) => 
   assert.equal(run.stderr, `${ USAGE }\n`);
   assert.equal(runGit(['status', '--porcelain'], repo), before);
 });
+
+test('refuses an upgrade whose language record is unknown and writes nothing', (t) => {
+  const repo = makeTempRepo(t);
+
+  commitFiles(repo, [
+    ['.claude/yapus/landmark/version', '0.3.0'],
+    [GO_RECORD, 'rust\n'],
+  ]);
+
+  const before = runGit(['status', '--porcelain'], repo);
+  const run = runProject(copyPlugin(t), repo);
+
+  assert.equal(run.status, 2);
+  assert.equal(run.stdout, '');
+  assert.equal(run.stderr, [
+    'yapus landmark project: refused, nothing written',
+    '.claude/yapus/landmark/language holds "rust", not a language; set it to typescript or go',
+    '',
+  ].join('\n'));
+  assert.equal(runGit(['status', '--porcelain'], repo), before);
+});
