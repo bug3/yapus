@@ -14,4 +14,5 @@ description: Write the plan of deep work before its first edit, in a form critic
 - Status: each slice as open, done with its commit, or blocked with the reason, then the next step.
 - Before the first edit, launch `providens:critic` once on the plan file and its acceptance criteria when the plan touches more than one module or a public interface, and fold each defect into the section it names.
 - Give each builder one slice and take its ORCH-5 brief from the plan: the slice's intent as the goal, its files, the decisions that bind it, its criteria and its oracle.
+- Ask the person's open decisions with the question tool: one question per decision, your recommendation first, its context inside the question.
 - Record each decision the person makes in Decisions as they make it, and update Status each time a slice returns.
