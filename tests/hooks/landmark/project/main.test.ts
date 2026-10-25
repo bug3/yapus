@@ -3,7 +3,6 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { readTemplates } from '../../../../hooks/landmark/project/files/read-templates.ts';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
 import { getGitEnv, runGit } from '../../../helpers/run-git.ts';
 import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
@@ -12,6 +11,13 @@ import { copyPlugin, PLUGIN, runProject } from './run-project.ts';
 
 const OWNED = '.landmark/eslint.config.ts';
 const WRAPPER = 'eslint.config.ts';
+const OWNED_TSCONFIG = '.landmark/tsconfig.json';
+const WRAPPER_TSCONFIG = 'tsconfig.json';
+const SCOPES = '.landmark/scopes.json';
+const BASE_DIR = join(
+  import.meta.dirname,
+  ...['..', '..', '..', '..', 'hooks', 'landmark', 'project', 'files'],
+);
 
 function readVersion(): unknown {
   const manifest: unknown = JSON.parse(
@@ -21,8 +27,12 @@ function readVersion(): unknown {
   return isRecord(manifest) ? manifest.version : undefined;
 }
 
-function getTemplateText(target: string): string | undefined {
-  return readTemplates().find((template) => template.target === target)?.text;
+function readBase(name: string): string {
+  return readFileSync(join(BASE_DIR, name), 'utf8');
+}
+
+function readRepoFile(repo: string, path: string): string {
+  return readFileSync(join(repo, path), 'utf8');
 }
 
 function commitAll(repo: string): void {
@@ -63,31 +73,49 @@ test('installs into a fresh repository and prints the approved lines', (t) => {
     + '.landmark/version',
     '',
   ].join('\n'));
-  assert.equal(readFileSync(join(repo, OWNED), 'utf8'), getTemplateText(OWNED));
-  assert.equal(readFileSync(join(repo, WRAPPER), 'utf8'), getTemplateText(WRAPPER));
-  assert.equal(readFileSync(join(repo, '.landmark', 'version'), 'utf8'), readVersion());
+  assert.equal(readRepoFile(repo, OWNED), readBase('eslint.config.ts'));
+  assert.equal(readRepoFile(repo, OWNED_TSCONFIG), readBase('tsconfig.json'));
+  assert.match(readRepoFile(repo, WRAPPER), /from '\.\/\.landmark\/eslint\.config\.ts'/);
+  assert.match(readRepoFile(repo, WRAPPER_TSCONFIG), /"extends": "\.\/\.landmark\/tsconfig\.json"/);
+  assert.equal(readRepoFile(repo, '.landmark/version'), readVersion());
 });
 
 test('upgrade rewrites owned files and the stamp and keeps wrapper files', (t) => {
   const repo = makeTempRepo(t);
   const root = copyPlugin(t);
+  const customWrapper = 'changed wrapper\n';
+  const customTsconfig = '{"extends": "./mine.json"}\n';
+  const customScopes = '["mine"]\n';
 
   commitFiles(repo, [['README.md', 'x']]);
   assert.equal(runProject(root, repo).status, 0);
   commitAll(repo);
+
+  const installedPackage = readRepoFile(repo, 'package.json');
+  const customPackage = installedPackage.replace(/"test": "(?:[^"\\]|\\.)*"/, '"test": "my own test"');
+
+  assert.notEqual(customPackage, installedPackage);
+  writeFileSync(join(repo, 'package.json'), customPackage);
   writeFileSync(join(repo, OWNED), 'changed owned\n');
-  writeFileSync(join(repo, WRAPPER), 'changed wrapper\n');
+  writeFileSync(join(repo, OWNED_TSCONFIG), '{}\n');
   writeFileSync(join(repo, '.landmark', 'version'), '0.0.1');
+  writeFileSync(join(repo, WRAPPER), customWrapper);
+  writeFileSync(join(repo, WRAPPER_TSCONFIG), customTsconfig);
+  writeFileSync(join(repo, SCOPES), customScopes);
   commitAll(repo);
 
   const run = runProject(root, repo);
 
   assert.equal(run.status, 0, run.stderr);
   assert.match(run.stdout, /^yapus landmark project upgrade: wrote\n/);
-  assert.equal(readFileSync(join(repo, OWNED), 'utf8'), getTemplateText(OWNED));
-  assert.equal(readFileSync(join(repo, WRAPPER), 'utf8'), 'changed wrapper\n');
-  assert.equal(readFileSync(join(repo, '.landmark', 'version'), 'utf8'), readVersion());
+  assert.equal(readRepoFile(repo, OWNED), readBase('eslint.config.ts'));
+  assert.equal(readRepoFile(repo, OWNED_TSCONFIG), readBase('tsconfig.json'));
+  assert.equal(readRepoFile(repo, '.landmark/version'), readVersion());
   assert.doesNotMatch(run.stdout, /remove /);
+  assert.equal(readRepoFile(repo, WRAPPER), customWrapper);
+  assert.equal(readRepoFile(repo, WRAPPER_TSCONFIG), customTsconfig);
+  assert.equal(readRepoFile(repo, SCOPES), customScopes);
+  assert.equal(readRepoFile(repo, 'package.json'), customPackage);
 });
 
 test('install removes a legacy ESLint config and names it', (t) => {
@@ -135,7 +163,7 @@ test('crashes on an unparsable package.json and writes nothing', (t) => {
 
   assert.equal(run.status, 2);
   assert.equal(run.stdout, '');
-  assert.match(run.stderr, /^yapus landmark project: crashed: [^\n]+\n$/);
+  assert.match(run.stderr, /^yapus landmark project: crashed: [^\n]*package\.json[^\n]*\n$/);
   assert.equal(runGit(['status', '--porcelain'], repo), '');
   assert.ok(!existsSync(join(repo, '.landmark')));
 });

@@ -2,18 +2,28 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { getProjectPlan } from '../../../../../hooks/landmark/project/plan/get-project-plan.ts';
+import {
+  getProjectPlan,
+  type PlanResult,
+  type ProjectPlan,
+} from '../../../../../hooks/landmark/project/plan/get-project-plan.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../../helpers/make-temp-repo.ts';
 import { commitFiles, writeFiles } from './commit-files.ts';
 import { templates } from './templates.ts';
 
-function targetsOf(result: ReturnType<typeof getProjectPlan>): string[] {
-  return 'plan' in result ? result.plan.writes.map(({ target }) => target) : [];
+function getPlan(result: PlanResult): ProjectPlan {
+  assert.ok('plan' in result, 'expected a plan');
+
+  return result.plan;
 }
 
-function findWrite(result: ReturnType<typeof getProjectPlan>, target: string): unknown {
-  return 'plan' in result ? result.plan.writes.find((write) => write.target === target) : result;
+function targetsOf(result: PlanResult): string[] {
+  return getPlan(result).writes.map(({ target }) => target);
+}
+
+function findWrite(result: PlanResult, target: string): unknown {
+  return getPlan(result).writes.find((write) => write.target === target);
 }
 
 test('installs every template, the seed and the gitignore into a fresh repository', (t) => {
@@ -117,8 +127,8 @@ test('removes every legacy lint file present and lists each as changed', (t) => 
     '.eslintignore',
   ];
 
-  assert.deepEqual('plan' in result ? result.plan.removals : result, expected);
-  assert.deepEqual('plan' in result ? result.plan.changed.slice(0, 12) : result, expected);
+  assert.deepEqual(getPlan(result).removals, expected);
+  assert.deepEqual(getPlan(result).changed.slice(0, 12), expected);
 });
 
 test('does not remove a lint file on an upgrade', (t) => {
@@ -131,7 +141,7 @@ test('does not remove a lint file on an upgrade', (t) => {
 
   const result = getProjectPlan(repo, templates);
 
-  assert.deepEqual('plan' in result ? result.plan.removals : result, []);
+  assert.deepEqual(getPlan(result).removals, []);
 });
 
 test('seeds scopes from tracked directories, sorted, without .github and __tests__', (t) => {
@@ -176,7 +186,7 @@ test('keeps an existing scopes file', (t) => {
   const result = getProjectPlan(repo, templates);
 
   assert.equal(targetsOf(result).includes('.landmark/scopes.json'), false);
-  assert.equal('plan' in result && result.plan.changed.includes('.landmark/scopes.json'), false);
+  assert.equal(getPlan(result).changed.includes('.landmark/scopes.json'), false);
 });
 
 test('adds node_modules to a gitignore that lacks it, after a missing final newline', (t) => {
@@ -296,7 +306,7 @@ test('does not refuse for an unrelated untracked file', (t) => {
     ['src/new.ts', 'x'],
   ]);
 
-  assert.equal('plan' in getProjectPlan(repo, templates), true);
+  getPlan(getProjectPlan(repo, templates));
 });
 
 test('splits created and changed by what exists now', (t) => {
@@ -315,7 +325,7 @@ test('splits created and changed by what exists now', (t) => {
   const result = getProjectPlan(repo, extended);
 
   assert.deepEqual(
-    'plan' in result ? [result.plan.created, result.plan.changed] : result,
+    [getPlan(result).created, getPlan(result).changed],
     [
       [
         '.landmark/eslint.config.ts',
