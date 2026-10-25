@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { readLimit } from '../../../../../hooks/claude/providens/settings/read-limit.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
 const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', '..', 'hooks');
@@ -73,6 +74,21 @@ test('names the file when the limit in force is invalid', (t) => {
   );
 });
 
+test('writes the largest safe integer and the gate reads it back', (t) => {
+  const dataDir = makeTempDir(t);
+  const path = join(dataDir, 'sessions', 's1.launch-limit');
+  const run = runLimit([dataDir, 's1', '9007199254740991']);
+
+  assert.equal(run.status, 0);
+  assert.equal(readFileSync(path, 'utf8'), '9007199254740991\n');
+  assert.deepEqual(readLimit(dataDir, 's1'), {
+    kind: 'value',
+    value: Number.MAX_SAFE_INTEGER,
+    source: 'session',
+    path,
+  });
+});
+
 test('does not touch another session', (t) => {
   const dataDir = makeTempDir(t);
 
@@ -104,6 +120,8 @@ for (const [name, args] of [
   ['a number with a suffix', ['DIR', 's1', '6x']],
   ['a negative number', ['DIR', 's1', '-1']],
   ['a decimal', ['DIR', 's1', '1.5']],
+  ['a number past the safe range', ['DIR', 's1', '9007199254740992']],
+  ['a number that prints in exponent form', ['DIR', 's1', '1000000000000000000000']],
   ['--global twice', ['DIR', 's1', '5', '--global', '--global']],
   ['an unknown flag', ['DIR', 's1', '5', '--force']],
 ] as const) {

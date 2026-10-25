@@ -11,11 +11,13 @@ export function parseArgs(args: readonly string[]): LimitChange | undefined {
   const numbers = args.filter((arg) => WHOLE_NUMBER.test(arg));
   const globals = args.filter((arg) => arg === '--global');
   const [number] = numbers;
+  const limit = Number(number);
 
+  // A number past the safe range would be written as 1e+21, which no gate reads.
   if (number === undefined || numbers.length > 1 || globals.length > 1
-    || numbers.length + globals.length < args.length) {
+    || numbers.length + globals.length < args.length || !Number.isSafeInteger(limit)) {
     return undefined;
   }
 
-  return { limit: Number(number), isGlobal: globals.length === 1 };
+  return { limit, isGlobal: globals.length === 1 };
 }
