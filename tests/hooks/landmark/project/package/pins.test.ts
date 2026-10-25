@@ -2,16 +2,16 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { isRecord } from '../../../../../hooks/shared/is-record.ts';
 import { readPins } from '../../../../../hooks/landmark/project/package/read-pins.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..', '..');
 
 test('keeps the pins equal to the devDependencies of the repository package.json', () => {
-  assert.partialDeepStrictEqual(
-    JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')),
-    { devDependencies: readPins() },
-  );
-  assert.equal(Object.keys(readPins()).length, 6);
+  const manifest: unknown = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+
+  assert.ok(isRecord(manifest));
+  assert.deepEqual(manifest.devDependencies, readPins());
 });
 
 test('keeps pins.json in canonical form', () => {
