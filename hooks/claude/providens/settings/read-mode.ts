@@ -2,7 +2,7 @@ import { resolveSetting, type ResolvedSetting, type Setting } from './resolve-se
 
 export type Mode = 'on' | 'off';
 
-const MODE: Setting<Mode> = { name: 'mode', parse: parseMode, fallback: 'on' };
+export const MODE: Setting<Mode> = { name: 'mode', parse: parseMode, fallback: 'on' };
 
 // The mode in force for the session: the person's <dataDir>/sessions/
 // <sessionId>.mode, else <dataDir>/mode, else on. A file that holds neither

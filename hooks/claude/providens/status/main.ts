@@ -1,7 +1,7 @@
 import { writeSync } from 'node:fs';
 import { formatMessage } from '../../../shared/format-message.ts';
 import { getFirstLine } from '../../../shared/get-first-line.ts';
-import { isSafeId } from '../../../shared/is-safe-id.ts';
+import { getTarget } from '../settings/get-target.ts';
 import { getStatus } from './get-status.ts';
 
 const PROGRAM = 'providens status';
@@ -25,11 +25,13 @@ function main(): void {
 function getOutcome(args: readonly string[]): Outcome {
   const [dataDir, sessionId, ...extra] = args;
 
-  if (dataDir === undefined || dataDir === '' || !isSafeId(sessionId) || extra.length > 0) {
+  const target = getTarget(dataDir, sessionId);
+
+  if (target === undefined || extra.length > 0) {
     return { kind: 'failure', detail: USAGE };
   }
 
-  return { kind: 'status', text: getStatus(dataDir, sessionId) };
+  return { kind: 'status', text: getStatus(target.dataDir, target.sessionId) };
 }
 
 function stop(outcome: Outcome): never {

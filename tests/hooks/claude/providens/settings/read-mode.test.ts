@@ -8,19 +8,34 @@ import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 test('returns on by default when no mode file exists', (t) => {
   const dataDir = makeTempDir(t);
 
-  assert.deepEqual(readMode(dataDir, 's1'), { kind: 'value', value: 'on', source: 'default' });
+  assert.deepEqual(readMode(dataDir, 's1'), {
+    kind: 'value',
+    value: 'on',
+    source: 'default',
+    path: join(dataDir, 'mode'),
+  });
 });
 
 test('returns the global mode, trimmed', (t) => {
   const dataDir = makeDataDir(t, 'off\n', undefined);
 
-  assert.deepEqual(readMode(dataDir, 's1'), { kind: 'value', value: 'off', source: 'global' });
+  assert.deepEqual(readMode(dataDir, 's1'), {
+    kind: 'value',
+    value: 'off',
+    source: 'global',
+    path: join(dataDir, 'mode'),
+  });
 });
 
 test('returns the session mode over the global mode', (t) => {
   const dataDir = makeDataDir(t, 'off', 'on');
 
-  assert.deepEqual(readMode(dataDir, 's1'), { kind: 'value', value: 'on', source: 'session' });
+  assert.deepEqual(readMode(dataDir, 's1'), {
+    kind: 'value',
+    value: 'on',
+    source: 'session',
+    path: join(dataDir, 'sessions', 's1.mode'),
+  });
 });
 
 test('returns invalid with the session path for a word that is not a mode', (t) => {

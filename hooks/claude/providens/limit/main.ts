@@ -1,7 +1,7 @@
 import { writeSync } from 'node:fs';
 import { formatMessage } from '../../../shared/format-message.ts';
 import { getFirstLine } from '../../../shared/get-first-line.ts';
-import { isSafeId } from '../../../shared/is-safe-id.ts';
+import { getTarget } from '../settings/get-target.ts';
 import { applyLimit } from './apply-limit.ts';
 import { parseArgs } from './parse-args.ts';
 
@@ -27,11 +27,13 @@ function getOutcome(args: readonly string[]): Outcome {
   const [dataDir, sessionId, ...rest] = args;
   const change = parseArgs(rest);
 
-  if (dataDir === undefined || dataDir === '' || !isSafeId(sessionId) || change === undefined) {
+  const target = getTarget(dataDir, sessionId);
+
+  if (target === undefined || change === undefined) {
     return { kind: 'failure', detail: USAGE };
   }
 
-  return { kind: 'text', text: applyLimit(dataDir, sessionId, change).text };
+  return { kind: 'text', text: applyLimit(target.dataDir, target.sessionId, change).text };
 }
 
 function stop(outcome: Outcome): never {

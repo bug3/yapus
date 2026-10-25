@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import {
+  getSettingPath,
   resolveSetting,
   type Setting,
 } from '../../../../../hooks/claude/providens/settings/resolve-setting.ts';
@@ -19,7 +20,12 @@ test('returns the session file over the global file', (t) => {
 
   assert.deepEqual(
     resolveSetting(dataDir, 's1', WORD),
-    { kind: 'value', value: 'session-word', source: 'session' },
+    {
+      kind: 'value',
+      value: 'session-word',
+      source: 'session',
+      path: join(dataDir, 'sessions', 's1.word'),
+    },
   );
 });
 
@@ -28,7 +34,7 @@ test('returns the global file when the session has none', (t) => {
 
   assert.deepEqual(
     resolveSetting(dataDir, 's1', WORD),
-    { kind: 'value', value: 'global-word', source: 'global' },
+    { kind: 'value', value: 'global-word', source: 'global', path: join(dataDir, 'word') },
   );
 });
 
@@ -37,7 +43,7 @@ test('returns the fallback when no file exists', (t) => {
 
   assert.deepEqual(
     resolveSetting(dataDir, 's1', WORD),
-    { kind: 'value', value: 'fallback', source: 'default' },
+    { kind: 'value', value: 'fallback', source: 'default', path: join(dataDir, 'word') },
   );
 });
 
@@ -57,6 +63,13 @@ test('returns invalid with the global path when the session has none', (t) => {
     resolveSetting(dataDir, 's1', WORD),
     { kind: 'invalid', path: join(dataDir, 'word') },
   );
+});
+
+test('gives the session path with an id and the global path without', (t) => {
+  const dataDir = makeTempDir(t);
+
+  assert.equal(getSettingPath(dataDir, 'word', 's1'), join(dataDir, 'sessions', 's1.word'));
+  assert.equal(getSettingPath(dataDir, 'word'), join(dataDir, 'word'));
 });
 
 function makeDataDir(t: TestContext, globalText: string, sessionText: string | undefined): string {

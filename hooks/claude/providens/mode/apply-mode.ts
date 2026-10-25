@@ -1,7 +1,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { getContext, POLICY_PATH } from '../policy/get-context.ts';
-import { readMode } from '../settings/read-mode.ts';
+import { MODE, readMode } from '../settings/read-mode.ts';
+import { getSettingPath } from '../settings/resolve-setting.ts';
 import type { ModeChange } from './parse-args.ts';
 
 const OFF_PATH = join(import.meta.dirname, 'off.md');
@@ -47,7 +48,7 @@ function describeWrite(path: string, state: string): string {
 
 function write(dataDir: string, sessionId: string, change: ModeChange): string {
   const { mode, isGlobal } = change;
-  const path = isGlobal ? join(dataDir, 'mode') : join(dataDir, 'sessions', `${ sessionId }.mode`);
+  const path = getSettingPath(dataDir, MODE.name, isGlobal ? undefined : sessionId);
 
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${ mode }\n`);
