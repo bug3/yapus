@@ -2,8 +2,10 @@
 paths:
   - "**/*.test.ts"
   - "**/test_*.py"
+  - "**/*_test.go"
   - "package.json"
   - "pyproject.toml"
+  - "go.mod"
 ---
 
 # Tests
