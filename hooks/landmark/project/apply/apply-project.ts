@@ -3,11 +3,9 @@ import { join } from 'node:path';
 import { readPluginVersion } from '../../../shared/read-plugin-version.ts';
 import { readTemplates } from '../files/read-templates.ts';
 import { mergePackage } from '../package/merge-package.ts';
-import { getProjectPlan } from '../plan/get-project-plan.ts';
+import { getProjectPlan, PACKAGE } from '../plan/get-project-plan.ts';
 import { formatReport } from './format-report.ts';
 import { writeProject } from './write-project.ts';
-
-const PACKAGE = 'package.json';
 
 // What the program ends with: the exit status and the lines for the stream
 // that status names (stdout for 0, stderr for 2).
@@ -25,16 +23,16 @@ export function applyProject(
   env: NodeJS.ProcessEnv,
 ): Outcome {
   const version = readPluginVersion(pluginRoot);
-  const result = getProjectPlan(projectDir, readTemplates(), env);
+  const planned = getProjectPlan(projectDir, readTemplates(), env);
 
-  if ('refusals' in result) {
+  if ('refusals' in planned) {
     return {
       status: 2,
-      lines: ['yapus landmark project: refused, nothing written', ...result.refusals],
+      lines: ['yapus landmark project: refused, nothing written', ...planned.refusals],
     };
   }
 
-  const { plan } = result;
+  const { plan } = planned;
   const packagePath = join(projectDir, PACKAGE);
   const existing = existsSync(packagePath) ? readFileSync(packagePath, 'utf8') : undefined;
   const merge = mergePackage(existing, plan.mode);

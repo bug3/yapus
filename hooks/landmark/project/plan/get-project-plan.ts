@@ -16,11 +16,13 @@ export interface ProjectPlan {
 
 export type PlanResult = { readonly plan: ProjectPlan } | { readonly refusals: readonly string[] };
 
-const STAMP = '.landmark/version';
-const PACKAGE = 'package.json';
+export const STAMP = '.landmark/version';
+
+export const PACKAGE = 'package.json';
+
 const SCOPES = '.landmark/scopes.json';
 const GITIGNORE = '.gitignore';
-const LEGACY_LINT_FILES = [
+const LEGACY_LINT_FILES: readonly string[] = [
   'eslint.config.js',
   'eslint.config.mjs',
   'eslint.config.cjs',
@@ -44,7 +46,7 @@ export function getProjectPlan(
 ): PlanResult {
   const mode = existsSync(join(root, STAMP)) ? 'upgrade' : 'install';
   const isInstall = mode === 'install';
-  const removals = isInstall ? LEGACY_LINT_FILES.filter((name) => exists(root, name)) : [];
+  const removals = isInstall ? LEGACY_LINT_FILES.filter((name) => hasPath(root, name)) : [];
   const rootRefusal = getRootRefusal(root, env);
 
   if (rootRefusal !== undefined) {
@@ -55,7 +57,7 @@ export function getProjectPlan(
     ...templates
       .filter(({ kind }) => isInstall || kind === 'owned')
       .map(({ target, text }) => ({ target, text })),
-    ...isInstall && !exists(root, SCOPES) ? [{ target: SCOPES, text: getScopes(root, env) }] : [],
+    ...isInstall && !hasPath(root, SCOPES) ? [{ target: SCOPES, text: getScopes(root, env) }] : [],
     ...isInstall ? getGitignoreWrites(root) : [],
   ];
   const touched = [...writes.map(({ target }) => target), ...removals, PACKAGE, STAMP];
@@ -70,13 +72,13 @@ export function getProjectPlan(
       mode,
       writes,
       removals,
-      created: touched.filter((path) => !exists(root, path)),
-      changed: touched.filter((path) => exists(root, path)),
+      created: touched.filter((path) => !hasPath(root, path)),
+      changed: touched.filter((path) => hasPath(root, path)),
     },
   };
 }
 
-function exists(root: string, path: string): boolean {
+function hasPath(root: string, path: string): boolean {
   return existsSync(join(root, path));
 }
 

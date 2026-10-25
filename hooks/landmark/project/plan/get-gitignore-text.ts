@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const IGNORING_LINES = new Set([
+const IGNORING_LINES: ReadonlySet<string> = new Set([
   'node_modules',
   'node_modules/',
   '/node_modules',

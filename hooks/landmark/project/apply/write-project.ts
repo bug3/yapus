@@ -1,9 +1,6 @@
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import type { ProjectPlan } from '../plan/get-project-plan.ts';
-
-const PACKAGE = 'package.json';
-const STAMP = '.landmark/version';
+import { PACKAGE, type ProjectPlan, STAMP } from '../plan/get-project-plan.ts';
 
 interface Writing {
   readonly plan: ProjectPlan;
