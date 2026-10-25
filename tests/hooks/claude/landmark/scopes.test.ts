@@ -40,15 +40,14 @@ test('shows the violation when the catalog is not sorted', (t) => {
 });
 
 test('stays silent when CLAUDE_PROJECT_DIR is unset', (t) => {
-  makeProject(t, '["api"]');
-
-  const { status, stdout } = runScopes(undefined);
+  const project = makeProject(t, '["api"]');
+  const { status, stdout } = runScopes(undefined, project);
 
   assert.deepEqual([status, stdout], [0, '']);
 });
 
-test('does not show a catalog that sits elsewhere in the project', (t) => {
-  const project = makeTempDir(t);
+test('shows only the landmark catalog when the project also holds another', (t) => {
+  const project = makeProject(t, '["api"]');
   const catalogs = join(project, 'hooks', 'shared', 'catalogs');
 
   mkdirSync(catalogs, { recursive: true });
@@ -56,7 +55,12 @@ test('does not show a catalog that sits elsewhere in the project', (t) => {
 
   const { status, stdout } = runScopes(project);
 
-  assert.deepEqual([status, stdout], [0, '']);
+  assert.equal(status, 0);
+  assert.equal(
+    getContext(stdout),
+    'Commit scopes of this repository (.claude/yapus/landmark/scopes.json): api;'
+      + ' a new scope enters that file in the commit that first uses it.',
+  );
 });
 
 // A project with the scope catalog at the place landmark reads.
@@ -71,12 +75,16 @@ function makeProject(t: TestContext, catalogText: string): string {
 }
 
 // Runs the program through run.sh as the harness would, with the project
-// directory in the environment.
-function runScopes(project: string | undefined): { status: number | null; stdout: string } {
+// directory in the environment and the given working directory.
+function runScopes(
+  project: string | undefined,
+  cwd: string = process.cwd(),
+): { status: number | null; stdout: string } {
   const sessionEnv = Object.fromEntries(
     Object.entries(process.env).filter(([name]) => name !== 'CLAUDE_PROJECT_DIR'),
   );
   const commandRun = spawnSync('bash', [RUN, 'claude/landmark/scopes'], {
+    cwd,
     encoding: 'utf8',
     env: project === undefined ? sessionEnv : { ...sessionEnv, CLAUDE_PROJECT_DIR: project },
     timeout: SUBPROCESS_TIMEOUT_MS,
