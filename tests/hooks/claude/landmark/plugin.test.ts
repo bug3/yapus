@@ -10,6 +10,7 @@ const PLUGIN = join(ROOT, 'plugins', 'landmark');
 const COMMAND = 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/dashes';
 const CHECK_COMMAND =
   'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/landmark/check "${CLAUDE_PLUGIN_ROOT}"';
+const SCOPES_COMMAND = 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/landmark/scopes';
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const EM_DASH = String.fromCodePoint(0x2014);
 const EM_DASH_WRITE = JSON.stringify({
@@ -17,7 +18,7 @@ const EM_DASH_WRITE = JSON.stringify({
   tool_input: { file_path: '/r/a.md', content: `a ${ EM_DASH } b\n` },
 });
 
-test('registers the session check and the dashes hook', () => {
+test('registers the session check, the scope catalog and the dashes hook', () => {
   const hooks: unknown = JSON.parse(readFileSync(join(PLUGIN, 'hooks', 'hooks.json'), 'utf8'));
 
   assert.deepEqual(hooks, {
@@ -25,7 +26,10 @@ test('registers the session check and the dashes hook', () => {
       SessionStart: [
         {
           matcher: 'startup|resume|clear|compact',
-          hooks: [{ type: 'command', command: CHECK_COMMAND, timeout: 10 }],
+          hooks: [
+            { type: 'command', command: CHECK_COMMAND, timeout: 10 },
+            { type: 'command', command: SCOPES_COMMAND, timeout: 10 },
+          ],
         },
       ],
       PreToolUse: [

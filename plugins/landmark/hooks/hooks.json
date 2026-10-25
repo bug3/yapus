@@ -8,6 +8,11 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/landmark/check \"${CLAUDE_PLUGIN_ROOT}\"",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/landmark/scopes",
+            "timeout": 10
           }
         ]
       }
