@@ -8,7 +8,7 @@ const FIELD_SEPARATOR = ': ';
 const REQUIRED_FIELDS: readonly string[] = ['name', 'description', 'tools', 'model'];
 // The roster's agents that hold no built-in tool that writes a file or runs a command.
 const READ_ONLY_AGENTS: readonly string[] = [
-  'plan-reviewer', 'reader', 'diff-reviewer', 'web-researcher',
+  'plan-reviewer', 'reader', 'diff-reviewer', 'web-researcher', 'mcp-operator',
 ];
 const CHANGING_TOOLS: readonly string[] = ['Bash', 'Edit', 'NotebookEdit', 'Write'];
 const LAUNCHING_TOOL = 'Agent';
