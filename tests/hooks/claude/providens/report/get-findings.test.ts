@@ -112,7 +112,7 @@ test('names every roster agent never launched, acting only after 30 sessions', (
     'providens:diff-reviewer',
     'providens:reader',
     'providens:runner',
-    'providens:webscribe',
+    'providens:web-researcher',
   ]);
   assert.deepEqual([unused[0]?.state, early[0]?.state], ['act', 'wait']);
 });
