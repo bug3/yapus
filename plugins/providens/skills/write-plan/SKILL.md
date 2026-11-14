@@ -1,5 +1,5 @@
 ---
-name: blueprint
+name: write-plan
 description: Write the plan of deep work before its first edit, in a form plan-reviewer can judge and builders can take slice by slice. Use when ORCH-1 rates a task deep or the person asks for a plan.
 ---
 

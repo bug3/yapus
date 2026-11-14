@@ -5,7 +5,7 @@ import { type TestContext, test } from 'node:test';
 import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
 import { getSkillProblems } from './get-skill-problems.ts';
 
-const SKILL = 'plugins/p/skills/blueprint/SKILL.md';
+const SKILL = 'plugins/p/skills/write-plan/SKILL.md';
 const BODY = 'body\n';
 
 interface MarkdownFile {
@@ -14,7 +14,7 @@ interface MarkdownFile {
 }
 
 test('finds nothing in a skill with its directory name and a description', (t) => {
-  const root = makeSkill(t, makeHead('name: blueprint\ndescription: "d: x"'));
+  const root = makeSkill(t, makeHead('name: write-plan\ndescription: "d: x"'));
 
   assert.deepEqual(getSkillProblems(root), []);
 });
@@ -35,7 +35,7 @@ test('names a missing name', (t) => {
 });
 
 test('names a missing description', (t) => {
-  const root = makeSkill(t, makeHead('name: blueprint'));
+  const root = makeSkill(t, makeHead('name: write-plan'));
 
   assert.deepEqual(getSkillProblems(root), [`${ SKILL }: no description`]);
 });
@@ -43,7 +43,7 @@ test('names a missing description', (t) => {
 test('names a name that is not the directory name', (t) => {
   const root = makeSkill(t, makeHead('name: scout\ndescription: d'));
 
-  assert.deepEqual(getSkillProblems(root), [`${ SKILL }: name is not blueprint`]);
+  assert.deepEqual(getSkillProblems(root), [`${ SKILL }: name is not write-plan`]);
 });
 
 test('ignores a markdown file outside plugins/*/skills/*/SKILL.md', (t) => {
