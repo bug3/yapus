@@ -1,7 +1,9 @@
 import type { Launch } from './parse-launch.ts';
 
 // The agents of plugins/providens/agents, by file name.
-export const ROSTER = ['builder', 'critic', 'deacon', 'proctor', 'warden', 'webscribe'] as const;
+export const ROSTER = [
+  'builder', 'deacon', 'plan-reviewer', 'proctor', 'warden', 'webscribe',
+] as const;
 
 const ROSTER_TYPES: readonly string[] = ROSTER.map((name) => `providens:${ name }`);
 const DEPTH_TAG = /^\[(quick|standard|deep)\] /;

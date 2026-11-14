@@ -32,8 +32,8 @@ test('refuses a launch from inside a subagent', () => {
 test('refuses a built-in agent and names the roster', () => {
   assert.equal(
     getRefusal({ ...LAUNCH, subagentType: 'Explore' }),
-    'Explore is not on the roster; launch one of providens:builder, providens:critic, '
-      + 'providens:deacon, providens:proctor, providens:warden, providens:webscribe',
+    'Explore is not on the roster; launch one of providens:builder, providens:deacon, '
+      + 'providens:plan-reviewer, providens:proctor, providens:warden, providens:webscribe',
   );
 });
 

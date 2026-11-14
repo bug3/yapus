@@ -35,7 +35,7 @@ export const MIN_SAMPLE = 20;
 // Sessions without a launch of an agent before it is a drop candidate.
 export const MIN_SESSIONS = 30;
 
-const CRITIC = 'providens:critic';
+const PLAN_REVIEWER = 'providens:plan-reviewer';
 const PERCENT = 100;
 const ROSTER_AGENTS: readonly string[] = ROSTER.map((name) => `providens:${ name }`);
 
@@ -65,15 +65,15 @@ const RATE_RULES: readonly RateRule[] = [
   },
 ];
 
-const CRITIC_RULE: RateRule = {
+const PLAN_REVIEWER_RULE: RateRule = {
   rule: 'GO rate',
   getCounts: (stats) => [
     stats.verdicts.GO ?? 0,
     (stats.verdicts.GO ?? 0) + (stats.verdicts.REVISE ?? 0),
   ],
   isOver: (percent) => percent > 90 || percent < 20,
-  threshold: `over 90 percent at n ${ String(MIN_SAMPLE) }: remove the critic; under 20: read `
-    + 'its defects for a plan template fault',
+  threshold: `over 90 percent at n ${ String(MIN_SAMPLE) }: remove the plan-reviewer; `
+    + 'under 20: read its defects for a plan template fault',
 };
 
 // Every reading rule applied to the measured record, agents sorted as given.
@@ -81,8 +81,8 @@ export function getFindings(measured: Measured): Finding[] {
   return [
     ...measured.stats.filter((stats) => ROSTER_AGENTS.includes(stats.agent))
       .flatMap((stats) => RATE_RULES.map((rule) => getRateFinding(rule, stats))),
-    ...measured.stats.filter((stats) => stats.agent === CRITIC)
-      .map((stats) => getRateFinding(CRITIC_RULE, stats)),
+    ...measured.stats.filter((stats) => stats.agent === PLAN_REVIEWER)
+      .map((stats) => getRateFinding(PLAN_REVIEWER_RULE, stats)),
     getReworkFinding(measured.rework),
     ...getUnusedFindings(measured),
   ];

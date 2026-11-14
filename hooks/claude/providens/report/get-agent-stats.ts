@@ -30,7 +30,7 @@ export interface AgentStats {
 // The words contract.md asks every return to open with.
 export const CONTRACT_WORDS: readonly string[] = ['DONE', 'PARTIAL', 'QUESTIONS', 'BLOCKED'];
 
-// The words the judges' definitions (critic.md, warden.md) put on the line
+// The words the judges' definitions (plan-reviewer.md, warden.md) put on the line
 // after the status.
 export const VERDICT_WORDS: readonly string[] = ['GO', 'REVISE', 'APPROVE', 'REWORK'];
 
