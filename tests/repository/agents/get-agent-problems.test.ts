@@ -48,10 +48,54 @@ test('names a name that is not the file name', (t) => {
   assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/reader.md: name is not reader']);
 });
 
-function makeHead(name: string, tools: string): string {
-  const head = `name: ${ name }\ndescription: "d: x"\ntools: ${ tools }\nmodel: sonnet`;
+test('names an agent with neither tools nor disallowedTools', (t) => {
+  const root = makeAgents(t, [{ name: 'builder', text: makeHeadWith('builder', []) }]);
 
-  return `---\n${ head }\n---\n\nbody\n`;
+  assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/builder.md: no tools']);
+});
+
+test('names an agent without tools whose disallowedTools lacks Agent', (t) => {
+  const root = makeAgents(t, [
+    { name: 'builder', text: makeHeadWith('builder', ['disallowedTools: Read, Grep']) },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), [
+    'plugins/p/agents/builder.md: does not disallow Agent',
+  ]);
+});
+
+test('names the changing tool a read-only agent without tools does not disallow', (t) => {
+  const root = makeAgents(t, [
+    {
+      name: 'reader',
+      text: makeHeadWith('reader', ['disallowedTools: Agent, Bash, Edit, Write']),
+    },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), [
+    'plugins/p/agents/reader.md: does not disallow NotebookEdit',
+  ]);
+});
+
+test('finds nothing in a read-only agent without tools that disallows all five', (t) => {
+  const root = makeAgents(t, [
+    {
+      name: 'reader',
+      text: makeHeadWith('reader', ['disallowedTools: Agent, Bash, Edit, NotebookEdit, Write']),
+    },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), []);
+});
+
+function makeHead(name: string, tools: string): string {
+  return makeHeadWith(name, [`tools: ${ tools }`]);
+}
+
+function makeHeadWith(name: string, toolLines: readonly string[]): string {
+  const lines = [`name: ${ name }`, 'description: "d: x"', ...toolLines, 'model: sonnet'];
+
+  return `---\n${ lines.join('\n') }\n---\n\nbody\n`;
 }
 
 function makeAgents(t: TestContext, agents: readonly Agent[]): string {
