@@ -3,11 +3,11 @@ import { test } from 'node:test';
 import { getReport } from '../../../../../hooks/claude/providens/report/get-report.ts';
 
 const LINES = [
-  '{"time":"2026-10-24T16:02:11Z","hook":"launch","sessionId":"s1","subject":"providens:proctor",'
+  '{"time":"2026-10-24T16:02:11Z","hook":"launch","sessionId":"s1","subject":"providens:runner",'
     + '"allowed":true,"reason":"","description":"[standard] S1 run it","toolUseId":"t1"}',
-  '{"time":"2026-10-24T16:02:12Z","hook":"return","sessionId":"s1","subject":"providens:proctor",'
+  '{"time":"2026-10-24T16:02:12Z","hook":"return","sessionId":"s1","subject":"providens:runner",'
     + '"allowed":true,"reason":"","agentId":"a1","status":"DONE","length":43}',
-  '{"time":"2026-10-24T16:02:13Z","hook":"end","sessionId":"s1","subject":"providens:proctor",'
+  '{"time":"2026-10-24T16:02:13Z","hook":"end","sessionId":"s1","subject":"providens:runner",'
     + '"toolUseId":"t1","agentId":"a1","status":"completed","durationMs":1444,"capped":false}',
   'not a row',
   '{"time":"2026-10-24T16:03:00Z","hook":"launch","sessionId":"s2","subject":"providens:reader",'
@@ -28,7 +28,7 @@ test('reports the extent, the agents, the rules and the refusals of a record tex
   );
   assert.match(
     markdown,
-    /\n\| providens:proctor \| 1 \| 0 \| 1 \| 0 \| 0 \| 1 \| 0 \| 1 \| {2}\| 1 \| - \| - \|\n/u,
+    /\n\| providens:runner \| 1 \| 0 \| 1 \| 0 \| 0 \| 1 \| 0 \| 1 \| {2}\| 1 \| - \| - \|\n/u,
   );
   assert.match(markdown, /\n\| unused agent \| providens:builder \| 0 launches in 2 sessions \| 2 \| /u);
   assert.match(markdown, /\n\| start the description with the depth in brackets \| 1 \|\n$/u);

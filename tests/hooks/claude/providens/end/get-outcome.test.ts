@@ -9,7 +9,7 @@ const END = JSON.stringify({
   session_id: 's1',
   tool_name: 'Agent',
   tool_use_id: 'toolu_1',
-  tool_input: { subagent_type: 'providens:proctor', description: '[standard] run it' },
+  tool_input: { subagent_type: 'providens:runner', description: '[standard] run it' },
   tool_response: {
     status: 'completed',
     agentId: 'a1',
@@ -24,7 +24,7 @@ test('records a completed launch as one end row, leaving absent fields out', (t)
   assert.deepEqual(getOutcome({ stdinText: END, dataDir, time: 't' }), { kind: 'recorded' });
   assert.equal(
     readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'),
-    '{"time":"t","hook":"end","sessionId":"s1","subject":"providens:proctor","toolUseId":"toolu_1",'
+    '{"time":"t","hook":"end","sessionId":"s1","subject":"providens:runner","toolUseId":"toolu_1",'
       + '"agentId":"a1","status":"completed","durationMs":40,"word":"DONE","length":7,'
       + '"capped":false}\n',
   );

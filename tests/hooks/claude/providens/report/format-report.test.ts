@@ -13,7 +13,7 @@ const REPORT: Report = {
   first: 't1',
   last: 't3',
   stats: [{
-    agent: 'providens:proctor',
+    agent: 'providens:runner',
     launches: 1,
     refused: 0,
     completed: 1,
@@ -29,7 +29,7 @@ const REPORT: Report = {
   }],
   findings: [{
     rule: 'cap-stop rate',
-    agent: 'providens:proctor',
+    agent: 'providens:runner',
     value: '0 of 1, 0 percent',
     n: 1,
     threshold: 'over 30 percent at n 20',
@@ -43,8 +43,8 @@ test('writes the extent, one row per agent with rounded medians and the findings
 
   assert.match(markdown, /^# providens record report\n\nRecord `\/d\/decisions\.jsonl`: 3 rows, 1 skipped, 1 sessions, from t1 to t3\.\n/u);
   assert.match(markdown, /\| completed \| capped \| no return \| returns \|/u);
-  assert.match(markdown, /\n\| providens:proctor \| 1 \| 0 \| 1 \| 0 \| 2 \| 1 \| 0 \| 1 \| APPROVE 1 \| 1 \| 3738 \| - \|\n/u);
-  assert.match(markdown, /\n\| cap-stop rate \| providens:proctor \| 0 of 1, 0 percent \| 1 \| over 30 percent at n 20 \| wait \|\n/u);
+  assert.match(markdown, /\n\| providens:runner \| 1 \| 0 \| 1 \| 0 \| 2 \| 1 \| 0 \| 1 \| APPROVE 1 \| 1 \| 3738 \| - \|\n/u);
+  assert.match(markdown, /\n\| cap-stop rate \| providens:runner \| 0 of 1, 0 percent \| 1 \| over 30 percent at n 20 \| wait \|\n/u);
   assert.match(markdown, /\n## Refusals\n\nNo refusals\.\n$/u);
 });
 
