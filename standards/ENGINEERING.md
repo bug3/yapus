@@ -27,7 +27,7 @@ paths:
 
 ## ENG-10. Write no boolean parameter that selects between two behaviors; write two functions or a type with one case per behavior.
 
-## ENG-11. When the program itself states a closed set of cases, declare it in one place and handle it only through a construct the compiler checks for exhaustiveness.
+## ENG-11. When the program itself states a closed set of cases, declare it in one place and handle it only through a construct the compiler or a linter checks for exhaustiveness.
 
 ## ENG-16. Give every hard-to-reverse effect a reverse path the repository can run.
 

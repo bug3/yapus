@@ -45,7 +45,7 @@ paths:
 
 ## CODE-25. When two branches of one function differ only in a value, compute the value once and write the rest once.
 
-## CODE-26. Give a literal used more than twice a named constant at the top of its file.
+## CODE-26. Give a literal whose value does not say what it means, or whose uses must change together, a named constant at the top of its file.
 
 ## CODE-28. Read a file, a process or a request once per run and pass its result on.
 
