@@ -1,6 +1,6 @@
 {
   "name": "landmark",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Installs the yapus standards, the dashes hook and the git hooks once per machine and keeps them current.",
   "author": {
     "name": "bug3"
