@@ -46,9 +46,9 @@ const BUILDER: AgentStats = {
   tokensMedian: undefined,
   toolUsesMedian: undefined,
 };
-const CRITIC: AgentStats = {
+const PLAN_REVIEWER: AgentStats = {
   ...BUILDER,
-  agent: 'providens:critic',
+  agent: 'providens:plan-reviewer',
   completed: 0,
   capped: 0,
   returns: 25,
@@ -56,7 +56,7 @@ const CRITIC: AgentStats = {
   verdicts: { GO: 24, REVISE: 1 },
 };
 const MEASURED = {
-  stats: [BUILDER, CRITIC],
+  stats: [BUILDER, PLAN_REVIEWER],
   rework: { builders: 40, reworked: 10 },
   sessions: 31,
 };
@@ -89,11 +89,11 @@ test('counts launches that ended without a return with the capped ones', () => {
   assert.deepEqual([finding?.value, finding?.state], ['8 of 20, 40 percent', 'act']);
 });
 
-test('acts on a critic GO rate over 90 percent and only for the critic', () => {
+test('acts on a plan-reviewer GO rate over 90 percent and only for the plan-reviewer', () => {
   const findings = getFindings(MEASURED).filter((finding) => finding.rule === 'GO rate');
 
   assert.deepEqual(findings.map((finding) => [finding.agent, finding.state]), [
-    ['providens:critic', 'act'],
+    ['providens:plan-reviewer', 'act'],
   ]);
 });
 
