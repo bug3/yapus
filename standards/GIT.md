@@ -1,7 +1,7 @@
 ---
 paths:
-  - ".github/**"
-  - "hooks/git/**"
+  - ".claude/yapus/landmark/scopes.json"
+  - "hooks/shared/catalogs/scopes.json"
 ---
 
 # Git

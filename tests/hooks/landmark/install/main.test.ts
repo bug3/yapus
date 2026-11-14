@@ -21,7 +21,10 @@ test('writes 15 rendered rule files and the version stamp', (t) => {
   assert.equal(installRun.status, 0, installRun.stderr);
   assert.equal(readdirSync(rules).length, 15);
   assert.ok(!readFileSync(join(rules, 'principles.md'), 'utf8').startsWith('---'));
-  assert.ok(!readFileSync(join(rules, 'git.md'), 'utf8').includes('hooks/git/'));
+  const gitRule = readFileSync(join(rules, 'git.md'), 'utf8');
+
+  assert.ok(!gitRule.includes('hooks/shared/'));
+  assert.ok(gitRule.includes('.claude/yapus/landmark/scopes.json'));
   assert.equal(
     readFileSync(join(home, '.claude', 'yapus', 'landmark', 'version'), 'utf8'),
     isRecord(manifest) ? manifest.version : undefined,
