@@ -11,7 +11,7 @@ const SUBPROCESS_TIMEOUT_MS = 10000;
 const CALL = {
   session_id: 's1',
   tool_name: 'Agent',
-  tool_input: { subagent_type: 'providens:deacon', description: '[deep] Find x' },
+  tool_input: { subagent_type: 'providens:reader', description: '[deep] Find x' },
 };
 
 test('exits 0 with no output for a roster launch', (t) => {

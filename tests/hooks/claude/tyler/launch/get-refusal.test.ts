@@ -5,7 +5,7 @@ import { getRefusal } from '../../../../../hooks/claude/tyler/launch/get-refusal
 const LAUNCH = {
   sessionId: 's',
   isNested: false,
-  subagentType: 'providens:deacon',
+  subagentType: 'providens:reader',
   description: '[standard] Find x',
   toolUseId: undefined,
   promptId: undefined,
@@ -32,8 +32,8 @@ test('refuses a launch from inside a subagent', () => {
 test('refuses a built-in agent and names the roster', () => {
   assert.equal(
     getRefusal({ ...LAUNCH, subagentType: 'Explore' }),
-    'Explore is not on the roster; launch one of providens:builder, providens:deacon, '
-      + 'providens:diff-reviewer, providens:plan-reviewer, providens:proctor, providens:webscribe',
+    'Explore is not on the roster; launch one of providens:builder, providens:diff-reviewer, '
+      + 'providens:plan-reviewer, providens:proctor, providens:reader, providens:webscribe',
   );
 });
 

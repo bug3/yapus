@@ -10,7 +10,7 @@ const LINES = [
   '{"time":"2026-10-24T16:02:13Z","hook":"end","sessionId":"s1","subject":"providens:proctor",'
     + '"toolUseId":"t1","agentId":"a1","status":"completed","durationMs":1444,"capped":false}',
   'not a row',
-  '{"time":"2026-10-24T16:03:00Z","hook":"launch","sessionId":"s2","subject":"providens:deacon",'
+  '{"time":"2026-10-24T16:03:00Z","hook":"launch","sessionId":"s2","subject":"providens:reader",'
     + '"allowed":false,"reason":"start the description with the depth in brackets",'
     + '"description":"x"}',
 ];
@@ -24,7 +24,7 @@ test('reports the extent, the agents, the rules and the refusals of a record tex
   );
   assert.match(
     markdown,
-    /\n\| providens:deacon \| 0 \| 1 \| 0 \| 0 \| 0 \| 0 \| 0 \| 0 \| {2}\| - \| - \| - \|\n/u,
+    /\n\| providens:reader \| 0 \| 1 \| 0 \| 0 \| 0 \| 0 \| 0 \| 0 \| {2}\| - \| - \| - \|\n/u,
   );
   assert.match(
     markdown,

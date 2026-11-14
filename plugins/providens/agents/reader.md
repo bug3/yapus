@@ -1,5 +1,5 @@
 ---
-name: deacon
+name: reader
 description: "Read-only recon: finds files, symbols and usages, and distills long files, logs or diffs that would flood the main session. Returns file:line pointers with the shortest excerpts and names what it did not search. Not for edits, running commands or judgments."
 tools: Read, Grep, Glob
 model: sonnet
