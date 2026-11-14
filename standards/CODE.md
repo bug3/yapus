@@ -39,28 +39,14 @@ paths:
 
 ## CODE-17. At a program's start, check that every tool it needs is present at the version it needs.
 
-## CODE-18. Separate two statements of different jobs, such as reading, building, checking, acting and returning, with one blank line, and keep the statements of one job together.
-
-## CODE-19. Start a function name with a verb: `get` for one that finds or computes a value, `is`, `has`, `can` or `should` for one that returns a boolean, the verb of the change for one that converts, and a creating verb such as `make` for one that creates.
-
 ## CODE-20. Name a value for what it holds, never for its type or with a generic word such as `data`, `value`, `item` or `result`, and repeat no word its container already says.
 
 ## CODE-21. Give a function one job, and write an entry function as a list of calls to named steps.
-
-## CODE-22. Order a file as imports, constants, exported functions, then the functions they call, every caller above what it calls.
-
-## CODE-23. Use a ternary only to pick a value, and a `switch` or a lookup object instead of an if and else-if chain over one value.
-
-## CODE-24. Name a condition that joins two or more tests, with a constant or a function.
 
 ## CODE-25. When two branches of one function differ only in a value, compute the value once and write the rest once.
 
 ## CODE-26. Give a literal used more than twice a named constant at the top of its file.
 
-## CODE-27. Inline a variable used once, unless its name explains a condition, it holds an awaited value, it keeps a call out of a template literal or it separates the steps of a test.
-
 ## CODE-28. Read a file, a process or a request once per run and pass its result on.
-
-## CODE-29. Convert no value into the form it already has.
 
 ## CODE-30. Wrap in `try` only code that can throw.

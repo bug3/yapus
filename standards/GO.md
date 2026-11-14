@@ -17,5 +17,3 @@ paths:
 ## GO-5. Handle each error once: return it wrapped with `%w` and the step that failed, or report it; never both.
 
 ## GO-6. Start a goroutine only together with the way it is stopped and the place that waits for it to end.
-
-## GO-7. Name a constructor `New` or `NewX`, a method an interface requires by the interface's name, and a method that only returns a field by that field, without `Get`.
