@@ -2,7 +2,7 @@ import type { Launch } from './parse-launch.ts';
 
 // The agents of plugins/providens/agents, by file name.
 export const ROSTER = [
-  'builder', 'diff-reviewer', 'plan-reviewer', 'proctor', 'reader', 'webscribe',
+  'builder', 'diff-reviewer', 'plan-reviewer', 'reader', 'runner', 'webscribe',
 ] as const;
 
 const ROSTER_TYPES: readonly string[] = ROSTER.map((name) => `providens:${ name }`);
