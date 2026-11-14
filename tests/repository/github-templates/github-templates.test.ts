@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { ghCommands } from '../../../hooks/claude/tyler/gh/rules/gh-commands.ts';
+import { ghCommands } from '../../../hooks/claude/gates/gh/rules/gh-commands.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 const { bodies } = ghCommands;

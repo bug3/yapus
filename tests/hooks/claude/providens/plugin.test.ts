@@ -29,7 +29,7 @@ test('registers every providens hook', () => {
           hooks: [
             {
               type: 'command',
-              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/launch',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/gates/launch',
               timeout: 10,
               onFailure: 'block',
             },
@@ -41,7 +41,7 @@ test('registers every providens hook', () => {
             {
               type: 'command',
               if: 'Bash(gh *)',
-              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/gh',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/gates/gh',
               timeout: 10,
               onFailure: 'block',
             },
@@ -88,7 +88,7 @@ test('registers every providens hook', () => {
           hooks: [
             {
               type: 'command',
-              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/tyler/return',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/gates/return',
               timeout: 10,
               onFailure: 'block',
             },

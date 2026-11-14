@@ -5,7 +5,7 @@ import { type TestContext, test } from 'node:test';
 import {
   admitLaunch,
   countLaunches,
-} from '../../../../../hooks/claude/tyler/launch/admit-launch.ts';
+} from '../../../../../hooks/claude/gates/launch/admit-launch.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
 test('admits a launch and counts it in the session log', (t) => {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getRefusal } from '../../../../../hooks/claude/tyler/launch/get-refusal.ts';
+import { getRefusal } from '../../../../../hooks/claude/gates/launch/get-refusal.ts';
 
 const LAUNCH = {
   sessionId: 's',

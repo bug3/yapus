@@ -5,7 +5,7 @@ import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
 const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', '..', 'hooks');
-const MAIN = join(HOOKS, 'claude', 'tyler', 'launch', 'main.ts');
+const MAIN = join(HOOKS, 'claude', 'gates', 'launch', 'main.ts');
 const RUN_SH = join(HOOKS, 'run.sh');
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const CALL = {
@@ -39,7 +39,7 @@ test('exits 2 and says so when the plugin data directory is not set', (t) => {
 });
 
 test('exits 0 through the bash entry point for a roster launch', (t) => {
-  const entryRun = spawnSync('bash', [RUN_SH, 'claude/tyler/launch'], {
+  const entryRun = spawnSync('bash', [RUN_SH, 'claude/gates/launch'], {
     encoding: 'utf8',
     env: makeHookEnv(t),
     input: JSON.stringify(CALL),

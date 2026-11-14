@@ -2,12 +2,12 @@ import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { getPrRefusal } from '../../../../../../hooks/claude/tyler/gh/rules/get-pr-refusal.ts';
+import { getPrRefusal } from '../../../../../../hooks/claude/gates/gh/rules/get-pr-refusal.ts';
 import {
   CATALOGS_DIRECTORY,
   readGhCatalogs,
-} from '../../../../../../hooks/claude/tyler/gh/rules/read-gh-catalogs.ts';
-import type { Word } from '../../../../../../hooks/claude/tyler/gh/shell/split-commands.ts';
+} from '../../../../../../hooks/claude/gates/gh/rules/read-gh-catalogs.ts';
+import type { Word } from '../../../../../../hooks/claude/gates/gh/shell/split-commands.ts';
 import { makeTempDir } from '../../../../../helpers/make-temp-dir.ts';
 
 const read = await readGhCatalogs(CATALOGS_DIRECTORY);

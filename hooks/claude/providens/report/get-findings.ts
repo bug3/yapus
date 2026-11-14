@@ -1,4 +1,4 @@
-import { ROSTER } from '../../tyler/launch/get-refusal.ts';
+import { ROSTER } from '../../gates/launch/get-refusal.ts';
 import type { AgentStats } from './get-agent-stats.ts';
 import type { Rework } from './get-rework.ts';
 

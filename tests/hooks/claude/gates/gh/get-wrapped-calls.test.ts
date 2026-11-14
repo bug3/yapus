@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getVerdict } from '../../../../../hooks/claude/tyler/gh/get-verdict.ts';
+import { getVerdict } from '../../../../../hooks/claude/gates/gh/get-verdict.ts';
 import { makeCatalogRoot } from './make-catalog-root.ts';
 
 const BAD_TITLE = 'gh pr create -t "Add a check"';

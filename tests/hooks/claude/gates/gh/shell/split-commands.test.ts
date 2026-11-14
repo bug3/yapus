@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   splitCommands,
-} from '../../../../../../hooks/claude/tyler/gh/shell/split-commands.ts';
+} from '../../../../../../hooks/claude/gates/gh/shell/split-commands.ts';
 
 function literal(text: string): { text: string; isLiteral: boolean } {
   return { text, isLiteral: true };

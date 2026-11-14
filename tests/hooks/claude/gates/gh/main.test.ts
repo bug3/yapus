@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
 const MAIN = join(
-  import.meta.dirname, '..', '..', '..', '..', '..', 'hooks', 'claude', 'tyler', 'gh', 'main.ts',
+  import.meta.dirname, '..', '..', '..', '..', '..', 'hooks', 'claude', 'gates', 'gh', 'main.ts',
 );
 const SUBPROCESS_TIMEOUT_MS = 10000;
 
