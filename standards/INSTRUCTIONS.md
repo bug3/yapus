@@ -16,7 +16,7 @@ paths:
 
 ## INST-3. Load a rule that applies to one kind of task only while the agent does a task of that kind.
 
-## INST-4. Add a rule only for a mistake an agent would make without it.
+## INST-4. Add a rule only for a mistake an agent would make without it and that costs more than obeying the rule; remove the rule when either stops holding.
 
 ## INST-5. Write a rule as an action the agent can take, never as a value it should hold.
 

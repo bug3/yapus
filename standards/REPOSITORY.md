@@ -12,7 +12,7 @@ paths:
 
 ## REPO-2. Choose a technology whose failure modes others have already written down.
 
-## REPO-3. Use a language whose types can make an illegal state unrepresentable and whose compiler checks a closed set for exhaustiveness.
+## REPO-3. Use a language whose types can make an illegal state unrepresentable and whose compiler or linter checks a closed set for exhaustiveness.
 
 ## REPO-5. Add a dependency, direct or transitive, only for work you would not write and maintain yourself.
 
