@@ -3,12 +3,12 @@
     "hooks/git/commit-msg": null,
     "hooks/git/forward": null,
     "hooks/git/reference-transaction": null,
-    "hooks/git/**": null,
+    "hooks/shared/catalogs/scopes.json": null,
     "tests/repository/**": null
   },
   "keep": [
     ".claude/**/*.md",
-    ".github/**",
+    ".claude/yapus/landmark/scopes.json",
     ".github/workflows/**",
     "go.mod",
     "package.json",
