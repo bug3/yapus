@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import {
   getTranscriptStats,
   readTranscriptStats,
-} from '../../../../../hooks/claude/tyler/return/get-transcript-stats.ts';
+} from '../../../../../hooks/claude/gates/return/get-transcript-stats.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
 const FIRST_USAGE = {

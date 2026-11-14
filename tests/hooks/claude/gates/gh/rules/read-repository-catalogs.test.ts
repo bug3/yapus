@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import {
   CATALOGS_PATH,
   readRepositoryCatalogs,
-} from '../../../../../../hooks/claude/tyler/gh/rules/read-repository-catalogs.ts';
+} from '../../../../../../hooks/claude/gates/gh/rules/read-repository-catalogs.ts';
 import { makeTempDir } from '../../../../../helpers/make-temp-dir.ts';
 import { makeCatalogRoot } from '../make-catalog-root.ts';
 

@@ -1,4 +1,4 @@
-import { countLaunches } from '../../tyler/launch/admit-launch.ts';
+import { countLaunches } from '../../gates/launch/admit-launch.ts';
 import { readLimit } from '../settings/read-limit.ts';
 import { readMode } from '../settings/read-mode.ts';
 import type { ResolvedSetting } from '../settings/resolve-setting.ts';

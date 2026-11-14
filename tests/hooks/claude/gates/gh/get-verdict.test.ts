@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { getVerdict } from '../../../../../hooks/claude/tyler/gh/get-verdict.ts';
+import { getVerdict } from '../../../../../hooks/claude/gates/gh/get-verdict.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 import { makeCatalogRoot } from './make-catalog-root.ts';
 

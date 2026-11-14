@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { parseStop } from '../../../../../hooks/claude/tyler/return/parse-stop.ts';
+import { parseStop } from '../../../../../hooks/claude/gates/return/parse-stop.ts';
 
 const FIELDS = {
   session_id: 's1',
