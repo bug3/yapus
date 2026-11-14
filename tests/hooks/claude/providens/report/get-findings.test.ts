@@ -109,9 +109,9 @@ test('names every roster agent never launched, acting only after 30 sessions', (
     .filter((finding) => finding.rule === 'unused agent');
 
   assert.deepEqual(unused.map((finding) => finding.agent), [
-    'providens:deacon',
     'providens:diff-reviewer',
     'providens:proctor',
+    'providens:reader',
     'providens:webscribe',
   ]);
   assert.deepEqual([unused[0]?.state, early[0]?.state], ['act', 'wait']);

@@ -4,7 +4,7 @@ import { parseStop } from '../../../../../hooks/claude/tyler/return/parse-stop.t
 
 const FIELDS = {
   session_id: 's1',
-  agent_type: 'providens:deacon',
+  agent_type: 'providens:reader',
   last_assistant_message: 'DONE',
 };
 
@@ -13,7 +13,7 @@ test('reads a stop without stop_hook_active as a first stop', () => {
     kind: 'stop',
     stop: {
       sessionId: 's1',
-      agentType: 'providens:deacon',
+      agentType: 'providens:reader',
       message: 'DONE',
       isRetry: false,
       agentId: undefined,
@@ -49,7 +49,7 @@ test('reads a stop with stop_hook_active as a retry', () => {
 });
 
 test('names stdin that is not JSON and a stop without its message', () => {
-  const noMessage = { session_id: 's1', agent_type: 'providens:deacon' };
+  const noMessage = { session_id: 's1', agent_type: 'providens:reader' };
 
   assert.deepEqual([parseStop('{'), parseStop(JSON.stringify(noMessage))], [
     { kind: 'failure', reason: 'stdin is not JSON' },

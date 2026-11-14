@@ -8,7 +8,7 @@ import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 const FIELDS = {
   session_id: 's1',
   tool_name: 'Agent',
-  tool_input: { subagent_type: 'providens:deacon', description: '[deep] Find x' },
+  tool_input: { subagent_type: 'providens:reader', description: '[deep] Find x' },
 };
 const CALL = JSON.stringify(FIELDS);
 

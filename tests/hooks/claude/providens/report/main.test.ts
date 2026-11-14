@@ -10,7 +10,7 @@ const MAIN = join(
   'main.ts',
 );
 const SUBPROCESS_TIMEOUT_MS = 10000;
-const ROW = '{"time":"t","hook":"launch","sessionId":"s","subject":"providens:deacon",'
+const ROW = '{"time":"t","hook":"launch","sessionId":"s","subject":"providens:reader",'
   + '"allowed":true,"reason":"","description":"[deep] x"}\n';
 
 test('exits 0 and prints the report of the record in the directory argument', (t) => {
@@ -22,7 +22,7 @@ test('exits 0 and prints the report of the record in the directory argument', (t
 
   assert.equal(run.status, 0);
   assert.match(run.stdout, /^# providens record report\n/u);
-  assert.match(run.stdout, /\n\| providens:deacon \| 1 \|/u);
+  assert.match(run.stdout, /\n\| providens:reader \| 1 \|/u);
 });
 
 test('reads the record from CLAUDE_PLUGIN_DATA without an argument', (t) => {

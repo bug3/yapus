@@ -5,7 +5,7 @@ import { parseLaunch } from '../../../../../hooks/claude/tyler/launch/parse-laun
 const MAIN_CALL = {
   session_id: 'abc-1',
   tool_name: 'Agent',
-  tool_input: { subagent_type: 'providens:deacon', description: '[deep] Find x', prompt: 'p' },
+  tool_input: { subagent_type: 'providens:reader', description: '[deep] Find x', prompt: 'p' },
 };
 
 test('reads a launch from the main session', () => {
@@ -14,7 +14,7 @@ test('reads a launch from the main session', () => {
     launch: {
       sessionId: 'abc-1',
       isNested: false,
-      subagentType: 'providens:deacon',
+      subagentType: 'providens:reader',
       description: '[deep] Find x',
       toolUseId: undefined,
       promptId: undefined,

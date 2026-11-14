@@ -12,7 +12,7 @@ interface Agent {
 
 test('finds nothing in a read-only agent and a writing agent within their tools', (t) => {
   const root = makeAgents(t, [
-    { name: 'deacon', text: makeHead('deacon', 'Read, Grep, Glob') },
+    { name: 'reader', text: makeHead('reader', 'Read, Grep, Glob') },
     { name: 'builder', text: makeHead('builder', 'Read, Edit, Write, Bash') },
   ]);
 
@@ -20,13 +20,13 @@ test('finds nothing in a read-only agent and a writing agent within their tools'
 });
 
 test('names every missing field of a definition without a head', (t) => {
-  const root = makeAgents(t, [{ name: 'deacon', text: 'body\n' }]);
+  const root = makeAgents(t, [{ name: 'reader', text: 'body\n' }]);
 
   assert.deepEqual(getAgentProblems(root), [
-    'plugins/p/agents/deacon.md: no name',
-    'plugins/p/agents/deacon.md: no description',
-    'plugins/p/agents/deacon.md: no tools',
-    'plugins/p/agents/deacon.md: no model',
+    'plugins/p/agents/reader.md: no name',
+    'plugins/p/agents/reader.md: no description',
+    'plugins/p/agents/reader.md: no tools',
+    'plugins/p/agents/reader.md: no model',
   ]);
 });
 
@@ -43,9 +43,9 @@ test('names a launching tool anywhere and a changing tool in a read-only agent',
 });
 
 test('names a name that is not the file name', (t) => {
-  const root = makeAgents(t, [{ name: 'deacon', text: makeHead('scout', 'Read') }]);
+  const root = makeAgents(t, [{ name: 'reader', text: makeHead('scout', 'Read') }]);
 
-  assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/deacon.md: name is not deacon']);
+  assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/reader.md: name is not reader']);
 });
 
 function makeHead(name: string, tools: string): string {

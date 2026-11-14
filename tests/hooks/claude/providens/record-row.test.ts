@@ -13,7 +13,7 @@ const RETURN: ReturnRow = {
   time: 't',
   hook: 'return',
   sessionId: 's',
-  subject: 'providens:deacon',
+  subject: 'providens:reader',
   allowed: true,
   reason: '',
   agentId: 'a1',
@@ -35,9 +35,9 @@ test('appends each row as one JSON line, creating the directory', (t) => {
 
   assert.equal(
     readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'),
-    '{"time":"t","hook":"return","sessionId":"s","subject":"providens:deacon","allowed":true,'
+    '{"time":"t","hook":"return","sessionId":"s","subject":"providens:reader","allowed":true,'
       + '"reason":"","agentId":"a1","status":"DONE","length":4}\n'
-      + '{"time":"t","hook":"return","sessionId":"s","subject":"providens:deacon","allowed":false,'
+      + '{"time":"t","hook":"return","sessionId":"s","subject":"providens:reader","allowed":false,'
       + '"reason":"r","agentId":"a1","status":"DONE","length":4}\n',
   );
 });
