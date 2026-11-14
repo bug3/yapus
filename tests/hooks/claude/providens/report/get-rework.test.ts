@@ -24,7 +24,7 @@ const JUDGE: ReturnRow = {
   time: '2026-10-24T10:05:00Z',
   hook: 'return',
   sessionId: 's1',
-  subject: 'providens:warden',
+  subject: 'providens:diff-reviewer',
   allowed: true,
   reason: '',
   agentId: 'b',

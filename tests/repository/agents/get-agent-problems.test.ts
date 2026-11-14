@@ -33,12 +33,12 @@ test('names every missing field of a definition without a head', (t) => {
 test('names a launching tool anywhere and a changing tool in a read-only agent', (t) => {
   const root = makeAgents(t, [
     { name: 'builder', text: makeHead('builder', 'Read, Agent') },
-    { name: 'warden', text: makeHead('warden', 'Read, Bash') },
+    { name: 'diff-reviewer', text: makeHead('diff-reviewer', 'Read, Bash') },
   ]);
 
   assert.deepEqual(getAgentProblems(root).sort(), [
     'plugins/p/agents/builder.md: lists Agent',
-    'plugins/p/agents/warden.md: lists Bash',
+    'plugins/p/agents/diff-reviewer.md: lists Bash',
   ]);
 });
 

@@ -33,7 +33,7 @@ test('refuses a built-in agent and names the roster', () => {
   assert.equal(
     getRefusal({ ...LAUNCH, subagentType: 'Explore' }),
     'Explore is not on the roster; launch one of providens:builder, providens:deacon, '
-      + 'providens:plan-reviewer, providens:proctor, providens:warden, providens:webscribe',
+      + 'providens:diff-reviewer, providens:plan-reviewer, providens:proctor, providens:webscribe',
   );
 });
 

@@ -132,18 +132,20 @@ test('counts a background launch with a return as completed with the return medi
 });
 
 test('counts a resume as a cap stop under the agent type of its launch only', () => {
-  const warden = { ...END, subject: 'providens:warden', agentId: 'b', status: 'async_launched' };
+  const diffReviewer = {
+    ...END, subject: 'providens:diff-reviewer', agentId: 'b', status: 'async_launched',
+  };
   const [builder, other] = getAgentStats([
     { ...END, status: 'async_launched' },
     RESUME,
     RETURN,
-    warden,
-    { ...RETURN, subject: 'providens:warden', agentId: 'b' },
+    diffReviewer,
+    { ...RETURN, subject: 'providens:diff-reviewer', agentId: 'b' },
   ]);
 
   assert.deepEqual(
     [builder?.agent, builder?.capped, other?.agent, other?.capped],
-    [BUILDER, 1, 'providens:warden', 0],
+    [BUILDER, 1, 'providens:diff-reviewer', 0],
   );
 });
 
@@ -160,9 +162,9 @@ test('counts a background launch without a return as no return and not completed
 });
 
 test('gives one entry per agent, sorted by name, with undefined medians without ends', () => {
-  const stats = getAgentStats([{ ...LAUNCH, subject: 'providens:warden' }, LAUNCH]);
+  const stats = getAgentStats([{ ...LAUNCH, subject: 'providens:diff-reviewer' }, LAUNCH]);
 
-  assert.deepEqual(stats.map((entry) => entry.agent), [BUILDER, 'providens:warden']);
+  assert.deepEqual(stats.map((entry) => entry.agent), [BUILDER, 'providens:diff-reviewer']);
   assert.deepEqual(
     [stats[0]?.durationMedianMs, stats[0]?.tokensMedian, stats[0]?.toolUsesMedian],
     [undefined, undefined, undefined],

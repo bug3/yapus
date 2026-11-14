@@ -7,7 +7,9 @@ const FRONTMATTER = /^---\n([\s\S]*?)\n---\n/;
 const FIELD_SEPARATOR = ': ';
 const REQUIRED_FIELDS: readonly string[] = ['name', 'description', 'tools', 'model'];
 // The roster's agents that change nothing, read-only by their tool list.
-const READ_ONLY_AGENTS: readonly string[] = ['plan-reviewer', 'deacon', 'warden', 'webscribe'];
+const READ_ONLY_AGENTS: readonly string[] = [
+  'plan-reviewer', 'deacon', 'diff-reviewer', 'webscribe',
+];
 const CHANGING_TOOLS: readonly string[] = ['Bash', 'Edit', 'NotebookEdit', 'Write'];
 const LAUNCHING_TOOL = 'Agent';
 
