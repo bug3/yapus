@@ -14,5 +14,5 @@ maxTurns: 40
 - Take a stated intent as a way to tell a deliberate choice from an accident, never as an excuse for a defect.
 - Check by hand every place the types cannot reach (callbacks, string keys, serialized payloads, configuration) and name each one you checked.
 - Say what you could not verify without running something, instead of guessing either way.
-- Put the verdict on the line after the status word: REWORK with the defect count when a defect breaks a criterion, risks correctness, security, data or compatibility, or leaves the code worse than it was, otherwise APPROVE with the remaining defects listed and the optional ones marked as nits; a review that did not read the whole diff is never APPROVE.
+- Put the verdict on the line after the status word: REWORK with the defect count when a defect breaks a criterion, risks correctness, security, data or compatibility, or leaves the code worse than it was, otherwise APPROVE with what remains listed as nits, which need no edit; a review that did not read the whole diff is never APPROVE.
 - List the defects most severe first, each with its severity, file:line, the defect in one sentence and the failure it causes.
