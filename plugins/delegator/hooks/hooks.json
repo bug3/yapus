@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/providens/policy",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/delegator/policy",
             "timeout": 10
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/providens/recall",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/delegator/recall",
             "timeout": 10
           }
         ]
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/providens/remember || exit 0",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/delegator/remember || exit 0",
             "timeout": 10
           }
         ]
@@ -64,7 +64,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/providens/end",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/delegator/end",
             "timeout": 10
           }
         ]
@@ -74,7 +74,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/providens/resume",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/delegator/resume",
             "timeout": 10
           }
         ]
@@ -86,7 +86,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/providens/contract",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/delegator/contract",
             "timeout": 10
           }
         ]

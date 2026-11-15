@@ -1,8 +1,8 @@
 import { admitLaunch } from './admit-launch.ts';
 import { getRefusal } from './get-refusal.ts';
-import { recordRow } from '../../providens/record-row.ts';
+import { recordRow } from '../../delegator/record-row.ts';
 import { type Launch, parseLaunch } from './parse-launch.ts';
-import { readMode } from '../../providens/settings/read-mode.ts';
+import { readMode } from '../../delegator/settings/read-mode.ts';
 
 export interface Input {
   readonly stdinText: string;

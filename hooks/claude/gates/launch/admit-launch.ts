@@ -1,6 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { readLimit } from '../../providens/settings/read-limit.ts';
+import { readLimit } from '../../delegator/settings/read-limit.ts';
 
 const LAUNCHES_DIR = 'launches';
 

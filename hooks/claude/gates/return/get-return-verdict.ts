@@ -1,6 +1,6 @@
-import { RETURN_CAP_CHARACTERS } from '../../providens/contract/get-context.ts';
-import type { ReturnRow } from '../../providens/record-row.ts';
-import { recordRow } from '../../providens/record-row.ts';
+import { RETURN_CAP_CHARACTERS } from '../../delegator/contract/get-context.ts';
+import type { ReturnRow } from '../../delegator/record-row.ts';
+import { recordRow } from '../../delegator/record-row.ts';
 import type { TranscriptStats } from './get-transcript-stats.ts';
 import { readTranscriptStats } from './get-transcript-stats.ts';
 import { parseStop } from './parse-stop.ts';
