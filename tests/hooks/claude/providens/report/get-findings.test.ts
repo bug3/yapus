@@ -110,6 +110,7 @@ test('names every roster agent never launched, acting only after 30 sessions', (
 
   assert.deepEqual(unused.map((finding) => finding.agent), [
     'providens:diff-reviewer',
+    'providens:finisher',
     'providens:mcp-operator',
     'providens:reader',
     'providens:runner',
