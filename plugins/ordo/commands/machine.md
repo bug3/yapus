@@ -1,8 +1,8 @@
 ---
 description: Install the yapus standards and git hooks into ~/.claude once for this machine
-allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/runtime/run.sh landmark/install:*)
+allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/runtime/run.sh landmark/machine:*)
 ---
 
-!`bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" landmark/install "${CLAUDE_PLUGIN_ROOT}" install`
+!`bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" landmark/machine "${CLAUDE_PLUGIN_ROOT}" machine`
 
 Show the output above to the person as it is; add nothing.

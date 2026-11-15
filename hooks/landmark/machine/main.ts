@@ -21,10 +21,10 @@ function main(): void {
   const home = process.env.HOME;
 
   const hasHome = home !== undefined && home !== '';
-  const isMode = mode === 'install' || mode === 'upgrade';
+  const isMode = mode === 'machine' || mode === 'upgrade';
 
   if (root === undefined || !isMode || extra.length > 0 || !hasHome) {
-    stop(2, ['usage: landmark/install <plugin root> install|upgrade, with HOME set']);
+    stop(2, ['usage: landmark/install <plugin root> machine|upgrade, with HOME set']);
   }
 
   try {

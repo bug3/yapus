@@ -53,7 +53,7 @@ export function spawnInstall(
 ): SpawnSyncReturns<string> {
   return spawnSync(
     'bash',
-    [join(root, 'runtime', 'run.sh'), 'landmark/install', root, mode],
+    [join(root, 'runtime', 'run.sh'), 'landmark/machine', root, mode],
     {
       encoding: 'utf8',
       env: makeEnv(home, extraEnv),

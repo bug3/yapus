@@ -7,8 +7,8 @@ import {
   getProjectPlan,
   type PlanResult,
   type ProjectPlan,
-} from '../../../../../hooks/landmark/project/plan/get-project-plan.ts';
-import { getScopes } from '../../../../../hooks/landmark/project/plan/get-scopes.ts';
+} from '../../../../../hooks/landmark/repo/plan/get-project-plan.ts';
+import { getScopes } from '../../../../../hooks/landmark/repo/plan/get-scopes.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../../helpers/make-temp-repo.ts';
 import { commitFiles, writeFiles } from './commit-files.ts';

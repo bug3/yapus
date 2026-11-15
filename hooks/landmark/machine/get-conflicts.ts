@@ -8,7 +8,7 @@ import { getRulesDirectory } from '../../shared/hooks-path/get-rules-directory.t
 // nothing does. An upgrade needs the stamp and ignores the rules directory.
 // globalHooksPath is the global core.hooksPath as git reads it, if set.
 export function getConflicts(
-  mode: 'install' | 'upgrade',
+  mode: 'machine' | 'upgrade',
   { home, env, globalHooksPath }: {
     readonly home: string;
     readonly env: NodeJS.ProcessEnv;
