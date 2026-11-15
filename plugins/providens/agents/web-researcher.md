@@ -3,7 +3,7 @@ name: web-researcher
 description: "Web research: answers one self-contained question about external facts (library and API behavior, version changes, vendor documentation, published reports) with one URL per claim and a list of what it did not check. Not for the repository, for writing files or for decisions."
 tools: WebSearch, WebFetch
 model: sonnet
-effort: medium
+effort: high
 maxTurns: 25
 omitClaudeMd: true
 ---

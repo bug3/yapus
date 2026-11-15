@@ -2,7 +2,7 @@
 name: diff-reviewer
 description: "Judges a finished diff, read from the file the brief names, against the task's acceptance criteria and any standard the session has loaded, with no knowledge of the conversation that produced it. Returns APPROVE or REWORK with the defects and file:line pointers. Not for running checks, fixing code or design decisions."
 tools: Read, Grep, Glob
-model: opus
+model: inherit
 effort: high
 maxTurns: 40
 ---
