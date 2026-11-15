@@ -12,4 +12,4 @@
 
 ## ORCH-6. When a launch is refused, do not pull the work into this session unless it fits quick, and never split it into smaller launches to get past the refusal; tell the person what was refused and why, and leave raising the budget or changing the plan to them.
 
-## ORCH-7. Before you report a change as done, when it has changed more than 150 lines since the session started, committed or not, write its diff to a file and launch providens:diff-reviewer once with that file and the task's acceptance criteria; fix what a REWORK names and let the oracle close the repair, leave the nits of an APPROVE unless the person asks, and send any other edit made after the verdict to a new review.
+## ORCH-7. Before you report a change as done, when it has changed more than 150 lines since the session started, committed or not, write its diff to a file and launch providens:diff-reviewer once with that file and the task's acceptance criteria; fix what a REWORK names and let the oracle close the repair, leave the nits of an APPROVE, a breach of a standard among them, unless the person asks, and send any other edit made after the verdict to a new review.
