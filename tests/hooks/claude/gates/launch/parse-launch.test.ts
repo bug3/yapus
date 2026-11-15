@@ -13,7 +13,7 @@ test('reads a launch from the main session', () => {
     kind: 'launch',
     launch: {
       sessionId: 'abc-1',
-      isNested: false,
+      caller: undefined,
       subagentType: 'providens:reader',
       description: '[deep] Find x',
       toolUseId: undefined,
@@ -40,11 +40,20 @@ test('reads the join keys, the model override and the effort', () => {
   );
 });
 
-test('marks a launch from inside a subagent as nested', () => {
+test('names the calling subagent of a nested launch by its type', () => {
+  const parsed = parseLaunch(JSON.stringify({
+    ...MAIN_CALL, agent_id: 'a1', agent_type: 'providens:lead',
+  }));
+
+  assert.ok(parsed.kind === 'launch');
+  assert.deepEqual(parsed.launch.caller, { agentType: 'providens:lead' });
+});
+
+test('reads a launch with agent_id and no agent_type as nested with the type unknown', () => {
   const parsed = parseLaunch(JSON.stringify({ ...MAIN_CALL, agent_id: 'a1' }));
 
   assert.ok(parsed.kind === 'launch');
-  assert.equal(parsed.launch.isNested, true);
+  assert.deepEqual(parsed.launch.caller, { agentType: undefined });
 });
 
 test('reads a launch without subagent_type as general-purpose', () => {

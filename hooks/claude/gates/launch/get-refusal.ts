@@ -16,7 +16,7 @@ const DEPTH_TAG = /^\[(quick|standard|deep)\] /;
 
 // Why the launch breaks the roster's rules, or undefined when it keeps them.
 export function getRefusal(launch: Launch): string | undefined {
-  if (launch.isNested) {
+  if (launch.caller !== undefined) {
     return 'a subagent launches no agents; return the work to your caller';
   }
 

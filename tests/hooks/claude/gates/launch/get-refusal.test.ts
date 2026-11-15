@@ -7,7 +7,7 @@ const ROSTER_LIST = 'providens:builder, providens:diff-reviewer, providens:mcp-o
 const OFF_ROSTER = ['claude-code-guide', 'other-plugin:agent', 'db-migrator'];
 const LAUNCH = {
   sessionId: 's',
-  isNested: false,
+  caller: undefined,
   subagentType: 'providens:reader',
   description: '[standard] Find x',
   toolUseId: undefined,
@@ -36,7 +36,14 @@ test('passes an off-roster type that stands in for no roster agent', () => {
 
 test('refuses a launch from inside a subagent', () => {
   assert.equal(
-    getRefusal({ ...LAUNCH, isNested: true }),
+    getRefusal({ ...LAUNCH, caller: { agentType: 'providens:reader' } }),
+    'a subagent launches no agents; return the work to your caller',
+  );
+});
+
+test('refuses a nested launch whose caller type is unknown', () => {
+  assert.equal(
+    getRefusal({ ...LAUNCH, caller: { agentType: undefined } }),
     'a subagent launches no agents; return the work to your caller',
   );
 });
@@ -68,7 +75,7 @@ test('refuses a description without a depth tag and a quick one', () => {
 test('keeps the nested and depth rules for an off-roster type', () => {
   const guide = { ...LAUNCH, subagentType: 'claude-code-guide' };
   const refusals = [
-    getRefusal({ ...guide, isNested: true }),
+    getRefusal({ ...guide, caller: { agentType: 'providens:reader' } }),
     getRefusal({ ...guide, description: 'Find x' }),
     getRefusal({ ...guide, description: '[quick] Find x' }),
   ];
