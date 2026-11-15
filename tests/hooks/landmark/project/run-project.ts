@@ -6,7 +6,7 @@ import type { TestContext } from 'node:test';
 import { getGitEnv } from '../../../helpers/run-git.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 
-export const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'landmark');
+export const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'ordo');
 
 const SUBPROCESS_TIMEOUT_MS = 20000;
 

@@ -7,7 +7,7 @@ import { readPluginVersion } from '../../../../hooks/shared/read-plugin-version.
 import { makeEnv, runInstall } from './run-install.ts';
 
 const UPGRADE_TIMEOUT_MS = 20000;
-const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'landmark');
+const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'ordo');
 const PLUGIN_VERSION = readPluginVersion(PLUGIN);
 const NEXT_VERSION = '99.0.0';
 

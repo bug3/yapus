@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
-const PLUGIN = join(ROOT, 'plugins', 'landmark');
+const PLUGIN = join(ROOT, 'plugins', 'ordo');
 const COMMAND = 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/dashes';
 const CHECK_COMMAND =
   'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/landmark/check "${CLAUDE_PLUGIN_ROOT}"';

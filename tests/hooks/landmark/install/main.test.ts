@@ -9,7 +9,7 @@ import { readNameList } from '../../../../hooks/landmark/install/read-name-list.
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
 import { makeEnv, runInstall, spawnInstall } from './run-install.ts';
 
-const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'landmark');
+const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'ordo');
 
 test('writes 15 rendered rule files and the version stamp', (t) => {
   const { home, installRun } = runInstall(t, 'install');

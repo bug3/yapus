@@ -10,8 +10,8 @@
       "source": "./plugins/delegator"
     },
     {
-      "name": "landmark",
-      "source": "./plugins/landmark"
+      "name": "ordo",
+      "source": "./plugins/ordo"
     }
   ]
 }
