@@ -6,7 +6,7 @@ interface PathsCatalog {
   readonly map: Readonly<Record<string, unknown>>;
 }
 
-// The standard as landmark installs it into ~/.claude/rules/yapus/landmark:
+// The standard as ordo installs it into ~/.claude/rules/yapus/ordo:
 // each paths entry named in the catalog map is replaced by its value, or
 // dropped when the value is not a string; every other line, the body included,
 // stays as it is.

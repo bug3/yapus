@@ -1,6 +1,6 @@
 ---
 paths:
-  - ".claude/yapus/landmark/scopes.json"
+  - ".claude/yapus/ordo/scopes.json"
   - "hooks/shared/catalogs/scopes.json"
 ---
 

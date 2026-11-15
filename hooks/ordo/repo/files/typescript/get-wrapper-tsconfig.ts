@@ -7,7 +7,7 @@ export function getWrapperTsconfig(): string {
   return `${ JSON.stringify(
     {
       extends: `./${ getProjectDirectory() }/tsconfig.json`,
-      compilerOptions: { tsBuildInfoFile: 'node_modules/.cache/yapus/landmark/tsbuildinfo' },
+      compilerOptions: { tsBuildInfoFile: 'node_modules/.cache/yapus/ordo/tsbuildinfo' },
     },
     undefined,
     2,

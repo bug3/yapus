@@ -16,7 +16,7 @@ test('shows the scopes of the project catalog as one line', (t) => {
   assert.equal(status, 0);
   assert.equal(
     getContext(stdout),
-    'Commit scopes of this repository (.claude/yapus/landmark/scopes.json): api, cli, docs;'
+    'Commit scopes of this repository (.claude/yapus/ordo/scopes.json): api, cli, docs;'
       + ' a new scope enters that file in the commit that first uses it.',
   );
 });
@@ -30,7 +30,7 @@ test('stays silent when the project has no scope catalog', (t) => {
 test('shows the violation when the catalog is not sorted', (t) => {
   const project = makeProject(t, '["docs", "api"]');
   const { status, stdout } = runScopes(project);
-  const path = join(project, '.claude', 'yapus', 'landmark', 'scopes.json');
+  const path = join(project, '.claude', 'yapus', 'ordo', 'scopes.json');
 
   assert.equal(status, 0);
   assert.equal(
@@ -46,7 +46,7 @@ test('stays silent when CLAUDE_PROJECT_DIR is unset', (t) => {
   assert.deepEqual([status, stdout], [0, '']);
 });
 
-test('shows only the landmark catalog when the project also holds another', (t) => {
+test('shows only the ordo catalog when the project also holds another', (t) => {
   const project = makeProject(t, '["api"]');
   const catalogs = join(project, 'hooks', 'shared', 'catalogs');
 
@@ -58,15 +58,15 @@ test('shows only the landmark catalog when the project also holds another', (t) 
   assert.equal(status, 0);
   assert.equal(
     getContext(stdout),
-    'Commit scopes of this repository (.claude/yapus/landmark/scopes.json): api;'
+    'Commit scopes of this repository (.claude/yapus/ordo/scopes.json): api;'
       + ' a new scope enters that file in the commit that first uses it.',
   );
 });
 
-// A project with the scope catalog at the place landmark reads.
+// A project with the scope catalog at the place ordo reads.
 function makeProject(t: TestContext, catalogText: string): string {
   const project = makeTempDir(t);
-  const directory = join(project, '.claude', 'yapus', 'landmark');
+  const directory = join(project, '.claude', 'yapus', 'ordo');
 
   mkdirSync(directory, { recursive: true });
   writeFileSync(join(directory, 'scopes.json'), catalogText);
