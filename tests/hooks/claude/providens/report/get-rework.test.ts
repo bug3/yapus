@@ -194,3 +194,25 @@ test('lands a return that reaches no launch row on the builder as before', () =>
 
   assert.deepEqual(rework, { builders: 1, reworked: 1, finishers: 1, reworkedFinishers: 0 });
 });
+
+test('lands a return whose caller matches no completion on nothing', () => {
+  const rework = getRework([
+    { ...END, time: 't1' },
+    { ...NESTED_LAUNCH, callerId: 'x' },
+    JUDGE_END,
+    { ...JUDGE, time: 't3' },
+  ]);
+
+  assert.deepEqual(rework, { builders: 1, reworked: 0, finishers: 0, reworkedFinishers: 0 });
+});
+
+test('lands a return whose caller is a builder on nothing', () => {
+  const rework = getRework([
+    { ...END, time: 't1' },
+    { ...NESTED_LAUNCH, callerId: 'a' },
+    JUDGE_END,
+    { ...JUDGE, time: 't3' },
+  ]);
+
+  assert.deepEqual(rework, { builders: 1, reworked: 0, finishers: 0, reworkedFinishers: 0 });
+});
