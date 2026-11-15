@@ -5,7 +5,7 @@ import { type TestContext, test } from 'node:test';
 import { readTexts, TEXTS_PATH } from '../../../../../hooks/claude/providens/recall/read-texts.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
-test('reads the approved header, mark and path line from the shipped file', () => {
+test('reads the approved header, mark, path line and plans line from the shipped file', () => {
   assert.deepEqual(readTexts(TEXTS_PATH), {
     kind: 'texts',
     texts: {
@@ -14,6 +14,7 @@ test('reads the approved header, mark and path line from the shipped file', () =
         + ' decided.',
       cutMark: '[cut at 2,000 characters]',
       pathLine: 'The whole prompt log is in `{path}`.',
+      plansLine: 'The plans of this project, newest first: {plans}.',
     },
   });
 });
@@ -25,14 +26,15 @@ test('fails on a file that is not on disk', (t) => {
   assert.match(read.detail, /^cannot read .*gone\.md: ENOENT/u);
 });
 
-test('fails on a file without a placeholder or with a fourth line', (t) => {
-  const detail = 'does not hold three lines: a header with {left-out}, a mark, a line with {path}';
-  const noPlaceholder = makeTexts(t, 'H\nM\nP {path}\n');
-  const fourLines = makeTexts(t, 'H {left-out}\nM\nP {path}\nmore\n');
+test('fails on a file without the plans placeholder or with a fifth line', (t) => {
+  const detail = 'does not hold four lines: a header with {left-out}, a mark, a line with {path},'
+    + ' a line with {plans}';
+  const noPlans = makeTexts(t, 'H {left-out}\nM\nP {path}\nL\n');
+  const fiveLines = makeTexts(t, 'H {left-out}\nM\nP {path}\nL {plans}\nmore\n');
 
-  assert.deepEqual([readTexts(noPlaceholder), readTexts(fourLines)], [
-    { kind: 'failure', detail: `${ noPlaceholder } ${ detail }` },
-    { kind: 'failure', detail: `${ fourLines } ${ detail }` },
+  assert.deepEqual([readTexts(noPlans), readTexts(fiveLines)], [
+    { kind: 'failure', detail: `${ noPlans } ${ detail }` },
+    { kind: 'failure', detail: `${ fiveLines } ${ detail }` },
   ]);
 });
 

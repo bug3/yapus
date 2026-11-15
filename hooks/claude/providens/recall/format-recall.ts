@@ -1,4 +1,9 @@
-import { LEFT_OUT_PLACEHOLDER, PATH_PLACEHOLDER, type Texts } from './read-texts.ts';
+import {
+  LEFT_OUT_PLACEHOLDER,
+  PATH_PLACEHOLDER,
+  PLANS_PLACEHOLDER,
+  type Texts,
+} from './read-texts.ts';
 
 // The most characters the recall adds, so the policy beside it at the same
 // compaction stays under Claude Code's cap on added context.
@@ -9,6 +14,7 @@ export const BUDGET_CHARACTERS = 6000;
 export const CUT_CHARACTERS = 2000;
 
 const SEPARATOR = '\n\n';
+const PLANS_SEPARATOR = ', ';
 
 // One line of the prompt log.
 export interface LoggedPrompt {
@@ -16,21 +22,39 @@ export interface LoggedPrompt {
   readonly prompt: string;
 }
 
+// Where the prompt log and the project's plan files are.
+export interface Paths {
+  readonly logPath: string;
+  readonly planPaths: readonly string[];
+}
+
 // The header, the latest prompts that fit the budget, oldest first, each with
-// its time, and the log's path last; undefined when even the header and the
-// path pass the budget.
+// its time, the log's path, and the plans line when there are plan paths;
+// with no prompt, the plans line alone. Undefined when the fixed lines alone
+// pass the budget.
 export function formatRecall(
   texts: Texts,
   prompts: readonly LoggedPrompt[],
-  logPath: string,
+  { logPath, planPaths }: Paths,
 ): string | undefined {
+  const plansLines = planPaths.length === 0
+    ? []
+    : [texts.plansLine.replace(PLANS_PLACEHOLDER, () => planPaths.join(PLANS_SEPARATOR))];
+
+  if (prompts.length === 0) {
+    const plansOnly = plansLines.join(SEPARATOR);
+
+    return plansOnly.length <= BUDGET_CHARACTERS ? plansOnly : undefined;
+  }
+
   const blocks = prompts.map((prompt) => formatPrompt(prompt, texts.cutMark));
   const pathLine = texts.pathLine.replace(PATH_PLACEHOLDER, () => logPath);
   const join = (keptCount: number): string => {
     const leftOut = String(blocks.length - keptCount);
     const header = texts.header.replace(LEFT_OUT_PLACEHOLDER, () => leftOut);
+    const kept = blocks.slice(blocks.length - keptCount);
 
-    return [header, ...blocks.slice(blocks.length - keptCount), pathLine].join(SEPARATOR);
+    return [header, ...kept, pathLine, ...plansLines].join(SEPARATOR);
   };
   const keptCounts = [...blocks.keys(), blocks.length].map((index) => blocks.length - index);
   const keptCount = keptCounts.find((count) => join(count).length <= BUDGET_CHARACTERS);
