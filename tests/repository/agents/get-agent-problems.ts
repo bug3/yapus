@@ -14,10 +14,13 @@ const READ_ONLY_AGENTS: readonly string[] = [
 ];
 const CHANGING_TOOLS: readonly string[] = ['Bash', 'Edit', 'NotebookEdit', 'Write'];
 const LAUNCHING_TOOL = 'Agent';
+// The roster's agents that may hold LAUNCHING_TOOL.
+const LAUNCHING_AGENTS: readonly string[] = ['finisher'];
 
 // Every way an agent definition of a plugin under root leaves the roster's
 // limits: a missing field (one of tools or disallowedTools is enough), a name
-// that is not its file's, a tool that launches agents, or a tool that changes
+// that is not its file's, a tool that launches agents outside
+// LAUNCHING_AGENTS, or a tool that changes
 // something in a read-only agent. An agent with a tools line must not list
 // those tools; one without it inherits every tool, so its disallowedTools
 // line must name them. Both are one comma-separated line; a YAML list reads
@@ -30,9 +33,10 @@ export function getAgentProblems(root: string): string[] {
 
 function getFileProblems(path: string, fields: ReadonlyMap<string, string>): string[] {
   const name = basename(path, '.md');
+  const launchingTools = LAUNCHING_AGENTS.includes(name) ? [] : [LAUNCHING_TOOL];
   const deniedTools = READ_ONLY_AGENTS.includes(name)
-    ? [LAUNCHING_TOOL, ...CHANGING_TOOLS]
-    : [LAUNCHING_TOOL];
+    ? [...launchingTools, ...CHANGING_TOOLS]
+    : launchingTools;
   const isNamedOtherwise = fields.has('name') && fields.get('name') !== name;
   const hasOnlyDisallowedLine = !fields.has(TOOLS_FIELD) && fields.has(DISALLOWED_FIELD);
   const missingFields = REQUIRED_FIELDS.filter((field) => isMissing(fields, field));

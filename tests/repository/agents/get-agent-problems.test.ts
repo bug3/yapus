@@ -42,6 +42,23 @@ test('names a launching tool anywhere and a changing tool in a read-only agent',
   ]);
 });
 
+test('finds nothing in the finisher that lists Agent', (t) => {
+  const root = makeAgents(t, [
+    { name: 'finisher', text: makeHead('finisher', 'Read, Edit, Bash, Agent') },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), []);
+});
+
+test('names Agent in an agent other than the finisher', (t) => {
+  const root = makeAgents(t, [
+    { name: 'finisher', text: makeHead('finisher', 'Read, Agent') },
+    { name: 'runner', text: makeHead('runner', 'Read, Agent') },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/runner.md: lists Agent']);
+});
+
 test('names a name that is not the file name', (t) => {
   const root = makeAgents(t, [{ name: 'reader', text: makeHead('scout', 'Read') }]);
 

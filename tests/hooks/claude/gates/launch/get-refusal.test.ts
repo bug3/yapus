@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { getRefusal, STAND_INS } from '../../../../../hooks/claude/gates/launch/get-refusal.ts';
 
-const ROSTER_LIST = 'providens:builder, providens:diff-reviewer, providens:mcp-operator, '
-  + 'providens:plan-reviewer, providens:reader, providens:runner, providens:web-researcher';
+const ROSTER_LIST = 'providens:builder, providens:diff-reviewer, providens:finisher, '
+  + 'providens:mcp-operator, providens:plan-reviewer, providens:reader, providens:runner, '
+  + 'providens:web-researcher';
 const OFF_ROSTER = ['claude-code-guide', 'other-plugin:agent', 'db-migrator'];
 const LAUNCH = {
   sessionId: 's',
