@@ -17,8 +17,9 @@ interface Decision extends Base {
 
 // The launch verdict with the description and the keys the payload carries:
 // the call id (joins the subagent's meta file), the prompt id (groups the
-// launches of one prompt), the model override and the effort level. A key
-// the payload lacks is undefined and left out of the line.
+// launches of one prompt), the model override, the effort level and the
+// calling subagent's id for a nested launch. A key the payload lacks is
+// undefined and left out of the line.
 export interface LaunchRow extends Decision {
   readonly hook: 'launch';
   readonly description: string;
@@ -26,6 +27,7 @@ export interface LaunchRow extends Decision {
   readonly promptId: string | undefined;
   readonly model: string | undefined;
   readonly effort: string | undefined;
+  readonly callerId: string | undefined;
 }
 
 // The return verdict with the subagent's id (joins its transcript and meta

@@ -53,7 +53,7 @@ test('reads a launch, a return and an end row, with absent fields undefined', ()
 
   assert.equal(skipped, 0);
   assert.deepEqual(rows, [
-    { ...LAUNCH, promptId: undefined, model: undefined },
+    { ...LAUNCH, promptId: undefined, model: undefined, callerId: undefined },
     {
       ...RETURN,
       verdict: undefined,
@@ -72,6 +72,16 @@ test('reads a launch, a return and an end row, with absent fields undefined', ()
       word: undefined,
       length: undefined,
     },
+  ]);
+});
+
+test('reads the caller id of a launch row that has one and none from one without', () => {
+  const { rows } = readRows(toText({ ...LAUNCH, callerId: 'a0' }, LAUNCH));
+  const absent = { promptId: undefined, model: undefined };
+
+  assert.deepEqual(rows, [
+    { ...LAUNCH, ...absent, callerId: 'a0' },
+    { ...LAUNCH, ...absent, callerId: undefined },
   ]);
 });
 

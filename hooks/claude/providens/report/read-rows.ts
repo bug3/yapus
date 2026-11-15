@@ -63,6 +63,7 @@ function readLaunch(fields: Readonly<Record<string, unknown>>): LaunchRow | unde
       promptId: getString(fields.promptId),
       model: getString(fields.model),
       effort: getString(fields.effort),
+      callerId: getString(fields.callerId),
     }
     : undefined;
 }

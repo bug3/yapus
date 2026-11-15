@@ -30,6 +30,7 @@ const LAUNCH: LaunchRow = {
   promptId: undefined,
   model: undefined,
   effort: undefined,
+  callerId: undefined,
 };
 const END: EndRow = {
   time: 't',

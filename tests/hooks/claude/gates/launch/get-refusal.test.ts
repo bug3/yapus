@@ -19,7 +19,7 @@ const LAUNCH = {
 const NESTED = 'a subagent launches no agents; return the work to your caller';
 const REVIEW = {
   ...LAUNCH,
-  caller: { agentType: 'providens:finisher' },
+  caller: { agentId: 'a1', agentType: 'providens:finisher' },
   subagentType: 'providens:diff-reviewer',
   description: '[deep] s1 Review the diff',
 };
@@ -47,14 +47,14 @@ test('passes an off-roster type that stands in for no roster agent', () => {
 
 test('refuses a launch from inside a subagent', () => {
   assert.equal(
-    getRefusal({ ...LAUNCH, caller: { agentType: 'providens:reader' } }),
+    getRefusal({ ...LAUNCH, caller: { agentId: 'a1', agentType: 'providens:reader' } }),
     'a subagent launches no agents; return the work to your caller',
   );
 });
 
 test('refuses a nested launch whose caller type is unknown', () => {
   assert.equal(
-    getRefusal({ ...LAUNCH, caller: { agentType: undefined } }),
+    getRefusal({ ...LAUNCH, caller: { agentId: 'a1', agentType: undefined } }),
     'a subagent launches no agents; return the work to your caller',
   );
 });
@@ -74,11 +74,14 @@ test('refuses a finisher launching a type other than the diff reviewer', () => {
 });
 
 test('refuses a caller other than the finisher launching the diff reviewer', () => {
-  assert.equal(getRefusal({ ...REVIEW, caller: { agentType: 'providens:builder' } }), NESTED);
+  assert.equal(
+    getRefusal({ ...REVIEW, caller: { agentId: 'a1', agentType: 'providens:builder' } }),
+    NESTED,
+  );
 });
 
 test('refuses a caller of unknown type launching the diff reviewer', () => {
-  assert.equal(getRefusal({ ...REVIEW, caller: { agentType: undefined } }), NESTED);
+  assert.equal(getRefusal({ ...REVIEW, caller: { agentId: 'a1', agentType: undefined } }), NESTED);
 });
 
 test('keeps the depth rules for the diff reviewer a finisher launches', () => {
@@ -138,7 +141,7 @@ test('refuses a description without a depth tag and a quick one', () => {
 test('keeps the nested and depth rules for an off-roster type', () => {
   const guide = { ...LAUNCH, subagentType: 'claude-code-guide' };
   const refusals = [
-    getRefusal({ ...guide, caller: { agentType: 'providens:reader' } }),
+    getRefusal({ ...guide, caller: { agentId: 'a1', agentType: 'providens:reader' } }),
     getRefusal({ ...guide, description: 'Find x' }),
     getRefusal({ ...guide, description: '[quick] Find x' }),
   ];
