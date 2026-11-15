@@ -1,6 +1,6 @@
 # Orchestration
 
-## ORCH-1. Name the task's depth in one sentence before the first tool call: quick (one file, a decided change, a one-command oracle: no plan, no subagent), standard (the default) or deep (more than 3 files or about 400 changed lines, several unknowns, multi-source research, or work that outlives one context: write a plan before the first edit); prefix every subagent description with the depth in brackets and, when a plan has slices, the slice id (`[deep] S3 ...`), raise the depth when recon finds more than 3 files, an oracle fails twice or a review asks for rework, and leave lowering it to the person.
+## ORCH-1. Name the task's depth in one sentence before the first tool call: quick (one file, a decided change, a one-command oracle: no plan, no subagent), standard (the default) or deep (about 400 changed lines, several unknowns, multi-source research, or work that outlives one context: write a plan before the first edit); prefix every subagent description with the depth in brackets and, when a plan has slices, the slice id (`[deep] S3 ...`), raise the depth when an oracle fails twice or a review asks for rework, and leave lowering it to the person.
 
 ## ORCH-2. This session is the shared workspace of the person and you: keep in it only what the next decision or answer needs (the conversation, decisions, distilled results, the state of the work); hand reading, running, judging and every edit beyond quick to subagents, launch independent ones in one message and keep working while they run.
 
