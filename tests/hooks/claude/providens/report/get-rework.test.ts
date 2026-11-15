@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { getRework } from '../../../../../hooks/claude/providens/report/get-rework.ts';
-import type { EndRow, ReturnRow } from '../../../../../hooks/claude/providens/record-row.ts';
+import type {
+  EndRow,
+  LaunchRow,
+  ReturnRow,
+} from '../../../../../hooks/claude/providens/record-row.ts';
 
 const END: EndRow = {
   time: '2026-10-24T10:00:00Z',
@@ -45,7 +49,7 @@ test('lands one REWORK on the latest builder before it, not on every builder', (
     { ...JUDGE, time: 't4' },
   ]);
 
-  assert.deepEqual(rework, { builders: 2, reworked: 1 });
+  assert.deepEqual(rework, { builders: 2, reworked: 1, finishers: 0, reworkedFinishers: 0 });
 });
 
 test('lands each REWORK on the latest builder before it when judges interleave', () => {
@@ -56,7 +60,7 @@ test('lands each REWORK on the latest builder before it when judges interleave',
     { ...JUDGE, agentId: 'f', time: 't4' },
   ]);
 
-  assert.deepEqual(rework, { builders: 2, reworked: 2 });
+  assert.deepEqual(rework, { builders: 2, reworked: 2, finishers: 0, reworkedFinishers: 0 });
 });
 
 test('lands no REWORK on a builder of another session', () => {
@@ -65,7 +69,7 @@ test('lands no REWORK on a builder of another session', () => {
     { ...JUDGE, time: 't2' },
   ]);
 
-  assert.deepEqual(rework, { builders: 1, reworked: 0 });
+  assert.deepEqual(rework, { builders: 1, reworked: 0, finishers: 0, reworkedFinishers: 0 });
 });
 
 test('counts a builder once however many returns land on it', () => {
@@ -75,7 +79,7 @@ test('counts a builder once however many returns land on it', () => {
     { ...JUDGE, agentId: 'f', time: 't3', verdict: 'REVISE' },
   ]);
 
-  assert.deepEqual(rework, { builders: 1, reworked: 1 });
+  assert.deepEqual(rework, { builders: 1, reworked: 1, finishers: 0, reworkedFinishers: 0 });
 });
 
 test('keeps sessions apart and ignores other builders statuses and verdicts', () => {
@@ -87,16 +91,19 @@ test('keeps sessions apart and ignores other builders statuses and verdicts', ()
     { ...JUDGE, sessionId: 's2', time: 't5', verdict: 'APPROVE' },
   ]);
 
-  assert.deepEqual(rework, { builders: 2, reworked: 1 });
+  assert.deepEqual(rework, { builders: 2, reworked: 1, finishers: 0, reworkedFinishers: 0 });
 });
 
 test('counts REVISE and counts nothing for a return before any builder in its session', () => {
   const earlier = { ...JUDGE, time: 't0', verdict: 'REVISE' };
 
-  assert.deepEqual(getRework([{ ...END, time: 't1' }, earlier]), { builders: 1, reworked: 0 });
+  assert.deepEqual(
+    getRework([{ ...END, time: 't1' }, earlier]),
+    { builders: 1, reworked: 0, finishers: 0, reworkedFinishers: 0 },
+  );
   assert.deepEqual(
     getRework([{ ...END, time: 't1' }, { ...JUDGE, time: 't2', verdict: 'REVISE' }]),
-    { builders: 1, reworked: 1 },
+    { builders: 1, reworked: 1, finishers: 0, reworkedFinishers: 0 },
   );
 });
 
@@ -109,5 +116,81 @@ test('counts a builder that only returned as reworked by a later REWORK', () => 
     verdict: undefined,
   };
 
-  assert.deepEqual(getRework([builderReturn, JUDGE]), { builders: 1, reworked: 1 });
+  assert.deepEqual(
+    getRework([builderReturn, JUDGE]),
+    { builders: 1, reworked: 1, finishers: 0, reworkedFinishers: 0 },
+  );
+});
+
+const FINISHER: EndRow = { ...END, subject: 'providens:finisher', agentId: 'f', time: 't2' };
+const NESTED_LAUNCH: LaunchRow = {
+  time: 't2',
+  hook: 'launch',
+  sessionId: 's1',
+  subject: 'providens:diff-reviewer',
+  allowed: true,
+  reason: '',
+  description: 'review the slice',
+  toolUseId: 'toolu_b',
+  promptId: undefined,
+  model: undefined,
+  effort: undefined,
+  callerId: 'f',
+};
+const JUDGE_END: EndRow = {
+  ...END,
+  subject: 'providens:diff-reviewer',
+  agentId: 'b',
+  toolUseId: 'toolu_b',
+  time: 't3',
+};
+
+test('lands a REWORK from a reviewer a finisher launched on it and on no builder', () => {
+  const rework = getRework([
+    { ...END, time: 't1' },
+    NESTED_LAUNCH,
+    JUDGE_END,
+    { ...JUDGE, time: 't3' },
+    { ...FINISHER, time: 't4' },
+  ]);
+
+  assert.deepEqual(rework, { builders: 1, reworked: 0, finishers: 1, reworkedFinishers: 1 });
+});
+
+test('counts a finisher once however many of its reviewers send it back', () => {
+  const rework = getRework([
+    NESTED_LAUNCH,
+    JUDGE_END,
+    { ...JUDGE, time: 't3' },
+    { ...NESTED_LAUNCH, toolUseId: 'toolu_g' },
+    { ...JUDGE_END, agentId: 'g', toolUseId: 'toolu_g' },
+    { ...JUDGE, agentId: 'g', time: 't3', verdict: 'REVISE' },
+    { ...FINISHER, time: 't4' },
+  ]);
+
+  assert.deepEqual(rework, { builders: 0, reworked: 0, finishers: 1, reworkedFinishers: 1 });
+});
+
+test('lands a return without a caller on the builder even after a finisher completed', () => {
+  const rework = getRework([
+    { ...END, time: 't1' },
+    FINISHER,
+    { ...NESTED_LAUNCH, callerId: undefined },
+    JUDGE_END,
+    { ...JUDGE, time: 't3' },
+  ]);
+
+  assert.deepEqual(rework, { builders: 1, reworked: 1, finishers: 1, reworkedFinishers: 0 });
+});
+
+test('lands a return that reaches no launch row on the builder as before', () => {
+  const rework = getRework([
+    { ...END, time: 't1' },
+    FINISHER,
+    { ...NESTED_LAUNCH, toolUseId: undefined },
+    { ...JUDGE_END, toolUseId: undefined },
+    { ...JUDGE, time: 't3' },
+  ]);
+
+  assert.deepEqual(rework, { builders: 1, reworked: 1, finishers: 1, reworkedFinishers: 0 });
 });
