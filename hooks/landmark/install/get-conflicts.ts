@@ -22,8 +22,8 @@ export function getConflicts(
   const isForeign = globalHooksPath !== undefined && globalHooksPath !== getHooksPath(home);
 
   return [
-    ...isUpgrade && !existsSync(stamp) ? [`${ stamp } is absent; use /landmark:install`] : [],
-    ...!isUpgrade && existsSync(stamp) ? [`${ stamp } exists; use /landmark:upgrade`] : [],
+    ...isUpgrade && !existsSync(stamp) ? [`${ stamp } is absent; use /ordo:machine`] : [],
+    ...!isUpgrade && existsSync(stamp) ? [`${ stamp } exists; use /ordo:upgrade`] : [],
     ...hasRulesDirectory ? [`${ rulesDirectory } exists; remove it first`] : [],
     ...isForeign ? [`the global core.hooksPath is ${ globalHooksPath }; unset it first`] : [],
     ...hasInjectedHooksPath(env)

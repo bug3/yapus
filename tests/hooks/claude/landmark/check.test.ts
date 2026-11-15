@@ -16,30 +16,30 @@ interface Arrangement {
   readonly env?: NodeJS.ProcessEnv;
 }
 
-test('names /landmark:install when there is no stamp', (t) => {
+test('names /ordo:machine when there is no stamp', (t) => {
   const { stdout } = runCheck(t, { hooksPath: 'own' });
 
   assert.equal(
     getContext(stdout),
-    'yapus landmark is not installed on this machine; run /landmark:install.',
+    'yapus landmark is not installed on this machine; run /ordo:machine.',
   );
 });
 
-test('names /landmark:upgrade when the stamp differs from the plugin version', (t) => {
+test('names /ordo:upgrade when the stamp differs from the plugin version', (t) => {
   const { stdout } = runCheck(t, { stamp: '0.0.1', hooksPath: 'own' });
 
   assert.equal(
     getContext(stdout),
-    `yapus landmark 0.0.1 is installed, the plugin is ${ PLUGIN_VERSION }; run /landmark:upgrade.`,
+    `yapus landmark 0.0.1 is installed, the plugin is ${ PLUGIN_VERSION }; run /ordo:upgrade.`,
   );
 });
 
-test('names /landmark:upgrade when the global hooks path is unset', (t) => {
+test('names /ordo:upgrade when the global hooks path is unset', (t) => {
   const { stdout } = runCheck(t, { stamp: PLUGIN_VERSION });
 
   assert.equal(
     getContext(stdout),
-    'yapus landmark: the global core.hooksPath is unset; run /landmark:upgrade.',
+    'yapus landmark: the global core.hooksPath is unset; run /ordo:upgrade.',
   );
 });
 
