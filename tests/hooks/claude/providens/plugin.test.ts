@@ -1,10 +1,15 @@
 import assert from 'node:assert/strict';
-import { readFileSync, realpathSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const PLUGIN = join(ROOT, 'plugins', 'providens');
+const REMEMBER_COMMAND =
+  'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/remember || exit 0';
+const SUBPROCESS_TIMEOUT_MS = 10000;
 
 test('registers every providens hook', () => {
   const hooks: unknown = JSON.parse(readFileSync(join(PLUGIN, 'hooks', 'hooks.json'), 'utf8'));
@@ -18,6 +23,27 @@ test('registers every providens hook', () => {
             {
               type: 'command',
               command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/policy',
+              timeout: 10,
+            },
+          ],
+        },
+        {
+          matcher: 'compact',
+          hooks: [
+            {
+              type: 'command',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/recall',
+              timeout: 10,
+            },
+          ],
+        },
+      ],
+      UserPromptSubmit: [
+        {
+          hooks: [
+            {
+              type: 'command',
+              command: REMEMBER_COMMAND,
               timeout: 10,
             },
           ],
@@ -97,6 +123,24 @@ test('registers every providens hook', () => {
       ],
     },
   });
+});
+
+// Exit 2 at UserPromptSubmit blocks the prompt, so the registered command
+// (pinned above) lets the prompt through even when run.sh itself fails.
+test('exits 0 from the remember command when run.sh exits 2', (t) => {
+  const pluginRoot = makeTempDir(t);
+
+  mkdirSync(join(pluginRoot, 'runtime'));
+  writeFileSync(join(pluginRoot, 'runtime', 'run.sh'), 'exit 2\n');
+
+  const commandRun = spawnSync('/bin/sh', ['-c', REMEMBER_COMMAND], {
+    encoding: 'utf8',
+    env: { ...process.env, CLAUDE_PLUGIN_ROOT: pluginRoot },
+    input: '',
+    timeout: SUBPROCESS_TIMEOUT_MS,
+  });
+
+  assert.equal(commandRun.status, 0);
 });
 
 // An install copies only the plugin directory and copies a link to elsewhere
