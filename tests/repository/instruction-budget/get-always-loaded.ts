@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
-import { POLICY_PATH } from '../../../hooks/claude/providens/policy/get-context.ts';
+import { POLICY_PATH } from '../../../hooks/claude/delegator/policy/get-context.ts';
 import { listFiles } from '../../helpers/list-files.ts';
 import { readUtf8 } from '../../helpers/read-utf8.ts';
 
