@@ -1,6 +1,6 @@
 {
   "name": "yapus",
-  "description": "The foundation for building software with AI: the rules that keep the work sound and the mechanisms that hold them.",
+  "description": "Standards and orchestration for coding with an AI agent: Claude Code plugins for keeping AI-written software sound and maintainable.",
   "owner": {
     "name": "bug3"
   },
