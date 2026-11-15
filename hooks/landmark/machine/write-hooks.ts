@@ -16,7 +16,7 @@ export function writeHooks(home: string, root: string): string[] {
   const source = join(root, 'runtime');
   const target = dirname(getHooksPath(home));
   const staging = `${ target }.new`;
-  const files = readNameList(join(source, 'landmark', 'install', 'hook-files.json'));
+  const files = readNameList(join(source, 'landmark', 'machine', 'hook-files.json'));
   const names = readNameList(join(source, 'git', 'forward-names.json'));
 
   rmSync(staging, { recursive: true, force: true });

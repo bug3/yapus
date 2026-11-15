@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
-import { renderStandard } from '../../../../hooks/landmark/install/render-standard.ts';
+import { renderStandard } from '../../../../hooks/landmark/machine/render-standard.ts';
 
 const MAP: unknown = JSON.parse(
   '{"hooks/git/**": "fixture/git/**", "tests/repository/**": null}',

@@ -1,5 +1,5 @@
 {
-  "extends": "./hooks/landmark/project/files/typescript/tsconfig.json",
+  "extends": "./hooks/landmark/repo/files/typescript/tsconfig.json",
   "compilerOptions": {
     "tsBuildInfoFile": "node_modules/.cache/yapus/tsbuildinfo"
   },

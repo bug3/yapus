@@ -23,7 +23,7 @@ function installThenUpgrade(
   change: (root: string) => void = () => undefined,
   extraEnv: NodeJS.ProcessEnv = {},
 ): Upgraded {
-  const { home } = runInstall(t, 'install');
+  const { home } = runInstall(t, 'machine');
   const before = snapshot(home);
 
   change(getRoot(home));
@@ -40,7 +40,7 @@ function runUpgrade(home: string, extraEnv: NodeJS.ProcessEnv = {}): SpawnSyncRe
 
   const entry = join(root, 'runtime', 'run.sh');
 
-  return spawnSync('bash', [entry, 'landmark/install', root, 'upgrade'], {
+  return spawnSync('bash', [entry, 'landmark/machine', root, 'upgrade'], {
     encoding: 'utf8', env: makeEnv(home, extraEnv), timeout: UPGRADE_TIMEOUT_MS,
   });
 }
@@ -100,7 +100,7 @@ test('upgrade after a plugin change rewrites the rule file and the stamp', (t) =
 });
 
 test('upgrade removes a stale rule file and keeps the current ones', (t) => {
-  const { home } = runInstall(t, 'install');
+  const { home } = runInstall(t, 'machine');
   const rulesDirectory = join(home, '.claude', 'rules', 'yapus', 'landmark');
 
   writeFileSync(join(rulesDirectory, 'dropped.md'), 'stale');
@@ -114,7 +114,7 @@ test('upgrade removes a stale rule file and keeps the current ones', (t) => {
 });
 
 test('upgrade keeps a file of the rules directory that is not markdown', (t) => {
-  const { home } = runInstall(t, 'install');
+  const { home } = runInstall(t, 'machine');
   const rulesDirectory = join(home, '.claude', 'rules', 'yapus', 'landmark');
 
   writeFileSync(join(rulesDirectory, 'notes.txt'), 'mine');
@@ -128,7 +128,7 @@ test('upgrade keeps a file of the rules directory that is not markdown', (t) => 
 });
 
 test('upgrade keeps a directory named like a rule file and still succeeds', (t) => {
-  const { home } = runInstall(t, 'install');
+  const { home } = runInstall(t, 'machine');
   const folder = join(home, '.claude', 'rules', 'yapus', 'landmark', 'x.md');
 
   mkdirSync(folder);
@@ -156,7 +156,7 @@ test('upgrade after a change to a hook file rewrites that installed hook file', 
 });
 
 test('upgrade removes the hooks.new and hooks.old a killed run left', (t) => {
-  const { home } = runInstall(t, 'install');
+  const { home } = runInstall(t, 'machine');
   const landmark = join(home, '.claude', 'yapus', 'landmark');
   const leftovers = [join(landmark, 'hooks.new'), join(landmark, 'hooks.old')];
 
@@ -193,7 +193,7 @@ test('upgrade that fails in the hooks copy keeps the old hooks and the old stamp
 });
 
 test('upgrade without a stamp is refused and writes nothing', (t) => {
-  const { home } = runInstall(t, 'install');
+  const { home } = runInstall(t, 'machine');
 
   rmSync(join(home, '.claude', 'yapus', 'landmark', 'version'));
   rmSync(join(home, '.claude', 'rules', 'yapus', 'landmark', 'git.md'));
@@ -207,7 +207,7 @@ test('upgrade without a stamp is refused and writes nothing', (t) => {
 });
 
 test('upgrade sets the global hooks path when it is unset', (t) => {
-  const { home } = runInstall(t, 'install');
+  const { home } = runInstall(t, 'machine');
 
   gitConfig(home, ['--unset', 'core.hooksPath']);
 
@@ -221,7 +221,7 @@ test('upgrade sets the global hooks path when it is unset', (t) => {
 });
 
 test('upgrade refuses a foreign global hooks path and writes nothing', (t) => {
-  const { home } = runInstall(t, 'install');
+  const { home } = runInstall(t, 'machine');
 
   gitConfig(home, ['core.hooksPath', '/elsewhere']);
   rmSync(join(home, '.claude', 'rules', 'yapus', 'landmark', 'git.md'));
@@ -234,7 +234,7 @@ test('upgrade refuses a foreign global hooks path and writes nothing', (t) => {
 });
 
 test('upgrade refuses a hooks path injected through the environment', (t) => {
-  const { home } = runInstall(t, 'install');
+  const { home } = runInstall(t, 'machine');
 
   rmSync(join(home, '.claude', 'rules', 'yapus', 'landmark', 'git.md'));
 

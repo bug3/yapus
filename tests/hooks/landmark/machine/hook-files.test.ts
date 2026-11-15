@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { readNameList } from '../../../../hooks/landmark/install/read-name-list.ts';
+import { readNameList } from '../../../../hooks/landmark/machine/read-name-list.ts';
 
 const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', 'hooks');
 const ENTRIES: readonly string[] = [
@@ -33,7 +33,7 @@ test('lists the import closure of the three git entries and the named files', ()
   });
 
   assert.deepEqual(
-    readNameList(join(HOOKS, 'landmark', 'install', 'hook-files.json')).sort(),
+    readNameList(join(HOOKS, 'landmark', 'machine', 'hook-files.json')).sort(),
     [...closure, ...NAMED_FILES].sort(),
   );
 });

@@ -125,7 +125,7 @@ function runMerge(
 
 // Installs from a copy of the plugin into a temporary home; returns a new repository.
 function installAndInit(t: TestContext): Setup {
-  const { home, installRun } = runInstall(t, 'install');
+  const { home, installRun } = runInstall(t, 'machine');
 
   assert.equal(installRun.status, 0, installRun.stderr);
 

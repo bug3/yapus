@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { readNameList } from '../../../../hooks/landmark/install/read-name-list.ts';
+import { readNameList } from '../../../../hooks/landmark/machine/read-name-list.ts';
 import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
 import { getGitEnv } from '../../../helpers/run-git.ts';
 import { runInstall } from './run-install.ts';
@@ -18,7 +18,7 @@ const BASH_ENTRIES: readonly string[] = [
 
 test('copies the listed files into the hooks directory with the layout kept', (t) => {
   const hooks = installHooks(t);
-  const files = readNameList(join(PLUGIN, 'runtime', 'landmark', 'install', 'hook-files.json'));
+  const files = readNameList(join(PLUGIN, 'runtime', 'landmark', 'machine', 'hook-files.json'));
 
   assert.deepEqual(
     files.map((file) => readFileSync(join(hooks, file), 'utf8')),
@@ -64,7 +64,7 @@ test('runs the repository hook of its name with the arguments', (t) => {
 
 // Installs into a temporary home; returns the hooks directory.
 function installHooks(t: TestContext): string {
-  const { home, installRun } = runInstall(t, 'install');
+  const { home, installRun } = runInstall(t, 'machine');
 
   assert.equal(installRun.status, 0, installRun.stderr);
 

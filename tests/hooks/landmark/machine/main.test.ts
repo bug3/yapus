@@ -5,14 +5,14 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { readNameList } from '../../../../hooks/landmark/install/read-name-list.ts';
+import { readNameList } from '../../../../hooks/landmark/machine/read-name-list.ts';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
 import { makeEnv, runInstall, spawnInstall } from './run-install.ts';
 
 const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'ordo');
 
 test('writes 15 rendered rule files and the version stamp', (t) => {
-  const { home, installRun } = runInstall(t, 'install');
+  const { home, installRun } = runInstall(t, 'machine');
   const rules = join(home, '.claude', 'rules', 'yapus', 'landmark');
   const manifest: unknown = JSON.parse(
     readFileSync(join(PLUGIN, '.claude-plugin', 'plugin.json'), 'utf8'),
@@ -34,7 +34,7 @@ test('writes 15 rendered rule files and the version stamp', (t) => {
 });
 
 test('refuses an existing stamp and writes nothing', (t) => {
-  const { home, installRun } = runInstall(t, 'install', { arrange: (homeDir) => {
+  const { home, installRun } = runInstall(t, 'machine', { arrange: (homeDir) => {
     mkdirSync(join(homeDir, '.claude', 'yapus', 'landmark'), { recursive: true });
     writeFileSync(join(homeDir, '.claude', 'yapus', 'landmark', 'version'), '0.0.1');
   } });
@@ -46,7 +46,7 @@ test('refuses an existing stamp and writes nothing', (t) => {
 });
 
 test('refuses an existing rules directory and writes nothing', (t) => {
-  const { home, installRun } = runInstall(t, 'install', { arrange: (homeDir) => {
+  const { home, installRun } = runInstall(t, 'machine', { arrange: (homeDir) => {
     mkdirSync(join(homeDir, '.claude', 'rules', 'yapus', 'landmark'), { recursive: true });
   } });
   const rulesDirectory = join(home, '.claude', 'rules', 'yapus', 'landmark');
@@ -66,7 +66,7 @@ test('refuses an unknown mode and writes nothing', (t) => {
 });
 
 test('sets the global hooks path to the installed directory and prints its undo', (t) => {
-  const { home, installRun } = runInstall(t, 'install');
+  const { home, installRun } = runInstall(t, 'machine');
   const hooksPath = spawnSync('git', ['config', '--global', '--get', 'core.hooksPath'], {
     encoding: 'utf8', env: makeEnv(home),
   });
@@ -80,7 +80,7 @@ test('sets the global hooks path to the installed directory and prints its undo'
 
 test('refuses a foreign global hooks path and writes nothing', (t) => {
   const config = '[core]\n\thooksPath = /elsewhere\n';
-  const { home, installRun } = runInstall(t, 'install', { arrange: (homeDir) => {
+  const { home, installRun } = runInstall(t, 'machine', { arrange: (homeDir) => {
     writeFileSync(join(homeDir, '.gitconfig'), config);
   } });
 
@@ -91,7 +91,7 @@ test('refuses a foreign global hooks path and writes nothing', (t) => {
 });
 
 test('refuses a hooks path injected through the environment and writes nothing', (t) => {
-  const { home, installRun } = runInstall(t, 'install', { extraEnv: {
+  const { home, installRun } = runInstall(t, 'machine', { extraEnv: {
     GIT_CONFIG_COUNT: '2',
     GIT_CONFIG_KEY_0: 'user.name',
     GIT_CONFIG_VALUE_0: 'x',
@@ -107,9 +107,9 @@ test('refuses a hooks path injected through the environment and writes nothing',
 
 test('leaves no rule, stamp or git config when hooks fail, and a re-run installs', (t) => {
   const listed = readNameList(
-    join(PLUGIN, 'runtime', 'landmark', 'install', 'hook-files.json'),
+    join(PLUGIN, 'runtime', 'landmark', 'machine', 'hook-files.json'),
   )[0] ?? '';
-  const { root, home, installRun } = runInstall(t, 'install', { arrangePlugin: (pluginRoot) => {
+  const { root, home, installRun } = runInstall(t, 'machine', { arrangePlugin: (pluginRoot) => {
     rmSync(join(pluginRoot, 'runtime', listed));
   } });
 
@@ -120,7 +120,7 @@ test('leaves no rule, stamp or git config when hooks fail, and a re-run installs
 
   copyFileSync(join(PLUGIN, 'runtime', listed), join(root, 'runtime', listed));
 
-  const rerun = spawnInstall({ root, home, mode: 'install' });
+  const rerun = spawnInstall({ root, home, mode: 'machine' });
 
   assert.equal(rerun.status, 0, rerun.stderr);
   assert.equal(readdirSync(join(home, '.claude', 'rules', 'yapus', 'landmark')).length, 15);

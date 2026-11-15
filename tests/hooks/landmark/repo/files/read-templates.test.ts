@@ -2,13 +2,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { readTemplates } from '../../../../../hooks/landmark/project/files/read-templates.ts';
+import { readTemplates } from '../../../../../hooks/landmark/repo/files/read-templates.ts';
 import {
   getGolangciLintVersion,
-} from '../../../../../hooks/landmark/project/files/go/get-golangci-lint-version.ts';
+} from '../../../../../hooks/landmark/repo/files/go/get-golangci-lint-version.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..', '..');
-const BASE = join(ROOT, 'hooks', 'landmark', 'project', 'files', 'typescript');
+const BASE = join(ROOT, 'hooks', 'landmark', 'repo', 'files', 'typescript');
 // The ShellCheck step of test.yml and the comment above it, 1-based.
 const SHELLCHECK_FIRST_LINE = 18;
 const SHELLCHECK_LAST_LINE = 22;
