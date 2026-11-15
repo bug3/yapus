@@ -28,7 +28,7 @@ test('chooses TypeScript on an upgrade with no record', (t) => {
   const root = makeTempDir(t);
 
   writeFiles(root, [
-    ['.claude/yapus/landmark/version', '0.3.0'],
+    ['.claude/yapus/ordo/version', '0.3.0'],
   ]);
 
   assert.deepEqual(getLanguage(root, undefined), { language: 'typescript' });
@@ -38,8 +38,8 @@ test('chooses the recorded Go on an upgrade with no request', (t) => {
   const root = makeTempDir(t);
 
   writeFiles(root, [
-    ['.claude/yapus/landmark/version', '0.3.0'],
-    ['.claude/yapus/landmark/language', 'go\n'],
+    ['.claude/yapus/ordo/version', '0.3.0'],
+    ['.claude/yapus/ordo/language', 'go\n'],
     ['go.mod', 'module x'],
   ]);
 
@@ -50,8 +50,8 @@ test('refuses an upgrade whose request differs from the record', (t) => {
   const root = makeTempDir(t);
 
   writeFiles(root, [
-    ['.claude/yapus/landmark/version', '0.3.0'],
-    ['.claude/yapus/landmark/language', 'go\n'],
+    ['.claude/yapus/ordo/version', '0.3.0'],
+    ['.claude/yapus/ordo/language', 'go\n'],
     ['go.mod', 'module x'],
   ]);
 
@@ -64,7 +64,7 @@ test('refuses an upgrade with a request but no record when it is not TypeScript'
   const root = makeTempDir(t);
 
   writeFiles(root, [
-    ['.claude/yapus/landmark/version', '0.3.0'],
+    ['.claude/yapus/ordo/version', '0.3.0'],
     ['go.mod', 'module x'],
   ]);
 
@@ -77,8 +77,8 @@ test('refuses a recorded Go upgrade when go.mod is not at the root', (t) => {
   const root = makeTempDir(t);
 
   writeFiles(root, [
-    ['.claude/yapus/landmark/version', '0.3.0'],
-    ['.claude/yapus/landmark/language', 'go\n'],
+    ['.claude/yapus/ordo/version', '0.3.0'],
+    ['.claude/yapus/ordo/language', 'go\n'],
   ]);
 
   assert.deepEqual(getLanguage(root, undefined), {
@@ -90,13 +90,13 @@ test('refuses an upgrade whose record names an unknown language', (t) => {
   const root = makeTempDir(t);
 
   writeFiles(root, [
-    ['.claude/yapus/landmark/version', '0.3.0'],
-    ['.claude/yapus/landmark/language', 'rust\n'],
+    ['.claude/yapus/ordo/version', '0.3.0'],
+    ['.claude/yapus/ordo/language', 'rust\n'],
   ]);
 
   assert.deepEqual(getLanguage(root, undefined), {
     refusal:
-      '.claude/yapus/landmark/language holds "rust", not a language; set it to typescript or go',
+      '.claude/yapus/ordo/language holds "rust", not a language; set it to typescript or go',
   });
 });
 
@@ -104,12 +104,12 @@ test('refuses an unknown language record with a line break by escaping it in one
   const root = makeTempDir(t);
 
   writeFiles(root, [
-    ['.claude/yapus/landmark/version', '0.3.0'],
-    ['.claude/yapus/landmark/language', 'rust\nwrote fake\n'],
+    ['.claude/yapus/ordo/version', '0.3.0'],
+    ['.claude/yapus/ordo/language', 'rust\nwrote fake\n'],
   ]);
 
   assert.deepEqual(getLanguage(root, undefined), {
     refusal:
-      '.claude/yapus/landmark/language holds "rust\\nwrote fake", not a language; set it to typescript or go',
+      '.claude/yapus/ordo/language holds "rust\\nwrote fake", not a language; set it to typescript or go',
   });
 });

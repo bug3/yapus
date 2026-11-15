@@ -86,13 +86,13 @@ test('upgrade after a plugin change rewrites the rule file and the stamp', (t) =
     bumpVersion(root);
   });
   const rule = readFileSync(
-    join(home, '.claude', 'rules', 'yapus', 'landmark', 'git.md'),
+    join(home, '.claude', 'rules', 'yapus', 'ordo', 'git.md'),
     'utf8',
   );
 
   assert.equal(upgradeRun.status, 0, upgradeRun.stderr);
   assert.equal(
-    readFileSync(join(home, '.claude', 'yapus', 'landmark', 'version'), 'utf8'),
+    readFileSync(join(home, '.claude', 'yapus', 'ordo', 'version'), 'utf8'),
     NEXT_VERSION,
   );
   assert.match(rule, /Added line\./);
@@ -101,7 +101,7 @@ test('upgrade after a plugin change rewrites the rule file and the stamp', (t) =
 
 test('upgrade removes a stale rule file and keeps the current ones', (t) => {
   const { home } = runInstall(t, 'machine');
-  const rulesDirectory = join(home, '.claude', 'rules', 'yapus', 'landmark');
+  const rulesDirectory = join(home, '.claude', 'rules', 'yapus', 'ordo');
 
   writeFileSync(join(rulesDirectory, 'dropped.md'), 'stale');
 
@@ -115,7 +115,7 @@ test('upgrade removes a stale rule file and keeps the current ones', (t) => {
 
 test('upgrade keeps a file of the rules directory that is not markdown', (t) => {
   const { home } = runInstall(t, 'machine');
-  const rulesDirectory = join(home, '.claude', 'rules', 'yapus', 'landmark');
+  const rulesDirectory = join(home, '.claude', 'rules', 'yapus', 'ordo');
 
   writeFileSync(join(rulesDirectory, 'notes.txt'), 'mine');
   writeFileSync(join(rulesDirectory, 'dropped.md'), 'stale');
@@ -129,7 +129,7 @@ test('upgrade keeps a file of the rules directory that is not markdown', (t) => 
 
 test('upgrade keeps a directory named like a rule file and still succeeds', (t) => {
   const { home } = runInstall(t, 'machine');
-  const folder = join(home, '.claude', 'rules', 'yapus', 'landmark', 'x.md');
+  const folder = join(home, '.claude', 'rules', 'yapus', 'ordo', 'x.md');
 
   mkdirSync(folder);
   writeFileSync(join(folder, 'inner'), 'mine');
@@ -150,15 +150,15 @@ test('upgrade after a change to a hook file rewrites that installed hook file', 
 
   assert.equal(upgradeRun.status, 0, upgradeRun.stderr);
   assert.match(
-    readFileSync(join(home, '.claude', 'yapus', 'landmark', 'hooks', hook), 'utf8'),
+    readFileSync(join(home, '.claude', 'yapus', 'ordo', 'hooks', hook), 'utf8'),
     /\/\/ Changed\.\n$/,
   );
 });
 
 test('upgrade removes the hooks.new and hooks.old a killed run left', (t) => {
   const { home } = runInstall(t, 'machine');
-  const landmark = join(home, '.claude', 'yapus', 'landmark');
-  const leftovers = [join(landmark, 'hooks.new'), join(landmark, 'hooks.old')];
+  const ordo = join(home, '.claude', 'yapus', 'ordo');
+  const leftovers = [join(ordo, 'hooks.new'), join(ordo, 'hooks.old')];
 
   leftovers.forEach((leftover) => {
     mkdirSync(leftover);
@@ -186,7 +186,7 @@ test('upgrade that fails in the hooks copy keeps the old hooks and the old stamp
   assert.match(upgradeRun.stderr, /crashed/);
   assert.equal(snapshot(home), before);
   assert.equal(
-    readFileSync(join(home, '.claude', 'yapus', 'landmark', 'version'), 'utf8'),
+    readFileSync(join(home, '.claude', 'yapus', 'ordo', 'version'), 'utf8'),
     PLUGIN_VERSION,
   );
   assert.match(checkRun.stdout, /run \/ordo:upgrade/);
@@ -195,15 +195,15 @@ test('upgrade that fails in the hooks copy keeps the old hooks and the old stamp
 test('upgrade without a stamp is refused and writes nothing', (t) => {
   const { home } = runInstall(t, 'machine');
 
-  rmSync(join(home, '.claude', 'yapus', 'landmark', 'version'));
-  rmSync(join(home, '.claude', 'rules', 'yapus', 'landmark', 'git.md'));
+  rmSync(join(home, '.claude', 'yapus', 'ordo', 'version'));
+  rmSync(join(home, '.claude', 'rules', 'yapus', 'ordo', 'git.md'));
 
   const upgradeRun = runUpgrade(home);
 
   assert.equal(upgradeRun.status, 2);
   assert.match(upgradeRun.stderr, /use \/ordo:machine/);
-  assert.equal(existsSync(join(home, '.claude', 'rules', 'yapus', 'landmark', 'git.md')), false);
-  assert.equal(existsSync(join(home, '.claude', 'yapus', 'landmark', 'version')), false);
+  assert.equal(existsSync(join(home, '.claude', 'rules', 'yapus', 'ordo', 'git.md')), false);
+  assert.equal(existsSync(join(home, '.claude', 'yapus', 'ordo', 'version')), false);
 });
 
 test('upgrade sets the global hooks path when it is unset', (t) => {
@@ -216,7 +216,7 @@ test('upgrade sets the global hooks path when it is unset', (t) => {
   assert.equal(upgradeRun.status, 0, upgradeRun.stderr);
   assert.equal(
     gitConfig(home, ['--get', 'core.hooksPath']),
-    join(home, '.claude', 'yapus', 'landmark', 'hooks', 'git'),
+    join(home, '.claude', 'yapus', 'ordo', 'hooks', 'git'),
   );
 });
 
@@ -224,19 +224,19 @@ test('upgrade refuses a foreign global hooks path and writes nothing', (t) => {
   const { home } = runInstall(t, 'machine');
 
   gitConfig(home, ['core.hooksPath', '/elsewhere']);
-  rmSync(join(home, '.claude', 'rules', 'yapus', 'landmark', 'git.md'));
+  rmSync(join(home, '.claude', 'rules', 'yapus', 'ordo', 'git.md'));
 
   const upgradeRun = runUpgrade(home);
 
   assert.equal(upgradeRun.status, 2);
   assert.match(upgradeRun.stderr, /\/elsewhere/);
-  assert.equal(existsSync(join(home, '.claude', 'rules', 'yapus', 'landmark', 'git.md')), false);
+  assert.equal(existsSync(join(home, '.claude', 'rules', 'yapus', 'ordo', 'git.md')), false);
 });
 
 test('upgrade refuses a hooks path injected through the environment', (t) => {
   const { home } = runInstall(t, 'machine');
 
-  rmSync(join(home, '.claude', 'rules', 'yapus', 'landmark', 'git.md'));
+  rmSync(join(home, '.claude', 'rules', 'yapus', 'ordo', 'git.md'));
 
   const upgradeRun = runUpgrade(home, {
     GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'core.hooksPath', GIT_CONFIG_VALUE_0: '/old',
@@ -244,5 +244,5 @@ test('upgrade refuses a hooks path injected through the environment', (t) => {
 
   assert.equal(upgradeRun.status, 2);
   assert.match(upgradeRun.stderr, /retire it first/);
-  assert.equal(existsSync(join(home, '.claude', 'rules', 'yapus', 'landmark', 'git.md')), false);
+  assert.equal(existsSync(join(home, '.claude', 'rules', 'yapus', 'ordo', 'git.md')), false);
 });

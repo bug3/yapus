@@ -40,23 +40,23 @@ test('installs every template, the seed and the gitignore into a fresh repositor
     plan: {
       mode: 'install',
       writes: [
-        { target: '.claude/yapus/landmark/eslint.config.ts', text: 'base lint' },
+        { target: '.claude/yapus/ordo/eslint.config.ts', text: 'base lint' },
         { target: '.github/workflows/yapus.yml', text: 'workflow' },
         { target: 'eslint.config.ts', text: 'wrapper lint' },
-        { target: '.claude/yapus/landmark/scopes.json', text: '[\n  "project"\n]\n' },
+        { target: '.claude/yapus/ordo/scopes.json', text: '[\n  "project"\n]\n' },
         { target: '.gitignore', text: 'node_modules/\n' },
-        { target: '.claude/yapus/landmark/language', text: 'typescript\n' },
+        { target: '.claude/yapus/ordo/language', text: 'typescript\n' },
       ],
       removals: [],
       created: [
-        '.claude/yapus/landmark/eslint.config.ts',
+        '.claude/yapus/ordo/eslint.config.ts',
         '.github/workflows/yapus.yml',
         'eslint.config.ts',
-        '.claude/yapus/landmark/scopes.json',
+        '.claude/yapus/ordo/scopes.json',
         '.gitignore',
-        '.claude/yapus/landmark/language',
+        '.claude/yapus/ordo/language',
         'package.json',
-        '.claude/yapus/landmark/version',
+        '.claude/yapus/ordo/version',
       ],
       changed: [],
     },
@@ -67,12 +67,12 @@ test('plans an install in a repository with no commits', (t) => {
   const repo = makeTempRepo(t);
 
   assert.deepEqual(targetsOf(getProjectPlan(repo, templates, makeGitEnv(t))), [
-    '.claude/yapus/landmark/eslint.config.ts',
+    '.claude/yapus/ordo/eslint.config.ts',
     '.github/workflows/yapus.yml',
     'eslint.config.ts',
-    '.claude/yapus/landmark/scopes.json',
+    '.claude/yapus/ordo/scopes.json',
     '.gitignore',
-    '.claude/yapus/landmark/language',
+    '.claude/yapus/ordo/language',
   ]);
 });
 
@@ -80,7 +80,7 @@ test('upgrades with the owned templates only when the stamp exists', (t) => {
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['.claude/yapus/landmark/version', '0.3.0'],
+    ['.claude/yapus/ordo/version', '0.3.0'],
     ['eslint.config.js', 'old'],
     ['package.json', '{}'],
   ]);
@@ -89,12 +89,12 @@ test('upgrades with the owned templates only when the stamp exists', (t) => {
     plan: {
       mode: 'upgrade',
       writes: [
-        { target: '.claude/yapus/landmark/eslint.config.ts', text: 'base lint' },
+        { target: '.claude/yapus/ordo/eslint.config.ts', text: 'base lint' },
         { target: '.github/workflows/yapus.yml', text: 'workflow' },
       ],
       removals: [],
-      created: ['.claude/yapus/landmark/eslint.config.ts', '.github/workflows/yapus.yml'],
-      changed: ['package.json', '.claude/yapus/landmark/version'],
+      created: ['.claude/yapus/ordo/eslint.config.ts', '.github/workflows/yapus.yml'],
+      changed: ['package.json', '.claude/yapus/ordo/version'],
     },
   });
 });
@@ -141,7 +141,7 @@ test('does not remove a lint file on an upgrade', (t) => {
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['.claude/yapus/landmark/version', '0.3.0'],
+    ['.claude/yapus/ordo/version', '0.3.0'],
     ['.eslintrc', 'old'],
   ]);
 
@@ -164,9 +164,9 @@ test('seeds scopes from tracked directories, sorted, without .github and __tests
   const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
 
   assert.deepEqual(
-    findWrite(planOrRefusals, '.claude/yapus/landmark/scopes.json'),
+    findWrite(planOrRefusals, '.claude/yapus/ordo/scopes.json'),
     {
-      target: '.claude/yapus/landmark/scopes.json',
+      target: '.claude/yapus/ordo/scopes.json',
       text: '[\n  "project",\n  "src",\n  "tests"\n]\n',
     },
   );
@@ -176,27 +176,27 @@ test('does not seed scopes on an upgrade', (t) => {
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['.claude/yapus/landmark/version', '0.3.0'],
+    ['.claude/yapus/ordo/version', '0.3.0'],
     ['src/a.ts', 'x'],
   ]);
 
   const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
 
-  assert.equal(targetsOf(planOrRefusals).includes('.claude/yapus/landmark/scopes.json'), false);
+  assert.equal(targetsOf(planOrRefusals).includes('.claude/yapus/ordo/scopes.json'), false);
 });
 
 test('keeps an existing scopes file', (t) => {
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['.claude/yapus/landmark/scopes.json', '["mine"]\n'],
+    ['.claude/yapus/ordo/scopes.json', '["mine"]\n'],
   ]);
 
   const planOrRefusals = getProjectPlan(repo, templates, makeGitEnv(t));
 
-  assert.equal(targetsOf(planOrRefusals).includes('.claude/yapus/landmark/scopes.json'), false);
+  assert.equal(targetsOf(planOrRefusals).includes('.claude/yapus/ordo/scopes.json'), false);
   assert.equal(
-    getPlan(planOrRefusals).changed.includes('.claude/yapus/landmark/scopes.json'),
+    getPlan(planOrRefusals).changed.includes('.claude/yapus/ordo/scopes.json'),
     false,
   );
 });
@@ -315,15 +315,15 @@ test('refuses a gitignored file inside an ignored directory on a touched path', 
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['.gitignore', '.claude/yapus/landmark/\n'],
+    ['.gitignore', '.claude/yapus/ordo/\n'],
   ]);
   writeFiles(repo, [
-    ['.claude/yapus/landmark/version', '0.0.1'],
+    ['.claude/yapus/ordo/version', '0.0.1'],
   ]);
 
   assert.deepEqual(getProjectPlan(repo, templates, makeGitEnv(t)), {
     refusals: [
-      '.claude/yapus/landmark/version has an uncommitted or untracked change; commit or stash it first',
+      '.claude/yapus/ordo/version has an uncommitted or untracked change; commit or stash it first',
     ],
   });
 });
@@ -390,12 +390,12 @@ test('splits created and changed by what exists now', (t) => {
     [getPlan(planOrRefusals).created, getPlan(planOrRefusals).changed],
     [
       [
-        '.claude/yapus/landmark/eslint.config.ts',
+        '.claude/yapus/ordo/eslint.config.ts',
         '.github/workflows/yapus.yml',
-        '.claude/yapus/landmark/scopes.json',
+        '.claude/yapus/ordo/scopes.json',
         '.gitignore',
-        '.claude/yapus/landmark/language',
-        '.claude/yapus/landmark/version',
+        '.claude/yapus/ordo/language',
+        '.claude/yapus/ordo/version',
       ],
       ['eslint.config.ts', 'tsconfig.json', 'package.json'],
     ],
@@ -406,7 +406,7 @@ test('throws when git status fails instead of reading it as no change', (t) => {
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['.claude/yapus/landmark/scopes.json', '[]\n'],
+    ['.claude/yapus/ordo/scopes.json', '[]\n'],
   ]);
   writeFileSync(join(repo, '.git', 'index'), 'not an index');
 
@@ -462,16 +462,16 @@ test('plans a Go install with the Go templates, the seed and the record, no giti
       writes: [
         { target: '.golangci.yml', text: 'golangci' },
         { target: '.github/workflows/yapus.yml', text: 'go workflow' },
-        { target: '.claude/yapus/landmark/scopes.json', text: '[\n  "project"\n]\n' },
-        { target: '.claude/yapus/landmark/language', text: 'go\n' },
+        { target: '.claude/yapus/ordo/scopes.json', text: '[\n  "project"\n]\n' },
+        { target: '.claude/yapus/ordo/language', text: 'go\n' },
       ],
       removals: [],
       created: [
         '.golangci.yml',
         '.github/workflows/yapus.yml',
-        '.claude/yapus/landmark/scopes.json',
-        '.claude/yapus/landmark/language',
-        '.claude/yapus/landmark/version',
+        '.claude/yapus/ordo/scopes.json',
+        '.claude/yapus/ordo/language',
+        '.claude/yapus/ordo/version',
       ],
       changed: [],
     },
@@ -518,7 +518,7 @@ test('plans a Go upgrade with the owned templates only, no record and no removal
   const repo = makeTempRepo(t);
 
   commitFiles(repo, [
-    ['.claude/yapus/landmark/version', '0.3.0'],
+    ['.claude/yapus/ordo/version', '0.3.0'],
     ['.golangci.yaml', 'old'],
   ]);
 
@@ -531,7 +531,7 @@ test('plans a Go upgrade with the owned templates only, no record and no removal
       ],
       removals: [],
       created: ['.golangci.yml', '.github/workflows/yapus.yml'],
-      changed: ['.claude/yapus/landmark/version'],
+      changed: ['.claude/yapus/ordo/version'],
     },
   });
 });

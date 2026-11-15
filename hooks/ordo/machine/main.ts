@@ -12,8 +12,8 @@ import { writeStamp } from './write-stamp.ts';
 const UNDO = [
   'To undo:',
   '  git config --global --unset core.hooksPath',
-  '  remove ~/.claude/yapus/landmark/',
-  '  remove ~/.claude/rules/yapus/landmark/',
+  '  remove ~/.claude/yapus/ordo/',
+  '  remove ~/.claude/rules/yapus/ordo/',
 ];
 
 function main(): void {

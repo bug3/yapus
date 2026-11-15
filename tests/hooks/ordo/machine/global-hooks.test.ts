@@ -48,9 +48,9 @@ test('refuses to create a branch for an agent', (t) => {
 test('refuses a scope the repository catalog does not list', (t) => {
   const setup = installAndInit(t);
 
-  mkdirSync(join(setup.repository, '.claude', 'yapus', 'landmark'), { recursive: true });
+  mkdirSync(join(setup.repository, '.claude', 'yapus', 'ordo'), { recursive: true });
   writeFileSync(
-    join(setup.repository, '.claude', 'yapus', 'landmark', 'scopes.json'),
+    join(setup.repository, '.claude', 'yapus', 'ordo', 'scopes.json'),
     '["src"]\n',
   );
 

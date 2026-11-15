@@ -8,7 +8,7 @@
   },
   "keep": [
     ".claude/**/*.md",
-    ".claude/yapus/landmark/scopes.json",
+    ".claude/yapus/ordo/scopes.json",
     ".github/workflows/**",
     "go.mod",
     "package.json",

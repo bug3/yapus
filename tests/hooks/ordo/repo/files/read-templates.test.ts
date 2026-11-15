@@ -21,8 +21,8 @@ test('lists exactly the five targets with their kinds', () => {
   assert.deepEqual(
     readTemplates().map(({ target, kind }) => ({ target, kind })),
     [
-      { target: '.claude/yapus/landmark/eslint.config.ts', kind: 'owned' },
-      { target: '.claude/yapus/landmark/tsconfig.json', kind: 'owned' },
+      { target: '.claude/yapus/ordo/eslint.config.ts', kind: 'owned' },
+      { target: '.claude/yapus/ordo/tsconfig.json', kind: 'owned' },
       { target: '.github/workflows/yapus.yml', kind: 'owned' },
       { target: 'eslint.config.ts', kind: 'wrapper' },
       { target: 'tsconfig.json', kind: 'wrapper' },
@@ -32,14 +32,14 @@ test('lists exactly the five targets with their kinds', () => {
 
 test('carries the bytes of the base ESLint config', () => {
   assert.equal(
-    findText('.claude/yapus/landmark/eslint.config.ts'),
+    findText('.claude/yapus/ordo/eslint.config.ts'),
     readFileSync(join(BASE, 'eslint.config.ts'), 'utf8'),
   );
 });
 
 test('carries the bytes of the base tsconfig', () => {
   assert.equal(
-    findText('.claude/yapus/landmark/tsconfig.json'),
+    findText('.claude/yapus/ordo/tsconfig.json'),
     readFileSync(join(BASE, 'tsconfig.json'), 'utf8'),
   );
 });
@@ -62,8 +62,8 @@ test('makes the wrapper tsconfig extend the base and name the build info file', 
   const text = findText('tsconfig.json') ?? '';
 
   assert.deepEqual(JSON.parse(text), {
-    extends: './.claude/yapus/landmark/tsconfig.json',
-    compilerOptions: { tsBuildInfoFile: 'node_modules/.cache/yapus/landmark/tsbuildinfo' },
+    extends: './.claude/yapus/ordo/tsconfig.json',
+    compilerOptions: { tsBuildInfoFile: 'node_modules/.cache/yapus/ordo/tsbuildinfo' },
   });
   assert.ok(text.endsWith('}\n'));
 });
@@ -73,7 +73,7 @@ test('makes the wrapper ESLint config import the base with its extension', () =>
     findText('eslint.config.ts'),
     [
       'import { defineConfig } from \'eslint/config\';',
-      'import base from \'./.claude/yapus/landmark/eslint.config.ts\';',
+      'import base from \'./.claude/yapus/ordo/eslint.config.ts\';',
       '',
       'export default defineConfig(base);',
       '',
