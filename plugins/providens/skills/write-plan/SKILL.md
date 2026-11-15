@@ -3,7 +3,7 @@ name: write-plan
 description: Write the plan of deep work before its first edit, in a form plan-reviewer can judge and builders can take slice by slice. Use when ORCH-1 rates a task deep or the person asks for a plan.
 ---
 
-- Write the plan to the file the person names, else to `~/.claude/yapus/plans/<topic>.md`, and name its path in every brief that rests on it.
+- Write the plan to `.yapus/plans/<topic>.md` in the project's root, and name its path in every brief that rests on it.
 - Give the plan these sections in this order: Goal, Facts, Decisions, Acceptance, Slices, Risks, Status.
 - Goal: the end state in one paragraph, then what the work leaves out and the limits it accepts.
 - Facts: each fact a slice rests on, with its source as `file:line`, a URL, or a command and its output; measure an outside tool's behavior instead of assuming it.
