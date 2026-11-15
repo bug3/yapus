@@ -40,7 +40,7 @@ test('refuses an existing stamp and writes nothing', (t) => {
   } });
 
   assert.equal(installRun.status, 2);
-  assert.match(installRun.stderr, /use \/landmark:upgrade/);
+  assert.match(installRun.stderr, /use \/ordo:upgrade/);
   assert.equal(existsSync(join(home, '.claude', 'rules')), false);
   assert.equal(existsSync(join(home, '.gitconfig')), false);
 });

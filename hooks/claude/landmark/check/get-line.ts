@@ -15,7 +15,7 @@ export function getLine(state: State): string | undefined {
   const ownHooksPath = getHooksPath(home);
 
   if (stamp === undefined) {
-    return 'yapus landmark is not installed on this machine; run /landmark:install.';
+    return 'yapus landmark is not installed on this machine; run /ordo:machine.';
   }
 
   if (globalHooksPath !== undefined && globalHooksPath !== ownHooksPath) {
@@ -30,11 +30,11 @@ export function getLine(state: State): string | undefined {
 
   if (stamp !== pluginVersion) {
     return `yapus landmark ${ stamp } is installed, the plugin is ${ pluginVersion };`
-      + ' run /landmark:upgrade.';
+      + ' run /ordo:upgrade.';
   }
 
   if (globalHooksPath === undefined) {
-    return 'yapus landmark: the global core.hooksPath is unset; run /landmark:upgrade.';
+    return 'yapus landmark: the global core.hooksPath is unset; run /ordo:upgrade.';
   }
 
   return undefined;

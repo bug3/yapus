@@ -56,7 +56,7 @@ test('refuses an upgrade whose request differs from the record', (t) => {
   ]);
 
   assert.deepEqual(getLanguage(root, 'typescript'), {
-    refusal: 'this repository is set up for go; run /landmark:project go',
+    refusal: 'this repository is set up for go; run /ordo:repo go',
   });
 });
 
@@ -69,7 +69,7 @@ test('refuses an upgrade with a request but no record when it is not TypeScript'
   ]);
 
   assert.deepEqual(getLanguage(root, 'go'), {
-    refusal: 'this repository is set up for typescript; run /landmark:project typescript',
+    refusal: 'this repository is set up for typescript; run /ordo:repo typescript',
   });
 });
 

@@ -189,7 +189,7 @@ test('upgrade that fails in the hooks copy keeps the old hooks and the old stamp
     readFileSync(join(home, '.claude', 'yapus', 'landmark', 'version'), 'utf8'),
     PLUGIN_VERSION,
   );
-  assert.match(checkRun.stdout, /run \/landmark:upgrade/);
+  assert.match(checkRun.stdout, /run \/ordo:upgrade/);
 });
 
 test('upgrade without a stamp is refused and writes nothing', (t) => {
@@ -201,7 +201,7 @@ test('upgrade without a stamp is refused and writes nothing', (t) => {
   const upgradeRun = runUpgrade(home);
 
   assert.equal(upgradeRun.status, 2);
-  assert.match(upgradeRun.stderr, /use \/landmark:install/);
+  assert.match(upgradeRun.stderr, /use \/ordo:machine/);
   assert.equal(existsSync(join(home, '.claude', 'rules', 'yapus', 'landmark', 'git.md')), false);
   assert.equal(existsSync(join(home, '.claude', 'yapus', 'landmark', 'version')), false);
 });

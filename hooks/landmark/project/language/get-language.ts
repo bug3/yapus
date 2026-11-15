@@ -33,7 +33,7 @@ export function getLanguage(root: string, requested: Language | undefined): Lang
 
   if (isConflict) {
     return {
-      refusal: `this repository is set up for ${ language }; run /landmark:project ${ language }`,
+      refusal: `this repository is set up for ${ language }; run /ordo:repo ${ language }`,
     };
   }
 

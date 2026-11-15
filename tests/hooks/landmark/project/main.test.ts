@@ -303,7 +303,7 @@ test('typescript refuses in a repository set up for go and writes nothing', (t) 
   assert.equal(run.stdout, '');
   assert.equal(run.stderr, [
     'yapus landmark project: refused, nothing written',
-    'this repository is set up for go; run /landmark:project go',
+    'this repository is set up for go; run /ordo:repo go',
     '',
   ].join('\n'));
   assert.equal(runGit(['status', '--porcelain'], repo), before);
