@@ -20,6 +20,27 @@ test('allows a roster launch, counts it and logs it', (t) => {
   assert.match(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /"allowed":true/);
 });
 
+test('allows an off-roster launch, counts it and logs it', (t) => {
+  const dataDir = makeTempDir(t);
+  const call = JSON.stringify({
+    ...FIELDS, tool_input: { ...FIELDS.tool_input, subagent_type: 'claude-code-guide' },
+  });
+
+  assert.deepEqual(getVerdict({ stdinText: call, dataDir, time: 't' }), { kind: 'allow' });
+  assert.equal(readFileSync(join(dataDir, 'launches', 's1.log'), 'utf8'), '+\n');
+  assert.match(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /"allowed":true/);
+});
+
+test('denies a general-purpose launch and logs it', (t) => {
+  const dataDir = makeTempDir(t);
+  const call = JSON.stringify({
+    ...FIELDS, tool_input: { ...FIELDS.tool_input, subagent_type: 'general-purpose' },
+  });
+
+  assert.equal(getVerdict({ stdinText: call, dataDir, time: 't' }).kind, 'deny');
+  assert.match(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /"allowed":false/);
+});
+
 test('logs the description and the keys the payload carries, and no absent key', (t) => {
   const dataDir = makeTempDir(t);
   const call = JSON.stringify({ ...FIELDS, tool_use_id: 'toolu_1', effort: { level: 'high' } });
