@@ -1,10 +1,17 @@
 import { isRecord } from '../../../shared/is-record.ts';
 import { isSafeId } from '../../../shared/is-safe-id.ts';
 
+// The subagent that called the Agent tool; agentType is undefined when the
+// payload names no type.
+export interface Caller {
+  readonly agentType: string | undefined;
+}
+
 export interface Launch {
   readonly sessionId: string;
-  // Claude Code sends agent_id only from inside a subagent.
-  readonly isNested: boolean;
+  // Claude Code sends agent_id only from inside a subagent; undefined for a
+  // launch from the main session.
+  readonly caller: Caller | undefined;
   readonly subagentType: string;
   readonly description: string;
   // The keys and settings the record keeps; undefined when the payload
@@ -38,6 +45,7 @@ export function parseLaunch(stdinText: string): Parsed {
   const {
     session_id: sessionId,
     agent_id: agentId,
+    agent_type: agentType,
     tool_name: toolName,
     tool_input: toolInput,
     tool_use_id: toolUseId,
@@ -65,7 +73,7 @@ export function parseLaunch(stdinText: string): Parsed {
 
   const launch: Launch = {
     sessionId,
-    isNested: agentId !== undefined,
+    caller: agentId === undefined ? undefined : { agentType: getString(agentType) },
     subagentType,
     description,
     toolUseId: getString(toolUseId),
