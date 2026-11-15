@@ -6,7 +6,7 @@
 
 ## ORCH-3. Let into this session only what a decision needs: a search hit, a ranged read, an output known to be short, or a narrow range when the decision turns on exact text; have a subagent run anything whose output length is unknown, and when a return falls short, read the range you need of the detail file it names or ask the same subagent a targeted question instead of reading the source here.
 
-## ORCH-4. Give subagents that run at the same time disjoint files and name those files in each brief; touch none of them until its task returns, run one providens:finisher at a time in a working tree, and run checks only after every writer has finished, with the check naming the state it verified.
+## ORCH-4. Give subagents that run at the same time disjoint files and name those files in each brief; touch none of them until its task returns, launch no other writer into a working tree while a providens:finisher runs in it, and run checks only after every writer has finished, with the check naming the state it verified.
 
 ## ORCH-5. Write each brief self-contained: the goal, the constraints, the acceptance criteria and the oracle command, or for a finisher the plan file, the slice and the prompt log's path when you have it; never forward the conversation's history, and leave the return's shape to the agent's definition and the return cap.
 
