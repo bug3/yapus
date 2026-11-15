@@ -33,7 +33,7 @@ export function formatReport(
   const created = plan.created.filter((path) => written.includes(path));
 
   return [
-    `yapus landmark project ${ plan.mode }: wrote`,
+    `yapus ordo repo ${ plan.mode }: wrote`,
     ...indent(written),
     ...plan.removals.length > 0 ? ['removed', ...indent(plan.removals)] : [],
     ...merge === undefined ? [] : getKeysLine(merge),

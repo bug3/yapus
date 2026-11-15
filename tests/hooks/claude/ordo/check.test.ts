@@ -21,7 +21,7 @@ test('names /ordo:machine when there is no stamp', (t) => {
 
   assert.equal(
     getContext(stdout),
-    'yapus landmark is not installed on this machine; run /ordo:machine.',
+    'yapus ordo is not installed on this machine; run /ordo:machine.',
   );
 });
 
@@ -30,7 +30,7 @@ test('names /ordo:upgrade when the stamp differs from the plugin version', (t) =
 
   assert.equal(
     getContext(stdout),
-    `yapus landmark 0.0.1 is installed, the plugin is ${ PLUGIN_VERSION }; run /ordo:upgrade.`,
+    `yapus ordo 0.0.1 is installed, the plugin is ${ PLUGIN_VERSION }; run /ordo:upgrade.`,
   );
 });
 
@@ -39,7 +39,7 @@ test('names /ordo:upgrade when the global hooks path is unset', (t) => {
 
   assert.equal(
     getContext(stdout),
-    'yapus landmark: the global core.hooksPath is unset; run /ordo:upgrade.',
+    'yapus ordo: the global core.hooksPath is unset; run /ordo:upgrade.',
   );
 });
 
@@ -48,7 +48,7 @@ test('names the conflict without a command when the global hooks path is foreign
 
   assert.equal(
     getContext(stdout),
-    'yapus landmark: the global core.hooksPath is /elsewhere/hooks, not its own; resolve it by hand.',
+    'yapus ordo: the global core.hooksPath is /elsewhere/hooks, not its own; resolve it by hand.',
   );
 });
 
@@ -62,7 +62,7 @@ test('names the conflict without a command when the environment injects a hooks 
 
   assert.equal(
     getContext(stdout),
-    'yapus landmark: GIT_CONFIG_* sets core.hooksPath in this session; retire that injection by hand.',
+    'yapus ordo: GIT_CONFIG_* sets core.hooksPath in this session; retire that injection by hand.',
   );
 });
 
@@ -81,7 +81,7 @@ test('exits 2 with a one-line error on stderr when the plugin manifest is unread
 
   assert.equal(status, 2);
   assert.equal(stdout, '');
-  assert.match(stderr, /^yapus landmark check: crashed: [^\n]*; fix the hook\n$/);
+  assert.match(stderr, /^yapus ordo check: crashed: [^\n]*; fix the hook\n$/);
 });
 
 // Runs the registered command as the harness would, with a copy of the plugin

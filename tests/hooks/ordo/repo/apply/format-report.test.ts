@@ -17,7 +17,7 @@ test('prints the golangci-lint install, lint, test and commit steps for go', () 
   const lines = formatReport(PLAN, ['a.txt'], { language: 'go', merge: undefined });
 
   assert.deepEqual(lines, [
-    'yapus landmark project install: wrote',
+    'yapus ordo repo install: wrote',
     '  a.txt',
     'Next:',
     '  curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b "$(go env GOPATH)/bin" v2.15.0',
@@ -33,7 +33,7 @@ test('prints the npm steps and the keys line for typescript with a merge', () =>
   const lines = formatReport(PLAN, ['a.txt'], { language: 'typescript', merge: MERGE });
 
   assert.deepEqual(lines, [
-    'yapus landmark project install: wrote',
+    'yapus ordo repo install: wrote',
     '  a.txt',
     'package.json: set type',
     'Next:',

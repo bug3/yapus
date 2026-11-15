@@ -13,7 +13,7 @@ function main(): void {
   const isUnknownLanguage = requested !== undefined && language === undefined;
 
   if (!hasBoth || extra.length > 0 || isUnknownLanguage) {
-    stop(2, ['usage: landmark/project <plugin root> <project dir> [typescript|go]']);
+    stop(2, ['usage: ordo/repo <plugin root> <project dir> [typescript|go]']);
   }
 
   const request = { env: process.env, requested: language };

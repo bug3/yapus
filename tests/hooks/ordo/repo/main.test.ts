@@ -13,7 +13,7 @@ import { readTemplates } from '../../../../hooks/ordo/repo/files/read-templates.
 import { commitFiles } from './plan/commit-files.ts';
 import { copyPlugin, PLUGIN, runProject } from './run-project.ts';
 
-const USAGE = 'usage: landmark/project <plugin root> <project dir> [typescript|go]';
+const USAGE = 'usage: ordo/repo <plugin root> <project dir> [typescript|go]';
 const OWNED = '.claude/yapus/landmark/eslint.config.ts';
 const WRAPPER = 'eslint.config.ts';
 const OWNED_TSCONFIG = '.claude/yapus/landmark/tsconfig.json';
@@ -57,7 +57,7 @@ test('installs into a fresh repository and prints the approved lines', (t) => {
 
   assert.equal(run.status, 0, run.stderr);
   assert.equal(run.stdout, [
-    'yapus landmark project install: wrote',
+    'yapus ordo repo install: wrote',
     '  .claude/yapus/landmark/eslint.config.ts',
     '  .claude/yapus/landmark/tsconfig.json',
     '  .github/workflows/yapus.yml',
@@ -116,7 +116,7 @@ test('upgrade rewrites owned files and the stamp and keeps wrapper files', (t) =
   const run = runProject(root, repo);
 
   assert.equal(run.status, 0, run.stderr);
-  assert.match(run.stdout, /^yapus landmark project upgrade: wrote\n/);
+  assert.match(run.stdout, /^yapus ordo repo upgrade: wrote\n/);
   assert.equal(readRepoFile(repo, OWNED), readBase('eslint.config.ts'));
   assert.equal(readRepoFile(repo, OWNED_TSCONFIG), readBase('tsconfig.json'));
   assert.equal(readRepoFile(repo, '.claude/yapus/landmark/version'), readVersion());
@@ -157,7 +157,7 @@ test('refuses on an uncommitted package.json and writes nothing', (t) => {
   assert.equal(run.status, 2);
   assert.equal(run.stdout, '');
   assert.equal(run.stderr, [
-    'yapus landmark project: refused, nothing written',
+    'yapus ordo repo: refused, nothing written',
     'package.json has an uncommitted or untracked change; commit or stash it first',
     '',
   ].join('\n'));
@@ -173,7 +173,7 @@ test('crashes on an unparsable package.json and writes nothing', (t) => {
 
   assert.equal(run.status, 2);
   assert.equal(run.stdout, '');
-  assert.match(run.stderr, /^yapus landmark project: crashed: [^\n]*package\.json[^\n]*\n$/);
+  assert.match(run.stderr, /^yapus ordo repo: crashed: [^\n]*package\.json[^\n]*\n$/);
   assert.equal(runGit(['status', '--porcelain'], repo), '');
   assert.ok(!existsSync(join(repo, '.claude', 'yapus', 'landmark')));
 });
@@ -214,7 +214,7 @@ test('go installs into a Go repository and prints the approved lines', (t) => {
 
   assert.equal(run.status, 0, run.stderr);
   assert.equal(run.stdout, [
-    'yapus landmark project install: wrote',
+    'yapus ordo repo install: wrote',
     '  .golangci.yml',
     '  .github/workflows/yapus.yml',
     '  .claude/yapus/landmark/scopes.json',
@@ -260,7 +260,7 @@ test('upgrade follows the recorded Go language and keeps the record and scopes',
   const run = runProject(root, repo);
 
   assert.equal(run.status, 0, run.stderr);
-  assert.match(run.stdout, /^yapus landmark project upgrade: wrote\n/);
+  assert.match(run.stdout, /^yapus ordo repo upgrade: wrote\n/);
   assert.equal(readRepoFile(repo, '.golangci.yml'), readGoTemplate('.golangci.yml'));
   assert.equal(readRepoFile(repo, GO_WORKFLOW), readGoTemplate(GO_WORKFLOW));
   assert.equal(readRepoFile(repo, '.claude/yapus/landmark/version'), readVersion());
@@ -281,7 +281,7 @@ test('go refuses without a root go.mod and writes nothing', (t) => {
   assert.equal(run.status, 2);
   assert.equal(run.stdout, '');
   assert.equal(run.stderr, [
-    'yapus landmark project: refused, nothing written',
+    'yapus ordo repo: refused, nothing written',
     'go.mod is not at the root; run go mod init first',
     '',
   ].join('\n'));
@@ -302,7 +302,7 @@ test('typescript refuses in a repository set up for go and writes nothing', (t) 
   assert.equal(run.status, 2);
   assert.equal(run.stdout, '');
   assert.equal(run.stderr, [
-    'yapus landmark project: refused, nothing written',
+    'yapus ordo repo: refused, nothing written',
     'this repository is set up for go; run /ordo:repo go',
     '',
   ].join('\n'));
@@ -337,7 +337,7 @@ test('refuses an upgrade whose language record is unknown and writes nothing', (
   assert.equal(run.status, 2);
   assert.equal(run.stdout, '');
   assert.equal(run.stderr, [
-    'yapus landmark project: refused, nothing written',
+    'yapus ordo repo: refused, nothing written',
     '.claude/yapus/landmark/language holds "rust", not a language; set it to typescript or go',
     '',
   ].join('\n'));

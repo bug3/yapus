@@ -12,6 +12,6 @@ export function runProject(
   try {
     return applyProject(pluginRoot, projectDir, request);
   } catch (error) {
-    return { status: 2, lines: [`yapus landmark project: crashed: ${ getFirstLine(error) }`] };
+    return { status: 2, lines: [`yapus ordo repo: crashed: ${ getFirstLine(error) }`] };
   }
 }

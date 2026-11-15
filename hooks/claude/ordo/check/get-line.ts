@@ -15,26 +15,26 @@ export function getLine(state: State): string | undefined {
   const ownHooksPath = getHooksPath(home);
 
   if (stamp === undefined) {
-    return 'yapus landmark is not installed on this machine; run /ordo:machine.';
+    return 'yapus ordo is not installed on this machine; run /ordo:machine.';
   }
 
   if (globalHooksPath !== undefined && globalHooksPath !== ownHooksPath) {
-    return `yapus landmark: the global core.hooksPath is ${ globalHooksPath }, not its own;`
+    return `yapus ordo: the global core.hooksPath is ${ globalHooksPath }, not its own;`
       + ' resolve it by hand.';
   }
 
   if (hasInjectedHooksPath(env)) {
-    return 'yapus landmark: GIT_CONFIG_* sets core.hooksPath in this session;'
+    return 'yapus ordo: GIT_CONFIG_* sets core.hooksPath in this session;'
       + ' retire that injection by hand.';
   }
 
   if (stamp !== pluginVersion) {
-    return `yapus landmark ${ stamp } is installed, the plugin is ${ pluginVersion };`
+    return `yapus ordo ${ stamp } is installed, the plugin is ${ pluginVersion };`
       + ' run /ordo:upgrade.';
   }
 
   if (globalHooksPath === undefined) {
-    return 'yapus landmark: the global core.hooksPath is unset; run /ordo:upgrade.';
+    return 'yapus ordo: the global core.hooksPath is unset; run /ordo:upgrade.';
   }
 
   return undefined;
