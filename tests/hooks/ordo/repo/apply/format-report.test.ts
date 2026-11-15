@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { formatReport } from '../../../../../hooks/landmark/repo/apply/format-report.ts';
-import type { PackageMerge } from '../../../../../hooks/landmark/repo/package/merge-package.ts';
-import type { ProjectPlan } from '../../../../../hooks/landmark/repo/plan/get-project-plan.ts';
+import { formatReport } from '../../../../../hooks/ordo/repo/apply/format-report.ts';
+import type { PackageMerge } from '../../../../../hooks/ordo/repo/package/merge-package.ts';
+import type { ProjectPlan } from '../../../../../hooks/ordo/repo/plan/get-project-plan.ts';
 
 const PLAN: ProjectPlan = {
   mode: 'install',

@@ -3,7 +3,7 @@ import { dirname, join } from 'node:path';
 
 // The hook groups that import nothing from each other; both may import
 // hooks/shared/.
-const GROUPS: readonly string[] = ['hooks/claude/', 'hooks/git/', 'hooks/landmark/'];
+const GROUPS: readonly string[] = ['hooks/claude/', 'hooks/git/', 'hooks/ordo/'];
 // `from '...'`, a side-effect `import '...'` and a dynamic `import('...')`.
 const RELATIVE_IMPORT = /(?:from|import)\s*\(?\s*'(\.{1,2}\/[^']+)'/g;
 

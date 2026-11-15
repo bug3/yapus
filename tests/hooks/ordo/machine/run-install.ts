@@ -15,7 +15,7 @@ interface InstallOptions {
 const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'ordo');
 const SUBPROCESS_TIMEOUT_MS = 20000;
 
-// Runs the landmark install in mode from a copy of the plugin with its links
+// Runs the program ordo/machine in mode from a copy of the plugin with its links
 // followed, as an installed plugin is, and a temporary HOME that arrange may
 // fill first and arrangePlugin may change the plugin copy. The environment has
 // no GIT_* variable of the caller, the global git config is the file
@@ -53,7 +53,7 @@ export function spawnInstall(
 ): SpawnSyncReturns<string> {
   return spawnSync(
     'bash',
-    [join(root, 'runtime', 'run.sh'), 'landmark/machine', root, mode],
+    [join(root, 'runtime', 'run.sh'), 'ordo/machine', root, mode],
     {
       encoding: 'utf8',
       env: makeEnv(home, extraEnv),

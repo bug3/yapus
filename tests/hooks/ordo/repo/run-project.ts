@@ -28,7 +28,7 @@ export function copyPlugin(t: TestContext): string {
   return root;
 }
 
-// The program landmark/repo run through the plugin copy's run.sh on repo,
+// The program ordo/repo run through the plugin copy's run.sh on repo,
 // with the language argument when one is given.
 export function runProject(
   root: string,
@@ -39,7 +39,7 @@ export function runProject(
     'bash',
     [
       join(root, 'runtime', 'run.sh'),
-      'landmark/repo',
+      'ordo/repo',
       root,
       repo,
       ...language === undefined ? [] : [language],

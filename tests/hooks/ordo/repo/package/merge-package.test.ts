@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mergePackage } from '../../../../../hooks/landmark/repo/package/merge-package.ts';
+import { mergePackage } from '../../../../../hooks/ordo/repo/package/merge-package.ts';
 
 const CHECK = 'tsc -p . && eslint --max-warnings 0 --flag unstable_native_nodejs_ts_config .';
 const YAPUS_TEST =
