@@ -9,7 +9,7 @@ description: Write the plan of deep work before its first edit, in a form plan-r
 - Facts: each fact a slice rests on, with its source as `file:line`, a URL, or a command and its output; measure an outside tool's behavior instead of assuming it.
 - Decisions: each settled choice with its reason and who took it, and each open one with a recommendation, marked for the person when it is theirs.
 - Acceptance: criteria numbered `A1` to `An`, each observable as pass or fail, and the oracle command that checks them.
-- Slices: a table of id (`S1` to `Sn`), intent, the files the slice may change, the slices it needs and its oracle; size a slice like one commit, and fix each interface two slices share before either starts.
+- Slices: a table of id (`S1` to `Sn`), intent, the files the slice may change, the slices it needs and its oracle; give a slice one intent, as a commit has, and fix each interface two slices share before either starts.
 - Risks: for each step that touches authentication, data migration, a public interface, concurrency or a destructive operation, who approves it, how it is verified independently and how it is undone.
 - Status: each slice as open, done with its commit, or blocked with the reason, then the next step.
 - Before the first edit, launch `providens:plan-reviewer` once on the plan file and its acceptance criteria when the plan touches more than one module or a public interface, and fold each defect into the section it names.
