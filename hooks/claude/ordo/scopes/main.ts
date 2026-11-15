@@ -3,7 +3,7 @@ import { formatMessage } from '../../../shared/format-message.ts';
 import { getFirstLine } from '../../../shared/get-first-line.ts';
 import { getLine } from './get-line.ts';
 
-const PROGRAM = 'landmark scopes';
+const PROGRAM = 'ordo scopes';
 
 // A line to report is on stdout and exit 0; a crash is a line on stderr and
 // exit 2, which at SessionStart shows the person the error and blocks nothing.

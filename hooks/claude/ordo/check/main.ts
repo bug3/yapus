@@ -6,7 +6,7 @@ import { readGlobalHooksPath } from '../../../shared/hooks-path/read-global-hook
 import { readPluginVersion } from '../../../shared/read-plugin-version.ts';
 import { getLine } from './get-line.ts';
 
-const PROGRAM = 'landmark check';
+const PROGRAM = 'ordo check';
 
 // A state to report is a line on stdout and exit 0; a crash is a line on stderr
 // and exit 2, which at SessionStart shows the person the error and blocks nothing.

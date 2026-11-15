@@ -69,7 +69,7 @@ export function applyProject(
   if ('refusal' in resolved) {
     return {
       status: 2,
-      lines: ['yapus landmark project: refused, nothing written', resolved.refusal],
+      lines: ['yapus ordo repo: refused, nothing written', resolved.refusal],
     };
   }
 
@@ -79,7 +79,7 @@ export function applyProject(
   if ('refusals' in planned) {
     return {
       status: 2,
-      lines: ['yapus landmark project: refused, nothing written', ...planned.refusals],
+      lines: ['yapus ordo repo: refused, nothing written', ...planned.refusals],
     };
   }
 

@@ -74,7 +74,7 @@ test('upgrade on an unchanged plugin leaves every installed file byte-identical'
   const { home, before, upgradeRun } = installThenUpgrade(t);
 
   assert.equal(upgradeRun.status, 0, upgradeRun.stderr);
-  assert.match(upgradeRun.stdout, /yapus landmark upgrade: wrote/);
+  assert.match(upgradeRun.stdout, /yapus ordo upgrade: wrote/);
   assert.equal(snapshot(home), before);
 });
 

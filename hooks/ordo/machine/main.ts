@@ -24,7 +24,7 @@ function main(): void {
   const isMode = mode === 'machine' || mode === 'upgrade';
 
   if (root === undefined || !isMode || extra.length > 0 || !hasHome) {
-    stop(2, ['usage: landmark/install <plugin root> machine|upgrade, with HOME set']);
+    stop(2, ['usage: ordo/machine <plugin root> machine|upgrade, with HOME set']);
   }
 
   try {
@@ -32,7 +32,7 @@ function main(): void {
     const conflicts = getConflicts(mode, { home, env: process.env, globalHooksPath: hooksPath });
 
     if (conflicts.length > 0) {
-      stop(2, [`yapus landmark ${ mode }: refused, nothing written`, ...conflicts]);
+      stop(2, [`yapus ordo ${ mode }: refused, nothing written`, ...conflicts]);
     }
 
     const plugin = readPlugin(root);
@@ -45,9 +45,9 @@ function main(): void {
 
     const written = [...rules, ...hooks, writeStamp(home, plugin.version)];
 
-    stop(0, [`yapus landmark ${ mode }: wrote`, ...written, ...UNDO]);
+    stop(0, [`yapus ordo ${ mode }: wrote`, ...written, ...UNDO]);
   } catch (error) {
-    stop(2, [`yapus landmark ${ mode }: crashed: ${ getFirstLine(error) }`]);
+    stop(2, [`yapus ordo ${ mode }: crashed: ${ getFirstLine(error) }`]);
   }
 }
 
