@@ -65,6 +65,35 @@ test('denies a nested launch, logs why and leaves the budget alone', (t) => {
   assert.match(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /"allowed":false/);
 });
 
+test('logs the caller id of a refused nested launch', (t) => {
+  const dataDir = makeTempDir(t);
+
+  getVerdict({ stdinText: JSON.stringify({ ...FIELDS, agent_id: 'a1' }), dataDir, time: 't' });
+
+  assert.match(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /"allowed":false.*"callerId":"a1"/);
+});
+
+test('logs the caller id of an allowed nested launch', (t) => {
+  const dataDir = makeTempDir(t);
+
+  writeFileSync(join(dataDir, 'mode'), 'off');
+  getVerdict({ stdinText: JSON.stringify({ ...FIELDS, agent_id: 'a1' }), dataDir, time: 't' });
+
+  assert.match(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /"allowed":true.*"callerId":"a1"/);
+});
+
+test('logs a launch from the main session without a caller id', (t) => {
+  const dataDir = makeTempDir(t);
+
+  getVerdict({ stdinText: CALL, dataDir, time: 't' });
+
+  assert.equal(
+    readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'),
+    '{"time":"t","hook":"launch","sessionId":"s1","subject":"providens:reader","allowed":true,'
+      + '"reason":"","description":"[deep] Find x"}\n',
+  );
+});
+
 test('denies when the plugin data directory is unset or empty', () => {
   const verdicts = [
     getVerdict({ stdinText: CALL, dataDir: undefined, time: 't' }),

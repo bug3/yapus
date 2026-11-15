@@ -46,14 +46,21 @@ test('names the calling subagent of a nested launch by its type', () => {
   }));
 
   assert.ok(parsed.kind === 'launch');
-  assert.deepEqual(parsed.launch.caller, { agentType: 'providens:lead' });
+  assert.deepEqual(parsed.launch.caller, { agentId: 'a1', agentType: 'providens:lead' });
 });
 
 test('reads a launch with agent_id and no agent_type as nested with the type unknown', () => {
   const parsed = parseLaunch(JSON.stringify({ ...MAIN_CALL, agent_id: 'a1' }));
 
   assert.ok(parsed.kind === 'launch');
-  assert.deepEqual(parsed.launch.caller, { agentType: undefined });
+  assert.deepEqual(parsed.launch.caller, { agentId: 'a1', agentType: undefined });
+});
+
+test('keeps the agent id of the calling subagent', () => {
+  const parsed = parseLaunch(JSON.stringify({ ...MAIN_CALL, agent_id: 'a2' }));
+
+  assert.ok(parsed.kind === 'launch');
+  assert.equal(parsed.launch.caller?.agentId, 'a2');
 });
 
 test('reads a launch without subagent_type as general-purpose', () => {

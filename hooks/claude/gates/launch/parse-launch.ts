@@ -4,6 +4,7 @@ import { isSafeId } from '../../../shared/is-safe-id.ts';
 // The subagent that called the Agent tool; agentType is undefined when the
 // payload names no type.
 export interface Caller {
+  readonly agentId: string;
   readonly agentType: string | undefined;
 }
 
@@ -73,7 +74,7 @@ export function parseLaunch(stdinText: string): Parsed {
 
   const launch: Launch = {
     sessionId,
-    caller: agentId === undefined ? undefined : { agentType: getString(agentType) },
+    caller: agentId === undefined ? undefined : getCaller(agentId, agentType),
     subagentType,
     description,
     toolUseId: getString(toolUseId),
@@ -83,6 +84,12 @@ export function parseLaunch(stdinText: string): Parsed {
   };
 
   return { kind: 'launch', launch };
+}
+
+// A present agent_id marks the launch nested whatever its type, so a malformed
+// id cannot pass as the main session; the record keeps its text.
+function getCaller(agentId: unknown, agentType: unknown): Caller {
+  return { agentId: String(agentId), agentType: getString(agentType) };
 }
 
 function getString(value: unknown): string | undefined {

@@ -19,6 +19,7 @@ const LAUNCH: LaunchRow = {
   promptId: undefined,
   model: undefined,
   effort: undefined,
+  callerId: undefined,
 };
 const RETURN: ReturnRow = {
   time: 't',

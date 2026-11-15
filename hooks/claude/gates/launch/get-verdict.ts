@@ -44,6 +44,7 @@ export function getVerdict(input: Input): Verdict {
     promptId: launch.promptId,
     model: launch.model,
     effort: launch.effort,
+    callerId: launch.caller?.agentId,
   });
 
   return reason === undefined ? { kind: 'allow' } : { kind: 'deny', detail: reason };
