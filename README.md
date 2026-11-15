@@ -1,14 +1,23 @@
 # yapus
 
-[![CI](https://github.com/bug3/yapus/actions/workflows/test.yml/badge.svg)](https://github.com/bug3/yapus/actions/workflows/test.yml)
 [![license](https://img.shields.io/github/license/bug3/yapus)](LICENSE)
 
 > If an AI writes the code, what keeps it sound?
 
-**The foundation for building software with AI.** yapus is the core of how an AI coding agent is run: the rules that keep the work sound and maintainable, and the mechanisms that hold them.
+**Standards and orchestration for coding with an AI agent.** yapus is a set of Claude Code plugins for keeping AI-written software sound and maintainable: standards for the work, an orchestrator that divides it among subagents, and the mechanisms that hold both.
 
-- **delegator** divides a session's work among a fixed roster of subagents, limits how many it launches and caps what returns to the main session
-- **ordo** installs the yapus standards and the git hooks once per machine, and adds lint, CI and commit checks to a repository with one command
+- **delegator** is the orchestrator: a fixed roster of subagents, a limit on launches and a cap on what returns to the main session
+- **ordo** installs the standards and the git hooks once per machine, and adds lint, CI and commit checks to a repository with one command
+
+## Features
+
+- **Quality held by checks.** Standards are written files; a rule a program can check is held by a hook or a test, and a pass-or-fail command, not a sentence, decides that a change is done.
+- **Independent review.** A plan and a finished diff are judged by a subagent that never saw the conversation that produced them.
+- **Context management.** The main session keeps what a decision needs; subagents do the reading, running and editing, each return is capped, and a standard other than the principles loads only when a file of its kind is touched.
+- **Parallel work.** Independent tasks launch together, each subagent on its own files.
+- **Work sized to the task.** A small change runs with no plan; a large one gets a written plan, built and committed one part at a time.
+- **Survives compaction.** The prompts the person typed are logged and given back to the session after a compaction, with the paths of the newest plans.
+- **Cost control.** Each subagent runs on the model its definition names, a smaller one for running commands, reading and web research than for editing, and a session has a launch budget.
 
 ## Quick Start
 
@@ -48,7 +57,7 @@ At the start of a session in a set-up repository, ordo lists the repository's co
 
 ## delegator
 
-The main session is the shared workspace of the person and the agent, and it keeps only what the next decision needs. delegator puts the orchestration rules [ORCH-1 to ORCH-7](hooks/claude/delegator/policy/policy.md) at the start of every session, and again after a resume, a clear or a compaction: they hand reading, running, judging and edits to subagents, launch independent ones together and let into the main session only what a decision needs. Hooks, the programs Claude Code runs at fixed points of a session, hold what a program can check: the launch check judges each subagent launch before it starts, and the return check caps what each subagent sends back. `claude plugin uninstall delegator@yapus` removes the plugin.
+The main session is the shared workspace of the person and the agent, and it keeps only what the next decision needs. delegator puts the orchestration rules [ORCH-1 to ORCH-7](hooks/claude/delegator/policy/policy.md) at the start of every session, and again after a resume, a clear or a compaction: they hand reading, running, judging and edits to subagents, launch independent ones together and let into the main session only what a decision needs. Hooks, the programs Claude Code runs at fixed points of a session, hold what a program can check: the launch check judges each subagent launch before it starts, and the return check caps what each subagent sends back. delegator also checks the form of `gh pr create` and `gh issue create` calls. `claude plugin uninstall delegator@yapus` removes the plugin.
 
 ### Depths
 
@@ -84,9 +93,9 @@ Every subagent receives a return contract at its start: the return opens with DO
 
 Deep work is a task rated `deep`: it is planned in writing before the first edit and carried out in slices. A slice is one step of the plan with one intent, its own files, acceptance criteria and oracle, committed on its own. The skill `/delegator:write-plan` runs the flow.
 
-1. Plan: `delegator:plan-writer` writes `.yapus/plans/<topic>.md` with the sections Goal, Facts, Decisions, Acceptance, Slices, Risks and Status, and a subagent measures each fact the plan marks unmeasured.
+1. Plan: `delegator:plan-writer` writes `.yapus/plans/<topic>.md`, and a subagent measures each fact the plan marks unmeasured.
 2. Plan review: when the plan touches more than one module or a public interface, `delegator:plan-reviewer` judges it once before the first edit, and the plan-writer folds each defect in.
-3. The person's decisions: the agent asks each open decision as one question with its recommendation first, and records the answer under Decisions.
+3. The person's decisions: the agent asks each open decision as one question with its recommendation first, and records the answer in the plan.
 4. Slices: one `delegator:finisher` per slice edits only the slice's files and runs its oracle until it passes or one failure survives two repairs.
 5. Diff review: the finisher writes the slice's diff to a file and launches `delegator:diff-reviewer`, the one nested launch the launch check admits, then repairs what a REWORK names.
 6. Commit: the finisher commits the slice alone, never pushes, and returns the commit, the oracle's exit code, the verdict and the path of the detail file `.yapus/plans/<topic>/<slice id>.md`, which holds the rest.
@@ -99,32 +108,15 @@ The launch budget is the number of subagent launches one session may make. deleg
 
 The budget is 41 by default, above the 37 launches of the busiest measured session. `/delegator:agent-limit <n>` sets another whole number for the session, or with `--global` for every session.
 
-delegator keeps these limits, its mode and its record in the plugin's data directory, `CLAUDE_PLUGIN_DATA`, under `~/.claude/plugins/data/`.
-
 The launch check also refuses a `quick` launch and a finisher outside `deep`. After a refusal the agent tells the person what was refused and why, and does not split the work into smaller launches.
 
-### Launch Record
-
-delegator writes one JSON line per event to `decisions.jsonl` in the plugin's data directory; the record never leaves the machine. It records:
-
-- every launch verdict
-- every launch's end: duration, tokens, tool calls, whether the subagent ran out of turns
-- every resume of a subagent
-- every return verdict, with the transcript's turns, tokens, tool calls and wall time
-
-`/delegator:agent-report` prints the record's counts per agent and the reading rules with their state: act, wait or ok.
+delegator records every launch and return verdict in a file that never leaves the machine; `/delegator:agent-report` prints the record's counts per agent.
 
 ### Prompt Log
 
 The prompt log keeps what the person typed, so a compaction does not lose it. delegator writes each prompt, with its time, as one JSON line to `.yapus/prompts/<session id>.jsonl` under the directory the session opened in. Right after a compaction it gives the session those prompts back, the newest that fit in 6,000 characters, with the paths of the five newest plans in `.yapus/plans/`.
 
-It creates the prompts directory readable by its owner alone and with a `.gitignore` that keeps it out of git; a person who wants their prompts in git changes that file. A prompt that cannot be written is not kept and is never blocked.
-
-### `gh` Check
-
-delegator checks the form of `gh pr create` and `gh issue create` calls: the title, the labels, the body headings and the footer by the catalogs of the repository the call runs in (`hooks/shared/catalogs/`), and only the body headings in a repository without them.
-
-The gh check knows the options of gh 2.102 and refuses an option it does not know.
+It creates the prompts directory with a `.gitignore` that keeps it out of git; a person who wants their prompts in git changes that file.
 
 ### Commands
 
@@ -136,7 +128,7 @@ Off means no rules at the session's start, no check on its launches, and no prom
 | `/delegator:switch on` | delegator back on |
 | `/delegator:status` | the mode and the limit in force, the session's launches |
 | `/delegator:agent-limit <n>` | the launch budget for the session, or with `--global` for every session |
-| `/delegator:agent-report` | the record's counts per agent, the reading rules with their state |
+| `/delegator:agent-report` | the record's counts per agent |
 | `/delegator:write-plan` | the deep work flow, from the plan to the slices |
 
 ## ordo
@@ -171,7 +163,7 @@ During a session, ordo refuses a Write or Edit that puts a Unicode dash other th
 
 ### Git Hooks
 
-The commit hook refuses a subject that is not `type(scope): verb ...` with each word listed in a catalog, or that is longer than 72 characters. The type and verb catalogs ship with the hooks (`hooks/shared/catalogs/`); the scopes come from the repository's `.claude/yapus/ordo/scopes.json`, and a repository without one accepts any scope of the form. A `!` before the colon marks a breaking change. The subjects git writes for a merge or a revert pass; an autosquash prefix such as `fixup! ` is set aside before the form check, and the 72-character limit still counts the whole line.
+The commit hook refuses a subject that is not `type(scope): verb ...` with each word listed in a catalog, or that is longer than 72 characters. The type and verb catalogs ship with the hooks (`hooks/shared/catalogs/`); the scopes come from the repository's `.claude/yapus/ordo/scopes.json`, and a repository without one accepts any scope of the form. A `!` before the colon marks a breaking change.
 
 Two subjects from this repository's history that pass:
 
@@ -188,7 +180,7 @@ yapus subject: "update the readme" is not in the form "type(scope): verb ...", s
 
 The repository's own `commit-msg` hook, which the global hooks path hides, runs after the yapus check, and its refusal stops the commit too.
 
-When an agent runs git (`CLAUDECODE=1`), a commit subject that passes gets the trailers `Assisted-by: Claude Code` and `Co-authored-by: yapus <noreply@yapus.dev>`, and git refuses a new branch not named `<type>/<slug>`: the type from `hooks/shared/catalogs/types.json`, the slug of lowercase letters, digits and hyphens, at most 50 characters. A branch that already exists, a default branch or a branch a remote already has passes.
+When an agent runs git (`CLAUDECODE=1`), a commit subject that passes gets the trailers `Assisted-by: Claude Code` and `Co-authored-by: yapus <noreply@yapus.dev>`, and git refuses a new branch not named `<type>/<slug>`: the type from `hooks/shared/catalogs/types.json`, the slug of lowercase letters, digits and hyphens, at most 50 characters.
 
 ### Repository Setup
 
@@ -216,24 +208,7 @@ The command writes nothing while a path it would write or remove has an uncommit
 
 ## Requirements
 
-Requires Node 24 or newer, bash 3.2 or newer, git 2.42 or newer and Claude Code 2.1.295 or newer; `npm test` also requires ShellCheck 0.11.0.
-
-## Development
-
-Clone the repository, install its devDependencies and run the tests.
-
-```bash
-git clone https://github.com/bug3/yapus.git
-cd yapus
-npm install
-npm test
-```
-
-Run once in a clone to have git refuse a commit whose subject is not `type(scope): verb ...` with each word listed in `hooks/shared/catalogs/`; `git config --unset core.hooksPath` undoes it.
-
-```bash
-git config core.hooksPath hooks/git
-```
+Requires Node 24 or newer, bash 3.2 or newer, git 2.42 or newer and Claude Code 2.1.295 or newer.
 
 ## Security
 
