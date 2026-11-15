@@ -2,8 +2,8 @@ import type { Launch } from './parse-launch.ts';
 
 // The agents of plugins/providens/agents, by file name.
 export const ROSTER = [
-  'builder', 'diff-reviewer', 'finisher', 'mcp-operator', 'plan-reviewer', 'reader',
-  'runner', 'web-researcher',
+  'builder', 'diff-reviewer', 'finisher', 'mcp-operator', 'plan-reviewer', 'plan-writer',
+  'reader', 'runner', 'web-researcher',
 ] as const;
 
 // The Claude Code agent types that stand in for a roster agent.
