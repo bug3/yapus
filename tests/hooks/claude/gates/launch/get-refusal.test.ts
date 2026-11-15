@@ -16,6 +16,16 @@ const LAUNCH = {
   model: undefined,
   effort: undefined,
 };
+const NESTED = 'a subagent launches no agents; return the work to your caller';
+const REVIEW = {
+  ...LAUNCH,
+  caller: { agentType: 'providens:finisher' },
+  subagentType: 'providens:diff-reviewer',
+  description: '[deep] s1 Review the diff',
+};
+const FINISH = {
+  ...LAUNCH, subagentType: 'providens:finisher', description: '[deep] s1 Finish x',
+};
 
 test('passes a roster launch tagged standard or deep', () => {
   const refusals = [
@@ -47,6 +57,58 @@ test('refuses a nested launch whose caller type is unknown', () => {
     getRefusal({ ...LAUNCH, caller: { agentType: undefined } }),
     'a subagent launches no agents; return the work to your caller',
   );
+});
+
+test('passes a finisher launching the diff reviewer', () => {
+  assert.equal(getRefusal(REVIEW), undefined);
+});
+
+test('refuses a finisher launching a type other than the diff reviewer', () => {
+  const refusals = [
+    getRefusal({ ...REVIEW, subagentType: 'providens:finisher' }),
+    getRefusal({ ...REVIEW, subagentType: 'providens:builder' }),
+    getRefusal({ ...REVIEW, subagentType: 'general-purpose' }),
+  ];
+
+  assert.deepEqual(refusals, [NESTED, NESTED, NESTED]);
+});
+
+test('refuses a caller other than the finisher launching the diff reviewer', () => {
+  assert.equal(getRefusal({ ...REVIEW, caller: { agentType: 'providens:builder' } }), NESTED);
+});
+
+test('refuses a caller of unknown type launching the diff reviewer', () => {
+  assert.equal(getRefusal({ ...REVIEW, caller: { agentType: undefined } }), NESTED);
+});
+
+test('keeps the depth rules for the diff reviewer a finisher launches', () => {
+  const refusals = [
+    getRefusal({ ...REVIEW, description: 's1 Review the diff' }),
+    getRefusal({ ...REVIEW, description: '[quick] s1 Review the diff' }),
+  ];
+
+  assert.deepEqual(refusals, [
+    'start the description with the depth in brackets: [quick], [standard] or [deep]',
+    'a quick task launches no subagent; do it in this session, or raise the depth',
+  ]);
+});
+
+test('refuses a finisher launched with a depth other than deep', () => {
+  const refusals = [
+    getRefusal({ ...FINISH, description: '[standard] s1 Finish x' }),
+    getRefusal({ ...FINISH, description: '[quick] s1 Finish x' }),
+    getRefusal({ ...FINISH, description: 's1 Finish x' }),
+  ];
+
+  assert.deepEqual(refusals, [
+    'a finisher takes a slice of deep work; start the description with [deep]',
+    'a finisher takes a slice of deep work; start the description with [deep]',
+    'start the description with the depth in brackets: [quick], [standard] or [deep]',
+  ]);
+});
+
+test('passes a finisher launched with [deep]', () => {
+  assert.equal(getRefusal(FINISH), undefined);
 });
 
 test('refuses each stand-in type and names the roster', () => {
