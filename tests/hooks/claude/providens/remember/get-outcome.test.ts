@@ -1,9 +1,19 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { getOutcome } from '../../../../../hooks/claude/providens/remember/get-outcome.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
+import { makeTempRepo } from '../../../../helpers/make-temp-repo.ts';
+import { runGit } from '../../../../helpers/run-git.ts';
 
 const TIME = '2026-11-15T10:00:00.000Z';
 const PROMPT = makePrompt('go');
@@ -103,6 +113,73 @@ test('fails with the path when the prompt log cannot be written', (t) => {
     /^\{"kind":"failure","detail":"cannot write .*\/\.yapus\/prompts\/s1\.jsonl: .*; the prompt is not remembered"\}$/u,
   );
 });
+
+test('leaves the prompt log out of git status in a repository', (t) => {
+  const projectRoot = makeTempRepo(t);
+
+  getOutcome({ stdinText: PROMPT, dataDir: makeTempDir(t), projectRoot, time: TIME });
+
+  assert.deepEqual(
+    [existsSync(getLogPath(projectRoot)), runGit(['status', '--porcelain'], projectRoot)],
+    [true, ''],
+  );
+});
+
+test('creates the prompts directory and the log private, .yapus with the default mode', (t) => {
+  const { projectRoot, dataDir } = makeDirs(t);
+  const defaultDirectory = join(projectRoot, 'default');
+
+  mkdirSync(defaultDirectory);
+  getOutcome({ stdinText: PROMPT, dataDir, projectRoot, time: TIME });
+
+  assert.deepEqual(
+    [
+      getMode(join(projectRoot, '.yapus')),
+      getMode(join(projectRoot, '.yapus', 'prompts')),
+      getMode(getLogPath(projectRoot)),
+    ],
+    [getMode(defaultDirectory), 0o700, 0o600],
+  );
+});
+
+test('leaves an existing prompts directory and log as they are', (t) => {
+  const { projectRoot, dataDir } = makeDirs(t);
+  const promptsDirectory = join(projectRoot, '.yapus', 'prompts');
+
+  mkdirSync(promptsDirectory, { recursive: true });
+  writeFileSync(getLogPath(projectRoot), '');
+  chmodSync(promptsDirectory, 0o755);
+  chmodSync(getLogPath(projectRoot), 0o644);
+  getOutcome({ stdinText: PROMPT, dataDir, projectRoot, time: TIME });
+
+  assert.deepEqual(
+    [
+      getMode(promptsDirectory),
+      getMode(getLogPath(projectRoot)),
+      existsSync(join(promptsDirectory, '.gitignore')),
+    ],
+    [0o755, 0o644, false],
+  );
+});
+
+test('does not write a deleted ignore file again', (t) => {
+  const { projectRoot, dataDir } = makeDirs(t);
+  const ignorePath = join(projectRoot, '.yapus', 'prompts', '.gitignore');
+
+  getOutcome({ stdinText: PROMPT, dataDir, projectRoot, time: TIME });
+  rmSync(ignorePath);
+  getOutcome({ stdinText: PROMPT, dataDir, projectRoot, time: TIME });
+
+  assert.equal(existsSync(ignorePath), false);
+});
+
+function getLogPath(projectRoot: string): string {
+  return join(projectRoot, '.yapus', 'prompts', 's1.jsonl');
+}
+
+function getMode(path: string): number {
+  return statSync(path).mode & 0o777;
+}
 
 function makePrompt(prompt: string): string {
   return JSON.stringify({ session_id: 's1', prompt, hook_event_name: 'UserPromptSubmit' });
