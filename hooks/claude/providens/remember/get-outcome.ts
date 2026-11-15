@@ -74,13 +74,8 @@ function isDirectory(path: string): boolean {
 }
 
 function append(path: string, line: { readonly time: string; readonly prompt: string }): Outcome {
-  const directory = dirname(path);
-
   try {
-    if (!existsSync(directory)) {
-      createPromptsDirectory(directory);
-    }
-
+    preparePromptsDirectory(dirname(path));
     appendFileSync(path, `${ JSON.stringify(line) }\n`, { mode: PRIVATE_FILE_MODE });
   } catch (error) {
     return makeFailure(`cannot write ${ path }: ${ getFirstLine(error) }; ${ NOT_WRITTEN }`);
@@ -89,20 +84,35 @@ function append(path: string, line: { readonly time: string; readonly prompt: st
   return { kind: 'written' };
 }
 
-// The ignore file is written only here, so a person who deletes it to commit
-// the prompts does not get it back. Without it the directory is removed, so
-// the next prompt tries again instead of landing in a directory git sees.
-function createPromptsDirectory(directory: string): void {
-  mkdirSync(dirname(directory), { recursive: true });
-  mkdirSync(directory, { mode: PRIVATE_DIRECTORY_MODE });
+// Creates the directory private when it is missing, and writes the ignore
+// file whenever it is missing, so a directory a repository ships gets one too.
+// An ignore file that exists is never changed: a person who wants the prompts
+// in git edits it. Without it a directory this run created is removed again.
+function preparePromptsDirectory(directory: string): void {
+  const isCreated = !existsSync(directory);
+
+  if (isCreated) {
+    mkdirSync(dirname(directory), { recursive: true });
+    mkdirSync(directory, { mode: PRIVATE_DIRECTORY_MODE });
+  }
 
   try {
-    writeFileSync(join(directory, IGNORE_FILE), IGNORE_ALL);
+    writeFileSync(join(directory, IGNORE_FILE), IGNORE_ALL, { flag: 'wx' });
   } catch (error) {
-    rmdirSync(directory);
+    if (isExisting(error)) {
+      return;
+    }
+
+    if (isCreated) {
+      rmdirSync(directory);
+    }
 
     throw error;
   }
+}
+
+function isExisting(error: unknown): boolean {
+  return error instanceof Error && 'code' in error && error.code === 'EEXIST';
 }
 
 function makeFailure(detail: string): Outcome {

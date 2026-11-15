@@ -8,7 +8,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { getOutcome } from '../../../../../hooks/claude/providens/remember/get-outcome.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
@@ -152,17 +152,36 @@ test('leaves an existing prompts directory and log as they are', (t) => {
   chmodSync(getLogPath(projectRoot), 0o644);
   getOutcome({ stdinText: PROMPT, dataDir, projectRoot, time: TIME });
 
+  assert.deepEqual([getMode(promptsDirectory), getMode(getLogPath(projectRoot))], [0o755, 0o644]);
+});
+
+test('writes the ignore file into an existing directory that has none', (t) => {
+  const projectRoot = makeTempRepo(t);
+
+  mkdirSync(join(projectRoot, '.yapus', 'prompts'), { recursive: true });
+  getOutcome({ stdinText: PROMPT, dataDir: makeTempDir(t), projectRoot, time: TIME });
+
   assert.deepEqual(
-    [
-      getMode(promptsDirectory),
-      getMode(getLogPath(projectRoot)),
-      existsSync(join(promptsDirectory, '.gitignore')),
-    ],
-    [0o755, 0o644, false],
+    [existsSync(getLogPath(projectRoot)), runGit(['status', '--porcelain'], projectRoot)],
+    [true, ''],
   );
 });
 
-test('does not write a deleted ignore file again', (t) => {
+test('leaves an existing ignore file byte for byte', (t) => {
+  const { projectRoot, dataDir } = makeDirs(t);
+  const ignorePath = join(projectRoot, '.yapus', 'prompts', '.gitignore');
+
+  mkdirSync(dirname(ignorePath), { recursive: true });
+  writeFileSync(ignorePath, '!s1.jsonl');
+  getOutcome({ stdinText: PROMPT, dataDir, projectRoot, time: TIME });
+
+  assert.deepEqual(
+    [readFileSync(ignorePath, 'utf8'), existsSync(getLogPath(projectRoot))],
+    ['!s1.jsonl', true],
+  );
+});
+
+test('writes a deleted ignore file again', (t) => {
   const { projectRoot, dataDir } = makeDirs(t);
   const ignorePath = join(projectRoot, '.yapus', 'prompts', '.gitignore');
 
@@ -170,7 +189,7 @@ test('does not write a deleted ignore file again', (t) => {
   rmSync(ignorePath);
   getOutcome({ stdinText: PROMPT, dataDir, projectRoot, time: TIME });
 
-  assert.equal(existsSync(ignorePath), false);
+  assert.equal(readFileSync(ignorePath, 'utf8'), '*\n');
 });
 
 function getLogPath(projectRoot: string): string {
