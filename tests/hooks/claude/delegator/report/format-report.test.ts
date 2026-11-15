@@ -41,7 +41,7 @@ const REPORT: Report = {
 test('writes the extent, one row per agent with rounded medians and the findings', () => {
   const markdown = formatReport(REPORT);
 
-  assert.match(markdown, /^# providens record report\n\nRecord `\/d\/decisions\.jsonl`: 3 rows, 1 skipped, 1 sessions, from t1 to t3\.\n/u);
+  assert.match(markdown, /^# delegator record report\n\nRecord `\/d\/decisions\.jsonl`: 3 rows, 1 skipped, 1 sessions, from t1 to t3\.\n/u);
   assert.match(markdown, /\| completed \| capped \| no return \| returns \|/u);
   assert.match(markdown, /\n\| delegator:runner \| 1 \| 0 \| 1 \| 0 \| 2 \| 1 \| 0 \| 1 \| APPROVE 1 \| 1 \| 3738 \| - \|\n/u);
   assert.match(markdown, /\n\| cap-stop rate \| delegator:runner \| 0 of 1, 0 percent \| 1 \| over 30 percent at n 20 \| wait \|\n/u);

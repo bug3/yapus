@@ -4,8 +4,8 @@ import { getFirstLine } from '../../../shared/get-first-line.ts';
 import { getTarget } from '../settings/get-target.ts';
 import { getStatus } from './get-status.ts';
 
-const PROGRAM = 'providens status';
-const USAGE = 'usage: providens status <dataDir> <sessionId>; give a data dir, an id of letters, '
+const PROGRAM = 'delegator status';
+const USAGE = 'usage: delegator status <dataDir> <sessionId>; give a data dir, an id of letters, '
   + 'digits and hyphens, and nothing else';
 
 type Outcome =

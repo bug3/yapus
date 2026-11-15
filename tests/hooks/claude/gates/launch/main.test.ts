@@ -25,7 +25,7 @@ test('exits 2 and names the reason for a nested launch', (t) => {
 
   assert.deepEqual(
     [hookRun.status, hookRun.stderr],
-    [2, 'yapus providens launch: a subagent launches no agents; return the work to your caller\n'],
+    [2, 'yapus delegator launch: a subagent launches no agents; return the work to your caller\n'],
   );
 });
 
@@ -34,7 +34,7 @@ test('exits 2 and says so when the plugin data directory is not set', (t) => {
 
   assert.deepEqual(
     [hookRun.status, hookRun.stderr],
-    [2, 'yapus providens launch: CLAUDE_PLUGIN_DATA is not set; reinstall the plugin\n'],
+    [2, 'yapus delegator launch: CLAUDE_PLUGIN_DATA is not set; reinstall the plugin\n'],
   );
 });
 

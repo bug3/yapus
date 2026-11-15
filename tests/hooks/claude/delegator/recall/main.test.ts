@@ -41,7 +41,7 @@ test('exits 2 with one line on stderr for stdin it cannot read', (t) => {
 
   assert.deepEqual(
     [hookRun.status, hookRun.stdout, hookRun.stderr],
-    [2, '', 'yapus providens recall: stdin is not JSON; the prompts are not recalled\n'],
+    [2, '', 'yapus delegator recall: stdin is not JSON; the prompts are not recalled\n'],
   );
 });
 
@@ -54,7 +54,7 @@ test('exits 2 with one line on stderr when the program crashes', (t) => {
   const hookRun = runHook(env, COMPACT);
 
   assert.deepEqual([hookRun.status, hookRun.stdout], [2, '']);
-  assert.match(hookRun.stderr, /^yapus providens recall: crashed: .*; fix the hook\n$/u);
+  assert.match(hookRun.stderr, /^yapus delegator recall: crashed: .*; fix the hook\n$/u);
 });
 
 test('exits 0 through the bash entry point', (t) => {

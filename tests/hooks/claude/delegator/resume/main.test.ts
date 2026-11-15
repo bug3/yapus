@@ -44,7 +44,7 @@ test('exits 2 and names the reason for stdin it cannot read', (t) => {
 
   assert.deepEqual(
     [hookRun.status, hookRun.stderr],
-    [2, 'yapus providens resume: stdin is not JSON; the resume is not recorded\n'],
+    [2, 'yapus delegator resume: stdin is not JSON; the resume is not recorded\n'],
   );
   assert.equal(existsSync(join(env.CLAUDE_PLUGIN_DATA ?? '', 'decisions.jsonl')), false);
 });
@@ -55,7 +55,7 @@ test('exits 2 with one line on stderr when CLAUDE_PLUGIN_DATA is empty', (t) => 
 
   assert.deepEqual(
     [hookRun.status, hookRun.stderr],
-    [2, 'yapus providens resume: CLAUDE_PLUGIN_DATA is not set; reinstall the plugin\n'],
+    [2, 'yapus delegator resume: CLAUDE_PLUGIN_DATA is not set; reinstall the plugin\n'],
   );
 });
 

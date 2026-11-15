@@ -5,8 +5,8 @@ import { getTarget } from '../settings/get-target.ts';
 import { type Applied, applyMode } from './apply-mode.ts';
 import { parseArgs } from './parse-args.ts';
 
-const PROGRAM = 'providens mode';
-const USAGE = 'usage: providens mode <dataDir> <sessionId> on|off [--global]; give a data dir, '
+const PROGRAM = 'delegator mode';
+const USAGE = 'usage: delegator mode <dataDir> <sessionId> on|off [--global]; give a data dir, '
   + 'an id of letters, digits and hyphens, one of on or off, and --global at most once';
 
 function main(): void {

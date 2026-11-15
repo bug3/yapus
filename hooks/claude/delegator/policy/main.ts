@@ -6,7 +6,7 @@ import { getWithinLimit } from '../../../shared/get-within-limit.ts';
 import { type Context, getContext, POLICY_PATH } from './get-context.ts';
 import { isSessionOff } from './is-session-off.ts';
 
-const PROGRAM = 'providens policy';
+const PROGRAM = 'delegator policy';
 const LIMIT_SECONDS = 5;
 
 // Silence is a session switched off: the hook prints nothing.

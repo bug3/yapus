@@ -31,7 +31,7 @@ export function formatReport(report: Report): string {
     + `${ String(report.sessions) } sessions${ span }`;
 
   return [
-    '# providens record report',
+    '# delegator record report',
     '',
     `Record \`${ report.path }\`: ${ extent }.`,
     '',

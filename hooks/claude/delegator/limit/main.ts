@@ -5,8 +5,8 @@ import { getTarget } from '../settings/get-target.ts';
 import { applyLimit } from './apply-limit.ts';
 import { parseArgs } from './parse-args.ts';
 
-const PROGRAM = 'providens limit';
-const USAGE = 'usage: providens limit <dataDir> <sessionId> <whole number> [--global]; give a '
+const PROGRAM = 'delegator limit';
+const USAGE = 'usage: delegator limit <dataDir> <sessionId> <whole number> [--global]; give a '
   + 'data dir, an id of letters, digits and hyphens, one whole number, and --global at most once';
 
 type Outcome =

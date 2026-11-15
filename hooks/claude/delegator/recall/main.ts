@@ -5,7 +5,7 @@ import { getFirstLine } from '../../../shared/get-first-line.ts';
 import { getWithinLimit } from '../../../shared/get-within-limit.ts';
 import { getOutcome, type Input, type Outcome } from './get-outcome.ts';
 
-const PROGRAM = 'providens recall';
+const PROGRAM = 'delegator recall';
 const LIMIT_SECONDS = 5;
 const NOT_RECALLED = 'the prompts are not recalled';
 

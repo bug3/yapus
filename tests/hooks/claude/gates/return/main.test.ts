@@ -20,7 +20,7 @@ test('exits 2 and tells the subagent to shorten a first return over the cap', (t
   const hookRun = runHook(t, { ...FIELDS, last_assistant_message: 'a'.repeat(12001) });
 
   assert.equal(hookRun.status, 2);
-  assert.match(hookRun.stderr, /^yapus providens return: the return has 12001 characters/);
+  assert.match(hookRun.stderr, /^yapus delegator return: the return has 12001 characters/);
 });
 
 test('exits 0 through the bash entry point for a return within the cap', (t) => {
