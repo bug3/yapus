@@ -84,6 +84,7 @@ export function getFindings(measured: Measured): Finding[] {
     ...measured.stats.filter((stats) => stats.agent === PLAN_REVIEWER)
       .map((stats) => getRateFinding(PLAN_REVIEWER_RULE, stats)),
     getReworkFinding(measured.rework),
+    getFinisherReworkFinding(measured.rework),
     ...getUnusedFindings(measured),
   ];
 }
@@ -101,6 +102,17 @@ function getReworkFinding(rework: Rework): Finding {
   };
 
   return makeRateFinding(rule, 'providens:builder', [rework.reworked, rework.builders]);
+}
+
+function getFinisherReworkFinding(rework: Rework): Finding {
+  const rule: RateRule = {
+    rule: 'rework after finisher',
+    getCounts: () => [rework.reworkedFinishers, rework.finishers],
+    isOver: (percent) => percent > 50,
+    threshold: `over 50 percent at n ${ String(MIN_SAMPLE) }: narrow the slices of the plan`,
+  };
+
+  return makeRateFinding(rule, 'providens:finisher', [rework.reworkedFinishers, rework.finishers]);
 }
 
 function makeRateFinding(

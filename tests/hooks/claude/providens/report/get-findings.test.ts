@@ -57,7 +57,7 @@ const PLAN_REVIEWER: AgentStats = {
 };
 const MEASURED = {
   stats: [BUILDER, PLAN_REVIEWER],
-  rework: { builders: 40, reworked: 10 },
+  rework: { builders: 40, reworked: 10, finishers: 0, reworkedFinishers: 0 },
   sessions: 31,
 };
 
@@ -136,4 +136,21 @@ test('reads a resumed launch without a return as 1 of 1 in the cap-stop rate', (
     .find((entry) => entry.rule === 'cap-stop rate');
 
   assert.equal(finding?.value, '1 of 1, 100 percent');
+});
+
+test('reads rework after finisher right after rework after builder', () => {
+  const findings = getFindings({
+    ...MEASURED,
+    rework: { builders: 40, reworked: 10, finishers: 30, reworkedFinishers: 18 },
+  });
+  const index = findings.findIndex((finding) => finding.rule === 'rework after builder');
+
+  assert.deepEqual(findings[index + 1], {
+    rule: 'rework after finisher',
+    agent: 'providens:finisher',
+    value: '18 of 30, 60 percent',
+    n: 30,
+    threshold: 'over 50 percent at n 20: narrow the slices of the plan',
+    state: 'act',
+  });
 });
