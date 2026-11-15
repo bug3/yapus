@@ -1,5 +1,5 @@
 {
-  "name": "landmark",
+  "name": "ordo",
   "version": "0.8.1",
   "description": "Installs the yapus standards, the dashes hook and the git hooks once per machine and keeps them current.",
   "author": {

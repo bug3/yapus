@@ -8,7 +8,7 @@ import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
 import { getGitEnv } from '../../../helpers/run-git.ts';
 import { runInstall } from './run-install.ts';
 
-const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'landmark');
+const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'ordo');
 const SUBPROCESS_TIMEOUT_MS = 20000;
 const STUB_HEAD =
   '#!/usr/bin/env bash\nset -u\nexec bash "$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)/forward" ';

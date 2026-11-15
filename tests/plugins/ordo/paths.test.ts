@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { isRecord } from '../../../hooks/shared/is-record.ts';
 
-const PLUGIN = join(import.meta.dirname, '..', '..', '..', 'plugins', 'landmark');
+const PLUGIN = join(import.meta.dirname, '..', '..', '..', 'plugins', 'ordo');
 const STANDARDS = join(PLUGIN, 'standards');
 const PATHS_ENTRY = /^ {2}- "([^"]+)"$/;
 const ANY_DIRECTORY = '**/';

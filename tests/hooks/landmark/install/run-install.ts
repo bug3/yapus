@@ -12,7 +12,7 @@ interface InstallOptions {
   readonly extraEnv?: NodeJS.ProcessEnv;
 }
 
-const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'landmark');
+const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'ordo');
 const SUBPROCESS_TIMEOUT_MS = 20000;
 
 // Runs the landmark install in mode from a copy of the plugin with its links

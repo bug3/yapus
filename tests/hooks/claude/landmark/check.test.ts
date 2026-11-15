@@ -6,7 +6,7 @@ import { type TestContext, test } from 'node:test';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 
-const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'landmark');
+const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'ordo');
 const SUBPROCESS_TIMEOUT_MS = 20000;
 const PLUGIN_VERSION = getPluginVersion();
 
