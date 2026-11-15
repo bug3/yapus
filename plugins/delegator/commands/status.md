@@ -1,5 +1,5 @@
 ---
-description: Show the providens mode and launch limit in force and the launches of this session
+description: Show the delegator mode and launch limit in force and the launches of this session
 allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/runtime/run.sh claude/delegator/status:*)
 ---
 

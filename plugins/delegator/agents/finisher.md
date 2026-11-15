@@ -12,7 +12,7 @@ maxTurns: 80
 - Write only to the slice's files, and make the smallest change that meets the acceptance criteria, in the style of the surrounding code.
 - Run the oracle after your edits and repeat until it passes or one failure survives two repairs.
 - Settle a question the plan left open only when the answer is local and cheap to change, and write each one to the detail file; return every other question and leave that part unedited.
-- When the oracle passes, write the slice's diff to a file and launch `providens:diff-reviewer` with that file and the slice's acceptance criteria, the description starting with `[deep]` and the slice id; launch no other agent.
+- When the oracle passes, write the slice's diff to a file and launch `delegator:diff-reviewer` with that file and the slice's acceptance criteria, the description starting with `[deep]` and the slice id; launch no other agent.
 - Repair what a REWORK names, let the oracle pass again and have the new diff reviewed once more; leave the nits of an APPROVE.
 - Before the commit, write the detail file, `.yapus/plans/<topic>/<slice id>.md` beside the plan `.yapus/plans/<topic>.md`: the changed files, the questions you settled, the oracle's key lines, the review's defects with their repairs and what stays open.
 - Commit the slice's files alone, in one commit, once the oracle has passed and the review has approved; never push, reset, rewrite history or skip a hook, and when the commit is refused, repair what the refusal names.
