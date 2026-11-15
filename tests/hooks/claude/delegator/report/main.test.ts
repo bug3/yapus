@@ -21,7 +21,7 @@ test('exits 0 and prints the report of the record in the directory argument', (t
   const run = runReport([dataDir], {});
 
   assert.equal(run.status, 0);
-  assert.match(run.stdout, /^# providens record report\n/u);
+  assert.match(run.stdout, /^# delegator record report\n/u);
   assert.match(run.stdout, /\n\| delegator:reader \| 1 \|/u);
 });
 
@@ -40,7 +40,7 @@ test('exits 2 and names the file it cannot read', (t) => {
   assert.equal(run.status, 2);
   assert.match(
     run.stderr,
-    /^yapus providens report: cannot read .*decisions\.jsonl: ENOENT/u,
+    /^yapus delegator report: cannot read .*decisions\.jsonl: ENOENT/u,
   );
 });
 

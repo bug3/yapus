@@ -6,7 +6,7 @@ import { getFirstLine } from '../../../shared/get-first-line.ts';
 import { RECORD_FILE } from '../record-row.ts';
 import { getReport } from './get-report.ts';
 
-const PROGRAM = 'providens report';
+const PROGRAM = 'delegator report';
 // Where Claude Code keeps the data of a plugin installed from the yapus
 // marketplace, when neither the argument nor CLAUDE_PLUGIN_DATA names it.
 const DEFAULT_DATA_DIR = join(homedir(), '.claude', 'plugins', 'data', 'delegator-yapus');

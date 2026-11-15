@@ -29,7 +29,7 @@ test('exits 2 and names the reason for stdin it cannot read', (t) => {
 
   assert.deepEqual(
     [hookRun.status, hookRun.stderr],
-    [2, 'yapus providens end: stdin is not JSON; the end is not recorded\n'],
+    [2, 'yapus delegator end: stdin is not JSON; the end is not recorded\n'],
   );
 });
 

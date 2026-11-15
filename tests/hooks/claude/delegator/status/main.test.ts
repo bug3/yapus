@@ -114,7 +114,7 @@ for (const [name, args] of [
 
     assert.equal(run.status, 2);
     assert.equal(run.stdout, '');
-    assert.match(run.stderr, /^yapus providens status: usage: [^\n]*\n$/u);
+    assert.match(run.stderr, /^yapus delegator status: usage: [^\n]*\n$/u);
     assert.deepEqual(readdirSync(cwd), []);
   });
 }

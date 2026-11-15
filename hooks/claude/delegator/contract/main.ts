@@ -3,7 +3,7 @@ import { formatMessage } from '../../../shared/format-message.ts';
 import { getFirstLine } from '../../../shared/get-first-line.ts';
 import { type Context, CONTRACT_PATH, getContext } from './get-context.ts';
 
-const PROGRAM = 'providens contract';
+const PROGRAM = 'delegator contract';
 
 function main(): void {
   try {

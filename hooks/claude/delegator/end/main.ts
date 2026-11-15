@@ -5,7 +5,7 @@ import { getFirstLine } from '../../../shared/get-first-line.ts';
 import { getWithinLimit } from '../../../shared/get-within-limit.ts';
 import { getOutcome, type Input, type Outcome } from './get-outcome.ts';
 
-const PROGRAM = 'providens end';
+const PROGRAM = 'delegator end';
 const LIMIT_SECONDS = 5;
 
 async function main(): Promise<void> {

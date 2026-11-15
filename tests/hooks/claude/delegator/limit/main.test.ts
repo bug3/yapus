@@ -132,7 +132,7 @@ for (const [name, args] of [
 
     assert.equal(run.status, 2);
     assert.equal(run.stdout, '');
-    assert.match(run.stderr, /^yapus providens limit: usage: [^\n]*\n$/u);
+    assert.match(run.stderr, /^yapus delegator limit: usage: [^\n]*\n$/u);
     assert.deepEqual(readdirSync(dataDir), []);
     assert.deepEqual(readdirSync(cwd), []);
   });

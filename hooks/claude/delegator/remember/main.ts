@@ -5,7 +5,7 @@ import { getFirstLine } from '../../../shared/get-first-line.ts';
 import { getWithinLimit } from '../../../shared/get-within-limit.ts';
 import { getOutcome, type Input, type Outcome } from './get-outcome.ts';
 
-const PROGRAM = 'providens remember';
+const PROGRAM = 'delegator remember';
 const LIMIT_SECONDS = 5;
 const NOT_WRITTEN = 'the prompt is not remembered';
 

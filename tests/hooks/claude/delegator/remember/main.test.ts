@@ -35,7 +35,7 @@ test('exits 0 with one line on stderr for stdin it cannot read', (t) => {
 
   assert.deepEqual(
     [hookRun.status, hookRun.stdout, hookRun.stderr],
-    [0, '', 'yapus providens remember: stdin is not JSON; the prompt is not remembered\n'],
+    [0, '', 'yapus delegator remember: stdin is not JSON; the prompt is not remembered\n'],
   );
 });
 
