@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getRefusal } from '../../../../../hooks/claude/gates/launch/get-refusal.ts';
+import { getRefusal, STAND_INS } from '../../../../../hooks/claude/gates/launch/get-refusal.ts';
 
+const ROSTER_LIST = 'providens:builder, providens:diff-reviewer, providens:mcp-operator, '
+  + 'providens:plan-reviewer, providens:reader, providens:runner, providens:web-researcher';
+const OFF_ROSTER = ['claude-code-guide', 'other-plugin:agent', 'db-migrator'];
 const LAUNCH = {
   sessionId: 's',
   isNested: false,
@@ -22,6 +25,15 @@ test('passes a roster launch tagged standard or deep', () => {
   assert.deepEqual(refusals, [undefined, undefined]);
 });
 
+test('passes an off-roster type that stands in for no roster agent', () => {
+  const refusals = OFF_ROSTER.flatMap((subagentType) => [
+    getRefusal({ ...LAUNCH, subagentType }),
+    getRefusal({ ...LAUNCH, subagentType, description: '[deep] Do x' }),
+  ]);
+
+  assert.deepEqual(refusals, OFF_ROSTER.flatMap(() => [undefined, undefined]));
+});
+
 test('refuses a launch from inside a subagent', () => {
   assert.equal(
     getRefusal({ ...LAUNCH, isNested: true }),
@@ -29,13 +41,16 @@ test('refuses a launch from inside a subagent', () => {
   );
 });
 
-test('refuses a built-in agent and names the roster', () => {
-  assert.equal(
-    getRefusal({ ...LAUNCH, subagentType: 'Explore' }),
-    'Explore is not on the roster; launch one of providens:builder, providens:diff-reviewer, '
-      + 'providens:mcp-operator, providens:plan-reviewer, providens:reader, providens:runner, '
-      + 'providens:web-researcher',
-  );
+test('refuses each stand-in type and names the roster', () => {
+  const refusals = STAND_INS.map((subagentType) => getRefusal({ ...LAUNCH, subagentType }));
+
+  assert.deepEqual(refusals, [
+    `claude stands in for the roster; launch one of ${ ROSTER_LIST }`,
+    `Explore stands in for the roster; launch one of ${ ROSTER_LIST }`,
+    `fork stands in for the roster; launch one of ${ ROSTER_LIST }`,
+    `general-purpose stands in for the roster; launch one of ${ ROSTER_LIST }`,
+    `Plan stands in for the roster; launch one of ${ ROSTER_LIST }`,
+  ]);
 });
 
 test('refuses a description without a depth tag and a quick one', () => {
@@ -45,6 +60,21 @@ test('refuses a description without a depth tag and a quick one', () => {
   ];
 
   assert.deepEqual(refusals, [
+    'start the description with the depth in brackets: [quick], [standard] or [deep]',
+    'a quick task launches no subagent; do it in this session, or raise the depth',
+  ]);
+});
+
+test('keeps the nested and depth rules for an off-roster type', () => {
+  const guide = { ...LAUNCH, subagentType: 'claude-code-guide' };
+  const refusals = [
+    getRefusal({ ...guide, isNested: true }),
+    getRefusal({ ...guide, description: 'Find x' }),
+    getRefusal({ ...guide, description: '[quick] Find x' }),
+  ];
+
+  assert.deepEqual(refusals, [
+    'a subagent launches no agents; return the work to your caller',
     'start the description with the depth in brackets: [quick], [standard] or [deep]',
     'a quick task launches no subagent; do it in this session, or raise the depth',
   ]);

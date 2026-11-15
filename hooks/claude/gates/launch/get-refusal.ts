@@ -6,6 +6,11 @@ export const ROSTER = [
   'web-researcher',
 ] as const;
 
+// The Claude Code agent types that stand in for a roster agent.
+export const STAND_INS: readonly string[] = [
+  'claude', 'Explore', 'fork', 'general-purpose', 'Plan',
+];
+
 const ROSTER_TYPES: readonly string[] = ROSTER.map((name) => `providens:${ name }`);
 const DEPTH_TAG = /^\[(quick|standard|deep)\] /;
 
@@ -15,10 +20,10 @@ export function getRefusal(launch: Launch): string | undefined {
     return 'a subagent launches no agents; return the work to your caller';
   }
 
-  if (!ROSTER_TYPES.includes(launch.subagentType)) {
+  if (STAND_INS.includes(launch.subagentType)) {
     const roster = ROSTER_TYPES.join(', ');
 
-    return `${ launch.subagentType } is not on the roster; launch one of ${ roster }`;
+    return `${ launch.subagentType } stands in for the roster; launch one of ${ roster }`;
   }
 
   const depth = DEPTH_TAG.exec(launch.description)?.[1];
