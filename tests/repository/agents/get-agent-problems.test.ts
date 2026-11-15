@@ -59,6 +59,23 @@ test('names Agent in an agent other than the finisher', (t) => {
   assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/runner.md: lists Agent']);
 });
 
+test('names Bash in the plan-writer and not in another writing agent', (t) => {
+  const root = makeAgents(t, [
+    { name: 'plan-writer', text: makeHead('plan-writer', 'Read, Write, Bash') },
+    { name: 'builder', text: makeHead('builder', 'Read, Write, Bash') },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/plan-writer.md: lists Bash']);
+});
+
+test('finds nothing in the plan-writer within its tools', (t) => {
+  const root = makeAgents(t, [
+    { name: 'plan-writer', text: makeHead('plan-writer', 'Read, Grep, Glob, Write, Edit') },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), []);
+});
+
 test('names a name that is not the file name', (t) => {
   const root = makeAgents(t, [{ name: 'reader', text: makeHead('scout', 'Read') }]);
 
