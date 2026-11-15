@@ -2,7 +2,7 @@
 name: plan-reviewer
 description: "Judges a written plan before any edit, against the research it rests on, the acceptance criteria and any standard the session has loaded, with no knowledge of the conversation that produced it. Returns GO or REVISE with the defects, most severe first. Not for writing or fixing the plan, for design decisions or for judging a diff."
 tools: Read, Grep, Glob
-model: opus
+model: inherit
 effort: high
 maxTurns: 30
 ---

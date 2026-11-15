@@ -2,8 +2,8 @@
 name: builder
 description: "Carries out decided work, code edits or generated files, against an oracle command, when the brief names the goal, the files it may change, the constraints, the acceptance criteria and the oracle. Runs the oracle until it passes. Not for undecided design, architecture, authentication, migrations, dependency changes or work without a pass-or-fail command."
 tools: Read, Edit, Write, Grep, Glob, Bash
-model: sonnet
-effort: medium
+model: opus
+effort: high
 maxTurns: 25
 ---
 
