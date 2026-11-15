@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import {
+  type AgentStats,
   CONTRACT_WORDS,
   getAgentStats,
   VERDICT_WORDS,
@@ -185,4 +186,85 @@ test('names only verdict words an agent definition asks for', () => {
     VERDICT_WORDS.filter((word) => !definitions.some((text) => text.includes(word))),
     [],
   );
+});
+
+const FINISHER = 'providens:finisher';
+const REVIEWER = 'providens:diff-reviewer';
+const NESTED_LAUNCH: LaunchRow = {
+  ...LAUNCH,
+  time: 't2',
+  subject: REVIEWER,
+  toolUseId: 'toolu_r',
+  callerId: 'f',
+};
+const REVIEWER_END: EndRow = {
+  ...END,
+  time: 't2',
+  subject: REVIEWER,
+  toolUseId: 'toolu_r',
+  agentId: 'r',
+  status: 'async_launched',
+};
+const REVIEWER_RETURN: ReturnRow = { ...RETURN, time: 't4', subject: REVIEWER, agentId: 'r' };
+const FINISHER_STOP: ReturnRow = {
+  ...RETURN,
+  time: 't3',
+  subject: FINISHER,
+  agentId: 'f',
+  allowed: false,
+  status: 'PARTIAL',
+  verdict: 'REWORK',
+};
+
+function getReturnCounts(stats: AgentStats | undefined): unknown[] {
+  return [stats?.returns, stats?.sentBack, stats?.contractWords, stats?.verdicts];
+}
+
+test('leaves a return while a nested launch runs out of the return counts', () => {
+  const [, finisher] = getAgentStats([NESTED_LAUNCH, REVIEWER_END, FINISHER_STOP]);
+
+  assert.deepEqual(getReturnCounts(finisher), [0, 0, 0, {}]);
+});
+
+test('counts a return after the nested agent returned', () => {
+  const [, finisher] = getAgentStats([
+    NESTED_LAUNCH,
+    REVIEWER_END,
+    REVIEWER_RETURN,
+    { ...FINISHER_STOP, time: 't5' },
+  ]);
+
+  assert.deepEqual(getReturnCounts(finisher), [1, 1, 1, { REWORK: 1 }]);
+});
+
+test('counts every return of an agent without a nested launch', () => {
+  const [, finisher] = getAgentStats([
+    NESTED_LAUNCH,
+    REVIEWER_END,
+    { ...FINISHER_STOP, agentId: 'g' },
+  ]);
+
+  assert.deepEqual(getReturnCounts(finisher), [1, 1, 1, { REWORK: 1 }]);
+});
+
+test('counts a return while a nested launch without an end row runs', () => {
+  const [, finisher] = getAgentStats([NESTED_LAUNCH, FINISHER_STOP]);
+
+  assert.deepEqual(getReturnCounts(finisher), [1, 1, 1, { REWORK: 1 }]);
+});
+
+test('leaves both waits of two nested launches out and counts the last return', () => {
+  const [, finisher] = getAgentStats([
+    NESTED_LAUNCH,
+    REVIEWER_END,
+    FINISHER_STOP,
+    REVIEWER_RETURN,
+    { ...NESTED_LAUNCH, time: 't5', toolUseId: 'toolu_s' },
+    { ...REVIEWER_END, time: 't5', toolUseId: 'toolu_s', agentId: 's' },
+    { ...FINISHER_STOP, time: 't6' },
+    { ...REVIEWER_RETURN, time: 't7', agentId: 's' },
+    { ...RETURN, time: 't8', subject: FINISHER, agentId: 'f' },
+  ]);
+
+  assert.deepEqual(getReturnCounts(finisher), [1, 0, 1, {}]);
 });

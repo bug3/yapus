@@ -1,4 +1,4 @@
-import type { LaunchRow, ResumeRow, ReturnRow, Row } from '../record-row.ts';
+import type { EndRow, LaunchRow, ResumeRow, ReturnRow, Row } from '../record-row.ts';
 import { getCompletions, getSilentEnds } from './get-completions.ts';
 import { getMedian } from './get-median.ts';
 
@@ -14,8 +14,8 @@ export interface AgentStats {
   readonly capped: number;
   // End rows of launches that neither completed nor returned: a cap or a kill in the background.
   readonly noReturn: number;
-  // Return rows: all, sent back over the cap, and opening with a word the
-  // return contract names.
+  // Return rows other than waiting stops: all, sent back over the cap, and
+  // opening with a word the return contract names.
   readonly returns: number;
   readonly sentBack: number;
   readonly contractWords: number;
@@ -39,9 +39,13 @@ export function getAgentStats(rows: readonly Row[]): AgentStats[] {
   const named = rows.filter(hasSubject);
   const agents = [...new Set(named.map((row) => row.subject))].sort();
   const subjects = getSubjects(named);
+  const waitingStops = getWaitingStops(rows);
 
-  return agents.map((agent) =>
-    getStats(agent, rows.filter((row) => getSubject(row, subjects) === agent)));
+  return agents.map((agent) => getStats(
+    agent,
+    rows.filter((row) => getSubject(row, subjects) === agent),
+    waitingStops,
+  ));
 }
 
 // The agent type of each agent id that has an end or a return row.
@@ -62,10 +66,15 @@ function hasSubject(row: Row): row is Exclude<Row, ResumeRow> {
   return row.hook !== 'resume';
 }
 
-function getStats(agent: string, rows: readonly Row[]): AgentStats {
+function getStats(
+  agent: string,
+  rows: readonly Row[],
+  waitingStops: ReadonlySet<ReturnRow>,
+): AgentStats {
   const launches = rows.filter((row): row is LaunchRow => row.hook === 'launch');
   const completions = getCompletions(rows);
-  const returns = rows.filter((row): row is ReturnRow => row.hook === 'return');
+  const returns = rows.filter((row): row is ReturnRow =>
+    row.hook === 'return' && !waitingStops.has(row));
 
   return {
     agent,
@@ -82,6 +91,41 @@ function getStats(agent: string, rows: readonly Row[]): AgentStats {
     tokensMedian: getMedian(completions.map((entry) => entry.tokens).filter(isNumber)),
     toolUsesMedian: getMedian(completions.map((entry) => entry.toolUses).filter(isNumber)),
   };
+}
+
+// The return rows an agent left when it only stopped to wait for a subagent
+// it launched in the background: at the time of the return, the agent had a
+// nested launch whose subagent had not yet returned. A nested launch reaches
+// its subagent through the end row that shares its call id; one without that
+// end row makes no return a waiting stop.
+function getWaitingStops(rows: readonly Row[]): ReadonlySet<ReturnRow> {
+  const returns = rows.filter((row): row is ReturnRow => row.hook === 'return');
+  const nested = rows.flatMap((row) => getNestedLaunch(rows, row) ?? []);
+
+  return new Set(returns.filter((stop) => nested.some((launch) =>
+    launch.callerId === stop.agentId
+    && launch.time <= stop.time
+    && !returns.some((done) => done.agentId === launch.agentId && done.time <= stop.time))));
+}
+
+interface NestedLaunch {
+  readonly callerId: string;
+  readonly agentId: string;
+  readonly time: string;
+}
+
+function getNestedLaunch(rows: readonly Row[], launch: Row): NestedLaunch | undefined {
+  if (launch.hook !== 'launch' || launch.callerId === undefined
+    || launch.toolUseId === undefined) {
+    return undefined;
+  }
+
+  const end = rows.find((row): row is EndRow =>
+    row.hook === 'end' && row.toolUseId === launch.toolUseId);
+
+  return end === undefined
+    ? undefined
+    : { callerId: launch.callerId, agentId: end.agentId, time: launch.time };
 }
 
 function countWords(words: readonly (string | undefined)[]): Record<string, number> {
