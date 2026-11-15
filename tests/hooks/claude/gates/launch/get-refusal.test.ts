@@ -3,8 +3,8 @@ import { test } from 'node:test';
 import { getRefusal, STAND_INS } from '../../../../../hooks/claude/gates/launch/get-refusal.ts';
 
 const ROSTER_LIST = 'providens:builder, providens:diff-reviewer, providens:finisher, '
-  + 'providens:mcp-operator, providens:plan-reviewer, providens:reader, providens:runner, '
-  + 'providens:web-researcher';
+  + 'providens:mcp-operator, providens:plan-reviewer, providens:plan-writer, providens:reader, '
+  + 'providens:runner, providens:web-researcher';
 const OFF_ROSTER = ['claude-code-guide', 'other-plugin:agent', 'db-migrator'];
 const LAUNCH = {
   sessionId: 's',

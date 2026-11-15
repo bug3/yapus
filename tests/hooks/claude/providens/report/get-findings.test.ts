@@ -112,6 +112,7 @@ test('names every roster agent never launched, acting only after 30 sessions', (
     'providens:diff-reviewer',
     'providens:finisher',
     'providens:mcp-operator',
+    'providens:plan-writer',
     'providens:reader',
     'providens:runner',
     'providens:web-researcher',
