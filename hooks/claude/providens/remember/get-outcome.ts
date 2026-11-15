@@ -1,5 +1,12 @@
-import { appendFileSync, mkdirSync, statSync } from 'node:fs';
-import { dirname, isAbsolute } from 'node:path';
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  rmdirSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
+import { dirname, isAbsolute, join } from 'node:path';
 import { getFirstLine } from '../../../shared/get-first-line.ts';
 import { readMode } from '../settings/read-mode.ts';
 import { getPromptsPath } from './get-prompts-path.ts';
@@ -24,6 +31,12 @@ export type Outcome =
 // with this tag; a typed prompt carries none.
 const NOTIFICATION_TAG = '<task-notification>';
 const NOT_WRITTEN = 'the prompt is not remembered';
+// A prompt can hold a pasted secret: the log stays the person's alone and out
+// of git, while .yapus/ beside it keeps the default mode for shared plans.
+const PRIVATE_DIRECTORY_MODE = 0o700;
+const PRIVATE_FILE_MODE = 0o600;
+const IGNORE_FILE = '.gitignore';
+const IGNORE_ALL = '*\n';
 
 // Appends the typed prompt in stdin to the session's prompt log, or says why
 // it cannot. A session switched off and a subagent's notification are silence.
@@ -61,14 +74,35 @@ function isDirectory(path: string): boolean {
 }
 
 function append(path: string, line: { readonly time: string; readonly prompt: string }): Outcome {
+  const directory = dirname(path);
+
   try {
-    mkdirSync(dirname(path), { recursive: true });
-    appendFileSync(path, `${ JSON.stringify(line) }\n`);
+    if (!existsSync(directory)) {
+      createPromptsDirectory(directory);
+    }
+
+    appendFileSync(path, `${ JSON.stringify(line) }\n`, { mode: PRIVATE_FILE_MODE });
   } catch (error) {
     return makeFailure(`cannot write ${ path }: ${ getFirstLine(error) }; ${ NOT_WRITTEN }`);
   }
 
   return { kind: 'written' };
+}
+
+// The ignore file is written only here, so a person who deletes it to commit
+// the prompts does not get it back. Without it the directory is removed, so
+// the next prompt tries again instead of landing in a directory git sees.
+function createPromptsDirectory(directory: string): void {
+  mkdirSync(dirname(directory), { recursive: true });
+  mkdirSync(directory, { mode: PRIVATE_DIRECTORY_MODE });
+
+  try {
+    writeFileSync(join(directory, IGNORE_FILE), IGNORE_ALL);
+  } catch (error) {
+    rmdirSync(directory);
+
+    throw error;
+  }
 }
 
 function makeFailure(detail: string): Outcome {
