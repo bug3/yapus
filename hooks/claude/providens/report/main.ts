@@ -9,7 +9,7 @@ import { getReport } from './get-report.ts';
 const PROGRAM = 'providens report';
 // Where Claude Code keeps the data of a plugin installed from the yapus
 // marketplace, when neither the argument nor CLAUDE_PLUGIN_DATA names it.
-const DEFAULT_DATA_DIR = join(homedir(), '.claude', 'plugins', 'data', 'providens-yapus');
+const DEFAULT_DATA_DIR = join(homedir(), '.claude', 'plugins', 'data', 'delegator-yapus');
 
 type Outcome =
   | { readonly kind: 'report'; readonly markdown: string }

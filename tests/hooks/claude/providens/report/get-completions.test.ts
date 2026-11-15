@@ -11,7 +11,7 @@ import type {
   Row,
 } from '../../../../../hooks/claude/providens/record-row.ts';
 
-const BUILDER = 'providens:builder';
+const BUILDER = 'delegator:builder';
 const END: EndRow = {
   time: 'te',
   hook: 'end',

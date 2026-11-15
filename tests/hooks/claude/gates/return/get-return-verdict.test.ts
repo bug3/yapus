@@ -7,7 +7,7 @@ import {
 } from '../../../../../hooks/claude/gates/return/get-return-verdict.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
-const FIELDS = { session_id: 's1', agent_type: 'providens:reader' };
+const FIELDS = { session_id: 's1', agent_type: 'delegator:reader' };
 const SHORT = JSON.stringify({ ...FIELDS, last_assistant_message: 'a'.repeat(12000) });
 const LONG_FIELDS = { ...FIELDS, last_assistant_message: 'a'.repeat(12001) };
 const LONG = JSON.stringify(LONG_FIELDS);

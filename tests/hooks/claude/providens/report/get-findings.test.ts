@@ -11,7 +11,7 @@ const SILENT_END: EndRow = {
   time: 't',
   hook: 'end',
   sessionId: 's',
-  subject: 'providens:builder',
+  subject: 'delegator:builder',
   promptId: undefined,
   toolUseId: undefined,
   agentId: 'a',
@@ -32,7 +32,7 @@ const RESUME: ResumeRow = {
   toolUseId: 'toolu_1',
 };
 const BUILDER: AgentStats = {
-  agent: 'providens:builder',
+  agent: 'delegator:builder',
   launches: 40,
   refused: 0,
   completed: 40,
@@ -48,7 +48,7 @@ const BUILDER: AgentStats = {
 };
 const PLAN_REVIEWER: AgentStats = {
   ...BUILDER,
-  agent: 'providens:plan-reviewer',
+  agent: 'delegator:plan-reviewer',
   completed: 0,
   capped: 0,
   returns: 25,
@@ -68,8 +68,8 @@ function getState(rule: string, agent: string) {
 
 test('acts on a cap-stop rate over 30 percent and accepts a sent-back rate under 50', () => {
   const states = [
-    getState('cap-stop rate', 'providens:builder'),
-    getState('sent-back rate', 'providens:builder'),
+    getState('cap-stop rate', 'delegator:builder'),
+    getState('sent-back rate', 'delegator:builder'),
   ];
 
   assert.deepEqual(states, ['act', 'ok']);
@@ -93,7 +93,7 @@ test('acts on a plan-reviewer GO rate over 90 percent and only for the plan-revi
   const findings = getFindings(MEASURED).filter((finding) => finding.rule === 'GO rate');
 
   assert.deepEqual(findings.map((finding) => [finding.agent, finding.state]), [
-    ['providens:plan-reviewer', 'act'],
+    ['delegator:plan-reviewer', 'act'],
   ]);
 });
 
@@ -109,13 +109,13 @@ test('names every roster agent never launched, acting only after 30 sessions', (
     .filter((finding) => finding.rule === 'unused agent');
 
   assert.deepEqual(unused.map((finding) => finding.agent), [
-    'providens:diff-reviewer',
-    'providens:finisher',
-    'providens:mcp-operator',
-    'providens:plan-writer',
-    'providens:reader',
-    'providens:runner',
-    'providens:web-researcher',
+    'delegator:diff-reviewer',
+    'delegator:finisher',
+    'delegator:mcp-operator',
+    'delegator:plan-writer',
+    'delegator:reader',
+    'delegator:runner',
+    'delegator:web-researcher',
   ]);
   assert.deepEqual([unused[0]?.state, early[0]?.state], ['act', 'wait']);
 });
@@ -127,7 +127,7 @@ test('applies the rate rules to roster agents only, not to a refused launch', ()
   const agents = new Set(findings.filter((finding) => finding.rule === 'cap-stop rate')
     .map((finding) => finding.agent));
 
-  assert.deepEqual([...agents], ['providens:builder']);
+  assert.deepEqual([...agents], ['delegator:builder']);
 });
 
 test('reads a resumed launch without a return as 1 of 1 in the cap-stop rate', () => {
@@ -147,7 +147,7 @@ test('reads rework after finisher right after rework after builder', () => {
 
   assert.deepEqual(findings[index + 1], {
     rule: 'rework after finisher',
-    agent: 'providens:finisher',
+    agent: 'delegator:finisher',
     value: '18 of 30, 60 percent',
     n: 30,
     threshold: 'over 50 percent at n 20: narrow the slices of the plan',

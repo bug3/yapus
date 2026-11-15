@@ -6,12 +6,12 @@ import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
 import { runGit } from '../../helpers/run-git.ts';
 import { getVersionBumpProblems } from './get-version-bump-problems.ts';
 
-const PLUGIN_DIR = join('plugins', 'providens');
+const PLUGIN_DIR = join('plugins', 'delegator');
 const MANIFEST = join(PLUGIN_DIR, '.claude-plugin', 'plugin.json');
 const HOOK = join('hooks', 'run.sh');
 const STALE = [
-  'plugins/providens/.claude-plugin/plugin.json: the shipped files changed since '
-  + 'providens-1.0.0 under the same version',
+  'plugins/delegator/.claude-plugin/plugin.json: the shipped files changed since '
+  + 'delegator-1.0.0 under the same version',
 ];
 
 test('finds nothing when no version is tagged', (t) => {
@@ -72,9 +72,9 @@ function makeShippedRepo(t: TestContext): string {
 
 function writeManifest(root: string, version: string): void {
   mkdirSync(join(root, PLUGIN_DIR, '.claude-plugin'), { recursive: true });
-  writeFileSync(join(root, MANIFEST), `{ "name": "providens", "version": "${ version }" }\n`);
+  writeFileSync(join(root, MANIFEST), `{ "name": "delegator", "version": "${ version }" }\n`);
 }
 
 function tagVersion(root: string): void {
-  runGit(['tag', 'providens-1.0.0'], root);
+  runGit(['tag', 'delegator-1.0.0'], root);
 }

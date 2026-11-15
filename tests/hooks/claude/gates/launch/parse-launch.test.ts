@@ -5,7 +5,7 @@ import { parseLaunch } from '../../../../../hooks/claude/gates/launch/parse-laun
 const MAIN_CALL = {
   session_id: 'abc-1',
   tool_name: 'Agent',
-  tool_input: { subagent_type: 'providens:reader', description: '[deep] Find x', prompt: 'p' },
+  tool_input: { subagent_type: 'delegator:reader', description: '[deep] Find x', prompt: 'p' },
 };
 
 test('reads a launch from the main session', () => {
@@ -14,7 +14,7 @@ test('reads a launch from the main session', () => {
     launch: {
       sessionId: 'abc-1',
       caller: undefined,
-      subagentType: 'providens:reader',
+      subagentType: 'delegator:reader',
       description: '[deep] Find x',
       toolUseId: undefined,
       promptId: undefined,
@@ -42,11 +42,11 @@ test('reads the join keys, the model override and the effort', () => {
 
 test('names the calling subagent of a nested launch by its type', () => {
   const parsed = parseLaunch(JSON.stringify({
-    ...MAIN_CALL, agent_id: 'a1', agent_type: 'providens:lead',
+    ...MAIN_CALL, agent_id: 'a1', agent_type: 'delegator:lead',
   }));
 
   assert.ok(parsed.kind === 'launch');
-  assert.deepEqual(parsed.launch.caller, { agentId: 'a1', agentType: 'providens:lead' });
+  assert.deepEqual(parsed.launch.caller, { agentId: 'a1', agentType: 'delegator:lead' });
 });
 
 test('reads a launch with agent_id and no agent_type as nested with the type unknown', () => {

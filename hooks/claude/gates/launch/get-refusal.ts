@@ -1,6 +1,6 @@
 import type { Launch } from './parse-launch.ts';
 
-// The agents of plugins/providens/agents, by file name.
+// The agents of plugins/delegator/agents, by file name.
 export const ROSTER = [
   'builder', 'diff-reviewer', 'finisher', 'mcp-operator', 'plan-reviewer', 'plan-writer',
   'reader', 'runner', 'web-researcher',
@@ -11,10 +11,10 @@ export const STAND_INS: readonly string[] = [
   'claude', 'Explore', 'fork', 'general-purpose', 'Plan',
 ];
 
-const ROSTER_TYPES: readonly string[] = ROSTER.map((name) => `providens:${ name }`);
+const ROSTER_TYPES: readonly string[] = ROSTER.map((name) => `delegator:${ name }`);
 const DEPTH_TAG = /^\[(quick|standard|deep)\] /;
-const FINISHER = 'providens:finisher';
-const REVIEWER = 'providens:diff-reviewer';
+const FINISHER = 'delegator:finisher';
+const REVIEWER = 'delegator:diff-reviewer';
 
 // Why the launch breaks the roster's rules, or undefined when it keeps them.
 export function getRefusal(launch: Launch): string | undefined {

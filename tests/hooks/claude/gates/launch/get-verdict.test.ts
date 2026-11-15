@@ -8,7 +8,7 @@ import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 const FIELDS = {
   session_id: 's1',
   tool_name: 'Agent',
-  tool_input: { subagent_type: 'providens:reader', description: '[deep] Find x' },
+  tool_input: { subagent_type: 'delegator:reader', description: '[deep] Find x' },
 };
 const CALL = JSON.stringify(FIELDS);
 
@@ -89,7 +89,7 @@ test('logs a launch from the main session without a caller id', (t) => {
 
   assert.equal(
     readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'),
-    '{"time":"t","hook":"launch","sessionId":"s1","subject":"providens:reader","allowed":true,'
+    '{"time":"t","hook":"launch","sessionId":"s1","subject":"delegator:reader","allowed":true,'
       + '"reason":"","description":"[deep] Find x"}\n',
   );
 });

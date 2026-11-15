@@ -5,6 +5,6 @@ import { getVersionBumpProblems } from './get-version-bump-problems.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 
-test('bumps the providens version when the shipped files change', () => {
+test('bumps the delegator version when the shipped files change', () => {
   assert.deepEqual(getVersionBumpProblems(ROOT), []);
 });

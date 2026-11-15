@@ -11,7 +11,7 @@ const END: EndRow = {
   time: '2026-10-24T10:00:00Z',
   hook: 'end',
   sessionId: 's1',
-  subject: 'providens:builder',
+  subject: 'delegator:builder',
   promptId: undefined,
   toolUseId: undefined,
   agentId: 'a',
@@ -28,7 +28,7 @@ const JUDGE: ReturnRow = {
   time: '2026-10-24T10:05:00Z',
   hook: 'return',
   sessionId: 's1',
-  subject: 'providens:diff-reviewer',
+  subject: 'delegator:diff-reviewer',
   allowed: true,
   reason: '',
   agentId: 'b',
@@ -111,7 +111,7 @@ test('counts a builder that only returned as reworked by a later REWORK', () => 
   const builderReturn: ReturnRow = {
     ...JUDGE,
     time: '2026-10-24T10:00:00Z',
-    subject: 'providens:builder',
+    subject: 'delegator:builder',
     agentId: 'a',
     verdict: undefined,
   };
@@ -122,12 +122,12 @@ test('counts a builder that only returned as reworked by a later REWORK', () => 
   );
 });
 
-const FINISHER: EndRow = { ...END, subject: 'providens:finisher', agentId: 'f', time: 't2' };
+const FINISHER: EndRow = { ...END, subject: 'delegator:finisher', agentId: 'f', time: 't2' };
 const NESTED_LAUNCH: LaunchRow = {
   time: 't2',
   hook: 'launch',
   sessionId: 's1',
-  subject: 'providens:diff-reviewer',
+  subject: 'delegator:diff-reviewer',
   allowed: true,
   reason: '',
   description: 'review the slice',
@@ -139,7 +139,7 @@ const NESTED_LAUNCH: LaunchRow = {
 };
 const JUDGE_END: EndRow = {
   ...END,
-  subject: 'providens:diff-reviewer',
+  subject: 'delegator:diff-reviewer',
   agentId: 'b',
   toolUseId: 'toolu_b',
   time: 't3',

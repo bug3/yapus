@@ -2,14 +2,14 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { getRefusal, STAND_INS } from '../../../../../hooks/claude/gates/launch/get-refusal.ts';
 
-const ROSTER_LIST = 'providens:builder, providens:diff-reviewer, providens:finisher, '
-  + 'providens:mcp-operator, providens:plan-reviewer, providens:plan-writer, providens:reader, '
-  + 'providens:runner, providens:web-researcher';
+const ROSTER_LIST = 'delegator:builder, delegator:diff-reviewer, delegator:finisher, '
+  + 'delegator:mcp-operator, delegator:plan-reviewer, delegator:plan-writer, delegator:reader, '
+  + 'delegator:runner, delegator:web-researcher';
 const OFF_ROSTER = ['claude-code-guide', 'other-plugin:agent', 'db-migrator'];
 const LAUNCH = {
   sessionId: 's',
   caller: undefined,
-  subagentType: 'providens:reader',
+  subagentType: 'delegator:reader',
   description: '[standard] Find x',
   toolUseId: undefined,
   promptId: undefined,
@@ -19,18 +19,18 @@ const LAUNCH = {
 const NESTED = 'a subagent launches no agents; return the work to your caller';
 const REVIEW = {
   ...LAUNCH,
-  caller: { agentId: 'a1', agentType: 'providens:finisher' },
-  subagentType: 'providens:diff-reviewer',
+  caller: { agentId: 'a1', agentType: 'delegator:finisher' },
+  subagentType: 'delegator:diff-reviewer',
   description: '[deep] s1 Review the diff',
 };
 const FINISH = {
-  ...LAUNCH, subagentType: 'providens:finisher', description: '[deep] s1 Finish x',
+  ...LAUNCH, subagentType: 'delegator:finisher', description: '[deep] s1 Finish x',
 };
 
 test('passes a roster launch tagged standard or deep', () => {
   const refusals = [
     getRefusal(LAUNCH),
-    getRefusal({ ...LAUNCH, subagentType: 'providens:builder', description: '[deep] Do x' }),
+    getRefusal({ ...LAUNCH, subagentType: 'delegator:builder', description: '[deep] Do x' }),
   ];
 
   assert.deepEqual(refusals, [undefined, undefined]);
@@ -47,7 +47,7 @@ test('passes an off-roster type that stands in for no roster agent', () => {
 
 test('refuses a launch from inside a subagent', () => {
   assert.equal(
-    getRefusal({ ...LAUNCH, caller: { agentId: 'a1', agentType: 'providens:reader' } }),
+    getRefusal({ ...LAUNCH, caller: { agentId: 'a1', agentType: 'delegator:reader' } }),
     'a subagent launches no agents; return the work to your caller',
   );
 });
@@ -65,8 +65,8 @@ test('passes a finisher launching the diff reviewer', () => {
 
 test('refuses a finisher launching a type other than the diff reviewer', () => {
   const refusals = [
-    getRefusal({ ...REVIEW, subagentType: 'providens:finisher' }),
-    getRefusal({ ...REVIEW, subagentType: 'providens:builder' }),
+    getRefusal({ ...REVIEW, subagentType: 'delegator:finisher' }),
+    getRefusal({ ...REVIEW, subagentType: 'delegator:builder' }),
     getRefusal({ ...REVIEW, subagentType: 'general-purpose' }),
   ];
 
@@ -75,7 +75,7 @@ test('refuses a finisher launching a type other than the diff reviewer', () => {
 
 test('refuses a caller other than the finisher launching the diff reviewer', () => {
   assert.equal(
-    getRefusal({ ...REVIEW, caller: { agentId: 'a1', agentType: 'providens:builder' } }),
+    getRefusal({ ...REVIEW, caller: { agentId: 'a1', agentType: 'delegator:builder' } }),
     NESTED,
   );
 });
@@ -141,7 +141,7 @@ test('refuses a description without a depth tag and a quick one', () => {
 test('keeps the nested and depth rules for an off-roster type', () => {
   const guide = { ...LAUNCH, subagentType: 'claude-code-guide' };
   const refusals = [
-    getRefusal({ ...guide, caller: { agentId: 'a1', agentType: 'providens:reader' } }),
+    getRefusal({ ...guide, caller: { agentId: 'a1', agentType: 'delegator:reader' } }),
     getRefusal({ ...guide, description: 'Find x' }),
     getRefusal({ ...guide, description: '[quick] Find x' }),
   ];
