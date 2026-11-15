@@ -2,14 +2,20 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { formatRecall } from '../../../../../hooks/claude/providens/recall/format-recall.ts';
 
-const TEXTS = { header: 'H {left-out}', cutMark: '[cut]', pathLine: 'P {path}' };
+const TEXTS = {
+  header: 'H {left-out}',
+  cutMark: '[cut]',
+  pathLine: 'P {path}',
+  plansLine: 'L {plans}.',
+};
 const TIME = '2026-11-15T10:00:00.000Z';
+const NO_PLANS = { logPath: '/p', planPaths: [] };
 
 test('returns every prompt whole, oldest first, between the header and the path', () => {
   const prompts = [{ time: TIME, prompt: 'one' }, { time: TIME, prompt: 'two\nlines' }];
 
   assert.equal(
-    formatRecall(TEXTS, prompts, '/p/s1.jsonl'),
+    formatRecall(TEXTS, prompts, { logPath: '/p/s1.jsonl', planPaths: [] }),
     'H 0\n\n2026-11-15T10:00:00.000Z\none\n\n2026-11-15T10:00:00.000Z\ntwo\nlines\n\nP /p/s1.jsonl',
   );
 });
@@ -18,14 +24,14 @@ test('cuts a prompt of 3,000 characters to its first 2,000 and the mark', () => 
   const prompts = [{ time: TIME, prompt: `${ 'a'.repeat(2000) }${ 'b'.repeat(1000) }` }];
 
   assert.equal(
-    formatRecall(TEXTS, prompts, '/p'),
+    formatRecall(TEXTS, prompts, NO_PLANS),
     `H 0\n\n${ TIME }\n${ 'a'.repeat(2000) }\n[cut]\n\nP /p`,
   );
 });
 
 test('cuts before a two-unit character that sits across the limit', () => {
   const prompts = [{ time: TIME, prompt: `${ 'a'.repeat(1999) }\u{1F600}${ 'b'.repeat(1000) }` }];
-  const recall = formatRecall(TEXTS, prompts, '/p') ?? '';
+  const recall = formatRecall(TEXTS, prompts, NO_PLANS) ?? '';
 
   assert.deepEqual(
     [recall, recall.isWellFormed()],
@@ -40,7 +46,7 @@ test('leaves out the oldest prompts over the budget and names their count', () =
     { time: 'new', prompt: 'z'.repeat(2000) },
     { time: 'now', prompt: 'w'.repeat(2000) },
   ];
-  const recall = formatRecall(TEXTS, prompts, '/p') ?? '';
+  const recall = formatRecall(TEXTS, prompts, NO_PLANS) ?? '';
 
   assert.deepEqual(
     [recall.startsWith('H 2\n\nnew\nz'), recall.includes('mid'), recall.length <= 6000],
@@ -49,11 +55,48 @@ test('leaves out the oldest prompts over the budget and names their count', () =
 });
 
 test('keeps a path that holds a replacement pattern as it is', () => {
-  const recall = formatRecall(TEXTS, [{ time: TIME, prompt: 'go' }], '/a$&b/s1.jsonl');
+  const recall = formatRecall(TEXTS, [{ time: TIME, prompt: 'go' }], {
+    logPath: '/a$&b/s1.jsonl',
+    planPaths: [],
+  });
 
   assert.equal(recall, `H 0\n\n${ TIME }\ngo\n\nP /a$&b/s1.jsonl`);
 });
 
 test('returns undefined when the header and the path alone pass the budget', () => {
-  assert.equal(formatRecall(TEXTS, [], `/${ 'p'.repeat(6000) }`), undefined);
+  assert.equal(formatRecall(TEXTS, [{ time: TIME, prompt: 'go' }], {
+    logPath: `/${ 'p'.repeat(6000) }`,
+    planPaths: [],
+  }), undefined);
+});
+
+test('ends with the plans line after the path, the paths in the order given', () => {
+  const recall = formatRecall(TEXTS, [{ time: TIME, prompt: 'go' }], {
+    logPath: '/p',
+    planPaths: ['/r/b.md', '/r/a.md'],
+  });
+
+  assert.equal(recall, `H 0\n\n${ TIME }\ngo\n\nP /p\n\nL /r/b.md, /r/a.md.`);
+});
+
+test('returns the plans line alone when no prompt is logged', () => {
+  assert.equal(formatRecall(TEXTS, [], { logPath: '/p', planPaths: ['/r/a.md'] }), 'L /r/a.md.');
+});
+
+// Three prompts of 1,980 characters fit with the path line alone and not with
+// a plans line of 44 characters beside it.
+test('counts the plans line inside the budget and leaves out one more prompt', () => {
+  const prompts = [
+    { time: 'old', prompt: 'x'.repeat(1980) },
+    { time: 'mid', prompt: 'y'.repeat(1980) },
+    { time: 'new', prompt: 'z'.repeat(1980) },
+  ];
+  const planPaths = [`/${ 'q'.repeat(40) }`];
+  const recall = formatRecall(TEXTS, prompts, { logPath: '/p', planPaths });
+  const withoutPlans = formatRecall(TEXTS, prompts, NO_PLANS) ?? '';
+
+  assert.deepEqual(
+    [withoutPlans.startsWith('H 0\n\nold'), recall?.startsWith('H 1\n\nmid'), recall?.length],
+    [true, true, 4027],
+  );
 });

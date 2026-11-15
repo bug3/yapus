@@ -27,6 +27,44 @@ test('adds the header, the prompts oldest first and the log path at compact', (t
   });
 });
 
+test('ends with the approved plans line after the log path', (t) => {
+  const { projectRoot, dataDir } = makeDirs(t, LOG);
+  const planPath = writePlan(projectRoot);
+  const outcome = getOutcome({ stdinText: COMPACT, dataDir, projectRoot });
+
+  assert.ok(outcome.kind === 'output');
+  assert.equal(
+    outcome.json.endsWith(`\`.\\n\\nThe plans of this project, newest first: ${ planPath }."}}`),
+    true,
+  );
+});
+
+test('adds the plans line alone when the session has no prompt log', (t) => {
+  const projectRoot = makeTempDir(t);
+  const planPath = writePlan(projectRoot);
+
+  assert.deepEqual(getOutcome({ stdinText: COMPACT, dataDir: makeTempDir(t), projectRoot }), {
+    kind: 'output',
+    json: JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: 'SessionStart',
+        additionalContext: `The plans of this project, newest first: ${ planPath }.`,
+      },
+    }),
+  });
+});
+
+test('fails with the path when the plans directory cannot be read', (t) => {
+  const { projectRoot, dataDir } = makeDirs(t, LOG);
+
+  writeFileSync(join(projectRoot, '.yapus', 'plans'), 'a file where the directory goes');
+
+  assert.match(
+    JSON.stringify(getOutcome({ stdinText: COMPACT, dataDir, projectRoot })),
+    /^\{"kind":"failure","detail":"cannot read .*\/plans: ENOTDIR.*; the prompts are not recalled"\}$/u,
+  );
+});
+
 test('marks a cut prompt with the approved mark and leaves the log unchanged', (t) => {
   const log = `${ JSON.stringify({ time: 't1', prompt: 'a'.repeat(3000) }) }\n`;
   const { projectRoot, dataDir } = makeDirs(t, log);
@@ -121,6 +159,16 @@ function makeStart(source: string): string {
 
 function getLogPath(projectRoot: string): string {
   return join(projectRoot, '.yapus', 'prompts', 's1.jsonl');
+}
+
+// One plan file in the project's plans directory; its path.
+function writePlan(projectRoot: string): string {
+  const plansDir = join(projectRoot, '.yapus', 'plans');
+
+  mkdirSync(plansDir, { recursive: true });
+  writeFileSync(join(plansDir, 'topic.md'), '# Plan\n');
+
+  return join(plansDir, 'topic.md');
 }
 
 // A project root whose session s1 has the log text, and a data directory.
