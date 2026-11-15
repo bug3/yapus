@@ -43,7 +43,7 @@ export function getCompletions(rows: readonly Row[]): Completion[] {
 }
 
 // Only a background launch needs the resume rule: a foreground one carries the
-// cap note on its end, and return rows exist for providens agents alone.
+// cap note on its end, and return rows exist for delegator agents alone.
 function isBackgroundLaunch(rows: readonly Row[], agentId: string): boolean {
   return rows.some((row) =>
     row.hook === 'end' && row.agentId === agentId && row.status === 'async_launched');

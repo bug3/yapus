@@ -16,8 +16,8 @@ export interface Rework {
   readonly reworkedFinishers: number;
 }
 
-const BUILDER = 'providens:builder';
-const FINISHER = 'providens:finisher';
+const BUILDER = 'delegator:builder';
+const FINISHER = 'delegator:finisher';
 const REWORK_VERDICTS: readonly string[] = ['REWORK', 'REVISE'];
 
 export function getRework(rows: readonly Row[]): Rework {

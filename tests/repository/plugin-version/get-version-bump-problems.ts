@@ -2,12 +2,12 @@ import { join } from 'node:path';
 import { readUtf8 } from '../../helpers/read-utf8.ts';
 import { runGit } from '../../helpers/run-git.ts';
 
-const MANIFEST = 'plugins/providens/.claude-plugin/plugin.json';
-const TAG_PREFIX = 'providens-';
-const SHIPPED_PATHS: readonly string[] = ['plugins/providens', 'hooks'];
+const MANIFEST = 'plugins/delegator/.claude-plugin/plugin.json';
+const TAG_PREFIX = 'delegator-';
+const SHIPPED_PATHS: readonly string[] = ['plugins/delegator', 'hooks'];
 
-// Every way the working tree under root ships a changed providens under the
-// version its latest `providens-<version>` tag already published; no tag
+// Every way the working tree under root ships a changed delegator under the
+// version its latest `delegator-<version>` tag already published; no tag
 // means nothing is published yet, so nothing can be stale.
 export function getVersionBumpProblems(root: string): string[] {
   const tag = getLatestTag(root);

@@ -6,8 +6,8 @@
   },
   "plugins": [
     {
-      "name": "providens",
-      "source": "./plugins/providens"
+      "name": "delegator",
+      "source": "./plugins/delegator"
     },
     {
       "name": "landmark",

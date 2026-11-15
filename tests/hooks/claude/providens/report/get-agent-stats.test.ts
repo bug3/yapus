@@ -17,8 +17,8 @@ import type {
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..', '..');
 const CONTRACT = join(ROOT, 'hooks', 'claude', 'providens', 'contract', 'contract.md');
-const AGENTS = join(ROOT, 'plugins', 'providens', 'agents');
-const BUILDER = 'providens:builder';
+const AGENTS = join(ROOT, 'plugins', 'delegator', 'agents');
+const BUILDER = 'delegator:builder';
 const LAUNCH: LaunchRow = {
   time: 't',
   hook: 'launch',
@@ -135,19 +135,19 @@ test('counts a background launch with a return as completed with the return medi
 
 test('counts a resume as a cap stop under the agent type of its launch only', () => {
   const diffReviewer = {
-    ...END, subject: 'providens:diff-reviewer', agentId: 'b', status: 'async_launched',
+    ...END, subject: 'delegator:diff-reviewer', agentId: 'b', status: 'async_launched',
   };
   const [builder, other] = getAgentStats([
     { ...END, status: 'async_launched' },
     RESUME,
     RETURN,
     diffReviewer,
-    { ...RETURN, subject: 'providens:diff-reviewer', agentId: 'b' },
+    { ...RETURN, subject: 'delegator:diff-reviewer', agentId: 'b' },
   ]);
 
   assert.deepEqual(
     [builder?.agent, builder?.capped, other?.agent, other?.capped],
-    [BUILDER, 1, 'providens:diff-reviewer', 0],
+    [BUILDER, 1, 'delegator:diff-reviewer', 0],
   );
 });
 
@@ -164,9 +164,9 @@ test('counts a background launch without a return as no return and not completed
 });
 
 test('gives one entry per agent, sorted by name, with undefined medians without ends', () => {
-  const stats = getAgentStats([{ ...LAUNCH, subject: 'providens:diff-reviewer' }, LAUNCH]);
+  const stats = getAgentStats([{ ...LAUNCH, subject: 'delegator:diff-reviewer' }, LAUNCH]);
 
-  assert.deepEqual(stats.map((entry) => entry.agent), [BUILDER, 'providens:diff-reviewer']);
+  assert.deepEqual(stats.map((entry) => entry.agent), [BUILDER, 'delegator:diff-reviewer']);
   assert.deepEqual(
     [stats[0]?.durationMedianMs, stats[0]?.tokensMedian, stats[0]?.toolUsesMedian],
     [undefined, undefined, undefined],
@@ -188,8 +188,8 @@ test('names only verdict words an agent definition asks for', () => {
   );
 });
 
-const FINISHER = 'providens:finisher';
-const REVIEWER = 'providens:diff-reviewer';
+const FINISHER = 'delegator:finisher';
+const REVIEWER = 'delegator:diff-reviewer';
 const NESTED_LAUNCH: LaunchRow = {
   ...LAUNCH,
   time: 't2',

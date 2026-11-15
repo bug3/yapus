@@ -8,7 +8,7 @@ const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', '..', 'hooks');
 const MAIN = join(HOOKS, 'claude', 'gates', 'return', 'main.ts');
 const RUN_SH = join(HOOKS, 'run.sh');
 const SUBPROCESS_TIMEOUT_MS = 10000;
-const FIELDS = { session_id: 's1', agent_type: 'providens:reader' };
+const FIELDS = { session_id: 's1', agent_type: 'delegator:reader' };
 
 test('exits 0 with no output for a return within the cap', (t) => {
   const hookRun = runHook(t, { ...FIELDS, last_assistant_message: 'DONE' });

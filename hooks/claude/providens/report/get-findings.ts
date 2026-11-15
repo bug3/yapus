@@ -35,9 +35,9 @@ export const MIN_SAMPLE = 20;
 // Sessions without a launch of an agent before it is a drop candidate.
 export const MIN_SESSIONS = 30;
 
-const PLAN_REVIEWER = 'providens:plan-reviewer';
+const PLAN_REVIEWER = 'delegator:plan-reviewer';
 const PERCENT = 100;
-const ROSTER_AGENTS: readonly string[] = ROSTER.map((name) => `providens:${ name }`);
+const ROSTER_AGENTS: readonly string[] = ROSTER.map((name) => `delegator:${ name }`);
 
 const RATE_RULES: readonly RateRule[] = [
   // A background subagent that hits its turn cap fires no stop hook: one
@@ -101,7 +101,7 @@ function getReworkFinding(rework: Rework): Finding {
     threshold: `over 50 percent at n ${ String(MIN_SAMPLE) }: change the brief form (ORCH-5)`,
   };
 
-  return makeRateFinding(rule, 'providens:builder', [rework.reworked, rework.builders]);
+  return makeRateFinding(rule, 'delegator:builder', [rework.reworked, rework.builders]);
 }
 
 function getFinisherReworkFinding(rework: Rework): Finding {
@@ -112,7 +112,7 @@ function getFinisherReworkFinding(rework: Rework): Finding {
     threshold: `over 50 percent at n ${ String(MIN_SAMPLE) }: narrow the slices of the plan`,
   };
 
-  return makeRateFinding(rule, 'providens:finisher', [rework.reworkedFinishers, rework.finishers]);
+  return makeRateFinding(rule, 'delegator:finisher', [rework.reworkedFinishers, rework.finishers]);
 }
 
 function makeRateFinding(

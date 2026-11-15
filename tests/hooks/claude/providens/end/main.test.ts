@@ -12,7 +12,7 @@ const SUBPROCESS_TIMEOUT_MS = 10000;
 const END = JSON.stringify({
   session_id: 's1',
   tool_name: 'Agent',
-  tool_input: { subagent_type: 'providens:runner', description: '[standard] run it' },
+  tool_input: { subagent_type: 'delegator:runner', description: '[standard] run it' },
   tool_response: { status: 'completed', agentId: 'a1' },
 });
 

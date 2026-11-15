@@ -82,7 +82,7 @@
     ],
     "SubagentStart": [
       {
-        "matcher": "^providens:",
+        "matcher": "^delegator:",
         "hooks": [
           {
             "type": "command",
@@ -94,7 +94,7 @@
     ],
     "SubagentStop": [
       {
-        "matcher": "^providens:",
+        "matcher": "^delegator:",
         "hooks": [
           {
             "type": "command",

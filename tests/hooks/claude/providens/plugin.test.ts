@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
-const PLUGIN = join(ROOT, 'plugins', 'providens');
+const PLUGIN = join(ROOT, 'plugins', 'delegator');
 const REMEMBER_COMMAND =
   'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/providens/remember || exit 0';
 const SUBPROCESS_TIMEOUT_MS = 10000;
@@ -98,7 +98,7 @@ test('registers every providens hook', () => {
       ],
       SubagentStart: [
         {
-          matcher: '^providens:',
+          matcher: '^delegator:',
           hooks: [
             {
               type: 'command',
@@ -110,7 +110,7 @@ test('registers every providens hook', () => {
       ],
       SubagentStop: [
         {
-          matcher: '^providens:',
+          matcher: '^delegator:',
           hooks: [
             {
               type: 'command',
