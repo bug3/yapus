@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { swapDirectory } from '../../../../hooks/landmark/machine/swap-directory.ts';
+import { swapDirectory } from '../../../../hooks/ordo/machine/swap-directory.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 
 test('puts the new directory in place of the old one', (t) => {

@@ -6,12 +6,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/landmark/check \"${CLAUDE_PLUGIN_ROOT}\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/ordo/check \"${CLAUDE_PLUGIN_ROOT}\"",
             "timeout": 10
           },
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/landmark/scopes",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/ordo/scopes",
             "timeout": 10
           }
         ]

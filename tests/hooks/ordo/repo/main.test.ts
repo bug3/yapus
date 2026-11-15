@@ -8,8 +8,8 @@ import { getGitEnv, runGit } from '../../../helpers/run-git.ts';
 import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
 import {
   getGolangciLintVersion,
-} from '../../../../hooks/landmark/repo/files/go/get-golangci-lint-version.ts';
-import { readTemplates } from '../../../../hooks/landmark/repo/files/read-templates.ts';
+} from '../../../../hooks/ordo/repo/files/go/get-golangci-lint-version.ts';
+import { readTemplates } from '../../../../hooks/ordo/repo/files/read-templates.ts';
 import { commitFiles } from './plan/commit-files.ts';
 import { copyPlugin, PLUGIN, runProject } from './run-project.ts';
 
@@ -22,7 +22,7 @@ const SCOPES = '.claude/yapus/landmark/scopes.json';
 const LANGUAGE_RECORD = '.claude/yapus/landmark/language';
 const BASE_DIR = join(
   import.meta.dirname,
-  ...['..', '..', '..', '..', 'hooks', 'landmark', 'repo', 'files', 'typescript'],
+  ...['..', '..', '..', '..', 'hooks', 'ordo', 'repo', 'files', 'typescript'],
 );
 
 function readVersion(): unknown {
@@ -180,7 +180,7 @@ test('crashes on an unparsable package.json and writes nothing', (t) => {
 
 test('prints the usage and exits 2 without two arguments', (t) => {
   const root = copyPlugin(t);
-  const run = spawnSync('bash', [join(root, 'runtime', 'run.sh'), 'landmark/repo', root], {
+  const run = spawnSync('bash', [join(root, 'runtime', 'run.sh'), 'ordo/repo', root], {
     encoding: 'utf8',
     env: getGitEnv(process.env),
     timeout: 20000,

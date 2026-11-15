@@ -9,8 +9,8 @@ const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const PLUGIN = join(ROOT, 'plugins', 'ordo');
 const COMMAND = 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/dashes';
 const CHECK_COMMAND =
-  'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/landmark/check "${CLAUDE_PLUGIN_ROOT}"';
-const SCOPES_COMMAND = 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/landmark/scopes';
+  'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/ordo/check "${CLAUDE_PLUGIN_ROOT}"';
+const SCOPES_COMMAND = 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/ordo/scopes';
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const EM_DASH = String.fromCodePoint(0x2014);
 const EM_DASH_WRITE = JSON.stringify({

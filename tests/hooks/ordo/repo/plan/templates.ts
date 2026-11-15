@@ -1,4 +1,4 @@
-import type { Template } from '../../../../../hooks/landmark/repo/files/read-templates.ts';
+import type { Template } from '../../../../../hooks/ordo/repo/files/read-templates.ts';
 
 export const templates: readonly Template[] = [
   { target: '.claude/yapus/landmark/eslint.config.ts', kind: 'owned', text: 'base lint' },

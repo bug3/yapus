@@ -40,7 +40,7 @@ function runUpgrade(home: string, extraEnv: NodeJS.ProcessEnv = {}): SpawnSyncRe
 
   const entry = join(root, 'runtime', 'run.sh');
 
-  return spawnSync('bash', [entry, 'landmark/machine', root, 'upgrade'], {
+  return spawnSync('bash', [entry, 'ordo/machine', root, 'upgrade'], {
     encoding: 'utf8', env: makeEnv(home, extraEnv), timeout: UPGRADE_TIMEOUT_MS,
   });
 }
@@ -178,7 +178,7 @@ test('upgrade that fails in the hooks copy keeps the old hooks and the old stamp
   });
   const checkRun = spawnSync(
     'bash',
-    [join(getRoot(home), 'runtime', 'run.sh'), 'claude/landmark/check', getRoot(home)],
+    [join(getRoot(home), 'runtime', 'run.sh'), 'claude/ordo/check', getRoot(home)],
     { encoding: 'utf8', env: makeEnv(home), timeout: UPGRADE_TIMEOUT_MS },
   );
 

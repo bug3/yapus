@@ -161,7 +161,7 @@ function getContext(stdout: string): string {
 // The command string of the SessionStart entry in hooks.json.
 function getRegisteredCommand(): string {
   const hooksText = readFileSync(join(PLUGIN, 'hooks', 'hooks.json'), 'utf8');
-  const checkEntry = /"command": ("(?:[^"\\]|\\.)*landmark\/check(?:[^"\\]|\\.)*")/;
+  const checkEntry = /"command": ("(?:[^"\\]|\\.)*ordo\/check(?:[^"\\]|\\.)*")/;
   const commandJson = checkEntry.exec(hooksText)?.[1] ?? '""';
   const command: unknown = JSON.parse(commandJson);
 

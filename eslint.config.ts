@@ -1,5 +1,5 @@
 import { defineConfig } from 'eslint/config';
-import base, { NUMBER_PARSING } from './hooks/landmark/repo/files/typescript/eslint.config.ts';
+import base, { NUMBER_PARSING } from './hooks/ordo/repo/files/typescript/eslint.config.ts';
 
 export default defineConfig(
   base,

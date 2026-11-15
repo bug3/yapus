@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { getLanguage } from '../../../../../hooks/landmark/repo/language/get-language.ts';
+import { getLanguage } from '../../../../../hooks/ordo/repo/language/get-language.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 import { writeFiles } from '../plan/commit-files.ts';
 

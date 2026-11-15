@@ -83,7 +83,7 @@ function runScopes(
   const sessionEnv = Object.fromEntries(
     Object.entries(process.env).filter(([name]) => name !== 'CLAUDE_PROJECT_DIR'),
   );
-  const commandRun = spawnSync('bash', [RUN, 'claude/landmark/scopes'], {
+  const commandRun = spawnSync('bash', [RUN, 'claude/ordo/scopes'], {
     cwd,
     encoding: 'utf8',
     env: project === undefined ? sessionEnv : { ...sessionEnv, CLAUDE_PROJECT_DIR: project },

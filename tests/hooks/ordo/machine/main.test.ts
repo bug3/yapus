@@ -5,7 +5,7 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { readNameList } from '../../../../hooks/landmark/machine/read-name-list.ts';
+import { readNameList } from '../../../../hooks/ordo/machine/read-name-list.ts';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
 import { makeEnv, runInstall, spawnInstall } from './run-install.ts';
 
@@ -107,7 +107,7 @@ test('refuses a hooks path injected through the environment and writes nothing',
 
 test('leaves no rule, stamp or git config when hooks fail, and a re-run installs', (t) => {
   const listed = readNameList(
-    join(PLUGIN, 'runtime', 'landmark', 'machine', 'hook-files.json'),
+    join(PLUGIN, 'runtime', 'ordo', 'machine', 'hook-files.json'),
   )[0] ?? '';
   const { root, home, installRun } = runInstall(t, 'machine', { arrangePlugin: (pluginRoot) => {
     rmSync(join(pluginRoot, 'runtime', listed));
