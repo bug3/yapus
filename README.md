@@ -1,4 +1,4 @@
-# yapus
+# <img src="docs/public/logo.svg" alt="" height="33" align="absmiddle"> yapus
 
 [![license](https://img.shields.io/github/license/bug3/yapus)](LICENSE)
 

@@ -26,7 +26,9 @@ const STANDARDS: readonly LinkEntry[] = readdirSync(STANDARDS_DIR)
 export const config = {
   title: 'yapus',
   description: 'Standards and orchestration for coding with an AI agent.',
+  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }]],
   themeConfig: {
+    logo: '/logo.svg',
     nav: [...SECTIONS, { text: 'Standards', link: '/standards/PRINCIPLES' }],
     sidebar: [...SECTIONS, { text: 'Standards', items: STANDARDS }],
     // A README section is one `##` heading over `###` subsections.
