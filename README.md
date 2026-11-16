@@ -9,6 +9,7 @@
 - **delegator** is the orchestrator: a fixed roster of subagents, a limit on launches and a cap on what returns to the main session
 - **ordo** installs the standards and the git hooks once per machine, and adds lint, CI and commit checks to a repository with one command
 
+<!-- #region features -->
 ## Features
 
 - **Quality held by checks.** Standards are written files; a rule a program can check is held by a hook or a test, and a pass-or-fail command, not a sentence, decides that a change is done.
@@ -19,6 +20,9 @@
 - **Survives compaction.** The prompts the person typed are logged and given back to the session after a compaction, with the paths of the newest plans.
 - **Cost control.** Each subagent runs on the model its definition names, a smaller one for running commands, reading and web research than for editing, and a session has a launch budget.
 
+<!-- #endregion features -->
+
+<!-- #region quick-start -->
 ## Quick Start
 
 ### 1. Install the Plugins
@@ -55,9 +59,12 @@ In every repository on the machine, git refuses a commit whose subject is not `t
 
 At the start of a session in a set-up repository, ordo lists the repository's commit scopes.
 
+<!-- #endregion quick-start -->
+
+<!-- #region delegator -->
 ## delegator
 
-The main session is the shared workspace of the person and the agent, and it keeps only what the next decision needs. delegator puts the orchestration rules [ORCH-1 to ORCH-7](hooks/claude/delegator/policy/policy.md) at the start of every session, and again after a resume, a clear or a compaction: they hand reading, running, judging and edits to subagents, launch independent ones together and let into the main session only what a decision needs. Hooks, the programs Claude Code runs at fixed points of a session, hold what a program can check: the launch check judges each subagent launch before it starts, and the return check caps what each subagent sends back. delegator also checks the form of `gh pr create` and `gh issue create` calls. `claude plugin uninstall delegator@yapus` removes the plugin.
+The main session is the shared workspace of the person and the agent, and it keeps only what the next decision needs. delegator puts the orchestration rules [ORCH-1 to ORCH-7](https://github.com/bug3/yapus/blob/main/hooks/claude/delegator/policy/policy.md) at the start of every session, and again after a resume, a clear or a compaction: they hand reading, running, judging and edits to subagents, launch independent ones together and let into the main session only what a decision needs. Hooks, the programs Claude Code runs at fixed points of a session, hold what a program can check: the launch check judges each subagent launch before it starts, and the return check caps what each subagent sends back. delegator also checks the form of `gh pr create` and `gh issue create` calls. `claude plugin uninstall delegator@yapus` removes the plugin.
 
 ### Depths
 
@@ -131,6 +138,9 @@ Off means no rules at the session's start, no check on its launches, and no prom
 | `/delegator:agent-report` | the record's counts per agent |
 | `/delegator:write-plan` | the deep work flow, from the plan to the slices |
 
+<!-- #endregion delegator -->
+
+<!-- #region ordo -->
 ## ordo
 
 ordo installs the yapus standards and git hooks on the machine and the yapus setup in a repository; `/ordo:upgrade` and `/ordo:repo` bring them up to the plugin's version. A standard is a file of numbered rules, such as `CODE-4`; every standard but PRINCIPLES.md names the file paths it applies to.
@@ -205,6 +215,8 @@ The command writes nothing while a path it would write or remove has an uncommit
 | `/ordo:upgrade` | installed standards and git hooks up to the plugin's version |
 | `/ordo:repo` | TypeScript setup of a new repository, upgrade of a set-up one in its recorded language |
 | `/ordo:repo go` | Go setup of a new repository |
+
+<!-- #endregion ordo -->
 
 ## Requirements
 
