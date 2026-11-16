@@ -7,6 +7,8 @@ export function getWorkflow(): string {
     '',
     'on:',
     '  pull_request:',
+    '  push:',
+    '    branches: ["main"]',
     '',
     'permissions:',
     '  contents: "read"',
