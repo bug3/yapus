@@ -1,0 +1,1 @@
+<!--@include: ../../standards/TYPESCRIPT.md-->

@@ -11,4 +11,11 @@ export default defineConfig(
       'no-restricted-properties': ['error', ...NUMBER_PARSING],
     },
   },
+  // VitePress reads its config from the default export.
+  {
+    files: ['docs/.vitepress/config.ts'],
+    rules: {
+      'no-restricted-exports': 'off',
+    },
+  },
 );

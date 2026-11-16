@@ -4,6 +4,7 @@
     "tsBuildInfoFile": "node_modules/.cache/yapus/tsbuildinfo"
   },
   "include": [
+    "docs/.vitepress/config.ts",
     "eslint.config.ts",
     "hooks/**/*.ts",
     "tests/**/*.ts"
