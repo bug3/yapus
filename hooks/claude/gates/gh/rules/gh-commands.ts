@@ -97,7 +97,7 @@ export const ghCommands = {
   bodies: {
     pr: {
       headings: ['Summary', 'Test plan'],
-      footer: ['Built with yapus', 'Co-authored-by: yapus <noreply@yapus.dev>'],
+      footer: ['Built with [yapus](https://yapus.dev)'],
     },
     // By the kind of the issue, which follows its `type:` label (`issueKinds`).
     issue: {

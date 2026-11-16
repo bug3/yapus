@@ -18,8 +18,7 @@ if ('violation' in read) {
 
 const CATALOGS = read;
 
-const BODY = '## Summary\na\n\n## Test plan\nb\n\nBuilt with yapus\n'
-  + 'Co-authored-by: yapus <noreply@yapus.dev>\n';
+const BODY = '## Summary\na\n\n## Test plan\nb\n\nBuilt with [yapus](https://yapus.dev)\n';
 const TITLE = 'feat(hooks): add a check';
 const LABELS = 'type: feat,scope: hooks';
 
@@ -184,8 +183,7 @@ test('passes a hand-kept extra label', (t) => {
 });
 
 test('refuses a body without the headings in order', (t) => {
-  const dir = bodyDir(t, '## Test plan\nb\n\n## Summary\na\n\nBuilt with yapus\n'
-    + 'Co-authored-by: yapus <noreply@yapus.dev>\n');
+  const dir = bodyDir(t, '## Test plan\nb\n\n## Summary\na\n\nBuilt with [yapus](https://yapus.dev)\n');
 
   assert.equal(
     getPrRefusal(words('-t', TITLE, '-l', LABELS, '-F', 'body.md'), dir, CATALOGS),
@@ -199,8 +197,7 @@ test('refuses a body without the footer', (t) => {
 
   assert.equal(
     getPrRefusal(words('-t', TITLE, '-l', LABELS, '-F', 'body.md'), dir, CATALOGS),
-    'the body must end with the lines `Built with yapus` and '
-    + '`Co-authored-by: yapus <noreply@yapus.dev>`; add them',
+    'the body must end with the lines `Built with [yapus](https://yapus.dev)`; add them',
   );
 });
 
