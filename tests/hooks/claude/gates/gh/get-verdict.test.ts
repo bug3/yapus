@@ -6,8 +6,7 @@ import { getVerdict } from '../../../../../hooks/claude/gates/gh/get-verdict.ts'
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 import { makeCatalogRoot } from './make-catalog-root.ts';
 
-const BODY = '## Summary\na\n\n## Test plan\nb\n\nBuilt with yapus\n'
-  + 'Co-authored-by: yapus <noreply@yapus.dev>\n';
+const BODY = '## Summary\na\n\n## Test plan\nb\n\nBuilt with [yapus](https://yapus.dev)\n';
 const CREATE = 'gh pr create -t "feat(hooks): add a check" -l "type: feat,scope: hooks"';
 const UNKNOWN_CWD = {
   kind: 'refuse',
