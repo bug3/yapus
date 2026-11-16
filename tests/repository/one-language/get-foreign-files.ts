@@ -14,6 +14,8 @@ const SHELL_ENTRIES: readonly string[] = [
 ];
 // YAML only where GitHub reads it (DATA-1).
 const YAML_DIRECTORY = '.github/';
+// SVG only where VitePress serves static files.
+const SVG_DIRECTORY = 'docs/public/';
 
 // Every kept file under root in a language or format the repository does
 // not use.
@@ -25,9 +27,14 @@ function isKept(path: string): boolean {
   return KEPT_EXTENSIONS.includes(extname(path))
     || KEPT_NAMES.includes(basename(path))
     || SHELL_ENTRIES.includes(path)
-    || isGitHubYaml(path);
+    || isGitHubYaml(path)
+    || isSiteSvg(path);
 }
 
 function isGitHubYaml(path: string): boolean {
   return extname(path) === '.yml' && path.startsWith(YAML_DIRECTORY);
+}
+
+function isSiteSvg(path: string): boolean {
+  return extname(path) === '.svg' && path.startsWith(SVG_DIRECTORY);
 }

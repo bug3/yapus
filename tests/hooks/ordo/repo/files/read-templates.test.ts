@@ -10,8 +10,8 @@ import {
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..', '..');
 const BASE = join(ROOT, 'hooks', 'ordo', 'repo', 'files', 'typescript');
 // The ShellCheck step of test.yml and the comment above it, 1-based.
-const SHELLCHECK_FIRST_LINE = 18;
-const SHELLCHECK_LAST_LINE = 22;
+const SHELLCHECK_FIRST_LINE = 20;
+const SHELLCHECK_LAST_LINE = 24;
 
 function findText(target: string): string | undefined {
   return readTemplates().find((template) => template.target === target)?.text;
@@ -112,10 +112,10 @@ test('limits the Go workflow token to read access on contents', () => {
   assert.match(findGoText('.github/workflows/yapus.yml'), /^permissions:\n {2}contents: "read"\n/m);
 });
 
-test('triggers the Go workflow on pull_request only', () => {
+test('triggers the Go workflow on pull_request and on pushes to main only', () => {
   const text = findGoText('.github/workflows/yapus.yml');
 
-  assert.match(text, /^on:\n {2}pull_request:\n\n/m);
+  assert.match(text, /^on:\n {2}pull_request:\n {2}push:\n {4}branches: \["main"\]\n\n/m);
   assert.doesNotMatch(text, /pull_request_target|workflow_run/);
 });
 

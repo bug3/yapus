@@ -25,6 +25,13 @@ const HOME_LINES: readonly RegExp[] = [
   /(?<=<p class="tagline"[^>]*>)[^<]+/u,
   /(?<=<meta name="description" content=")[^"]+/u,
 ];
+const LOGO = 'logo.svg';
+const README_LOGO = `docs/public/${ LOGO }`;
+// The nav logo and the favicon link, as the home page holds them.
+const LOGO_TAGS: readonly RegExp[] = [
+  /<img class="[^"]*\blogo\b[^"]*" src="\/logo\.svg"/u,
+  /<link rel="icon"[^>]*href="\/logo\.svg"/u,
+];
 
 // One build serves every test in the file; its output stays out of the
 // repository.
@@ -80,6 +87,16 @@ test('takes the hero lines and the description from the README', () => {
   const lines = HOME_LINES.map((pattern) => pattern.exec(home)?.[0]);
 
   assert.deepEqual(lines.filter((line) => line !== undefined && readme.includes(line)), lines);
+});
+
+test('shows the logo in the nav, as the favicon and in the README', () => {
+  const home = readPage(HOME_PAGE);
+  const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
+
+  assert.ok(existsSync(join(OUT_DIR, LOGO)));
+  assert.deepEqual(LOGO_TAGS.filter((pattern) => !pattern.test(home)), []);
+  assert.ok(readme.includes(README_LOGO));
+  assert.ok(existsSync(join(ROOT, README_LOGO)));
 });
 
 function getPages(): string[] {

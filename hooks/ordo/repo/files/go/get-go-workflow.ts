@@ -8,6 +8,8 @@ export function getGoWorkflow(): string {
     '',
     'on:',
     '  pull_request:',
+    '  push:',
+    '    branches: ["main"]',
     '',
     'permissions:',
     '  contents: "read"',
