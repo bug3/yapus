@@ -1,6 +1,6 @@
 # <img src="docs/public/logo.svg" alt="" height="33" align="absmiddle"> yapus
 
-[![license](https://img.shields.io/github/license/bug3/yapus)](LICENSE) [![docs](https://img.shields.io/badge/docs-yapus.dev-640B15)](https://yapus.dev)
+[![test](https://github.com/bug3/yapus/actions/workflows/test.yml/badge.svg)](https://github.com/bug3/yapus/actions/workflows/test.yml) [![license](https://img.shields.io/github/license/bug3/yapus)](LICENSE) [![docs](https://img.shields.io/badge/docs-yapus.dev-640B15)](https://yapus.dev)
 
 > If an AI writes the code, what keeps it sound?
 
