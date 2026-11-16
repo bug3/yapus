@@ -10,3 +10,4 @@ id_rsa*
 docs/.vitepress/cache
 docs/.vitepress/dist
 docs/.vitepress/.temp
+docs/.vitepress/config.ts.timestamp-*.mjs
