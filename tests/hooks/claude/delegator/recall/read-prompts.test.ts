@@ -19,6 +19,23 @@ test('reads the logged prompts in order and skips a line that is not one', (t) =
   });
 });
 
+// A plan line shares the session's file with the prompts and carries no prompt.
+test('skips a plan line between two logged prompts', (t) => {
+  const path = join(makeTempDir(t), 's1.jsonl');
+
+  writeFileSync(
+    path,
+    '{"time":"t1","prompt":"one"}\n'
+      + '{"time":"t2","plan":"2026-11/topic","file":"S1.md"}\n'
+      + '{"time":"t3","prompt":"three"}\n',
+  );
+
+  assert.deepEqual(readPrompts(path), {
+    kind: 'prompts',
+    prompts: [{ time: 't1', prompt: 'one' }, { time: 't3', prompt: 'three' }],
+  });
+});
+
 test('returns missing when the session has no log', (t) => {
   assert.deepEqual(readPrompts(join(makeTempDir(t), 's1.jsonl')), { kind: 'missing' });
 });
