@@ -3,6 +3,7 @@ import {
   chmodSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   rmSync,
   statSync,
@@ -16,6 +17,7 @@ import { makeTempRepo } from '../../../../helpers/make-temp-repo.ts';
 import { runGit } from '../../../../helpers/run-git.ts';
 
 const TIME = '2026-11-15T10:00:00.000Z';
+const LOG_NAME = '15T10-00-00Z_s1.jsonl';
 const PROMPT = makePrompt('go');
 
 test('appends the typed prompt as one line with its time, newlines kept', (t) => {
@@ -29,9 +31,32 @@ test('appends the typed prompt as one line with its time, newlines kept', (t) =>
     kind: 'written',
   });
   assert.equal(
-    readFileSync(join(projectRoot, '.yapus', 'prompts', 's1.jsonl'), 'utf8'),
+    readFileSync(join(projectRoot, '.yapus', 'sessions', '2026-11', LOG_NAME), 'utf8'),
     '{"time":"2026-11-15T10:00:00.000Z","prompt":"one"}\n'
       + '{"time":"2026-11-15T10:00:00.000Z","prompt":"two\\nlines"}\n',
+  );
+});
+
+test('keeps a later prompt in another month in the file of the first prompt', (t) => {
+  const { projectRoot, dataDir } = makeDirs(t);
+  const sessionsDirectory = join(projectRoot, '.yapus', 'sessions');
+  const later = '2026-12-01T09:30:00.000Z';
+
+  getOutcome({ stdinText: makePrompt('one'), dataDir, projectRoot, time: TIME });
+  getOutcome({ stdinText: makePrompt('two'), dataDir, projectRoot, time: later });
+
+  assert.deepEqual(
+    [
+      readFileSync(getLogPath(projectRoot), 'utf8'),
+      readdirSync(sessionsDirectory).sort(),
+      readdirSync(join(sessionsDirectory, '2026-11')),
+    ],
+    [
+      '{"time":"2026-11-15T10:00:00.000Z","prompt":"one"}\n'
+        + '{"time":"2026-12-01T09:30:00.000Z","prompt":"two"}\n',
+      ['.gitignore', '2026-11'],
+      [LOG_NAME],
+    ],
   );
 });
 
@@ -110,7 +135,21 @@ test('fails with the path when the prompt log cannot be written', (t) => {
 
   assert.match(
     JSON.stringify(outcome),
-    /^\{"kind":"failure","detail":"cannot write .*\/\.yapus\/prompts\/s1\.jsonl: .*; the prompt is not remembered"\}$/u,
+    /^\{"kind":"failure","detail":"cannot write .*\/sessions\/2026-11\/15T10-00-00Z_s1\.jsonl: .*; the prompt is not remembered"\}$/u,
+  );
+});
+
+test('fails with the path when the sessions directory cannot be read', (t) => {
+  const { projectRoot, dataDir } = makeDirs(t);
+
+  mkdirSync(join(projectRoot, '.yapus'));
+  writeFileSync(join(projectRoot, '.yapus', 'sessions'), 'a file where the directory goes');
+
+  const outcome = getOutcome({ stdinText: PROMPT, dataDir, projectRoot, time: TIME });
+
+  assert.match(
+    JSON.stringify(outcome),
+    /^\{"kind":"failure","detail":"cannot read .*\/\.yapus\/sessions: ENOTDIR.*; the prompt is not remembered"\}$/u,
   );
 });
 
@@ -125,7 +164,7 @@ test('leaves the prompt log out of git status in a repository', (t) => {
   );
 });
 
-test('creates the prompts directory and the log private, .yapus with the default mode', (t) => {
+test('creates the session directories and the log private, .yapus with the default mode', (t) => {
   const { projectRoot, dataDir } = makeDirs(t);
   const defaultDirectory = join(projectRoot, 'default');
 
@@ -135,30 +174,36 @@ test('creates the prompts directory and the log private, .yapus with the default
   assert.deepEqual(
     [
       getMode(join(projectRoot, '.yapus')),
-      getMode(join(projectRoot, '.yapus', 'prompts')),
+      getMode(join(projectRoot, '.yapus', 'sessions')),
+      getMode(join(projectRoot, '.yapus', 'sessions', '2026-11')),
       getMode(getLogPath(projectRoot)),
     ],
-    [getMode(defaultDirectory), 0o700, 0o600],
+    [getMode(defaultDirectory), 0o700, 0o700, 0o600],
   );
 });
 
-test('leaves an existing prompts directory and log as they are', (t) => {
+test('leaves the existing session directories and log as they are', (t) => {
   const { projectRoot, dataDir } = makeDirs(t);
-  const promptsDirectory = join(projectRoot, '.yapus', 'prompts');
+  const sessionsDirectory = join(projectRoot, '.yapus', 'sessions');
+  const monthDirectory = dirname(getLogPath(projectRoot));
 
-  mkdirSync(promptsDirectory, { recursive: true });
+  mkdirSync(monthDirectory, { recursive: true });
   writeFileSync(getLogPath(projectRoot), '');
-  chmodSync(promptsDirectory, 0o755);
+  chmodSync(sessionsDirectory, 0o755);
+  chmodSync(monthDirectory, 0o755);
   chmodSync(getLogPath(projectRoot), 0o644);
   getOutcome({ stdinText: PROMPT, dataDir, projectRoot, time: TIME });
 
-  assert.deepEqual([getMode(promptsDirectory), getMode(getLogPath(projectRoot))], [0o755, 0o644]);
+  assert.deepEqual(
+    [getMode(sessionsDirectory), getMode(monthDirectory), getMode(getLogPath(projectRoot))],
+    [0o755, 0o755, 0o644],
+  );
 });
 
-test('writes the ignore file into an existing directory that has none', (t) => {
+test('writes the ignore file into an existing sessions directory that has none', (t) => {
   const projectRoot = makeTempRepo(t);
 
-  mkdirSync(join(projectRoot, '.yapus', 'prompts'), { recursive: true });
+  mkdirSync(join(projectRoot, '.yapus', 'sessions'), { recursive: true });
   getOutcome({ stdinText: PROMPT, dataDir: makeTempDir(t), projectRoot, time: TIME });
 
   assert.deepEqual(
@@ -169,21 +214,21 @@ test('writes the ignore file into an existing directory that has none', (t) => {
 
 test('leaves an existing ignore file byte for byte', (t) => {
   const { projectRoot, dataDir } = makeDirs(t);
-  const ignorePath = join(projectRoot, '.yapus', 'prompts', '.gitignore');
+  const ignorePath = join(projectRoot, '.yapus', 'sessions', '.gitignore');
 
   mkdirSync(dirname(ignorePath), { recursive: true });
-  writeFileSync(ignorePath, '!s1.jsonl');
+  writeFileSync(ignorePath, '!*.jsonl');
   getOutcome({ stdinText: PROMPT, dataDir, projectRoot, time: TIME });
 
   assert.deepEqual(
     [readFileSync(ignorePath, 'utf8'), existsSync(getLogPath(projectRoot))],
-    ['!s1.jsonl', true],
+    ['!*.jsonl', true],
   );
 });
 
 test('writes a deleted ignore file again', (t) => {
   const { projectRoot, dataDir } = makeDirs(t);
-  const ignorePath = join(projectRoot, '.yapus', 'prompts', '.gitignore');
+  const ignorePath = join(projectRoot, '.yapus', 'sessions', '.gitignore');
 
   getOutcome({ stdinText: PROMPT, dataDir, projectRoot, time: TIME });
   rmSync(ignorePath);
@@ -193,7 +238,7 @@ test('writes a deleted ignore file again', (t) => {
 });
 
 function getLogPath(projectRoot: string): string {
-  return join(projectRoot, '.yapus', 'prompts', 's1.jsonl');
+  return join(projectRoot, '.yapus', 'sessions', '2026-11', LOG_NAME);
 }
 
 function getMode(path: string): number {

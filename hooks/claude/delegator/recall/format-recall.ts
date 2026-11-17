@@ -22,29 +22,33 @@ export interface LoggedPrompt {
   readonly prompt: string;
 }
 
-// Where the prompt log and the project's plan files are.
+// Where the prompt log and the project's plan files are, and whether the
+// project holds files in an older layout.
 export interface Paths {
   readonly logPath: string;
   readonly planPaths: readonly string[];
+  readonly hasOlderLayout: boolean;
 }
 
 // The header, the latest prompts that fit the budget, oldest first, each with
-// its time, the log's path, and the plans line when there are plan paths;
-// with no prompt, the plans line alone. Undefined when the fixed lines alone
-// pass the budget.
+// its time, the log's path, the plans line when there are plan paths, and the
+// notice when the project holds an older layout; with no prompt, the plans
+// line and the notice alone. Undefined when the fixed lines alone pass the
+// budget.
 export function formatRecall(
   texts: Texts,
   prompts: readonly LoggedPrompt[],
-  { logPath, planPaths }: Paths,
+  { logPath, planPaths, hasOlderLayout }: Paths,
 ): string | undefined {
   const plansLines = planPaths.length === 0
     ? []
     : [texts.plansLine.replace(PLANS_PLACEHOLDER, () => planPaths.join(PLANS_SEPARATOR))];
+  const closingLines = hasOlderLayout ? [...plansLines, texts.notice] : plansLines;
 
   if (prompts.length === 0) {
-    const plansOnly = plansLines.join(SEPARATOR);
+    const closing = closingLines.join(SEPARATOR);
 
-    return plansOnly.length <= BUDGET_CHARACTERS ? plansOnly : undefined;
+    return closing.length <= BUDGET_CHARACTERS ? closing : undefined;
   }
 
   const blocks = prompts.map((prompt) => formatPrompt(prompt, texts.cutMark));
@@ -54,7 +58,7 @@ export function formatRecall(
     const header = texts.header.replace(LEFT_OUT_PLACEHOLDER, () => leftOut);
     const kept = blocks.slice(blocks.length - keptCount);
 
-    return [header, ...kept, pathLine, ...plansLines].join(SEPARATOR);
+    return [header, ...kept, pathLine, ...closingLines].join(SEPARATOR);
   };
   const keptCounts = [...blocks.keys(), blocks.length].map((index) => blocks.length - index);
   const keptCount = keptCounts.find((count) => join(count).length <= BUDGET_CHARACTERS);

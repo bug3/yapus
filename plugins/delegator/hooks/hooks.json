@@ -78,6 +78,23 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Write(**/.yapus/plans/**)",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/delegator/link",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "if": "Edit(**/.yapus/plans/**)",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/delegator/link",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "SubagentStart": [

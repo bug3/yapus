@@ -89,7 +89,7 @@ Each subagent is launched as `delegator:<name>`. The launch check refuses the bu
 | `runner` | the named commands, with exit codes and first error lines |
 | `web-researcher` | one question about external facts, one URL per claim |
 | `mcp-operator` | one task in a browser or a connected app through MCP tools |
-| `plan-writer` | the plan of a `deep` task in `.yapus/plans/<topic>.md` |
+| `plan-writer` | the plan of a `deep` task in `.yapus/plans/<YYYY-MM>/<topic>/plan.md` |
 | `plan-reviewer` | a GO or REVISE verdict on a written plan |
 | `finisher` | one part of a plan: edit, oracle, review, commit |
 | `diff-reviewer` | an APPROVE or REWORK verdict on a finished diff |
@@ -100,12 +100,12 @@ Every subagent receives a return contract at its start: the return opens with DO
 
 Deep work is a task rated `deep`: it is planned in writing before the first edit and carried out in slices. A slice is one step of the plan with one intent, its own files, acceptance criteria and oracle, committed on its own. The skill `/delegator:write-plan` runs the flow.
 
-1. Plan: `delegator:plan-writer` writes `.yapus/plans/<topic>.md`, and a subagent measures each fact the plan marks unmeasured.
+1. Plan: `delegator:plan-writer` writes `.yapus/plans/<YYYY-MM>/<topic>/plan.md`, under the month the plan starts in, and a subagent measures each fact the plan marks unmeasured.
 2. Plan review: when the plan touches more than one module or a public interface, `delegator:plan-reviewer` judges it once before the first edit, and the plan-writer folds each defect in.
 3. The person's decisions: the agent asks each open decision as one question with its recommendation first, and records the answer in the plan.
 4. Slices: one `delegator:finisher` per slice edits only the slice's files and runs its oracle until it passes or one failure survives two repairs.
 5. Diff review: the finisher writes the slice's diff to a file and launches `delegator:diff-reviewer`, the one nested launch the launch check admits, then repairs what a REWORK names.
-6. Commit: the finisher commits the slice alone, never pushes, and returns the commit, the oracle's exit code, the verdict and the path of the detail file `.yapus/plans/<topic>/<slice id>.md`, which holds the rest.
+6. Commit: the finisher commits the slice alone, never pushes, and returns the commit, the oracle's exit code, the verdict and the path of the detail file `<slice id>.md` beside the plan, which holds the rest.
 
 Outside deep work, a change of more than 150 lines goes once to `delegator:diff-reviewer` before the agent reports it done.
 
@@ -121,9 +121,9 @@ delegator records every launch and return verdict in a file that never leaves th
 
 ### Prompt Log
 
-The prompt log keeps what the person typed, so a compaction does not lose it. delegator writes each prompt, with its time, as one JSON line to `.yapus/prompts/<session id>.jsonl` under the directory the session opened in. Right after a compaction it gives the session those prompts back, the newest that fit in 6,000 characters, with the paths of the five newest plans in `.yapus/plans/`.
+The prompt log keeps what the person typed, so a compaction does not lose it. delegator writes each prompt, with its time, as one JSON line to the session's file, `.yapus/sessions/<YYYY-MM>/<DD>T<HH-MM-SS>Z_<session id>.jsonl` under the directory the session opened in, named for the UTC time of the session's first prompt. A write to a file in a plan's directory adds a line that names the plan and the file. Right after a compaction it gives the session those prompts back, the newest that fit in 6,000 characters, with the paths of the five newest plans in `.yapus/plans/`.
 
-It creates the prompts directory with a `.gitignore` that keeps it out of git; a person who wants their prompts in git changes that file.
+It creates the sessions directory with a `.gitignore` that keeps it out of git; a person who wants their prompts in git changes that file. `/delegator:upgrade` moves the files of an older layout, `.yapus/prompts/` and the plans directly in `.yapus/plans/`, into this one and prints each move.
 
 ### Commands
 
@@ -136,6 +136,7 @@ Off means no rules at the session's start, no check on its launches, and no prom
 | `/delegator:status` | the mode and the limit in force, the session's launches |
 | `/delegator:agent-limit <n>` | the launch budget for the session, or with `--global` for every session |
 | `/delegator:agent-report` | the record's counts per agent |
+| `/delegator:upgrade` | the `.yapus/` files of an older layout moved into the present one |
 | `/delegator:write-plan` | the deep work flow, from the plan to the slices |
 
 <!-- #endregion delegator -->

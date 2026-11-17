@@ -95,6 +95,24 @@ test('registers every delegator hook', () => {
             },
           ],
         },
+        // No one path rule names both tools, so each tool has its handler.
+        {
+          matcher: 'Write|Edit',
+          hooks: [
+            {
+              type: 'command',
+              if: 'Write(**/.yapus/plans/**)',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/delegator/link',
+              timeout: 10,
+            },
+            {
+              type: 'command',
+              if: 'Edit(**/.yapus/plans/**)',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/delegator/link',
+              timeout: 10,
+            },
+          ],
+        },
       ],
       SubagentStart: [
         {

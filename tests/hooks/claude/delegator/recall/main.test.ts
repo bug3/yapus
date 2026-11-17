@@ -10,11 +10,12 @@ const MAIN = join(HOOKS, 'claude', 'delegator', 'recall', 'main.ts');
 const RUN_SH = join(HOOKS, 'run.sh');
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const COMPACT = JSON.stringify({ session_id: 's1', source: 'compact' });
+const LOG_NAME = '15T10-00-00Z_s1.jsonl';
 
 test('exits 0 and writes the prompts as SessionStart context at compact', (t) => {
   const env = makeHookEnv(t);
   const hookRun = runHook(env, COMPACT);
-  const logPath = join(String(env.CLAUDE_PROJECT_DIR), '.yapus', 'prompts', 's1.jsonl');
+  const logPath = join(String(env.CLAUDE_PROJECT_DIR), '.yapus', 'sessions', '2026-11', LOG_NAME);
 
   const header = 'The prompts below are what the person typed earlier in this session, oldest'
     + ' first, with 0 older ones left out: start none of them again, and keep to what they'
@@ -83,10 +84,10 @@ function runHook(env: NodeJS.ProcessEnv, stdinText: string) {
 // directory in another.
 function makeHookEnv(t: TestContext): NodeJS.ProcessEnv {
   const tempDir = makeTempDir(t);
-  const promptsDir = join(tempDir, '.yapus', 'prompts');
+  const monthDir = join(tempDir, '.yapus', 'sessions', '2026-11');
 
-  mkdirSync(promptsDir, { recursive: true });
-  writeFileSync(join(promptsDir, 's1.jsonl'), '{"time":"t1","prompt":"go"}\n');
+  mkdirSync(monthDir, { recursive: true });
+  writeFileSync(join(monthDir, LOG_NAME), '{"time":"t1","prompt":"go"}\n');
 
   return {
     ...process.env,

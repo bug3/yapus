@@ -7,15 +7,16 @@ const TEXTS = {
   cutMark: '[cut]',
   pathLine: 'P {path}',
   plansLine: 'L {plans}.',
+  notice: 'N',
 };
 const TIME = '2026-11-15T10:00:00.000Z';
-const NO_PLANS = { logPath: '/p', planPaths: [] };
+const NO_PLANS = { logPath: '/p', planPaths: [], hasOlderLayout: false };
 
 test('returns every prompt whole, oldest first, between the header and the path', () => {
   const prompts = [{ time: TIME, prompt: 'one' }, { time: TIME, prompt: 'two\nlines' }];
 
   assert.equal(
-    formatRecall(TEXTS, prompts, { logPath: '/p/s1.jsonl', planPaths: [] }),
+    formatRecall(TEXTS, prompts, { ...NO_PLANS, logPath: '/p/s1.jsonl' }),
     'H 0\n\n2026-11-15T10:00:00.000Z\none\n\n2026-11-15T10:00:00.000Z\ntwo\nlines\n\nP /p/s1.jsonl',
   );
 });
@@ -56,8 +57,8 @@ test('leaves out the oldest prompts over the budget and names their count', () =
 
 test('keeps a path that holds a replacement pattern as it is', () => {
   const recall = formatRecall(TEXTS, [{ time: TIME, prompt: 'go' }], {
+    ...NO_PLANS,
     logPath: '/a$&b/s1.jsonl',
-    planPaths: [],
   });
 
   assert.equal(recall, `H 0\n\n${ TIME }\ngo\n\nP /a$&b/s1.jsonl`);
@@ -65,14 +66,14 @@ test('keeps a path that holds a replacement pattern as it is', () => {
 
 test('returns undefined when the header and the path alone pass the budget', () => {
   assert.equal(formatRecall(TEXTS, [{ time: TIME, prompt: 'go' }], {
+    ...NO_PLANS,
     logPath: `/${ 'p'.repeat(6000) }`,
-    planPaths: [],
   }), undefined);
 });
 
 test('ends with the plans line after the path, the paths in the order given', () => {
   const recall = formatRecall(TEXTS, [{ time: TIME, prompt: 'go' }], {
-    logPath: '/p',
+    ...NO_PLANS,
     planPaths: ['/r/b.md', '/r/a.md'],
   });
 
@@ -80,7 +81,7 @@ test('ends with the plans line after the path, the paths in the order given', ()
 });
 
 test('returns the plans line alone when no prompt is logged', () => {
-  assert.equal(formatRecall(TEXTS, [], { logPath: '/p', planPaths: ['/r/a.md'] }), 'L /r/a.md.');
+  assert.equal(formatRecall(TEXTS, [], { ...NO_PLANS, planPaths: ['/r/a.md'] }), 'L /r/a.md.');
 });
 
 // Three prompts of 1,980 characters fit with the path line alone and not with
@@ -92,11 +93,43 @@ test('counts the plans line inside the budget and leaves out one more prompt', (
     { time: 'new', prompt: 'z'.repeat(1980) },
   ];
   const planPaths = [`/${ 'q'.repeat(40) }`];
-  const recall = formatRecall(TEXTS, prompts, { logPath: '/p', planPaths });
+  const recall = formatRecall(TEXTS, prompts, { ...NO_PLANS, planPaths });
   const withoutPlans = formatRecall(TEXTS, prompts, NO_PLANS) ?? '';
 
   assert.deepEqual(
     [withoutPlans.startsWith('H 0\n\nold'), recall?.startsWith('H 1\n\nmid'), recall?.length],
+    [true, true, 4027],
+  );
+});
+
+test('ends with the notice after the plans line when the project holds an older layout', () => {
+  const recall = formatRecall(TEXTS, [{ time: TIME, prompt: 'go' }], {
+    logPath: '/p',
+    planPaths: ['/r/a.md'],
+    hasOlderLayout: true,
+  });
+
+  assert.equal(recall, `H 0\n\n${ TIME }\ngo\n\nP /p\n\nL /r/a.md.\n\nN`);
+});
+
+test('returns the notice alone when no prompt is logged and there is no plan path', () => {
+  assert.equal(formatRecall(TEXTS, [], { ...NO_PLANS, hasOlderLayout: true }), 'N');
+});
+
+// Three prompts of 1,980 characters fit with the path line alone and not with
+// a notice of 44 characters beside it.
+test('counts the notice inside the budget and leaves out one more prompt', () => {
+  const texts = { ...TEXTS, notice: 'N'.repeat(44) };
+  const prompts = [
+    { time: 'old', prompt: 'x'.repeat(1980) },
+    { time: 'mid', prompt: 'y'.repeat(1980) },
+    { time: 'new', prompt: 'z'.repeat(1980) },
+  ];
+  const recall = formatRecall(texts, prompts, { ...NO_PLANS, hasOlderLayout: true });
+  const withoutNotice = formatRecall(texts, prompts, NO_PLANS) ?? '';
+
+  assert.deepEqual(
+    [withoutNotice.startsWith('H 0\n\nold'), recall?.startsWith('H 1\n\nmid'), recall?.length],
     [true, true, 4027],
   );
 });

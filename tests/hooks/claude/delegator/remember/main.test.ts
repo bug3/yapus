@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
@@ -10,6 +10,7 @@ const MAIN = join(HOOKS, 'claude', 'delegator', 'remember', 'main.ts');
 const RUN_SH = join(HOOKS, 'run.sh');
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const ISO_LINE = /^\{"time":"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z","prompt":"go"\}\n$/u;
+const LOG_NAME = /^\d{4}-\d\d\/\d\dT\d\d-\d\d-\d\dZ_s1\.jsonl$/u;
 
 test('exits 0 with no output and appends the typed prompt to the log', (t) => {
   const env = makeHookEnv(t);
@@ -112,8 +113,16 @@ function getLineCount(text: string): number {
   return text.split('\n').length - 1;
 }
 
+// The one file of session s1 under the sessions directory, in a month
+// directory and with the stamp of the moment the hook ran.
 function getLogPath(env: NodeJS.ProcessEnv): string {
-  return join(String(env.TMPDIR), '.yapus', 'prompts', 's1.jsonl');
+  const sessionsDirectory = join(String(env.TMPDIR), '.yapus', 'sessions');
+  const names = readdirSync(sessionsDirectory, { encoding: 'utf8', recursive: true })
+    .filter((name) => LOG_NAME.test(name));
+
+  assert.equal(names.length, 1);
+
+  return join(sessionsDirectory, String(names[0]));
 }
 
 // The caller's environment with HOME, TMPDIR and the project root in the
