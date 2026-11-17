@@ -1,6 +1,7 @@
 import { type Dirent, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { getFirstLine } from '../../../shared/get-first-line.ts';
+import { isMonthName } from '../plans/is-month-name.ts';
 import { getSessionsDirectory } from './get-session-path.ts';
 
 export type FoundSession =
@@ -12,14 +13,11 @@ type ReadDirectory =
   | { readonly kind: 'entries'; readonly entries: readonly Dirent[] }
   | { readonly kind: 'failure'; readonly detail: string };
 
-// A month directory: <YYYY-MM>. Any other entry of the sessions directory,
-// the ignore file among them, holds no session file.
-const MONTH_NAME = /^\d{4}-(0[1-9]|1[0-2])$/u;
-
 // The file of the session, wherever its first logged prompt put it: the month
 // directories are read newest first, up to the first name ending in
-// _<id>.jsonl. An id holds no '_', so that ending belongs to one session
-// alone, and no index keeps the path in a second place.
+// _<id>.jsonl. Any other entry of the sessions directory, the ignore file
+// among them, holds no session file. An id holds no '_', so that ending
+// belongs to one session alone, and no index keeps the path in a second place.
 export function findSessionFile(projectRoot: string, sessionId: string): FoundSession {
   const sessionsDirectory = getSessionsDirectory(projectRoot);
 
@@ -34,7 +32,7 @@ export function findSessionFile(projectRoot: string, sessionId: string): FoundSe
   }
 
   const months = read.entries
-    .filter((entry) => entry.isDirectory() && MONTH_NAME.test(entry.name))
+    .filter((entry) => entry.isDirectory() && isMonthName(entry.name))
     .map((entry) => entry.name)
     .sort()
     .reverse();
