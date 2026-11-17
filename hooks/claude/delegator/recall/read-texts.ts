@@ -15,6 +15,7 @@ const EXPECTED = [
   'a mark',
   `a line with ${ PATH_PLACEHOLDER }`,
   `a line with ${ PLANS_PLACEHOLDER }`,
+  'a notice',
 ].join(', ');
 
 // The recall's own words, one line each in the texts file, so a translation
@@ -24,14 +25,16 @@ export interface Texts {
   readonly cutMark: string;
   readonly pathLine: string;
   readonly plansLine: string;
+  // What the session is told while the project holds an older layout.
+  readonly notice: string;
 }
 
 export type ReadTexts =
   | { readonly kind: 'texts'; readonly texts: Texts }
   | { readonly kind: 'failure'; readonly detail: string };
 
-// The header, the mark of a cut prompt, the path line and the plans line in
-// the file at path, in that order, or why they cannot be used.
+// The header, the mark of a cut prompt, the path line, the plans line and the
+// notice in the file at path, in that order, or why they cannot be used.
 export function readTexts(path: string): ReadTexts {
   let text: string;
 
@@ -41,16 +44,17 @@ export function readTexts(path: string): ReadTexts {
     return { kind: 'failure', detail: `cannot read ${ path }: ${ getFirstLine(error) }` };
   }
 
-  const [header = '', cutMark = '', pathLine = '', plansLine = '', ...rest] = text.split('\n');
-  const isComplete = rest.join('') === '' && cutMark !== ''
+  const [header = '', cutMark = '', pathLine = '', plansLine = '', notice = '', ...rest]
+    = text.split('\n');
+  const isComplete = rest.join('') === '' && cutMark !== '' && notice !== ''
     && holdsOnce(header, LEFT_OUT_PLACEHOLDER) && holdsOnce(pathLine, PATH_PLACEHOLDER)
     && holdsOnce(plansLine, PLANS_PLACEHOLDER);
 
   if (!isComplete) {
-    return { kind: 'failure', detail: `${ path } does not hold four lines: ${ EXPECTED }` };
+    return { kind: 'failure', detail: `${ path } does not hold five lines: ${ EXPECTED }` };
   }
 
-  return { kind: 'texts', texts: { header, cutMark, pathLine, plansLine } };
+  return { kind: 'texts', texts: { header, cutMark, pathLine, plansLine, notice } };
 }
 
 function holdsOnce(line: string, placeholder: string): boolean {
