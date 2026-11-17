@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { getOutcome } from '../../../../../hooks/claude/delegator/recall/get-outcome.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
@@ -119,6 +119,46 @@ test('says nothing when the session has no log or an empty one', (t) => {
   );
 });
 
+test('says nothing when the sessions directory holds no file for the session', (t) => {
+  const { projectRoot, dataDir } = makeDirs(t, LOG);
+
+  assert.deepEqual(getOutcome({ stdinText: makeStart('compact', 's2'), dataDir, projectRoot }), {
+    kind: 'silence',
+  });
+});
+
+test('recalls the prompts of a file in an earlier month than the newest', (t) => {
+  const { projectRoot, dataDir } = makeDirs(t, LOG);
+  const newerMonth = join(projectRoot, '.yapus', 'sessions', '2026-12');
+
+  mkdirSync(newerMonth);
+  writeFileSync(join(newerMonth, '01T09-00-00Z_s2.jsonl'), '{"time":"t9","prompt":"other"}\n');
+
+  const outcome = getOutcome({ stdinText: COMPACT, dataDir, projectRoot });
+
+  assert.ok(outcome.kind === 'output');
+  assert.deepEqual(
+    [
+      outcome.json.includes('\\none\\n'),
+      outcome.json.includes('other'),
+      outcome.json.includes(`The whole prompt log is in \`${ getLogPath(projectRoot) }\`.`),
+    ],
+    [true, false, true],
+  );
+});
+
+test('fails with the path when the sessions directory cannot be read', (t) => {
+  const projectRoot = makeTempDir(t);
+
+  mkdirSync(join(projectRoot, '.yapus'));
+  writeFileSync(join(projectRoot, '.yapus', 'sessions'), 'a file where the directory goes');
+
+  assert.match(
+    JSON.stringify(getOutcome({ stdinText: COMPACT, dataDir: makeTempDir(t), projectRoot })),
+    /^\{"kind":"failure","detail":"cannot read .*\/sessions: ENOTDIR.*; the prompts are not recalled"\}$/u,
+  );
+});
+
 test('fails with the path when the log cannot be read', (t) => {
   const projectRoot = makeTempDir(t);
 
@@ -126,7 +166,7 @@ test('fails with the path when the log cannot be read', (t) => {
 
   assert.match(
     JSON.stringify(getOutcome({ stdinText: COMPACT, dataDir: makeTempDir(t), projectRoot })),
-    /^\{"kind":"failure","detail":"cannot read .*\/s1\.jsonl: EISDIR.*; the prompts are not recalled"\}$/u,
+    /^\{"kind":"failure","detail":"cannot read .*\/15T10-00-00Z_s1\.jsonl: EISDIR.*; the prompts are not recalled"\}$/u,
   );
 });
 
@@ -153,12 +193,12 @@ test('fails on stdin it cannot read', (t) => {
   });
 });
 
-function makeStart(source: string): string {
-  return JSON.stringify({ session_id: 's1', source, hook_event_name: 'SessionStart' });
+function makeStart(source: string, sessionId = 's1'): string {
+  return JSON.stringify({ session_id: sessionId, source, hook_event_name: 'SessionStart' });
 }
 
 function getLogPath(projectRoot: string): string {
-  return join(projectRoot, '.yapus', 'prompts', 's1.jsonl');
+  return join(projectRoot, '.yapus', 'sessions', '2026-11', '15T10-00-00Z_s1.jsonl');
 }
 
 // One plan file in the project's plans directory; its path.
@@ -178,7 +218,7 @@ function makeDirs(
 ): { readonly projectRoot: string; readonly dataDir: string } {
   const projectRoot = makeTempDir(t);
 
-  mkdirSync(join(projectRoot, '.yapus', 'prompts'), { recursive: true });
+  mkdirSync(dirname(getLogPath(projectRoot)), { recursive: true });
   writeFileSync(getLogPath(projectRoot), log);
 
   return { projectRoot, dataDir: makeTempDir(t) };

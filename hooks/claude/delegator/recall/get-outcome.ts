@@ -1,6 +1,6 @@
 import { statSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
-import { getPromptsPath } from '../remember/get-prompts-path.ts';
+import { findSessionFile } from '../sessions/find-session-file.ts';
 import { readMode } from '../settings/read-mode.ts';
 import { BUDGET_CHARACTERS, formatRecall } from './format-recall.ts';
 import { parseStart } from './parse-start.ts';
@@ -50,7 +50,15 @@ export function getOutcome(input: Input): Outcome {
     return makeFailure(`CLAUDE_PROJECT_DIR is not an absolute directory; ${ NOT_RECALLED }`);
   }
 
-  return recall(getPromptsPath(projectRoot, sessionId), join(projectRoot, '.yapus', 'plans'));
+  const found = findSessionFile(projectRoot, sessionId);
+
+  if (found.kind === 'failure') {
+    return makeFailure(`${ found.detail }; ${ NOT_RECALLED }`);
+  }
+
+  const logPath = found.kind === 'file' ? found.path : undefined;
+
+  return recall(logPath, join(projectRoot, '.yapus', 'plans'));
 }
 
 // Anything the hook cannot read is not off, as for the policy.
@@ -70,8 +78,9 @@ function isDirectory(path: string): boolean {
   return isAbsolute(path) && statSync(path, { throwIfNoEntry: false })?.isDirectory() === true;
 }
 
-function recall(logPath: string, plansDir: string): Outcome {
-  const logged = readPrompts(logPath);
+// A session with no file for its id has no logged prompt.
+function recall(logPath: string | undefined, plansDir: string): Outcome {
+  const logged = logPath === undefined ? { kind: 'missing' } as const : readPrompts(logPath);
 
   if (logged.kind === 'failure') {
     return makeFailure(`${ logged.detail }; ${ NOT_RECALLED }`);
@@ -95,7 +104,9 @@ function recall(logPath: string, plansDir: string): Outcome {
     return makeFailure(`${ read.detail }; ${ NOT_RECALLED }`);
   }
 
-  const additionalContext = formatRecall(read.texts, prompts, { logPath, planPaths: plans.paths });
+  // The path is written only beside a prompt, and a prompt comes from a file.
+  const paths = { logPath: logPath ?? '', planPaths: plans.paths };
+  const additionalContext = formatRecall(read.texts, prompts, paths);
 
   if (additionalContext === undefined) {
     const over = `the fixed lines of the recall pass ${ String(BUDGET_CHARACTERS) } characters`;
