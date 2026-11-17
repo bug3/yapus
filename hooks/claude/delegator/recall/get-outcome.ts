@@ -1,5 +1,6 @@
 import { statSync } from 'node:fs';
-import { isAbsolute, join } from 'node:path';
+import { isAbsolute } from 'node:path';
+import { getPlansDirectory } from '../plans/get-plans-directory.ts';
 import { findSessionFile } from '../sessions/find-session-file.ts';
 import { readMode } from '../settings/read-mode.ts';
 import { BUDGET_CHARACTERS, formatRecall } from './format-recall.ts';
@@ -58,7 +59,7 @@ export function getOutcome(input: Input): Outcome {
 
   const logPath = found.kind === 'file' ? found.path : undefined;
 
-  return recall(logPath, join(projectRoot, '.yapus', 'plans'));
+  return recall(logPath, getPlansDirectory(projectRoot));
 }
 
 // Anything the hook cannot read is not off, as for the policy.

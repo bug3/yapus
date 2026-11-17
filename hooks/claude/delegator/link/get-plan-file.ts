@@ -1,4 +1,5 @@
-import { isAbsolute, join, relative, sep } from 'node:path';
+import { isAbsolute, relative, sep } from 'node:path';
+import { getPlansDirectory } from '../plans/get-plans-directory.ts';
 import { isMonthName } from '../plans/is-month-name.ts';
 import { isTopicName } from '../plans/is-topic-name.ts';
 
@@ -18,8 +19,7 @@ export function getPlanFile(projectRoot: string, filePath: string): PlanFile | u
     return undefined;
   }
 
-  const plansDirectory = join(projectRoot, '.yapus', 'plans');
-  const [month, topic, ...below] = relative(plansDirectory, filePath).split(sep);
+  const [month, topic, ...below] = relative(getPlansDirectory(projectRoot), filePath).split(sep);
 
   if (month === undefined || topic === undefined || below.length === 0) {
     return undefined;
