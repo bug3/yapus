@@ -10,8 +10,8 @@ import {
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 
-// The ceiling on the rules every session carries (ledger, decision 3 of the
-// harness stage): past it, "every rule held" is measured to fall.
+// The ceiling on the rules every session carries: past it, an agent was
+// measured to stop holding every rule.
 const MAX_ALWAYS_LOADED_RULES = 20;
 
 test('loads at most the ceiling of rules in every session', () => {
