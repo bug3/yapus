@@ -19,8 +19,8 @@ export function admitLaunch(dataDir: string, sessionId: string): string | undefi
   const count = countLaunches(dataDir, sessionId);
 
   if (count >= limit.value) {
-    return `this session has launched ${ String(count) } subagents, its limit; the person can `
-      + `raise it by writing a larger number into ${ limit.path }`;
+    return `this session has launched ${ String(count) } subagents and its limit is `
+      + `${ String(limit.value) }; the person can raise it with /delegator:agent-limit <n>`;
   }
 
   const logPath = getLogPath(dataDir, sessionId);

@@ -20,8 +20,20 @@ test('refuses the launch past the default limit of 41', (t) => {
 
   assert.equal(
     admitLaunch(dataDir, 's1'),
-    'this session has launched 41 subagents, its limit; the person can raise it by '
-      + `writing a larger number into ${ join(dataDir, 'launch-limit') }`,
+    'this session has launched 41 subagents and its limit is 41; the person can raise it '
+      + 'with /delegator:agent-limit <n>',
+  );
+});
+
+test('states the count and the limit when the count is past the limit', (t) => {
+  const dataDir = makeSessionLog(t, 7);
+
+  writeFileSync(join(dataDir, 'launch-limit'), '5\n');
+
+  assert.equal(
+    admitLaunch(dataDir, 's1'),
+    'this session has launched 7 subagents and its limit is 5; the person can raise it '
+      + 'with /delegator:agent-limit <n>',
   );
 });
 
@@ -53,8 +65,8 @@ test('takes the session limit over the global one', (t) => {
 
   assert.equal(
     admitLaunch(dataDir, 's1'),
-    'this session has launched 5 subagents, its limit; the person can raise it by '
-      + `writing a larger number into ${ join(dataDir, 'sessions', 's1.launch-limit') }`,
+    'this session has launched 5 subagents and its limit is 5; the person can raise it '
+      + 'with /delegator:agent-limit <n>',
   );
 });
 

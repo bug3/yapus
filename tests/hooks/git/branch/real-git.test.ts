@@ -71,6 +71,20 @@ test('lets an agent make the first commit on main', (t) => {
   assert.equal(hasRef(repository, 'refs/heads/main'), true);
 });
 
+test('refuses an agent first commit on a branch not named <type>/<slug>', (t) => {
+  const repository = makeUnbornRepo(t);
+
+  runAgentGit(t, repository, ['checkout', '--quiet', '-b', 'Bad_Name']);
+
+  const commitRun = runAgentGit(
+    t, repository, ['commit', '--quiet', '--allow-empty', '-m', 'feat(hooks): add a check'],
+  );
+
+  assert.notEqual(commitRun.status, 0);
+  assert.match(commitRun.stderr, BAD_NAME_REFUSAL);
+  assert.equal(hasRef(repository, 'refs/heads/Bad_Name'), false);
+});
+
 test('lets an agent commit on an existing branch not named <type>/<slug>', (t) => {
   const repository = makeBranchRepo(t);
 
