@@ -10,7 +10,7 @@ const DISALLOWED_FIELD = 'disallowedTools';
 const REQUIRED_FIELDS: readonly string[] = ['name', 'description', TOOLS_FIELD, 'model'];
 // The roster's agents that hold none of the built-in tools in CHANGING_TOOLS.
 const READ_ONLY_AGENTS: readonly string[] = [
-  'plan-reviewer', 'reader', 'diff-reviewer', 'web-researcher', 'mcp-operator',
+  'diff-reviewer', 'mcp-operator', 'plan-reviewer', 'reader', 'web-researcher',
 ];
 const CHANGING_TOOLS: readonly string[] = ['Bash', 'Edit', 'NotebookEdit', 'Write'];
 const LAUNCHING_TOOL = 'Agent';
