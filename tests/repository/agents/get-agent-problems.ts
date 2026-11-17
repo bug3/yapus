@@ -12,7 +12,7 @@ const REQUIRED_FIELDS: readonly string[] = ['name', 'description', TOOLS_FIELD, 
 const READ_ONLY_AGENTS: readonly string[] = [
   'diff-reviewer', 'mcp-operator', 'plan-reviewer', 'reader', 'web-researcher',
 ];
-const CHANGING_TOOLS: readonly string[] = ['Bash', 'Edit', 'NotebookEdit', 'Write'];
+const CHANGING_TOOLS: readonly string[] = ['Bash', 'Edit', 'NotebookEdit', 'PowerShell', 'Write'];
 const LAUNCHING_TOOL = 'Agent';
 // The roster's agents that may hold LAUNCHING_TOOL.
 const LAUNCHING_AGENTS: readonly string[] = ['finisher'];

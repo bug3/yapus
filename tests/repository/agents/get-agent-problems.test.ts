@@ -98,7 +98,7 @@ test('names an agent without tools whose disallowedTools lacks Agent', (t) => {
   ]);
 });
 
-test('names the changing tool a read-only agent without tools does not disallow', (t) => {
+test('names the changing tools a read-only agent without tools does not disallow', (t) => {
   const root = makeAgents(t, [
     {
       name: 'reader',
@@ -108,15 +108,14 @@ test('names the changing tool a read-only agent without tools does not disallow'
 
   assert.deepEqual(getAgentProblems(root), [
     'plugins/p/agents/reader.md: does not disallow NotebookEdit',
+    'plugins/p/agents/reader.md: does not disallow PowerShell',
   ]);
 });
 
-test('finds nothing in a read-only agent without tools that disallows all five', (t) => {
+test('finds nothing in a read-only agent without tools that disallows all six', (t) => {
+  const disallowed = 'Agent, Bash, Edit, NotebookEdit, PowerShell, Write';
   const root = makeAgents(t, [
-    {
-      name: 'reader',
-      text: makeHeadWith('reader', ['disallowedTools: Agent, Bash, Edit, NotebookEdit, Write']),
-    },
+    { name: 'reader', text: makeHeadWith('reader', [`disallowedTools: ${ disallowed }`]) },
   ]);
 
   assert.deepEqual(getAgentProblems(root), []);
@@ -196,6 +195,16 @@ test('finds nothing in a read-only agent without tools whose quoted line disallo
   ]);
 
   assert.deepEqual(getAgentProblems(root), []);
+});
+
+test('names PowerShell in a read-only agent', (t) => {
+  const root = makeAgents(t, [
+    { name: 'diff-reviewer', text: makeHead('diff-reviewer', 'Read, PowerShell') },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), [
+    'plugins/p/agents/diff-reviewer.md: lists PowerShell',
+  ]);
 });
 
 function makeHead(name: string, tools: string): string {
