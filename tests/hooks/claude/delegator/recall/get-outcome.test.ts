@@ -201,14 +201,15 @@ function getLogPath(projectRoot: string): string {
   return join(projectRoot, '.yapus', 'sessions', '2026-11', '15T10-00-00Z_s1.jsonl');
 }
 
-// One plan file in the project's plans directory; its path.
+// The plan file of one topic under a month of the project's plans directory;
+// its path.
 function writePlan(projectRoot: string): string {
-  const plansDir = join(projectRoot, '.yapus', 'plans');
+  const planDir = join(projectRoot, '.yapus', 'plans', '2026-11', 'topic');
 
-  mkdirSync(plansDir, { recursive: true });
-  writeFileSync(join(plansDir, 'topic.md'), '# Plan\n');
+  mkdirSync(planDir, { recursive: true });
+  writeFileSync(join(planDir, 'plan.md'), '# Plan\n');
 
-  return join(plansDir, 'topic.md');
+  return join(planDir, 'plan.md');
 }
 
 // A project root whose session s1 has the log text, and a data directory.
