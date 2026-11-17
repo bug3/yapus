@@ -122,6 +122,28 @@ test('finds nothing in a read-only agent without tools that disallows all five',
   assert.deepEqual(getAgentProblems(root), []);
 });
 
+test('finds nothing in a read-only agent with both lines whose tools hold no denied tool', (t) => {
+  const root = makeAgents(t, [
+    {
+      name: 'reader',
+      text: makeHeadWith('reader', ['tools: Read, Grep', 'disallowedTools: Bash']),
+    },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), []);
+});
+
+test('names a changing tool a read-only agent with both lines lists and disallows', (t) => {
+  const root = makeAgents(t, [
+    {
+      name: 'reader',
+      text: makeHeadWith('reader', ['tools: Read, Bash', 'disallowedTools: Bash']),
+    },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/reader.md: lists Bash']);
+});
+
 function makeHead(name: string, tools: string): string {
   return makeHeadWith(name, [`tools: ${ tools }`]);
 }
