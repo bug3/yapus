@@ -1,8 +1,8 @@
 import { resolveSetting, type ResolvedSetting, type Setting } from './resolve-setting.ts';
 
 // Launches a session may make when the person has written no limit: above
-// the 37 the busiest measured session made.
-export const DEFAULT_LIMIT = 41;
+// the 53 the busiest measured session made.
+export const DEFAULT_LIMIT = 60;
 
 const WHOLE_NUMBER = /^\d+$/;
 

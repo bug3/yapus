@@ -113,7 +113,7 @@ Outside deep work, a change of more than 150 lines goes once to `delegator:diff-
 
 The launch budget is the number of subagent launches one session may make. delegator counts the launches of a session and refuses the one past the budget.
 
-The budget is 41 by default, above the 37 launches of the busiest measured session. `/delegator:agent-limit <n>` sets another whole number for the session, or with `--global` for every session.
+The budget is 60 by default, above the 53 launches of the busiest measured session. `/delegator:agent-limit <n>` sets another whole number for the session, or with `--global` for every session.
 
 The launch check also refuses a `quick` launch and a finisher outside `deep`. After a refusal the agent tells the person what was refused and why, and does not split the work into smaller launches.
 

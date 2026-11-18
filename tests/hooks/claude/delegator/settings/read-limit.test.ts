@@ -5,12 +5,12 @@ import { type TestContext, test } from 'node:test';
 import { readLimit } from '../../../../../hooks/claude/delegator/settings/read-limit.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
-test('returns 41 by default when no limit file exists', (t) => {
+test('returns 60 by default when no limit file exists', (t) => {
   const dataDir = makeTempDir(t);
 
   assert.deepEqual(readLimit(dataDir, 's1'), {
     kind: 'value',
-    value: 41,
+    value: 60,
     source: 'default',
     path: join(dataDir, 'launch-limit'),
   });

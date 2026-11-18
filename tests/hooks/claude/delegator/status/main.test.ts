@@ -16,7 +16,7 @@ test('prints the defaults and no launches for an empty data dir', (t) => {
   assert.deepEqual([run.status, run.stderr], [0, '']);
   assert.equal(
     run.stdout,
-    'mode: on (default)\nlaunch limit: 41 (default)\nlaunches this session: 0\n',
+    'mode: on (default)\nlaunch limit: 60 (default)\nlaunches this session: 0\n',
   );
 });
 
@@ -57,7 +57,7 @@ test('names the file of an invalid mode and keeps going', (t) => {
   assert.equal(run.status, 0);
   assert.equal(
     run.stdout,
-    `mode: ${ join(dataDir, 'mode') } holds no mode\nlaunch limit: 41 (default)\n`
+    `mode: ${ join(dataDir, 'mode') } holds no mode\nlaunch limit: 60 (default)\n`
       + 'launches this session: 0\n',
   );
 });

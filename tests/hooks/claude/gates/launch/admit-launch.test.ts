@@ -15,12 +15,12 @@ test('admits a launch and counts it in the session log', (t) => {
   assert.equal(readFileSync(join(dataDir, 'launches', 's1.log'), 'utf8'), '+\n');
 });
 
-test('refuses the launch past the default limit of 41', (t) => {
-  const dataDir = makeSessionLog(t, 41);
+test('refuses the launch past the default limit of 60', (t) => {
+  const dataDir = makeSessionLog(t, 60);
 
   assert.equal(
     admitLaunch(dataDir, 's1'),
-    'this session has launched 41 subagents and its limit is 41; the person can raise it '
+    'this session has launched 60 subagents and its limit is 60; the person can raise it '
       + 'with /delegator:agent-limit <n>',
   );
 });
@@ -38,9 +38,9 @@ test('states the count and the limit when the count is past the limit', (t) => {
 });
 
 test('takes the limit the person wrote', (t) => {
-  const dataDir = makeSessionLog(t, 41);
+  const dataDir = makeSessionLog(t, 60);
 
-  writeFileSync(join(dataDir, 'launch-limit'), '42\n');
+  writeFileSync(join(dataDir, 'launch-limit'), '61\n');
 
   assert.equal(admitLaunch(dataDir, 's1'), undefined);
 });
@@ -53,7 +53,7 @@ test('refuses on a limit file that holds no whole number', (t) => {
 
   assert.equal(
     admitLaunch(dataDir, 's1'),
-    `${ limitPath } holds no whole number; the person writes one there, such as 41`,
+    `${ limitPath } holds no whole number; the person writes one there, such as 60`,
   );
 });
 
@@ -90,7 +90,7 @@ test('refuses on a session limit file that holds no whole number', (t) => {
   assert.equal(
     admitLaunch(dataDir, 's1'),
     `${ join(dataDir, 'sessions', 's1.launch-limit') } holds no whole number; `
-      + 'the person writes one there, such as 41',
+      + 'the person writes one there, such as 60',
   );
 });
 
@@ -103,15 +103,15 @@ test('refuses on a global limit file with no whole number when the session has n
   assert.equal(
     admitLaunch(dataDir, 's1'),
     `${ join(dataDir, 'launch-limit') } holds no whole number; `
-      + 'the person writes one there, such as 41',
+      + 'the person writes one there, such as 60',
   );
 });
 
-test('admits the 41st launch when no limit file exists', (t) => {
-  const dataDir = makeSessionLog(t, 40);
+test('admits the 60th launch when no limit file exists', (t) => {
+  const dataDir = makeSessionLog(t, 59);
 
   assert.equal(admitLaunch(dataDir, 's1'), undefined);
-  assert.equal(countLaunches(dataDir, 's1'), 41);
+  assert.equal(countLaunches(dataDir, 's1'), 60);
 });
 
 test('counts only the launches of the given session', (t) => {
