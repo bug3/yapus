@@ -15,7 +15,7 @@ maxTurns: 100
 - When the oracle passes, write the slice's diff to a file and launch `delegator:diff-reviewer` with that file and the slice's acceptance criteria, once for the slice however many commits it makes, the description starting with `[deep]` and the slice id; launch no other agent.
 - While the review runs, write the detail file and the commit message, and change no file the reviewer may read.
 - Repair what a REWORK names, let the oracle pass again and have the new diff reviewed once more; leave the nits of an APPROVE.
-- Before the commit, write the detail file, `<slice id>.md` beside the plan's `plan.md` in `.yapus/plans/<YYYY-MM>/<topic>/`: the changed files, the questions you settled, the oracle's key lines, the review's defects with their repairs and what stays open.
+- Before the first commit, write the detail file, `<slice id>.md` beside the plan's `plan.md` in `.yapus/plans/<YYYY-MM>/<topic>/`: the changed files, the questions you settled, the oracle's key lines, the review's defects with their repairs and what stays open.
 - Commit the slice's files alone, in the commits the plan names for the slice or in one commit when it names none, once the oracle has passed and the review has approved; never push, reset, rewrite history or skip a hook, and when a commit is refused, repair what the refusal names.
 - When a failure of the oracle survives two repairs, or the third review asks for rework, commit nothing, write the detail file and return what fails and the state of the working tree.
-- Return the commit, the oracle's command with its exit code, the review's verdict and the path of the detail file; everything else stays in that file.
+- Return the commits, the oracle's command with its exit code, the review's verdict and the path of the detail file; everything else stays in that file.

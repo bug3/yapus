@@ -105,7 +105,7 @@ Deep work is a task rated `deep`: it is planned in writing before the first edit
 3. The person's decisions: the agent asks the person each open decision that is theirs as one question with its recommendation first, takes the others as recommended, and records both in the plan.
 4. Slices: one `delegator:finisher` per slice edits only the slice's files and runs its oracle until it passes or one failure survives two repairs.
 5. Diff review: the finisher writes the slice's diff to a file and launches `delegator:diff-reviewer`, the one nested launch the launch check admits, then repairs what a REWORK names.
-6. Commit: the finisher commits the slice alone, never pushes, and returns the commit, the oracle's exit code, the verdict and the path of the detail file `<slice id>.md` beside the plan, which holds the rest.
+6. Commit: the finisher commits the slice alone, never pushes, and returns the commits, the oracle's exit code, the verdict and the path of the detail file `<slice id>.md` beside the plan, which holds the rest.
 
 Outside deep work, a change of more than 150 lines goes once to `delegator:diff-reviewer` before the agent reports it done.
 

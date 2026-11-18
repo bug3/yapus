@@ -16,6 +16,6 @@ maxTurns: 50
 - Acceptance: criteria numbered `A1` to `An`, each observable as pass or fail, and the oracle command that checks them.
 - Slices: a table of id (`S1` to `Sn`), intent, the commits it makes, the files the slice may change, the slices it needs, the criteria it meets and its oracle; a slice is the work of one finisher launch, and each launch reads the plan, has a diff reviewed and commits however little it holds, so give a slice the changes that share files or an oracle, up to about 250 changed lines, give each of its commits one intent, and fix each interface two slices share before either starts.
 - Risks: for each step that touches authentication, data migration, a public interface, concurrency or a destructive operation, who approves it, how it is verified independently and how it is undone.
-- Status: each slice as open, done with its commit, or blocked with the reason, then the next step.
+- Status: each slice as open, done with its commits, or blocked with the reason, then the next step.
 - When the brief names a review of the plan, fold each defect into the section it names, and return each one you did not fold in with the reason.
 - Return the plan's path, the decisions left open for the person and the facts left unmeasured; everything else stays in the plan.
