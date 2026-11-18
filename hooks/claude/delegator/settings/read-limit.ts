@@ -13,8 +13,8 @@ export const LIMIT: Setting<number> = {
 };
 
 // The launch limit in force for the session: the person's <dataDir>/sessions/
-// <sessionId>.launch-limit, else <dataDir>/launch-limit, else 41. A file that
-// holds no whole number is returned invalid.
+// <sessionId>.launch-limit, else <dataDir>/launch-limit, else DEFAULT_LIMIT. A
+// file that holds no whole number is returned invalid.
 export function readLimit(dataDir: string, sessionId: string): ResolvedSetting<number> {
   return resolveSetting(dataDir, sessionId, LIMIT);
 }
