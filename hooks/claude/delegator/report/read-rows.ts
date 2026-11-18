@@ -112,6 +112,7 @@ function readEnd(fields: Readonly<Record<string, unknown>>): EndRow | undefined 
       agentId,
       status,
       model: getString(fields.model),
+      outputFile: getString(fields.outputFile),
       durationMs: getNumber(fields.durationMs),
       tokens: getNumber(fields.tokens),
       toolUses: getNumber(fields.toolUses),

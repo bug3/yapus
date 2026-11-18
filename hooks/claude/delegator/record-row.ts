@@ -50,7 +50,8 @@ export interface ReturnRow extends Decision {
 
 // What the Agent tool reported when a launch ended: the keys that join the
 // launch row and the subagent's files, and the totals a completed launch
-// carries (a background launch is reported at once, without them).
+// carries (a background launch is reported at once, without them, with the
+// path of the output file the Agent tool names for it).
 export interface EndRow extends Base {
   readonly hook: 'end';
   readonly promptId: string | undefined;
@@ -58,6 +59,7 @@ export interface EndRow extends Base {
   readonly agentId: string;
   readonly status: string;
   readonly model: string | undefined;
+  readonly outputFile: string | undefined;
   readonly durationMs: number | undefined;
   readonly tokens: number | undefined;
   readonly toolUses: number | undefined;

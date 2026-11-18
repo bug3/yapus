@@ -32,14 +32,28 @@ test('judges by the starting directory\'s catalogs after a cd to an expansion', 
   assert.equal(verdict.kind, 'refuse');
 });
 
-test('judges only the body headings in a repository without catalogs', async (t) => {
+test('judges only the body in a repository without catalogs', async (t) => {
+  const root = makeTempDir(t);
+
+  writeFileSync(join(root, 'b.md'), BODY);
+
+  assert.deepEqual(
+    await getVerdict('gh pr create -t "Add a check" -l bug -F b.md', root),
+    { kind: 'pass' },
+  );
+});
+
+test('refuses a body without the footer in a repository without catalogs', async (t) => {
   const root = makeTempDir(t);
 
   writeFileSync(join(root, 'b.md'), '## Summary\na\n\n## Test plan\nb\n');
 
   assert.deepEqual(
     await getVerdict('gh pr create -t "Add a check" -l bug -F b.md', root),
-    { kind: 'pass' },
+    {
+      kind: 'refuse',
+      reason: 'the body must end with the lines `Built with [yapus](https://yapus.dev)`; add them',
+    },
   );
 });
 

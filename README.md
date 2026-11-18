@@ -98,14 +98,14 @@ Every subagent receives a return contract at its start: the return opens with DO
 
 ### Deep Work
 
-Deep work is a task rated `deep`: it is planned in writing before the first edit and carried out in slices. A slice is one step of the plan with one intent, its own files, acceptance criteria and oracle, committed on its own. The skill `/delegator:write-plan` runs the flow.
+Deep work is a task rated `deep`: it is planned in writing before the first edit and carried out in slices. A slice is the part of the plan one finisher takes in one launch: its own files, acceptance criteria and oracle, and one or more commits of one intent each. The skill `/delegator:write-plan` runs the flow.
 
 1. Plan: `delegator:plan-writer` writes `.yapus/plans/<YYYY-MM>/<topic>/plan.md`, under the month the plan starts in, and a subagent measures each fact the plan marks unmeasured.
 2. Plan review: when the plan touches more than one module or a public interface, `delegator:plan-reviewer` judges it once before the first edit, and the plan-writer folds each defect in.
-3. The person's decisions: the agent asks each open decision as one question with its recommendation first, and records the answer in the plan.
+3. The person's decisions: the agent asks the person each open decision that is theirs as one question with its recommendation first, takes the others as recommended, and records both in the plan.
 4. Slices: one `delegator:finisher` per slice edits only the slice's files and runs its oracle until it passes or one failure survives two repairs.
 5. Diff review: the finisher writes the slice's diff to a file and launches `delegator:diff-reviewer`, the one nested launch the launch check admits, then repairs what a REWORK names.
-6. Commit: the finisher commits the slice alone, never pushes, and returns the commit, the oracle's exit code, the verdict and the path of the detail file `<slice id>.md` beside the plan, which holds the rest.
+6. Commit: the finisher commits the slice alone, never pushes, and returns the commits, the oracle's exit code, the verdict and the path of the detail file `<slice id>.md` beside the plan, which holds the rest.
 
 Outside deep work, a change of more than 150 lines goes once to `delegator:diff-reviewer` before the agent reports it done.
 
@@ -113,7 +113,7 @@ Outside deep work, a change of more than 150 lines goes once to `delegator:diff-
 
 The launch budget is the number of subagent launches one session may make. delegator counts the launches of a session and refuses the one past the budget.
 
-The budget is 41 by default, above the 37 launches of the busiest measured session. `/delegator:agent-limit <n>` sets another whole number for the session, or with `--global` for every session.
+The budget is 60 by default, above the 53 launches of the busiest measured session. `/delegator:agent-limit <n>` sets another whole number for the session, or with `--global` for every session.
 
 The launch check also refuses a `quick` launch and a finisher outside `deep`. After a refusal the agent tells the person what was refused and why, and does not split the work into smaller launches.
 
@@ -133,7 +133,7 @@ Off means no rules at the session's start, no check on its launches, and no prom
 | --- | --- |
 | `/delegator:switch off` | delegator off for the session, or with `--global` for every session |
 | `/delegator:switch on` | delegator back on |
-| `/delegator:status` | the mode and the limit in force, the session's launches |
+| `/delegator:status` | the mode and the limit in force, the session's launches, the tool calls its background subagents wait on |
 | `/delegator:agent-limit <n>` | the launch budget for the session, or with `--global` for every session |
 | `/delegator:agent-report` | the record's counts per agent |
 | `/delegator:upgrade` | the `.yapus/` files of an older layout moved into the present one |

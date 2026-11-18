@@ -37,6 +37,7 @@ test('reads a completed launch with its totals and the first word of the return'
       agentId: 'a1',
       status: 'completed',
       model: 'claude-haiku-5-5',
+      outputFile: undefined,
       durationMs: 4018,
       tokens: 4832,
       toolUses: 1,
@@ -55,6 +56,17 @@ test('reads a background launch without totals or text', () => {
     [parsed.end.status, parsed.end.agentId, parsed.end.durationMs, parsed.end.word],
     ['async_launched', 'a2', undefined, undefined],
   );
+});
+
+test('reads the output file of a background launch, and none that is no string', () => {
+  const outputFiles = ['/tasks/a2.output', 7].map((outputFile) => {
+    const response = { ...LAUNCHED.tool_response, outputFile };
+    const parsed = parseEnd(JSON.stringify({ ...LAUNCHED, tool_response: response }));
+
+    return parsed.kind === 'end' ? parsed.end.outputFile : parsed.reason;
+  });
+
+  assert.deepEqual(outputFiles, ['/tasks/a2.output', undefined]);
 });
 
 test('marks a launch that ended on the turn-limit note as capped', () => {

@@ -1,6 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { readLimit } from '../../delegator/settings/read-limit.ts';
+import { DEFAULT_LIMIT, readLimit } from '../../delegator/settings/read-limit.ts';
 
 const LAUNCHES_DIR = 'launches';
 
@@ -13,7 +13,8 @@ export function admitLaunch(dataDir: string, sessionId: string): string | undefi
   const limit = readLimit(dataDir, sessionId);
 
   if (limit.kind === 'invalid') {
-    return `${ limit.path } holds no whole number; the person writes one there, such as 41`;
+    return `${ limit.path } holds no whole number; the person writes one there, `
+      + `such as ${ String(DEFAULT_LIMIT) }`;
   }
 
   const count = countLaunches(dataDir, sessionId);

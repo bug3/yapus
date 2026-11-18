@@ -3,12 +3,39 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { RECORD_FILE } from '../../../../../hooks/claude/delegator/record-row.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
 const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', '..', 'hooks');
 const MAIN = join(HOOKS, 'claude', 'delegator', 'status', 'main.ts');
 const RUN_SH = join(HOOKS, 'run.sh');
 const SUBPROCESS_TIMEOUT_MS = 10000;
+const LAUNCH = {
+  time: '2026-11-17T22:00:00Z',
+  hook: 'launch',
+  sessionId: 's1',
+  subject: 'delegator:finisher',
+  allowed: true,
+  reason: '',
+  description: '[deep] S2 x',
+  toolUseId: 'toolu_1',
+};
+const BACKGROUND_END = {
+  time: '2026-11-17T22:00:01Z',
+  hook: 'end',
+  sessionId: 's1',
+  subject: 'delegator:finisher',
+  toolUseId: 'toolu_1',
+  agentId: 'a1',
+  status: 'async_launched',
+  capped: false,
+};
+// A transcript line with a tool call that no line answers.
+const BASH_CALL = {
+  type: 'assistant',
+  timestamp: '2026-11-17T22:48:35.209Z',
+  message: { content: [{ type: 'tool_use', id: 'call_1', name: 'Bash', input: {} }] },
+};
 
 test('prints the defaults and no launches for an empty data dir', (t) => {
   const run = runStatus([makeTempDir(t), 's1'], makeTempDir(t));
@@ -16,7 +43,7 @@ test('prints the defaults and no launches for an empty data dir', (t) => {
   assert.deepEqual([run.status, run.stderr], [0, '']);
   assert.equal(
     run.stdout,
-    'mode: on (default)\nlaunch limit: 41 (default)\nlaunches this session: 0\n',
+    'mode: on (default)\nlaunch limit: 60 (default)\nlaunches this session: 0\n',
   );
 });
 
@@ -57,7 +84,7 @@ test('names the file of an invalid mode and keeps going', (t) => {
   assert.equal(run.status, 0);
   assert.equal(
     run.stdout,
-    `mode: ${ join(dataDir, 'mode') } holds no mode\nlaunch limit: 41 (default)\n`
+    `mode: ${ join(dataDir, 'mode') } holds no mode\nlaunch limit: 60 (default)\n`
       + 'launches this session: 0\n',
   );
 });
@@ -87,6 +114,33 @@ test('counts the launches of this session only', (t) => {
 
   assert.match(runStatus([dataDir, 's1'], makeTempDir(t)).stdout, /\nlaunches this session: 3\n$/u);
   assert.match(runStatus([dataDir, 's2'], makeTempDir(t)).stdout, /\nlaunches this session: 1\n$/u);
+});
+
+test('prints the call a background subagent waits on after the three lines', (t) => {
+  const dataDir = makeTempDir(t);
+  const outputFile = join(makeTempDir(t), 'a1.output');
+
+  writeFileSync(outputFile, `${ JSON.stringify(BASH_CALL) }\n`);
+  writeFileSync(
+    join(dataDir, RECORD_FILE),
+    `${ JSON.stringify(LAUNCH) }\n${ JSON.stringify({ ...BACKGROUND_END, outputFile }) }\n`,
+  );
+
+  assert.match(
+    runStatus([dataDir, 's1'], makeTempDir(t)).stdout,
+    /\nlaunches this session: 0\nwaiting on Bash for \d+ min: \[deep\] S2 x\n$/u,
+  );
+});
+
+test('names a background launch with no transcript after the three lines', (t) => {
+  const dataDir = makeTempDir(t);
+
+  writeFileSync(join(dataDir, RECORD_FILE), `${ JSON.stringify(BACKGROUND_END) }\n`);
+
+  assert.match(
+    runStatus([dataDir, 's1'], makeTempDir(t)).stdout,
+    /\nlaunches this session: 0\nno transcript to read: delegator:finisher\n$/u,
+  );
 });
 
 test('runs through run.sh', (t) => {

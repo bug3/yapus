@@ -30,6 +30,29 @@ test('records a completed launch as one end row, leaving absent fields out', (t)
   );
 });
 
+test('records the output file of a background launch, and none that is no string', (t) => {
+  const dataDir = makeTempDir(t);
+
+  for (const outputFile of ['/tasks/a2.output', 7]) {
+    const stdinText = JSON.stringify({
+      session_id: 's1',
+      tool_name: 'Agent',
+      tool_input: { subagent_type: 'delegator:runner' },
+      tool_response: { status: 'async_launched', agentId: 'a2', outputFile },
+    });
+
+    assert.deepEqual(getOutcome({ stdinText, dataDir, time: 't' }), { kind: 'recorded' });
+  }
+
+  assert.equal(
+    readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'),
+    '{"time":"t","hook":"end","sessionId":"s1","subject":"delegator:runner","agentId":"a2",'
+      + '"status":"async_launched","outputFile":"/tasks/a2.output","capped":false}\n'
+      + '{"time":"t","hook":"end","sessionId":"s1","subject":"delegator:runner","agentId":"a2",'
+      + '"status":"async_launched","capped":false}\n',
+  );
+});
+
 test('fails without a row when the plugin data directory is unset or empty', () => {
   const outcomes = [
     getOutcome({ stdinText: END, dataDir: undefined, time: 't' }),

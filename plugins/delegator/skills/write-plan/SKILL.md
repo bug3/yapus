@@ -8,5 +8,6 @@ description: Have the plan of deep work written before its first edit, reviewed,
 - Before the first edit, launch `delegator:plan-reviewer` once on the plan file and its acceptance criteria when the plan touches more than one module or a public interface, and have the plan-writer fold each defect into the section it names.
 - Give each finisher one slice of the plan, with the brief ORCH-5 names for it; launch at once the slices whose needed slices are done and whose files are disjoint, each in a worktree of its own that the brief names.
 - When finishers ran side by side, land their commits on one branch in the plan's order and have the oracle run on the result before the next launch.
-- Ask the person's open decisions with the question tool: one question per decision, your recommendation first, its context inside the question.
+- Ask the person, with the question tool, only the open decisions on architecture, authentication, data migration, the shape of a public interface, a dependency or technology choice, or one the project's instructions leave to the person: one question per decision, your recommendation first, its context inside the question.
+- Take every other open decision as the plan recommends, and record it in Decisions as taken by you and open to the person's override.
 - Record each decision the person makes in Decisions as they make it, and update Status each time a slice returns.

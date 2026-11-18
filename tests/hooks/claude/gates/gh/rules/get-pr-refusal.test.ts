@@ -370,12 +370,19 @@ test('passes -h, which creates nothing', (t) => {
   assert.equal(getPrRefusal(words('-h'), bodyDir(t), CATALOGS), undefined);
 });
 
-test('passes any title and label with a headed body in a repository without catalogs', (t) => {
+test('passes any title and label with a good body in a repository without catalogs', (t) => {
+  assert.equal(
+    getPrRefusal(words('-t', 'Add a check', '-l', 'bug', '-F', 'body.md'), bodyDir(t), undefined),
+    undefined,
+  );
+});
+
+test('refuses a body without the footer in a repository without catalogs', (t) => {
   const dir = bodyDir(t, '## Summary\na\n\n## Test plan\nb\n');
 
   assert.equal(
     getPrRefusal(words('-t', 'Add a check', '-l', 'bug', '-F', 'body.md'), dir, undefined),
-    undefined,
+    'the body must end with the lines `Built with [yapus](https://yapus.dev)`; add them',
   );
 });
 
@@ -387,8 +394,10 @@ test('refuses a missing title in a repository without catalogs', (t) => {
 });
 
 test('refuses a body without the headings in a repository without catalogs', (t) => {
+  const dir = bodyDir(t, 'a\n\nBuilt with [yapus](https://yapus.dev)\n');
+
   assert.match(
-    getPrRefusal(words('-t', 'Add a check', '-F', 'body.md'), bodyDir(t, 'a\n'), undefined) ?? '',
+    getPrRefusal(words('-t', 'Add a check', '-F', 'body.md'), dir, undefined) ?? '',
     /^the body must have the `##` headings Summary, Test plan/,
   );
 });
