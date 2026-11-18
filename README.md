@@ -98,7 +98,7 @@ Every subagent receives a return contract at its start: the return opens with DO
 
 ### Deep Work
 
-Deep work is a task rated `deep`: it is planned in writing before the first edit and carried out in slices. A slice is one step of the plan with one intent, its own files, acceptance criteria and oracle, committed on its own. The skill `/delegator:write-plan` runs the flow.
+Deep work is a task rated `deep`: it is planned in writing before the first edit and carried out in slices. A slice is the part of the plan one finisher takes in one launch: its own files, acceptance criteria and oracle, and one or more commits of one intent each. The skill `/delegator:write-plan` runs the flow.
 
 1. Plan: `delegator:plan-writer` writes `.yapus/plans/<YYYY-MM>/<topic>/plan.md`, under the month the plan starts in, and a subagent measures each fact the plan marks unmeasured.
 2. Plan review: when the plan touches more than one module or a public interface, `delegator:plan-reviewer` judges it once before the first edit, and the plan-writer folds each defect in.
