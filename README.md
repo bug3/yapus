@@ -102,7 +102,7 @@ Deep work is a task rated `deep`: it is planned in writing before the first edit
 
 1. Plan: `delegator:plan-writer` writes `.yapus/plans/<YYYY-MM>/<topic>/plan.md`, under the month the plan starts in, and a subagent measures each fact the plan marks unmeasured.
 2. Plan review: when the plan touches more than one module or a public interface, `delegator:plan-reviewer` judges it once before the first edit, and the plan-writer folds each defect in.
-3. The person's decisions: the agent asks each open decision as one question with its recommendation first, and records the answer in the plan.
+3. The person's decisions: the agent asks the person each open decision that is theirs as one question with its recommendation first, takes the others as recommended, and records both in the plan.
 4. Slices: one `delegator:finisher` per slice edits only the slice's files and runs its oracle until it passes or one failure survives two repairs.
 5. Diff review: the finisher writes the slice's diff to a file and launches `delegator:diff-reviewer`, the one nested launch the launch check admits, then repairs what a REWORK names.
 6. Commit: the finisher commits the slice alone, never pushes, and returns the commit, the oracle's exit code, the verdict and the path of the detail file `<slice id>.md` beside the plan, which holds the rest.
