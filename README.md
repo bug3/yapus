@@ -133,7 +133,7 @@ Off means no rules at the session's start, no check on its launches, and no prom
 | --- | --- |
 | `/delegator:switch off` | delegator off for the session, or with `--global` for every session |
 | `/delegator:switch on` | delegator back on |
-| `/delegator:status` | the mode and the limit in force, the session's launches |
+| `/delegator:status` | the mode and the limit in force, the session's launches, the tool calls its background subagents wait on |
 | `/delegator:agent-limit <n>` | the launch budget for the session, or with `--global` for every session |
 | `/delegator:agent-report` | the record's counts per agent |
 | `/delegator:upgrade` | the `.yapus/` files of an older layout moved into the present one |

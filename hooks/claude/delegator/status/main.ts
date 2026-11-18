@@ -31,7 +31,7 @@ function getOutcome(args: readonly string[]): Outcome {
     return { kind: 'failure', detail: USAGE };
   }
 
-  return { kind: 'status', text: getStatus(target.dataDir, target.sessionId) };
+  return { kind: 'status', text: getStatus(target.dataDir, target.sessionId, new Date()) };
 }
 
 function stop(outcome: Outcome): never {
