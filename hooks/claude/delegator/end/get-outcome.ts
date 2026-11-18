@@ -37,6 +37,7 @@ export function getOutcome(input: Input): Outcome {
     agentId: end.agentId,
     status: end.status,
     model: end.model,
+    outputFile: end.outputFile,
     durationMs: end.durationMs,
     tokens: end.tokens,
     toolUses: end.toolUses,

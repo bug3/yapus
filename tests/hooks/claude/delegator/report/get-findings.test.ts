@@ -17,6 +17,7 @@ const SILENT_END: EndRow = {
   agentId: 'a',
   status: 'async_launched',
   model: undefined,
+  outputFile: undefined,
   durationMs: undefined,
   tokens: undefined,
   toolUses: undefined,

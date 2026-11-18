@@ -67,6 +67,7 @@ test('reads a launch, a return and an end row, with absent fields undefined', ()
       ...END,
       promptId: undefined,
       model: undefined,
+      outputFile: undefined,
       tokens: undefined,
       toolUses: undefined,
       word: undefined,
@@ -91,6 +92,12 @@ test('reads the totals of a return row', () => {
   assert.deepEqual(readRows(toText({ ...RETURN, ...totals })).rows, [
     { ...RETURN, verdict: undefined, ...totals },
   ]);
+});
+
+test('reads the output file of an end row', () => {
+  const [row] = readRows(toText({ ...END, outputFile: '/tasks/a1.output' })).rows;
+
+  assert.equal(row?.hook === 'end' ? row.outputFile : row, '/tasks/a1.output');
 });
 
 test('reads a resume row', () => {

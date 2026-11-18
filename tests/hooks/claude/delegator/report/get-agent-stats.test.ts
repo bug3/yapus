@@ -43,6 +43,7 @@ const END: EndRow = {
   agentId: 'a',
   status: 'completed',
   model: undefined,
+  outputFile: undefined,
   durationMs: 100,
   tokens: 10,
   toolUses: 3,

@@ -2,8 +2,9 @@ import { isRecord } from '../../../shared/is-record.ts';
 import { isSafeId } from '../../../shared/is-safe-id.ts';
 
 // What the Agent tool reports when a launch ends: at once for a background
-// launch (status async_launched, no totals), at the subagent's end otherwise
-// (status completed, with the totals and the text it returned).
+// launch (status async_launched, no totals, the path of its output file), at
+// the subagent's end otherwise (status completed, with the totals and the text
+// it returned).
 export interface End {
   readonly sessionId: string;
   readonly promptId: string | undefined;
@@ -12,6 +13,7 @@ export interface End {
   readonly agentId: string;
   readonly status: string;
   readonly model: string | undefined;
+  readonly outputFile: string | undefined;
   readonly durationMs: number | undefined;
   readonly tokens: number | undefined;
   readonly toolUses: number | undefined;
@@ -85,6 +87,7 @@ export function parseEnd(stdinText: string): Parsed {
       agentId,
       status,
       model: getString(response.resolvedModel),
+      outputFile: getString(response.outputFile),
       durationMs: getNumber(response.totalDurationMs),
       tokens: getNumber(response.totalTokens),
       toolUses: getNumber(response.totalToolUseCount),
