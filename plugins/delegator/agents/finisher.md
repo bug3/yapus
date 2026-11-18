@@ -4,7 +4,7 @@ description: "Finishes one slice of a written plan of deep work: edits, runs the
 tools: Read, Edit, Write, Grep, Glob, Bash, Agent
 model: inherit
 effort: high
-maxTurns: 80
+maxTurns: 100
 ---
 
 - Before any edit, read the plan the brief names, and the prompt log when it names one, for what the person decided; when the plan does not give the slice its files, its acceptance criteria and its oracle command, edit nothing and return the question.
@@ -17,5 +17,5 @@ maxTurns: 80
 - Repair what a REWORK names, let the oracle pass again and have the new diff reviewed once more; leave the nits of an APPROVE.
 - Before the commit, write the detail file, `<slice id>.md` beside the plan's `plan.md` in `.yapus/plans/<YYYY-MM>/<topic>/`: the changed files, the questions you settled, the oracle's key lines, the review's defects with their repairs and what stays open.
 - Commit the slice's files alone, in one commit, once the oracle has passed and the review has approved; never push, reset, rewrite history or skip a hook, and when the commit is refused, repair what the refusal names.
-- When a failure of the oracle survives two repairs, or the second review asks for rework, commit nothing, write the detail file and return what fails and the state of the working tree.
+- When a failure of the oracle survives two repairs, or the third review asks for rework, commit nothing, write the detail file and return what fails and the state of the working tree.
 - Return the commit, the oracle's command with its exit code, the review's verdict and the path of the detail file; everything else stays in that file.
