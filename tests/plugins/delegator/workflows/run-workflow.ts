@@ -67,8 +67,11 @@ export async function runWorkflow(
   runInContext(DROP_CLOCK_AND_RANDOM, realm);
 
   // The body of an async function, where a top-level return and await parse
-  // and an import does not.
-  const returned: unknown = await runInContext(`(async () => {\n${ body }\n})()`, realm);
+  // and an import does not, in strict mode, as the workflow runtime runs it.
+  const returned: unknown = await runInContext(
+    `(async () => { 'use strict';\n${ body }\n})()`,
+    realm,
+  );
 
   return { meta, returned: copyIntoThisRealm(returned), calls, logs, phases };
 }

@@ -170,6 +170,15 @@ test('rejects a script that reads process', async (t) => {
   });
 });
 
+test('rejects a script that assigns to an undeclared name', async (t) => {
+  const scriptPath = writeScript(t, [META, 'undeclared = 1;', 'return undeclared;']);
+
+  await assert.rejects(runWorkflow(scriptPath, {}, () => undefined), {
+    name: 'ReferenceError',
+    message: 'undeclared is not defined',
+  });
+});
+
 function writeScript(t: TestContext, scriptLines: readonly string[]): string {
   const scriptPath = join(makeTempDir(t), 'sample.js');
 
