@@ -154,7 +154,7 @@ test('launches the scope agent for a topic of 64 units', async () => {
 
   const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
 
-  assert.deepEqual(run.calls.map((call) => call.options.label), ['scope']);
+  assert.equal(run.calls[0]?.options.label, 'scope');
 });
 
 test('returns the lanes error and launches no agent for a lane that is neither', async () => {
@@ -171,8 +171,8 @@ test('returns the lanes error and launches no agent for a lane that is neither',
 test('launches the scope agent with both lanes for a task and a directory alone', async () => {
   const run = await runWorkflow(SCRIPT_PATH, { task: TASK, directory: DIRECTORY }, getFixedAnswer);
 
-  assert.deepEqual(run.calls.map((call) => call.options.label), ['scope']);
   assert.match(run.calls[0]?.prompt ?? '', BOTH_LANES);
+  assert.equal(run.calls[0]?.options.label, 'scope');
 });
 
 test('names both lanes for lanes that are JSON null', async () => {

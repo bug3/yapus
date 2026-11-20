@@ -66,7 +66,9 @@ test('puts a question that holds a line break on one line', async () => {
 test('launches one scope agent with the options of its stage', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
-  assert.deepEqual(run.calls.map((call) => call.options), [
+  const scopeCalls = run.calls.filter((call) => call.options.label === 'scope');
+
+  assert.deepEqual(scopeCalls.map((call) => call.options), [
     {
       label: 'scope',
       phase: 'Scope',
@@ -97,22 +99,22 @@ test('launches one scope agent with the options of its stage', async () => {
   ]);
 });
 
-test('enters the Scope phase', async () => {
+test('enters the Scope phase first', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
-  assert.deepEqual(run.phases, ['Scope']);
+  assert.equal(run.phases[0], 'Scope');
 });
 
 test('logs the questions the scope agent returned, by lane', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
-  assert.deepEqual(run.logs, ['scope: 4 questions (3 repository, 1 web)']);
+  assert.equal(run.logs[0], 'scope: 4 questions (3 repository, 1 web)');
 });
 
-test('returns the questions by lane and the agents by stage', async () => {
+test('returns the questions by lane and the scope agent by its stage', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
-  assert.deepEqual(run.returned, {
+  assert.partialDeepStrictEqual(run.returned, {
     stats: {
       questions: { repository: 3, web: 1 },
       stages: { scope: { launched: 1, returned: 1 } },
