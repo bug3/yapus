@@ -6,6 +6,9 @@ const TSCONFIG = 'tsconfig.json';
 const MANIFEST = 'package.json';
 const NODE_RANGE = '>=24';
 const JAVASCRIPT_EXTENSIONS: readonly string[] = ['.js', '.mjs', '.cjs'];
+// Claude Code reads the workflow scripts of a plugin as JavaScript alone, so
+// one is written by hand, not emitted.
+const WORKFLOW_SCRIPT = /^plugins\/[a-z0-9-]+\/workflows\/[a-z0-9-]+\.js$/;
 
 // Every way the repository could stop running as `.ts` on Node 24 or newer:
 // a tsconfig that emits, a manifest that admits an older Node, or emitted
@@ -60,7 +63,9 @@ function getManifestViolations(root: string): string[] {
 }
 
 function getJavaScriptFiles(root: string): string[] {
-  return JAVASCRIPT_EXTENSIONS.flatMap((extension) => listFiles(root, extension));
+  return JAVASCRIPT_EXTENSIONS
+    .flatMap((extension) => listFiles(root, extension))
+    .filter((path) => !WORKFLOW_SCRIPT.test(path));
 }
 
 // The parsed file, or undefined when it is missing or not JSON.

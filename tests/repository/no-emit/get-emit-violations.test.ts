@@ -61,6 +61,32 @@ test('names every JavaScript file kept in the repository', (t) => {
   ]);
 });
 
+test('finds nothing for a workflow script of a plugin', (t) => {
+  const root = makeRepo(t, NO_EMIT, NODE_24);
+
+  mkdirSync(join(root, 'plugins', 'x', 'workflows'), { recursive: true });
+  writeFileSync(join(root, 'plugins', 'x', 'workflows', 'a.js'), '');
+
+  assert.deepEqual(getEmitViolations(root), []);
+});
+
+test('names JavaScript that is not a workflow script of a plugin', (t) => {
+  const root = makeRepo(t, NO_EMIT, NODE_24);
+
+  mkdirSync(join(root, 'plugins', 'x', 'workflows', 'sub'), { recursive: true });
+  writeFileSync(join(root, 'a.js'), '');
+  writeFileSync(join(root, 'plugins', 'x', 'a.js'), '');
+  writeFileSync(join(root, 'plugins', 'x', 'workflows', 'sub', 'a.js'), '');
+  writeFileSync(join(root, 'plugins', 'x', 'workflows', 'a.mjs'), '');
+
+  assert.deepEqual(getEmitViolations(root).sort(), [
+    'a.js: emitted JavaScript',
+    'plugins/x/a.js: emitted JavaScript',
+    'plugins/x/workflows/a.mjs: emitted JavaScript',
+    'plugins/x/workflows/sub/a.js: emitted JavaScript',
+  ]);
+});
+
 function makeRepo(t: TestContext, tsconfig: string, manifest: string): string {
   const root = makeTempRepo(t);
 

@@ -30,3 +30,29 @@ test('names another language, a stray shell script and YAML outside .github', (t
 
   assert.deepEqual(getForeignFiles(root).sort(), ['a.py', 'b.sh', 'c.yml']);
 });
+
+test('finds nothing for a workflow script of a plugin', (t) => {
+  const root = makeTempRepo(t);
+
+  mkdirSync(join(root, 'plugins', 'x', 'workflows'), { recursive: true });
+  writeFileSync(join(root, 'plugins', 'x', 'workflows', 'a.js'), '');
+
+  assert.deepEqual(getForeignFiles(root), []);
+});
+
+test('names JavaScript that is not a workflow script of a plugin', (t) => {
+  const root = makeTempRepo(t);
+
+  mkdirSync(join(root, 'plugins', 'x', 'workflows', 'sub'), { recursive: true });
+  writeFileSync(join(root, 'a.js'), '');
+  writeFileSync(join(root, 'plugins', 'x', 'a.js'), '');
+  writeFileSync(join(root, 'plugins', 'x', 'workflows', 'sub', 'a.js'), '');
+  writeFileSync(join(root, 'plugins', 'x', 'workflows', 'a.mjs'), '');
+
+  assert.deepEqual(getForeignFiles(root).sort(), [
+    'a.js',
+    'plugins/x/a.js',
+    'plugins/x/workflows/a.mjs',
+    'plugins/x/workflows/sub/a.js',
+  ]);
+});
