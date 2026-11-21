@@ -1,7 +1,7 @@
 ---
 name: switch
 description: Turn delegator on or off for this session, or for every session with --global
-allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/runtime/run.sh claude/delegator/mode:*)
+allowed-tools: Bash(bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/delegator/mode:*)
 disable-model-invocation: true
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: agent-limit
 description: Set the subagent launch limit of this session, or of every session with --global
-allowed-tools: Bash(bash ${CLAUDE_PLUGIN_ROOT}/runtime/run.sh claude/delegator/limit:*)
+allowed-tools: Bash(bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/delegator/limit:*)
 disable-model-invocation: true
 ---
 
