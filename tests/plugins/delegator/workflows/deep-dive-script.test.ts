@@ -64,7 +64,10 @@ test('holds the approved meta', async () => {
       'When the person asks for a deep dive before a plan is written. Pass args as an object: task (the task in the person\'s words), directory (the plan\'s directory, .yapus/plans/<YYYY-MM>/<topic>, under the month that already holds the topic or else the current month, UTC), and optionally questions (a list the research must answer), paths (repository paths to start from) and lanes (a list: ["repository"], ["web"] or ["repository", "web"]; both lanes when absent).',
     phases: [
       { title: 'Scope', detail: '3 to 12 questions, each for the repository or the web' },
-      { title: 'Gather', detail: 'one agent per question returns claims with their sources' },
+      {
+        title: 'Gather',
+        detail: 'one gather agent per question returns claims with their sources',
+      },
       { title: 'Verify', detail: 'each claim checked against the lines or the page it cites' },
       { title: 'Completeness', detail: 'unread areas and unanswered questions' },
       { title: 'Synthesize', detail: 'research_<digest>.md written beside the plan' },
