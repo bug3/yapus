@@ -177,6 +177,7 @@ During a session, ordo refuses a Write or Edit that puts a Unicode dash other th
 | [PRINCIPLES.md](standards/PRINCIPLES.md) | principles for every change |
 | [PYTHON.md](standards/PYTHON.md) | Python code |
 | [REPOSITORY.md](standards/REPOSITORY.md) | technology choice and repository layout |
+| [TERMS.md](standards/TERMS.md) | words for the human and the AI |
 | [TESTS.md](standards/TESTS.md) | tests |
 | [TYPESCRIPT.md](standards/TYPESCRIPT.md) | TypeScript code |
 
