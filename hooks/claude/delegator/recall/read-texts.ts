@@ -25,7 +25,7 @@ export interface Texts {
   readonly cutMark: string;
   readonly pathLine: string;
   readonly plansLine: string;
-  // What the session is told while the project holds an older layout.
+  // What the main agent is told while the project holds an older layout.
   readonly notice: string;
 }
 

@@ -38,8 +38,8 @@ function stop(verdict: Verdict): never {
   process.exit(write(verdict));
 }
 
-// Exit 2 blocks the Bash call and shows Claude the reason on stderr. writeSync,
-// because process.exit can drop a pending write to a pipe.
+// Exit 2 blocks the Bash call and shows the agent the reason on stderr.
+// writeSync, because process.exit can drop a pending write to a pipe.
 function write(verdict: Verdict): 0 | 2 {
   switch (verdict.kind) {
     case 'pass':

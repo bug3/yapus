@@ -3,7 +3,7 @@ import { isSafeId } from '../../../shared/is-safe-id.ts';
 
 // What PostToolUse reports for a Write or an Edit: the session and the path
 // of the file. A subagent's call carries the main session's id, so the write
-// of a subagent counts for the session that launched it.
+// of a subagent counts for the session it was launched in.
 export interface Write {
   readonly sessionId: string;
   readonly filePath: string;

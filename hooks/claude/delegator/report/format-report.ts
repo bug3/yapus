@@ -22,7 +22,7 @@ const REFUSAL_HEAD: readonly string[] = ['reason', 'count'];
 const MS_PER_SECOND = 1000;
 
 // The report as markdown: the record's extent, one table of counts per
-// agent, the reading rules with their state and the refusals.
+// agent type, the reading rules with their state and the refusals.
 export function formatReport(report: Report): string {
   const span = report.first === undefined
     ? ''

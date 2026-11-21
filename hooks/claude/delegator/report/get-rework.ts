@@ -3,12 +3,12 @@ import { getCompletions, type Completion } from './get-completions.ts';
 
 // How often a builder's or a finisher's work was sent back: their
 // completions, and those that received a judge's REWORK or REVISE. A return
-// whose launch names a caller lands on that caller when it is a finisher, and
-// on nothing else. A return whose caller is no completed finisher (one still
-// running, or cut off in the background and never resumed) lands on nothing.
-// A return without a caller lands on the most recent builder completion
-// before it in the same session, and on none when there is no such
-// completion.
+// whose launch names a launcher lands on that launcher when it is a finisher,
+// and on nothing else. A return whose launcher is no completed finisher (one
+// still running, or cut off in the background and never resumed) lands on
+// nothing. A return of a launch by the main agent lands on the most recent
+// builder completion before it in the same session, and on none when there
+// is no such completion.
 export interface Rework {
   readonly builders: number;
   readonly reworked: number;

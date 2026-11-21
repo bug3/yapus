@@ -5,7 +5,7 @@ import { getFirstLine } from '../../../shared/get-first-line.ts';
 export const POLICY_PATH = join(import.meta.dirname, 'policy.md');
 
 // Past this many characters Claude Code moves hook text into a file and
-// shows the model only a preview.
+// shows the agent only a preview.
 export const MAX_CHARACTERS = 10000;
 
 export type Context =

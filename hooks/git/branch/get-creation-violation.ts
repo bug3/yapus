@@ -10,8 +10,9 @@ const REMOTES = 'refs/remotes/';
 // refs/heads/ ref, or undefined. A name of the form `<type>/<slug>` passes
 // with no git call; any other name passes only when the ref already exists (a
 // forced update), names a default branch, or names a branch a remote has (the
-// agent checks out a branch someone already pushed). The excuses run in order
-// and stop at the first answer, so a later one reads git only when needed.
+// agent checks out a branch that was already pushed). The excuses run in
+// order and stop at the first answer, so a later one reads git only when
+// needed.
 export function getCreationViolation(
   ref: string,
   facts: BranchFacts,

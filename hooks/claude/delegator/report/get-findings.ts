@@ -2,8 +2,8 @@ import { ROSTER } from '../../gates/launch/get-refusal.ts';
 import type { AgentStats } from './get-agent-stats.ts';
 import type { Rework } from './get-rework.ts';
 
-// One reading rule applied to one agent: the value, the sample it rests on
-// and whether the threshold says to act, to wait for more sample, or that
+// One reading rule applied to one agent type: the value, the sample it rests
+// on and whether the threshold says to act, to wait for more sample, or that
 // the number is fine.
 export interface Finding {
   readonly rule: string;
@@ -20,8 +20,8 @@ export interface Measured {
   readonly sessions: number;
 }
 
-// A rate over an agent's counts: its name, the count and the sample it is
-// taken over, and the percent past which the rule acts.
+// A rate over an agent type's counts: its name, the count and the sample it
+// is taken over, and the percent past which the rule acts.
 interface RateRule {
   readonly rule: string;
   readonly getCounts: (stats: AgentStats) => readonly [number, number];
@@ -32,7 +32,7 @@ interface RateRule {
 // Launches a reading rule needs before its percent may act.
 export const MIN_SAMPLE = 20;
 
-// Sessions without a launch of an agent before it is a drop candidate.
+// Sessions without a launch of an agent type before it is a drop candidate.
 export const MIN_SESSIONS = 30;
 
 const PLAN_REVIEWER = 'delegator:plan-reviewer';
@@ -76,7 +76,8 @@ const PLAN_REVIEWER_RULE: RateRule = {
     + 'under 20: read its defects for a plan template fault',
 };
 
-// Every reading rule applied to the measured record, agents sorted as given.
+// Every reading rule applied to the measured record, agent types sorted as
+// given.
 export function getFindings(measured: Measured): Finding[] {
   return [
     ...measured.stats.filter((stats) => ROSTER_AGENTS.includes(stats.agent))
@@ -133,7 +134,8 @@ function makeRateFinding(
   };
 }
 
-// A roster agent never launched is a drop candidate once enough sessions ran.
+// An agent type of the roster never launched is a drop candidate once enough
+// sessions ran.
 function getUnusedFindings(measured: Measured): Finding[] {
   const launched = new Set(measured.stats.filter((stats) => stats.launches > 0)
     .map((stats) => stats.agent));

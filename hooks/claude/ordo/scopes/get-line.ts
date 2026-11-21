@@ -3,9 +3,9 @@ import { join } from 'node:path';
 import { getProjectDirectory } from '../../../shared/hooks-path/get-project-directory.ts';
 import { readCatalog } from '../../../shared/read-catalog.ts';
 
-// The one line the session should see: the scopes of a valid catalog, the
-// shared reader's violation for an invalid one, or undefined when the project
-// has no scope catalog or no project directory is known.
+// The one line the main agent should see: the scopes of a valid catalog,
+// the shared reader's violation for an invalid one, or undefined when the
+// project has no scope catalog or no project directory is known.
 export async function getLine(projectDir: string): Promise<string | undefined> {
   if (projectDir === '') {
     return undefined;

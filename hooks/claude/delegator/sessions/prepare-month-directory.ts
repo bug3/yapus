@@ -12,8 +12,8 @@ const IGNORE_ALL = '*\n';
 // Creates the sessions directory and the month directory in it private when
 // they are missing, and writes the ignore file of the sessions directory
 // whenever it is missing, so a directory a repository ships gets one too.
-// Nothing that exists is changed: a person who wants the prompts in git edits
-// the ignore file. Without it a sessions directory this run created is
+// Nothing that exists is changed: the person edits the ignore file to keep the
+// prompts in git. Without it a sessions directory this run created is
 // removed again.
 export function prepareMonthDirectory(projectRoot: string, month: string): void {
   const sessionsDirectory = getSessionsDirectory(projectRoot);

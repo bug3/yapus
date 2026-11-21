@@ -53,10 +53,10 @@ function readRecord(dataDir: string): readonly Row[] {
   return readRows(text).rows;
 }
 
-// A launch runs until the newest of its agent's return and resume rows is a
+// A launch runs until the newest of its subagent's return and resume rows is a
 // return the gate let through that opens with a word of the contract: a stop
 // in the middle of the work opens with another word, and a resume starts the
-// agent again.
+// subagent again.
 function isRunning(end: EndRow, rows: readonly Row[]): boolean {
   const newest = rows.findLast((row): row is ReturnRow | ResumeRow =>
     (row.hook === 'return' || row.hook === 'resume') && row.agentId === end.agentId);
@@ -64,8 +64,8 @@ function isRunning(end: EndRow, rows: readonly Row[]): boolean {
   return newest?.hook !== 'return' || !newest.allowed || !CONTRACT_WORDS.includes(newest.status);
 }
 
-// The launch row shares the call id of its end row; without one the agent
-// type stands in for the description.
+// The launch row shares the call id of its end row; without one the
+// agent type stands in for the description.
 function getDescription(end: EndRow, rows: readonly Row[]): string {
   const launch = rows.find((row): row is LaunchRow =>
     row.hook === 'launch' && row.toolUseId !== undefined && row.toolUseId === end.toolUseId);

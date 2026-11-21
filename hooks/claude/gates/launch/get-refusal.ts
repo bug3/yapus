@@ -1,12 +1,12 @@
 import type { Launch } from './parse-launch.ts';
 
-// The agents of plugins/delegator/agents, by file name.
+// The agent definitions of plugins/delegator/agents, by file name.
 export const ROSTER = [
   'builder', 'diff-reviewer', 'finisher', 'mcp-operator', 'plan-reviewer', 'plan-writer',
   'reader', 'runner', 'web-researcher',
 ] as const;
 
-// The Claude Code agent types that stand in for a roster agent.
+// The Claude Code agent types that stand in for an agent type of the roster.
 export const STAND_INS: readonly string[] = [
   'claude', 'Explore', 'fork', 'general-purpose', 'Plan',
 ];
