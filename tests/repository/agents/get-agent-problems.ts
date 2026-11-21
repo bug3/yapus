@@ -8,16 +8,16 @@ const FIELD_SEPARATOR = ': ';
 const TOOLS_FIELD = 'tools';
 const DISALLOWED_FIELD = 'disallowedTools';
 const REQUIRED_FIELDS: readonly string[] = ['name', 'description', TOOLS_FIELD, 'model'];
-// The roster's agents that hold none of the built-in tools in CHANGING_TOOLS.
+// The agent definitions of the roster that hold none of the built-in tools in CHANGING_TOOLS.
 const READ_ONLY_AGENTS: readonly string[] = [
   'diff-reviewer', 'mcp-operator', 'plan-reviewer', 'reader', 'web-researcher',
 ];
 const CHANGING_TOOLS: readonly string[] = ['Bash', 'Edit', 'NotebookEdit', 'PowerShell', 'Write'];
 const LAUNCHING_TOOL = 'Agent';
-// The roster's agents that may hold LAUNCHING_TOOL.
+// The agent definitions of the roster that may hold LAUNCHING_TOOL.
 const LAUNCHING_AGENTS: readonly string[] = ['finisher'];
 const COMMAND_TOOL = 'Bash';
-// The roster's agents that write files and must not hold COMMAND_TOOL.
+// The agent definitions of the roster that write files and must not hold COMMAND_TOOL.
 const COMMANDLESS_AGENTS: readonly string[] = ['plan-writer'];
 const BRACKETED = /^\[(.*)\]$/;
 const QUOTED = /^(["'])(.*)\1$/;
@@ -25,10 +25,10 @@ const SCOPE = /\(.*$/;
 
 // Every way an agent definition of a plugin under root leaves the roster's
 // limits: a missing field (one of tools or disallowedTools is enough), a name
-// that is not its file's, a tool that launches agents outside
-// LAUNCHING_AGENTS, a tool that runs commands in an agent of
-// COMMANDLESS_AGENTS, or a tool that changes
-// something in a read-only agent. An agent with a tools line must not list
+// that is not its file's, a tool that launches subagents outside
+// LAUNCHING_AGENTS, a tool that runs commands in an agent definition of
+// COMMANDLESS_AGENTS, or a tool that changes something in a read-only
+// agent definition. An agent definition with a tools line must not list
 // those tools, and a scoped entry such as Bash(git *) lists its tool; one
 // without it inherits every tool, so its disallowedTools line must name
 // them, and a scoped entry there names none. Either line is read so: one
