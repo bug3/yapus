@@ -2,9 +2,12 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { FIXED_ARGS, JSON_NULL, SCRIPT_PATH, getFixedAnswer } from './get-fixed-answer.ts';
 import { runWorkflow } from './run-workflow.ts';
+import type { AgentCall } from './run-workflow.ts';
 
 const { task: TASK, directory: DIRECTORY } = FIXED_ARGS;
 const SCOPE_ERROR = 'deep-dive: the scope agent returned nothing; run it again';
+const NO_QUESTION_ERROR =
+  'deep-dive: no question stands in the lanes given; pass other lanes or run it again';
 // No source says that what the runtime rejects with is an Error.
 const SPAWN_DENIAL: unknown = 'spawn denied';
 const SCOPE_PROMPT = [
@@ -33,6 +36,16 @@ const SCOPE_PROMPT = [
   '- Return through the structured output alone: it is the one form of return here, in place of any other your rules name.',
   "- Look at the repository's layout before you split; change no file.",
 ].join('\n');
+
+// The web lane alone, and a scope answer that holds no question of it.
+const WEB_LANE_ARGS = { ...FIXED_ARGS, lanes: ['web'] } as const;
+const REPOSITORY_SCOPE = {
+  questions: [
+    { lane: 'repository', question: 'Where is the gate?' },
+    { lane: 'repository', question: 'Who calls the gate?' },
+    { lane: 'repository', question: 'Which tests hold the gate?' },
+  ],
+} as const;
 
 test('gives the scope agent the approved prompt', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
@@ -146,3 +159,56 @@ test('logs a rejection that is no error as its text', async () => {
 
   assert.deepEqual(run.logs, ['scope failed: spawn denied']);
 });
+
+test('returns the no-question error and the counts when the lanes leave no question', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, WEB_LANE_ARGS, answerRepositoryScope);
+
+  assert.deepEqual(run.returned, {
+    error: NO_QUESTION_ERROR,
+    stats: {
+      questions: { repository: 0, web: 0 },
+      dropped: 3,
+      claims: { repository: 0, web: 0 },
+      verified: { repository: 0, web: 0 },
+      refuted: { repository: 0, web: 0 },
+      undecided: { repository: 0, web: 0 },
+      notLaunched: 0,
+      pathsRefused: 0,
+      gatherReturns: { count: 0, near: 0, longest: 0 },
+      stages: Object.fromEntries([
+        ['scope', { launched: 1, returned: 1 }],
+        ['gather-repo', { launched: 0, returned: 0 }],
+        ['gather-web', { launched: 0, returned: 0 }],
+        ['verify-repo', { launched: 0, returned: 0 }],
+        ['verify-web', { launched: 0, returned: 0 }],
+        ['verify-web-third', { launched: 0, returned: 0 }],
+        ['completeness', { launched: 0, returned: 0 }],
+        ['synthesize', { launched: 0, returned: 0 }],
+      ]),
+    },
+  });
+});
+
+test('launches no agent after the scope agent when the lanes leave no question', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, WEB_LANE_ARGS, answerRepositoryScope);
+
+  assert.deepEqual(run.calls.map((call) => call.options.label), ['scope']);
+});
+
+test('enters no phase after Scope when the lanes leave no question', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, WEB_LANE_ARGS, answerRepositoryScope);
+
+  assert.deepEqual(run.phases, ['Scope']);
+});
+
+test('logs the scope line alone when the lanes leave no question', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, WEB_LANE_ARGS, answerRepositoryScope);
+
+  assert.deepEqual(run.logs, ['scope: 0 questions (0 repository, 0 web)']);
+});
+
+// The stand-in of the fixed run, but for its scope agent, which returns
+// repository questions alone.
+function answerRepositoryScope(call: AgentCall): unknown {
+  return call.options.label === 'scope' ? REPOSITORY_SCOPE : getFixedAnswer(call);
+}

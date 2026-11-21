@@ -226,6 +226,8 @@ const MAX_TOPIC_LENGTH = 64;
 const ARGS_ERROR =
   'deep-dive: args is not an object with task and directory; pass {task, directory, questions, paths, lanes}';
 const SCOPE_ERROR = 'deep-dive: the scope agent returned nothing; run it again';
+const NO_QUESTION_ERROR =
+  'deep-dive: no question stands in the lanes given; pass other lanes or run it again';
 const SYNTHESIZE_ERROR =
   'deep-dive: no research file was written; resume the run with its run id';
 
@@ -292,6 +294,13 @@ const droppedQuestions = selectDroppedQuestions(scope.questions, input.lanes);
 const questionCounts = countByLane(questions);
 
 log(`scope: ${ questions.length } questions (${ formatLaneCounts(questionCounts) })`);
+
+// Every question the scope agent returned stands in a lane the args left
+// out, so nothing is left to research: the run ends here, before the agents
+// that would end it with a research file of no claim.
+if (questions.length === 0) {
+  return { error: NO_QUESTION_ERROR, stats: getStats(questionCounts, droppedQuestions, []) };
+}
 
 // Gathering and verifying run with no barrier between them: the run enters
 // the first of the two phases, and each agent carries the phase of its stage.
