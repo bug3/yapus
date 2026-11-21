@@ -12,11 +12,11 @@ import { readGhArguments, type GhArguments } from './read-gh-arguments.ts';
 const { reasons } = ghCommands;
 const spec = ghCommands.actions.prCreate;
 
-// A reason to refuse a `gh pr create` whose options, title, labels or body file
-// break the rules, or undefined. `words` follow the action; `cwd` is the
-// directory a relative body file resolves against, undefined when unknown;
-// `catalogs` judge the title and the labels, and without them only the
-// options, the title's presence and the body are judged.
+// A reason to refuse a `gh pr create` whose options, title, labels, assignee or
+// body file break the rules, or undefined. `words` follow the action; `cwd` is
+// the directory a relative body file resolves against, undefined when unknown;
+// with `catalogs` the title, the labels and the assignee are judged, and
+// without them only the options, the title's presence and the body.
 export function getPrRefusal(
   words: readonly Word[],
   cwd: string | undefined,
@@ -34,8 +34,15 @@ export function getPrRefusal(
 
   return getForbiddenOptionRefusal(args, spec.command)
     ?? getTitleRefusal(args, catalogs)
-    ?? (catalogs === undefined ? undefined : getCreateLabelRefusal(args, spec.command, catalogs))
+    ?? (catalogs === undefined
+      ? undefined
+      : getCreateLabelRefusal(args, spec.command, catalogs) ?? getAssigneeRefusal(args))
     ?? getBodyRefusal(args, { command: spec.command, rules: ghCommands.bodies.pr, cwd });
+}
+
+// Any value passes: the rule asks only that the pull request start assigned.
+function getAssigneeRefusal(args: GhArguments): string | undefined {
+  return args.values.has('assignee') ? undefined : reasons.missingAssignee(spec.command);
 }
 
 function getTitleRefusal(args: GhArguments, catalogs: GhCatalogs | undefined): string | undefined {

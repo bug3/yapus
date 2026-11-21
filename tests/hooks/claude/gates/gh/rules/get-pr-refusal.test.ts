@@ -40,7 +40,7 @@ test('passes a create with a good title, labels and body file, without --draft',
 
   assert.equal(
     getPrRefusal(
-      words('-t', TITLE, '-l', LABELS, '-F', join(dir, 'body.md')),
+      words('-t', TITLE, '-l', LABELS, '-a', '@me', '-F', join(dir, 'body.md')),
       undefined,
       CATALOGS,
     ),
@@ -53,7 +53,10 @@ test('passes the long, equals and attached option forms', (t) => {
 
   assert.equal(
     getPrRefusal(
-      words(`--title=${ TITLE }`, `-l${ LABELS }`, `-F=${ join(dir, 'body.md') }`, '-B', 'main'),
+      words(
+        `--title=${ TITLE }`, `-l${ LABELS }`, `-F=${ join(dir, 'body.md') }`,
+        '-B', 'main', '-a', '@me',
+      ),
       undefined,
       CATALOGS,
     ),
@@ -174,7 +177,47 @@ test('refuses a label outside the catalog', (t) => {
 test('passes a hand-kept extra label', (t) => {
   assert.equal(
     getPrRefusal(
-      words('-t', TITLE, '-l', LABELS, '-l', 'help wanted', '-F', 'body.md'),
+      words('-t', TITLE, '-l', LABELS, '-a', '@me', '-l', 'help wanted', '-F', 'body.md'),
+      bodyDir(t),
+      CATALOGS,
+    ),
+    undefined,
+  );
+});
+
+test('refuses a create without an assignee', (t) => {
+  assert.equal(
+    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-F', 'body.md'), bodyDir(t), CATALOGS),
+    '`gh pr create` needs --assignee; write `--assignee @me` to assign it to its creator',
+  );
+});
+
+test('passes an assignee given as --assignee and a value', (t) => {
+  assert.equal(
+    getPrRefusal(
+      words('-t', TITLE, '-l', LABELS, '--assignee', '@me', '-F', 'body.md'),
+      bodyDir(t),
+      CATALOGS,
+    ),
+    undefined,
+  );
+});
+
+test('passes an assignee given as --assignee=value', (t) => {
+  assert.equal(
+    getPrRefusal(
+      words('-t', TITLE, '-l', LABELS, '--assignee=@me', '-F', 'body.md'),
+      bodyDir(t),
+      CATALOGS,
+    ),
+    undefined,
+  );
+});
+
+test('passes an assignee given as -a and a value', (t) => {
+  assert.equal(
+    getPrRefusal(
+      words('-t', TITLE, '-l', LABELS, '-a', 'bug3', '-F', 'body.md'),
       bodyDir(t),
       CATALOGS,
     ),
@@ -186,7 +229,7 @@ test('refuses a body without the headings in order', (t) => {
   const dir = bodyDir(t, '## Test plan\nb\n\n## Summary\na\n\nBuilt with [yapus](https://yapus.dev)\n');
 
   assert.equal(
-    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-F', 'body.md'), dir, CATALOGS),
+    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-a', '@me', '-F', 'body.md'), dir, CATALOGS),
     'the body must have the `##` headings Summary, Test plan in order, each with text under it; '
     + 'fix the file',
   );
@@ -196,7 +239,7 @@ test('refuses a body without the footer', (t) => {
   const dir = bodyDir(t, '## Summary\na\n\n## Test plan\nb\n');
 
   assert.equal(
-    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-F', 'body.md'), dir, CATALOGS),
+    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-a', '@me', '-F', 'body.md'), dir, CATALOGS),
     'the body must end with the lines `Built with [yapus](https://yapus.dev)`; add them',
   );
 });
@@ -205,7 +248,7 @@ test('refuses a body file that does not exist yet', (t) => {
   const dir = makeTempDir(t);
 
   assert.equal(
-    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-F', 'body.md'), dir, CATALOGS),
+    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-a', '@me', '-F', 'body.md'), dir, CATALOGS),
     `${ join(dir, 'body.md') } does not exist yet; write the file first, then run the command`,
   );
 });
@@ -216,21 +259,29 @@ test('refuses a body file that is not UTF-8', (t) => {
   writeFileSync(join(dir, 'body.md'), Buffer.from([0xff, 0xfe]));
 
   assert.equal(
-    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-F', 'body.md'), dir, CATALOGS),
+    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-a', '@me', '-F', 'body.md'), dir, CATALOGS),
     `cannot read ${ join(dir, 'body.md') }; make it a UTF-8 file of at most 64 KiB`,
   );
 });
 
 test('reads a relative body file against a known directory', (t) => {
   assert.equal(
-    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-F', 'body.md'), bodyDir(t), CATALOGS),
+    getPrRefusal(
+      words('-t', TITLE, '-l', LABELS, '-a', '@me', '-F', 'body.md'),
+      bodyDir(t),
+      CATALOGS,
+    ),
     undefined,
   );
 });
 
 test('refuses a relative body file when the directory is unknown', () => {
   assert.equal(
-    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-F', 'body.md'), undefined, CATALOGS),
+    getPrRefusal(
+      words('-t', TITLE, '-l', LABELS, '-a', '@me', '-F', 'body.md'),
+      undefined,
+      CATALOGS,
+    ),
     'the --body-file "body.md" of `gh pr create` is relative to a directory this check cannot '
     + 'tell; give an absolute --body-file',
   );
@@ -238,7 +289,7 @@ test('refuses a relative body file when the directory is unknown', () => {
 
 test('refuses a body file read from standard input', (t) => {
   assert.equal(
-    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-F', '-'), bodyDir(t), CATALOGS),
+    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-a', '@me', '-F', '-'), bodyDir(t), CATALOGS),
     'the --body-file of `gh pr create` is standard input, which this check cannot read; '
     + 'write the body to a file and give its path',
   );
@@ -246,7 +297,7 @@ test('refuses a body file read from standard input', (t) => {
 
 test('refuses a create without a body file', (t) => {
   assert.equal(
-    getPrRefusal(words('-t', TITLE, '-l', LABELS), bodyDir(t), CATALOGS),
+    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-a', '@me'), bodyDir(t), CATALOGS),
     '`gh pr create` needs --body-file; write it',
   );
 });
@@ -255,7 +306,7 @@ test('refuses a body file over 64 KiB', (t) => {
   const dir = bodyDir(t, `${ BODY }${ 'a'.repeat(65_536) }`);
 
   assert.equal(
-    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-F', 'body.md'), dir, CATALOGS),
+    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-a', '@me', '-F', 'body.md'), dir, CATALOGS),
     `cannot read ${ join(dir, 'body.md') }; make it a UTF-8 file of at most 64 KiB`,
   );
 });
@@ -298,7 +349,10 @@ test('refuses a breaking title without the breaking-change label', (t) => {
 test('passes a breaking title with the breaking-change label', (t) => {
   assert.equal(
     getPrRefusal(
-      words('-t', 'feat(hooks)!: add x', '-l', `${ LABELS },breaking-change`, '-F', 'body.md'),
+      words(
+        '-t', 'feat(hooks)!: add x', '-l', `${ LABELS },breaking-change`, '-a', '@me',
+        '-F', 'body.md',
+      ),
       bodyDir(t),
       CATALOGS,
     ),
@@ -373,6 +427,13 @@ test('passes -h, which creates nothing', (t) => {
 test('passes any title and label with a good body in a repository without catalogs', (t) => {
   assert.equal(
     getPrRefusal(words('-t', 'Add a check', '-l', 'bug', '-F', 'body.md'), bodyDir(t), undefined),
+    undefined,
+  );
+});
+
+test('passes a create without an assignee in a repository without catalogs', (t) => {
+  assert.equal(
+    getPrRefusal(words('-t', TITLE, '-l', LABELS, '-F', 'body.md'), bodyDir(t), undefined),
     undefined,
   );
 });

@@ -7,7 +7,7 @@ import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 import { makeCatalogRoot } from './make-catalog-root.ts';
 
 const BODY = '## Summary\na\n\n## Test plan\nb\n\nBuilt with [yapus](https://yapus.dev)\n';
-const CREATE = 'gh pr create -t "feat(hooks): add a check" -l "type: feat,scope: hooks"';
+const CREATE = 'gh pr create -t "feat(hooks): add a check" -l "type: feat,scope: hooks" -a @me';
 const UNKNOWN_CWD = {
   kind: 'refuse',
   reason: 'the --body-file "b.md" of `gh pr create` is relative to a directory this check '

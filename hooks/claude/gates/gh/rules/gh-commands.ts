@@ -156,6 +156,8 @@ export const ghCommands = {
       `the type, scope and breaking-change labels of \`${ command }\` must be exactly `
       + `${ expected.map((label) => `\`${ label }\``).join(', ') }, as its title says, `
       + 'besides any hand-kept extra label; fix --label',
+    missingAssignee: (command: string): string =>
+      `\`${ command }\` needs --assignee; write \`--assignee @me\` to assign it to its creator`,
     issueTitle: (command: string, title: string): string =>
       `the title ${ JSON.stringify(title) } of \`${ command }\` must be \`<scope>: <symptom>\`, `
       + 'a scope the catalog scopes.json lists, a symptom, and at most '
