@@ -80,7 +80,7 @@ The main agent raises the depth when an oracle fails twice or a review asks for 
 
 ### Subagents
 
-Each subagent is launched as `delegator:<name>`. The launch check refuses the built-in agent types that stand in for the roster (`general-purpose`, `Explore`, `Plan`, `fork`, `claude`), and a subagent launches no other subagent, except a finisher that launches the diff reviewer for its own diff.
+Each subagent is launched as `delegator:<name>`, or as a `fork` when the work needs content of the conversation that no brief can carry. The launch check refuses the built-in agent types that stand in for the roster (`general-purpose`, `Explore`, `Plan`, `claude`), and a subagent launches no other subagent, except a finisher that launches the diff reviewer for its own diff.
 
 | Agent definition | Job |
 | --- | --- |

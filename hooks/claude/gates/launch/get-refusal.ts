@@ -8,7 +8,7 @@ export const ROSTER = [
 
 // The Claude Code agent types that stand in for an agent type of the roster.
 export const STAND_INS: readonly string[] = [
-  'claude', 'Explore', 'fork', 'general-purpose', 'Plan',
+  'claude', 'Explore', 'general-purpose', 'Plan',
 ];
 
 const ROSTER_TYPES: readonly string[] = ROSTER.map((name) => `delegator:${ name }`);
