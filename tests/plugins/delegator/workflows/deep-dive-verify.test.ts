@@ -55,6 +55,10 @@ const DENIED_TOOLS = ['Bash', 'Edit', 'NotebookEdit', 'PowerShell', 'Agent', 'Wr
 
 const SUPPORTED = { verdict: 'supported', evidence: 'The source says so.' } as const;
 const UNSUPPORTED = { verdict: 'unsupported', evidence: 'The source says otherwise.' } as const;
+const UNSUPPORTED_FIRST = {
+  verdict: 'unsupported',
+  evidence: 'The page\nnames no stop.',
+} as const;
 const UNOPENED = { verdict: 'unopened', evidence: 'The source is not there.' } as const;
 
 const REPOSITORY_CLAIM = {
@@ -69,6 +73,12 @@ const WEB_CLAIM = {
   quote: 'Exit code 2\n\n## Rules\n- blocks the stop',
 } as const;
 
+// The two claims as the research file prints them, up to the mark.
+const REPOSITORY_CLAIM_LINE =
+  '- The gate blocks a return with no status word. | `hooks/claude/gates/return/ main.ts:35`';
+const WEB_CLAIM_LINE =
+  '- A hook that exits 2 blocks the stop. | <https://code.claude.com/docs/en/hooks>';
+
 // The answers, by stage id, of a run on one repository question of 30 claims.
 const THIRTY_CLAIMS_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['scope', { questions: [{ lane: 'repository', question: 'What blocks a return?' }] }],
@@ -77,10 +87,11 @@ const THIRTY_CLAIMS_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unkn
 ]);
 
 // The answers, by stage id, of a run on 12 web questions of 45 claims each,
-// the two votes of every claim agreeing: 1093 launches were every one made.
+// the two votes of every claim agreeing: 1095 launches with none held back.
 // The first 10 questions and 42 claims of the eleventh get both votes, 492
 // claims; the next claim gets one vote, and its second and its third are
-// held back with the two votes of each of the 47 claims left.
+// held back with the two votes of each of the 47 claims left. The two agents
+// that end the run are launched past the 998.
 const WIDE_RUN_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   [
     'scope',
@@ -88,8 +99,37 @@ const WIDE_RUN_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>(
   ],
   ['gather-web', { claims: Array.from({ length: 45 }, () => WEB_CLAIM), notChecked: [] }],
   ['verify-web', SUPPORTED],
+  ['completeness', { unreadAreas: [], unansweredQuestions: [] }],
+  ['synthesize', { outcome: 'written', detail: '' }],
 ]);
 const NOT_LAUNCHED = ' not launched: the run is at 998 agents';
+const WIDE_RUN_UNVERIFIED_BLOCK = [
+  '## Unverified',
+  '',
+  `${ WEB_CLAIM_LINE } | undecided 1 of 1`,
+  ...Array.from({ length: 47 }, () => `${ WEB_CLAIM_LINE } | undecided 0 of 0`),
+].join('\n');
+const WIDE_RUN_RUN_BLOCK = [
+  '## Run',
+  '',
+  '| Stage | Launched | Returned |',
+  '| --- | --- | --- |',
+  '| scope | 1 | 1 |',
+  '| gather-repo | 0 | 0 |',
+  '| gather-web | 12 | 12 |',
+  '| verify-repo | 0 | 0 |',
+  '| verify-web | 985 | 985 |',
+  '| verify-web-third | 0 | 0 |',
+  '| completeness | 1 | 1 |',
+  '',
+  '- Questions: 12 (0 repository, 12 web)',
+  '- Claims: 540 (0 repository, 540 web)',
+  '- Verified: 492 (0 repository, 492 web)',
+  '- Refuted: 0 (0 repository, 0 web)',
+  '- Undecided: 48 (0 repository, 48 web)',
+  '- Not launched at the limit of 1000 agents: 96',
+  '- Gather returns of 10000 characters or more: 0 of 12, the longest 6823 (the return limit is 12000)',
+].join('\n');
 
 test('gives the verifier of a repository claim the approved prompt', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
@@ -191,6 +231,15 @@ test('launches a verifier for each of 30 claims of one repository question', asy
   assert.equal(run.logs[1], 'Q1: 30 claims, 30 verified, 0 refuted, 0 undecided');
 });
 
+test('hands all 30 claims of one repository question to the synthesize agent', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, answerByStage(THIRTY_CLAIMS_ANSWERS));
+
+  assert.deepEqual(
+    listClaimLines(run),
+    Array.from({ length: 30 }, () => `${ REPOSITORY_CLAIM_LINE } | verified 1 of 1`),
+  );
+});
+
 test('verifies a repository claim on a supported verdict', async () => {
   const run = await runClaim('repository', [SUPPORTED]);
 
@@ -281,40 +330,111 @@ test('takes a verifier that rejects as no vote and logs its failure', async () =
   assert.equal(run.logs.includes('verify-web:Q4.C2.v2 failed: agent died'), true);
 });
 
-test('returns the counts of the run by lane and by stage', async () => {
-  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
+test('marks a repository claim with a supported verdict as verified 1 of 1', async () => {
+  const run = await runClaim('repository', [SUPPORTED]);
 
-  assert.deepEqual(run.returned, {
-    stats: {
-      questions: { repository: 3, web: 1 },
-      claims: { repository: 3, web: 2 },
-      verified: { repository: 1, web: 2 },
-      refuted: { repository: 1, web: 0 },
-      undecided: { repository: 1, web: 0 },
-      notLaunched: 0,
-      gatherReturns: { count: 3, near: 0, longest: 475 },
-      stages: Object.fromEntries([
-        ['scope', { launched: 1, returned: 1 }],
-        ['gather-repo', { launched: 3, returned: 2 }],
-        ['gather-web', { launched: 1, returned: 1 }],
-        ['verify-repo', { launched: 3, returned: 3 }],
-        ['verify-web', { launched: 4, returned: 4 }],
-        ['verify-web-third', { launched: 1, returned: 1 }],
-      ]),
-    },
-  });
+  assert.deepEqual(listClaimLines(run), [`${ REPOSITORY_CLAIM_LINE } | verified 1 of 1`]);
 });
 
-test('stops at 998 agents when the claims ask for more verifiers', async () => {
+test('marks a repository claim with an unsupported verdict as refuted 0 of 1', async () => {
+  const run = await runClaim('repository', [UNSUPPORTED]);
+
+  assert.deepEqual(listClaimLines(run), [
+    `${ REPOSITORY_CLAIM_LINE } | refuted 0 of 1: The source says otherwise.`,
+  ]);
+});
+
+test('marks a repository claim with an unopened verdict as undecided 0 of 0', async () => {
+  const run = await runClaim('repository', [UNOPENED]);
+
+  assert.deepEqual(listClaimLines(run), [`${ REPOSITORY_CLAIM_LINE } | undecided 0 of 0`]);
+});
+
+test('marks a repository claim whose verifier returns nothing as undecided 0 of 0', async () => {
+  const run = await runClaim('repository', [JSON_NULL]);
+
+  assert.deepEqual(listClaimLines(run), [`${ REPOSITORY_CLAIM_LINE } | undecided 0 of 0`]);
+});
+
+test('marks a web claim with two supported votes as verified 2 of 2', async () => {
+  const run = await runClaim('web', [SUPPORTED, SUPPORTED]);
+
+  assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | verified 2 of 2`]);
+});
+
+test('marks a web claim with two unsupported votes as refuted 0 of 2', async () => {
+  const run = await runClaim('web', [UNSUPPORTED, UNSUPPORTED]);
+
+  assert.deepEqual(listClaimLines(run), [
+    `${ WEB_CLAIM_LINE } | refuted 0 of 2: The source says otherwise.`,
+  ]);
+});
+
+test('marks a web claim with a supported third vote as verified 2 of 3', async () => {
+  const run = await runClaim('web', [SUPPORTED, UNSUPPORTED, SUPPORTED]);
+
+  assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | verified 2 of 3`]);
+});
+
+test('marks a web claim with an unsupported third vote as refuted 1 of 3', async () => {
+  const run = await runClaim('web', [SUPPORTED, UNSUPPORTED, UNSUPPORTED]);
+
+  assert.deepEqual(listClaimLines(run), [
+    `${ WEB_CLAIM_LINE } | refuted 1 of 3: The source says otherwise.`,
+  ]);
+});
+
+test('marks a web claim whose third verifier returns nothing as undecided 1 of 2', async () => {
+  const run = await runClaim('web', [SUPPORTED, UNSUPPORTED, JSON_NULL]);
+
+  assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | undecided 1 of 2`]);
+});
+
+test('marks a web claim with one vote and a supported third as verified 2 of 2', async () => {
+  const run = await runClaim('web', [SUPPORTED, JSON_NULL, SUPPORTED]);
+
+  assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | verified 2 of 2`]);
+});
+
+test('marks a web claim with a vote of each kind and an unopened page as undecided', async () => {
+  const run = await runClaim('web', [SUPPORTED, UNOPENED, UNSUPPORTED]);
+
+  assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | undecided 1 of 2`]);
+});
+
+test('marks a web claim with no vote cast as undecided 0 of 0', async () => {
+  const run = await runClaim('web', [JSON_NULL, JSON_NULL]);
+
+  assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | undecided 0 of 0`]);
+});
+
+test('gives a refuted claim the evidence of its first vote against it, on one line', async () => {
+  const run = await runClaim('web', [SUPPORTED, UNSUPPORTED_FIRST, UNSUPPORTED]);
+
+  assert.deepEqual(listClaimLines(run), [
+    `${ WEB_CLAIM_LINE } | refuted 1 of 3: The page names no stop.`,
+  ]);
+});
+
+test('makes 1000 calls when the claims ask for more verifiers', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, answerByStage(WIDE_RUN_ANSWERS));
 
-  assert.equal(run.calls.length, 998);
+  assert.equal(run.calls.length, 1000);
+});
+
+test('launches the two agents that end the run past the 998', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, answerByStage(WIDE_RUN_ANSWERS));
+
+  assert.deepEqual(
+    run.calls.slice(-2).map((call) => call.options.label),
+    ['completeness', 'synthesize'],
+  );
 });
 
 test('counts the launches held back and leaves their claims undecided', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, answerByStage(WIDE_RUN_ANSWERS));
 
-  assert.deepEqual(run.returned, {
+  assert.partialDeepStrictEqual(run.returned, {
     stats: {
       questions: { repository: 0, web: 12 },
       claims: { repository: 0, web: 540 },
@@ -330,9 +450,23 @@ test('counts the launches held back and leaves their claims undecided', async ()
         ['verify-repo', { launched: 0, returned: 0 }],
         ['verify-web', { launched: 985, returned: 985 }],
         ['verify-web-third', { launched: 0, returned: 0 }],
+        ['completeness', { launched: 1, returned: 1 }],
+        ['synthesize', { launched: 1, returned: 1 }],
       ]),
     },
   });
+});
+
+test('keeps every claim whose verifier was held back in the Unverified block', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, answerByStage(WIDE_RUN_ANSWERS));
+
+  assert.equal(readBlock(run, 'Unverified', 'Unmeasured'), WIDE_RUN_UNVERIFIED_BLOCK);
+});
+
+test('names the launches held back in the Run block', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, answerByStage(WIDE_RUN_ANSWERS));
+
+  assert.equal(readBlock(run, 'Run', 'Rules'), WIDE_RUN_RUN_BLOCK);
 });
 
 test('logs each launch held back under its label', async () => {
@@ -343,6 +477,25 @@ test('logs each launch held back under its label', async () => {
   assert.equal(heldBack.includes(`verify-web:Q12.C45.v2${ NOT_LAUNCHED }`), true);
   assert.equal(heldBack.includes(`verify-web-third:Q11.C43.v3${ NOT_LAUNCHED }`), true);
 });
+
+// The lines of the claims in the prompt of the synthesize agent: the lines
+// of a list there that hold a source.
+function listClaimLines(run: WorkflowRun): string[] {
+  return (findCall(run, 'synthesize')?.prompt ?? '')
+    .split('\n')
+    .filter((line) => line.startsWith('- ') && line.includes(' | '));
+}
+
+// The block of the research file under the heading `title`, as the prompt
+// of the synthesize agent holds it before the heading `nextTitle`.
+function readBlock(run: WorkflowRun, title: string, nextTitle: string): string {
+  const prompt = findCall(run, 'synthesize')?.prompt ?? '';
+
+  return prompt.slice(
+    prompt.indexOf(`\n## ${ title }\n`) + 1,
+    prompt.indexOf(`\n\n## ${ nextTitle }\n`),
+  );
+}
 
 // The run of one question with one claim of `lane`, whose verifiers answer
 // with `verdicts` in the order of their votes; a verifier past the list

@@ -23,7 +23,7 @@ export const FIXED_ARGS = {
 // What each agent of the run on FIXED_ARGS returns, by its label. The
 // gatherer of the third question has no answer; the claims come out as one
 // verified, one refuted and one undecided for the repository, and for the
-// web one verified by two votes and one by the third.
+// web one verified by two votes and one by the third; the file is written.
 const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['scope', {
     questions: [
@@ -119,6 +119,11 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
     verdict: 'supported',
     evidence: 'The quote stands in the last paragraph of the page.',
   }],
+  ['completeness', {
+    unreadAreas: ['tests/hooks/claude/gates/return'],
+    unansweredQuestions: ['Which tests hold the verdicts of the return gate?'],
+  }],
+  ['synthesize', { outcome: 'written', detail: '' }],
 ]);
 
 // The stand-in for the agents of a deep-dive run on FIXED_ARGS: the answer of

@@ -197,7 +197,7 @@ test('numbers the questions it keeps when the args leave a lane out', async () =
 test('enters the Gather phase after the Scope phase', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
-  assert.deepEqual(run.phases, ['Scope', 'Gather']);
+  assert.deepEqual(run.phases.slice(0, 2), ['Scope', 'Gather']);
 });
 
 test('logs the claims of each question with their outcomes', async () => {
@@ -246,6 +246,15 @@ test('researches the other questions when a gatherer rejects', async () => {
       ]),
     },
   });
+});
+
+test('writes that a question returned nothing when its gatherer rejects', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, rejectFirstGatherer);
+
+  assert.match(
+    findCall(run, 'synthesize')?.prompt ?? '',
+    /\n## Unmeasured\n\n- Unread: [^\n]+\n- Unanswered: [^\n]+\n- Q1 returned nothing\.\n- Q3 returned nothing\.\n- Q4 not searched: /u,
+  );
 });
 
 test('counts the gather answers that came back and the longest of them', async () => {

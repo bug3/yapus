@@ -24,24 +24,32 @@ const STAGES = {
   'verify-repo': { phase: 'Verify', model: 'sonnet', effort: 'medium' },
   'verify-web': { phase: 'Verify', model: 'sonnet', effort: 'high' },
   'verify-web-third': { phase: 'Verify', model: 'opus', effort: 'high' },
+  'completeness': { phase: 'Completeness', model: 'opus', effort: 'high' },
+  'synthesize': { phase: 'Synthesize', model: 'opus', effort: 'high', keptTool: 'Write' },
 };
 
 // The built-in tools that change files or launch agents, denied to an agent
-// that is given no agent type. A name the agent never held raises no error,
-// and an agent denied Bash holds Read, Glob and Grep.
+// that is given no agent type, but for the one tool the row of its stage
+// keeps. A name the agent never held raises no error, and an agent denied
+// Bash holds Read, Glob and Grep.
 const DENIED_TOOLS = ['Bash', 'Edit', 'NotebookEdit', 'PowerShell', 'Agent', 'Write'];
 
 // How a question of each lane is researched: the stage that gathers its
-// claims, the prompt of that stage, and how one of its claims is verified.
+// claims, the prompt of that stage, what its gatherer names as left out, and
+// how one of its claims is cited and verified.
 const LANE_RESEARCH = {
   repository: {
     gatherStageId: 'gather-repo',
     formatGatherPrompt: formatRepositoryGatherPrompt,
+    listUnsearched: (gathered) => gathered.notSearched,
+    citeClaim: citeRepositoryClaim,
     verifyClaim: verifyRepositoryClaim,
   },
   web: {
     gatherStageId: 'gather-web',
     formatGatherPrompt: formatWebGatherPrompt,
+    listUnsearched: (gathered) => gathered.notChecked,
+    citeClaim: citeWebClaim,
     verifyClaim: verifyWebClaim,
   },
 };
@@ -64,6 +72,10 @@ const WEB_QUORUM = 2;
 const VERIFIED = 'verified';
 const REFUTED = 'refuted';
 const UNDECIDED = 'undecided';
+
+// What the agent that writes the research file answers.
+const WRITTEN = 'written';
+const FAILED = 'failed';
 
 const VERDICT_SCHEMA = {
   type: 'object',
@@ -139,6 +151,22 @@ const SCHEMAS = {
   'verify-repo': VERDICT_SCHEMA,
   'verify-web': VERDICT_SCHEMA,
   'verify-web-third': VERDICT_SCHEMA,
+  'completeness': {
+    type: 'object',
+    properties: {
+      unreadAreas: { type: 'array', items: { type: 'string' } },
+      unansweredQuestions: { type: 'array', items: { type: 'string' } },
+    },
+    required: ['unreadAreas', 'unansweredQuestions'],
+  },
+  'synthesize': {
+    type: 'object',
+    properties: {
+      outcome: { type: 'string', enum: [WRITTEN, FAILED] },
+      detail: { type: 'string' },
+    },
+    required: ['outcome', 'detail'],
+  },
 };
 
 // A plan's directory is PLANS_PREFIX, a month and a topic. A script can load
@@ -152,20 +180,35 @@ const MAX_TOPIC_LENGTH = 64;
 const ARGS_ERROR =
   'deep-dive: args is not an object with task and directory; pass {task, directory, questions, paths, lanes}';
 const SCOPE_ERROR = 'deep-dive: the scope agent returned nothing; run it again';
+const SYNTHESIZE_ERROR =
+  'deep-dive: no research file was written; resume the run with its run id';
 
 const NO_LINES = 'none';
 const NO_START_PATH = 'no path given';
+const NOTHING_NAMED = 'nothing named';
+const NO_CLAIM_LINE = '- None.';
 
 // The runtime ends a run at RUN_AGENT_LIMIT agents. Gathering and verifying
-// stop LAST_AGENTS short of it, which leaves the agents that end a run their
-// launches.
+// stop short of it by the agents that end a run, which leaves those their
+// launches: a run that met the limit before its file is written would cost
+// the most and write nothing.
 const RUN_AGENT_LIMIT = 1000;
-const LAST_AGENTS = 2;
-const GATHER_AND_VERIFY_LIMIT = RUN_AGENT_LIMIT - LAST_AGENTS;
+const LAST_STAGE_IDS = ['completeness', 'synthesize'];
+const GATHER_AND_VERIFY_LIMIT = RUN_AGENT_LIMIT - LAST_STAGE_IDS.length;
 
-// A gatherer is told to keep its return within a limit of characters, and
-// may cut its claims to do so; a return of this length counts as near it.
+// A gatherer is told to keep its return within RETURN_LIMIT characters, and
+// may cut its claims to do so; a return of NEAR_RETURN_LIMIT characters
+// counts as near it. A script can load no module, so the limit of
+// hooks/claude/delegator/contract/ stands here a second time.
+const RETURN_LIMIT = 12000;
 const NEAR_RETURN_LIMIT = 10000;
+
+// The digest in the name of the research file is FNV-1a of 32 bits, written
+// in DIGEST_LENGTH hexadecimal characters.
+const FNV_OFFSET_BASIS = 0x811c9dc5;
+const FNV_PRIME = 0x01000193;
+const HEXADECIMAL = 16;
+const DIGEST_LENGTH = 8;
 
 // The agents launched and the agents that returned an answer, by stage id,
 // and the launches held back at GATHER_AND_VERIFY_LIMIT.
@@ -201,7 +244,37 @@ const researched = await parallel(
   questions.map((question) => () => researchQuestion(input.task, question)),
 );
 
-return { stats: getStats(questionCounts, researched) };
+phase(STAGES.completeness.phase);
+
+const gaps = await launchAgent('completeness', formatCompletenessPrompt(input.task, researched));
+
+// `stats.stages` is the table launchAgent counts in, so the stats the run
+// returns hold its last agent too.
+const stats = getStats(questionCounts, researched);
+const content = formatContent(researched, gaps, stats);
+
+// The file is named from what it holds: a run of other content writes
+// another file, and a file a run replaces held the same content.
+const researchPath = `${ input.directory }/research_${ getDigest(content) }.md`;
+
+phase(STAGES.synthesize.phase);
+
+const synthesized = await launchAgent(
+  'synthesize',
+  formatSynthesizePrompt(input, researchPath, content),
+);
+
+if (synthesized?.outcome === FAILED) {
+  log(`synthesize failed: ${ toOneLine(synthesized.detail) }`);
+}
+
+if (synthesized?.outcome !== WRITTEN) {
+  return { error: SYNTHESIZE_ERROR, stats };
+}
+
+log(`wrote ${ researchPath }`);
+
+return { researchPath, stats };
 
 // The run's input from its args, or the failure line that names what they
 // lack. A script has no clock and no filesystem, so the session names the
@@ -232,6 +305,7 @@ function readInput(runArgs) {
   return {
     kind: 'input',
     task: runArgs.task.trim(),
+    directory: runArgs.directory,
     questions: runArgs.questions ?? [],
     paths: runArgs.paths ?? [],
     // A list that names no lane leaves both, as an absent one does.
@@ -327,7 +401,8 @@ function selectQuestions(scopeQuestions, lanes) {
 }
 
 // One branch of the run: gathers the claims of one question, verifies each
-// of them as soon as they are in, and gives what the run counts of it. An
+// of them as soon as they are in, and gives the question under its own id
+// with what came back for it, so the run reads no place of a `parallel`. An
 // agent that fails makes it give less and never reject, so it holds under a
 // `parallel` that rejects with its branch and under one that does not.
 async function researchQuestion(task, question) {
@@ -337,28 +412,53 @@ async function researchQuestion(task, question) {
     research.formatGatherPrompt(task, question),
     question.id,
   );
-  const claims = gathered?.claims ?? [];
-  const outcomes = await parallel(
-    claims.map((claim, index) => () => (
-      research.verifyClaim(claim, `${ question.id }.C${ index + 1 }`)
+  const claims = await parallel(
+    (gathered?.claims ?? []).map((claim, index) => () => (
+      checkClaim(research, claim, `${ question.id }.C${ index + 1 }`)
     )),
   );
 
-  const verified = countOutcome(outcomes, VERIFIED);
-  const refuted = countOutcome(outcomes, REFUTED);
-  const undecided = countOutcome(outcomes, UNDECIDED);
+  const verified = countOutcome(claims, VERIFIED);
+  const refuted = countOutcome(claims, REFUTED);
+  const undecided = countOutcome(claims, UNDECIDED);
 
   log(
-    `${ question.id }: ${ outcomes.length } claims, ${ verified } verified, ${ refuted } refuted, ${ undecided } undecided`,
+    `${ question.id }: ${ claims.length } claims, ${ verified } verified, ${ refuted } refuted, ${ undecided } undecided`,
   );
 
   return {
+    id: question.id,
     lane: question.lane,
+    text: toOneLine(question.question),
     // The JSON text of its structured answer is all the script sees of what
-    // a gatherer returned.
+    // a gatherer returned; a gatherer that returned nothing leaves no length.
     gatherLength: gathered === undefined ? undefined : JSON.stringify(gathered).length,
-    outcomes,
+    unsearched: (gathered === undefined ? [] : research.listUnsearched(gathered)).map(toOneLine),
+    claims,
   };
+}
+
+// One claim as the run keeps it: its text and its source as the research
+// file prints them, and what its verifiers made of it.
+async function checkClaim(research, claim, claimId) {
+  return {
+    text: toOneLine(claim.claim),
+    ...research.citeClaim(claim),
+    ...await research.verifyClaim(claim, claimId),
+  };
+}
+
+// The source of a claim as the research file prints it, a file at a line in
+// backticks and a page in angle brackets, and the file of a claim that
+// cites one.
+function citeRepositoryClaim({ path, line }) {
+  const file = toOneLine(path);
+
+  return { source: `\`${ file }:${ line }\``, file };
+}
+
+function citeWebClaim({ url }) {
+  return { source: `<${ toOneLine(url) }>` };
 }
 
 function formatRepositoryGatherPrompt(task, question) {
@@ -408,7 +508,7 @@ function formatWebGatherPrompt(task, question) {
 async function verifyRepositoryClaim(claim, claimId) {
   const answer = await launchAgent('verify-repo', formatRepositoryVerifyPrompt(claim), claimId);
 
-  return getOutcome([answer], REPOSITORY_QUORUM);
+  return judgeClaim([answer], REPOSITORY_QUORUM);
 }
 
 // Two verifiers at once decide a claim about external facts when they agree.
@@ -420,15 +520,15 @@ async function verifyWebClaim(claim, claimId) {
       launchAgent('verify-web', prompt, `${ claimId }.v${ voteNumber }`)
     )),
   );
-  const firstOutcome = getOutcome(firstAnswers, WEB_QUORUM);
+  const firstJudgment = judgeClaim(firstAnswers, WEB_QUORUM);
 
-  if (firstOutcome !== UNDECIDED || !firstAnswers.some(isVote)) {
-    return firstOutcome;
+  if (firstJudgment.outcome !== UNDECIDED || !firstAnswers.some(isVote)) {
+    return firstJudgment;
   }
 
   const thirdAnswer = await launchAgent('verify-web-third', prompt, `${ claimId }.v3`);
 
-  return getOutcome([...firstAnswers, thirdAnswer], WEB_QUORUM);
+  return judgeClaim([...firstAnswers, thirdAnswer], WEB_QUORUM);
 }
 
 function formatRepositoryVerifyPrompt({ claim, path, line, excerpt }) {
@@ -475,8 +575,23 @@ function formatWebVerifyPrompt({ claim, url, quote }) {
   ].join('\n');
 }
 
-// What the answers of its verifiers make of a claim: `quorum` votes of a
-// kind decide it.
+// What the answers of its verifiers make of a claim: the outcome, the mark
+// that prints the outcome with the votes for the claim among the votes cast,
+// and the evidence of the first vote against it.
+function judgeClaim(answers, quorum) {
+  const outcome = getOutcome(answers, quorum);
+  const supportedCount = countVerdict(answers, SUPPORTED);
+  const voteCount = answers.filter(isVote).length;
+  const against = answers.find((answer) => answer?.verdict === UNSUPPORTED);
+
+  return {
+    outcome,
+    mark: `${ outcome } ${ supportedCount } of ${ voteCount }`,
+    evidence: against === undefined ? undefined : toOneLine(against.evidence),
+  };
+}
+
+// `quorum` votes of a kind decide a claim.
 function getOutcome(answers, quorum) {
   if (countVerdict(answers, SUPPORTED) >= quorum) {
     return VERIFIED;
@@ -496,21 +611,25 @@ function countVerdict(answers, verdict) {
   return answers.filter((answer) => answer?.verdict === verdict).length;
 }
 
-function countOutcome(outcomes, counted) {
-  return outcomes.filter((outcome) => outcome === counted).length;
+function countOutcome(claims, counted) {
+  return selectClaims(claims, counted).length;
+}
+
+function selectClaims(claims, selected) {
+  return claims.filter(({ outcome }) => outcome === selected);
 }
 
 function getStats(questionCounts, researched) {
   const claims = researched.flatMap(
-    ({ lane, outcomes }) => outcomes.map((outcome) => ({ lane, outcome })),
+    ({ lane, claims: laneClaims }) => laneClaims.map(({ outcome }) => ({ lane, outcome })),
   );
 
   return {
     questions: questionCounts,
     claims: countByLane(claims),
-    verified: countByLane(claims.filter(({ outcome }) => outcome === VERIFIED)),
-    refuted: countByLane(claims.filter(({ outcome }) => outcome === REFUTED)),
-    undecided: countByLane(claims.filter(({ outcome }) => outcome === UNDECIDED)),
+    verified: countByLane(selectClaims(claims, VERIFIED)),
+    refuted: countByLane(selectClaims(claims, REFUTED)),
+    undecided: countByLane(selectClaims(claims, UNDECIDED)),
     notLaunched: notLaunchedCount,
     gatherReturns: getGatherReturns(researched),
     stages: stageCounts,
@@ -531,18 +650,196 @@ function getGatherReturns(researched) {
   };
 }
 
+function formatCompletenessPrompt(task, researched) {
+  return [
+    'Find what the research for one task left out.',
+    '',
+    '## Task',
+    task,
+    '',
+    '## Questions and what came back',
+    researched.map(formatQuestionReturn).join('\n'),
+    '',
+    '## Files the claims cite',
+    formatLines(listCitedFiles(researched), NO_LINES),
+    '',
+    '## Rules',
+    "- In unreadAreas, name each part of the repository the task touches that no claim cites; look at the repository's layout to find them.",
+    '- In unansweredQuestions, name each question above that came back with no verified claim, and each question the task raises that none of them covers.',
+    '- Name what is missing; do not answer it, and change no file.',
+  ].join('\n');
+}
+
+function formatQuestionReturn({ id, lane, text, claims, unsearched }) {
+  const unsearchedList = unsearched.length === 0 ? NOTHING_NAMED : unsearched.join('; ');
+
+  return `${ formatQuestionTitle({ id, lane, text }) }: ${ claims.length } claims, ${ countOutcome(claims, VERIFIED) } verified; not searched: ${ unsearchedList }`;
+}
+
+function formatQuestionTitle({ id, lane, text }) {
+  return `${ id } (${ lane }): ${ text }`;
+}
+
+// Each file a claim cites, once.
+function listCitedFiles(researched) {
+  const files = researched
+    .flatMap(({ claims }) => claims.map(({ file }) => file))
+    .filter((file) => file !== undefined);
+
+  return [...new Set(files)];
+}
+
+// The content of the run as the writer of the research file is given it:
+// the verified claims under their questions, then the four blocks the file
+// holds as they stand here. The name of the file is a digest of this text.
+function formatContent(researched, gaps, stats) {
+  const claims = researched.flatMap(({ claims: questionClaims }) => questionClaims);
+
+  return [
+    '## Verified claims',
+    ...researched.flatMap(listVerifiedLines),
+    '',
+    '## Blocks to copy',
+    formatClaimBlock('Refuted', selectClaims(claims, REFUTED).map(formatRefutedLine)),
+    '',
+    formatClaimBlock('Unverified', selectClaims(claims, UNDECIDED).map(formatClaimLine)),
+    '',
+    formatBlock('Unmeasured', listUnmeasuredLines(researched, gaps)),
+    '',
+    formatRunBlock(stats),
+  ].join('\n');
+}
+
+function listVerifiedLines({ id, lane, text, claims }) {
+  return [
+    formatQuestionTitle({ id, lane, text }),
+    ...selectClaims(claims, VERIFIED).map(formatClaimLine),
+  ];
+}
+
+function formatClaimLine({ text, source, mark }) {
+  return `- ${ text } | ${ source } | ${ mark }`;
+}
+
+function formatRefutedLine(claim) {
+  return `${ formatClaimLine(claim) }: ${ claim.evidence }`;
+}
+
+// A block of the research file: its heading, then its lines under an empty
+// line. A block of no line is its heading alone.
+function formatBlock(title, lines) {
+  return [`## ${ title }`, ...(lines.length === 0 ? [] : ['', ...lines])].join('\n');
+}
+
+function formatClaimBlock(title, claimLines) {
+  return formatBlock(title, claimLines.length === 0 ? [NO_CLAIM_LINE] : claimLines);
+}
+
+// What the research left out: what the completeness agent named, or that it
+// returned nothing, and what each gatherer named, or that it returned
+// nothing.
+function listUnmeasuredLines(researched, gaps) {
+  const unsearchedLines = researched.flatMap(listUnsearchedLines);
+
+  if (gaps === undefined) {
+    return [...unsearchedLines, '- The completeness stage returned nothing.'];
+  }
+
+  return [
+    ...gaps.unreadAreas.map((area) => `- Unread: ${ toOneLine(area) }`),
+    ...gaps.unansweredQuestions.map((question) => `- Unanswered: ${ toOneLine(question) }`),
+    ...unsearchedLines,
+  ];
+}
+
+function listUnsearchedLines({ id, gatherLength, unsearched }) {
+  if (gatherLength === undefined) {
+    return [`- ${ id } returned nothing.`];
+  }
+
+  return unsearched.map((area) => `- ${ id } not searched: ${ area }`);
+}
+
+// The counts of the run as the research file holds them. The agent that
+// writes the file is launched after they are taken, so its stage has no row.
+function formatRunBlock(stats) {
+  const { count, near, longest } = stats.gatherReturns;
+
+  return formatBlock('Run', [
+    '| Stage | Launched | Returned |',
+    '| --- | --- | --- |',
+    ...Object.entries(stats.stages)
+      .filter(([stageId]) => stageId !== 'synthesize')
+      .map(([stageId, { launched, returned }]) => (
+        `| ${ stageId } | ${ launched } | ${ returned } |`
+      )),
+    '',
+    formatCountLine('Questions', stats.questions),
+    formatCountLine('Claims', stats.claims),
+    formatCountLine('Verified', stats.verified),
+    formatCountLine('Refuted', stats.refuted),
+    formatCountLine('Undecided', stats.undecided),
+    `- Not launched at the limit of ${ RUN_AGENT_LIMIT } agents: ${ stats.notLaunched }`,
+    `- Gather returns of ${ NEAR_RETURN_LIMIT } characters or more: ${ near } of ${ count }, the longest ${ longest } (the return limit is ${ RETURN_LIMIT })`,
+  ]);
+}
+
+function formatCountLine(title, laneCounts) {
+  const total = LANES.reduce((laneSum, lane) => laneSum + laneCounts[lane], 0);
+
+  return `- ${ title }: ${ total } (${ formatLaneCounts(laneCounts) })`;
+}
+
+// FNV-1a over the UTF-16 units of a text: Math.imul is what a realm with no
+// crypto API has for the product of two 32-bit numbers.
+function getDigest(text) {
+  const hash = text.split('').reduce(
+    (hashed, unit) => Math.imul(hashed ^ unit.charCodeAt(0), FNV_PRIME),
+    FNV_OFFSET_BASIS,
+  );
+
+  return (hash >>> 0).toString(HEXADECIMAL).padStart(DIGEST_LENGTH, '0');
+}
+
+// The topic of a plan is the last name of its directory.
+function formatSynthesizePrompt({ task, directory }, researchPath, content) {
+  const topic = directory.split('/').at(-1);
+
+  return [
+    'Write the research file for the plan of one task.',
+    '',
+    '## Task',
+    task,
+    '',
+    '## File',
+    `${ researchPath }, under the project's root`,
+    '',
+    content,
+    '',
+    '## Rules',
+    `- Write the file with these parts in this order: the title line \`# ${ topic }: research\`, \`## Goal\`, one \`## Facts: <subject>\` section per subject, then the blocks above.`,
+    "- Goal: the task in one paragraph, in the person's words.",
+    '- Facts: group the verified claims by subject and merge the ones that say the same thing, keeping every source of a merged claim; write each fact as one line that ends with its source and its mark, a file as `path:line` in backticks and a page as its URL in angle brackets.',
+    '- Add no fact that is not among the verified claims, and drop none.',
+    '- Copy the blocks as they are, character for character.',
+    '- Write exactly the file named above and no other, and change no other file.',
+    `- Return ${ WRITTEN } when the file is written, or ${ FAILED } with the tool's answer when it is not.`,
+  ].join('\n');
+}
+
 // Launches the agent of one stage and gives its answer, or undefined for an
 // agent that was skipped, died, was rejected or was held back at the limit;
-// a rejection and a launch held back are logged. Every launch of the run
-// goes through here, so the counts hold them all. `item` names the question,
-// the claim or the vote of the agent, and a stage of one agent has none.
+// a rejection and a launch held back are logged, and no agent that ends a
+// run is held back. Every launch of the run goes through here, so the counts
+// hold them all. `item` names the question, the claim or the vote of the
+// agent, and a stage of one agent has none.
 async function launchAgent(stageId, prompt, item) {
   const stage = STAGES[stageId];
   const stageCount = stageCounts[stageId];
   const label = item === undefined ? stageId : `${ stageId }:${ item }`;
   let answer;
 
-  if (countLaunched() >= GATHER_AND_VERIFY_LIMIT) {
+  if (!LAST_STAGE_IDS.includes(stageId) && countLaunched() >= GATHER_AND_VERIFY_LIMIT) {
     notLaunchedCount += 1;
     log(`${ label } not launched: the run is at ${ GATHER_AND_VERIFY_LIMIT } agents`);
 
@@ -590,7 +887,11 @@ function getStageOptions(stage) {
     return { agentType: stage.agentType };
   }
 
-  return { model: stage.model, effort: stage.effort, disallowedTools: DENIED_TOOLS };
+  return {
+    model: stage.model,
+    effort: stage.effort,
+    disallowedTools: DENIED_TOOLS.filter((tool) => tool !== stage.keptTool),
+  };
 }
 
 // A rejection can come from outside the realm of the script, where it is no
