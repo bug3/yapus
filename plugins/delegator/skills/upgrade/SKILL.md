@@ -2,7 +2,6 @@
 name: upgrade
 description: Move the .yapus files of an older layout into the present one
 allowed-tools: Bash(bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/delegator/upgrade:*)
-disable-model-invocation: true
 ---
 
 !`bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/delegator/upgrade "${CLAUDE_PROJECT_DIR}"`
