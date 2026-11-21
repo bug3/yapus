@@ -109,7 +109,7 @@ const WIDE_RUN_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>(
   ['completeness', { unreadAreas: [], unansweredQuestions: [] }],
   ['synthesize', { outcome: 'written', detail: '' }],
 ]);
-const NOT_LAUNCHED = ' not launched: the run is at 998 agents';
+const NOT_LAUNCHED = ' not launched: the run is at 998 workflow agents';
 const WIDE_RUN_UNVERIFIED_BLOCK = [
   '## Unverified',
   '',
@@ -134,8 +134,8 @@ const WIDE_RUN_RUN_BLOCK = [
   '- Verified: 492 (0 repository, 492 web)',
   '- Refuted: 0 (0 repository, 0 web)',
   '- Undecided: 48 (0 repository, 48 web)',
-  '- Not launched at the limit of 1000 agents: 96',
-  '- Claims not sent to a verifier for their path: 0',
+  '- Not launched at the limit of 1000 workflow agents: 96',
+  '- Claims not sent to a verify agent for their path: 0',
   '- Gather returns: 12, the longest 6823 characters',
 ].join('\n');
 
@@ -523,7 +523,7 @@ test('names the claims whose path was refused in the Run block', async () => {
 
   assert.equal(
     readBlock(run, 'Run', 'Rules').split('\n').at(-2),
-    '- Claims not sent to a verifier for their path: 5',
+    '- Claims not sent to a verify agent for their path: 5',
   );
 });
 

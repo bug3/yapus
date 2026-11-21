@@ -31,7 +31,7 @@ const COMPLETENESS_PROMPT = [
 
 // The digest is FNV-1a of 32 bits over the UTF-16 units of CONTENT below,
 // worked out by a program apart from the script.
-const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_7bd6231a.md';
+const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_2321f25d.md';
 const BLOCKS = [
   '## Refuted',
   '',
@@ -66,8 +66,8 @@ const BLOCKS = [
   '- Verified: 3 (1 repository, 2 web)',
   '- Refuted: 1 (1 repository, 0 web)',
   '- Undecided: 1 (1 repository, 0 web)',
-  '- Not launched at the limit of 1000 agents: 0',
-  '- Claims not sent to a verifier for their path: 0',
+  '- Not launched at the limit of 1000 workflow agents: 0',
+  '- Claims not sent to a verify agent for their path: 0',
   '- Gather returns: 3, the longest 475 characters',
 ].join('\n');
 
@@ -109,8 +109,8 @@ const REPOSITORY_LANE_BLOCKS = [
   '- Verified: 1 (1 repository, 0 web)',
   '- Refuted: 1 (1 repository, 0 web)',
   '- Undecided: 1 (1 repository, 0 web)',
-  '- Not launched at the limit of 1000 agents: 0',
-  '- Claims not sent to a verifier for their path: 0',
+  '- Not launched at the limit of 1000 workflow agents: 0',
+  '- Claims not sent to a verify agent for their path: 0',
   '- Gather returns: 2, the longest 437 characters',
 ].join('\n');
 
@@ -136,7 +136,7 @@ const SYNTHESIZE_PROMPT = [
   'Add a retry limit to the return gate',
   '',
   '## File',
-  ".yapus/plans/2026-11/return-retry/research_7bd6231a.md, under the project's root",
+  ".yapus/plans/2026-11/return-retry/research_2321f25d.md, under the project's root",
   '',
   CONTENT,
   '',
@@ -513,7 +513,7 @@ test('writes that the completeness agent returned nothing, after the gather agen
 
   assert.match(
     findCall(run, 'synthesize')?.prompt ?? '',
-    /\n## Unmeasured\n\n- Q1 not searched: hooks\/claude\/delegator\/status\n- Q3 returned nothing\.\n- Q4 not searched: [^\n]+\n- The completeness stage returned nothing\.\n\n## Run\n/u,
+    /\n## Unmeasured\n\n- Q1 not searched: hooks\/claude\/delegator\/status\n- Q3 returned nothing\.\n- Q4 not searched: [^\n]+\n- The completeness agent returned nothing\.\n\n## Run\n/u,
   );
 });
 
@@ -526,7 +526,7 @@ test('writes a dropped question before the line of an absent completeness agent'
 
   assert.match(
     findCall(run, 'synthesize')?.prompt ?? '',
-    /\n- Q3 returned nothing\.\n- Dropped: [^\n]+\n- The completeness stage returned nothing\.\n\n## Run\n/u,
+    /\n- Q3 returned nothing\.\n- Dropped: [^\n]+\n- The completeness agent returned nothing\.\n\n## Run\n/u,
   );
 });
 
@@ -687,12 +687,12 @@ test('names another file with no gather answer when the Unmeasured block differs
 // The digest of the content with the unread area `area 29` is 0x0d21cbda,
 // worked out by a program apart from the script.
 test('writes a digest that begins with a zero in 8 characters', async () => {
-  const gaps = { unreadAreas: ['area 29'], unansweredQuestions: [] };
+  const gaps = { unreadAreas: ['area 12'], unansweredQuestions: [] };
 
   const run = await runSmall(new Map([['completeness', gaps]]));
 
   assert.partialDeepStrictEqual(run.returned, {
-    researchPath: '.yapus/plans/2026-11/return-retry/research_0d21cbda.md',
+    researchPath: '.yapus/plans/2026-11/return-retry/research_06299427.md',
   });
 });
 

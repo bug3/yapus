@@ -862,7 +862,7 @@ function listUnmeasuredLines(researched, droppedQuestions, gaps) {
   const droppedLines = droppedQuestions.map(formatDroppedLine);
 
   if (gaps === undefined) {
-    return [...unsearchedLines, ...droppedLines, '- The completeness stage returned nothing.'];
+    return [...unsearchedLines, ...droppedLines, '- The completeness agent returned nothing.'];
   }
 
   return [
@@ -906,8 +906,8 @@ function formatRunBlock(stats) {
     formatCountLine('Verified', stats.verified),
     formatCountLine('Refuted', stats.refuted),
     formatCountLine('Undecided', stats.undecided),
-    `- Not launched at the limit of ${ RUN_AGENT_LIMIT } agents: ${ stats.notLaunched }`,
-    `- Claims not sent to a verifier for their path: ${ stats.pathsRefused }`,
+    `- Not launched at the limit of ${ RUN_AGENT_LIMIT } workflow agents: ${ stats.notLaunched }`,
+    `- Claims not sent to a verify agent for their path: ${ stats.pathsRefused }`,
     `- Gather returns: ${ count }, the longest ${ longest } characters`,
   ]);
 }
@@ -969,7 +969,7 @@ async function launchAgent(stageId, prompt, item) {
 
   if (!LAST_STAGE_IDS.includes(stageId) && countLaunched() >= GATHER_AND_VERIFY_LIMIT) {
     notLaunchedCount += 1;
-    log(`${ label } not launched: the run is at ${ GATHER_AND_VERIFY_LIMIT } agents`);
+    log(`${ label } not launched: the run is at ${ GATHER_AND_VERIFY_LIMIT } workflow agents`);
 
     return undefined;
   }
