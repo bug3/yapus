@@ -335,14 +335,26 @@ const synthesized = await launchAgent(
   formatSynthesizePrompt(input, researchPath, content),
 );
 
+// No file was written, so each return below gives the path and the content
+// the run handed the agent beside the failure line, and the session can write
+// the file. A resume reads the answer of an agent that answered from its
+// cache, where `failed` would come back, so the line for that answer carries
+// it and names the write, not a resume.
 if (synthesized?.outcome === FAILED) {
-  log(`synthesize failed: ${ toOneLine(synthesized.detail) }`);
+  const detail = toOneLine(synthesized.detail);
+
+  log(`synthesize failed: ${ detail }`);
+
+  return {
+    error: `deep-dive: the research file was not written: ${ detail }; write the returned content to the returned researchPath`,
+    researchPath,
+    content,
+    stats,
+  };
 }
 
-// No file was written, so the run gives the path and the content it handed
-// the agent beside the failure line, and the session can write the file.
 if (synthesized?.outcome !== WRITTEN) {
-  return { error: getSynthesizeError(synthesized), researchPath, content, stats };
+  return { error: SYNTHESIZE_ERROR, researchPath, content, stats };
 }
 
 log(`wrote ${ researchPath }`);
@@ -946,17 +958,6 @@ function formatSynthesizePrompt({ task, directory }, researchPath, content) {
     '- Write exactly the file named above and no other, and change no other file.',
     `- Return ${ WRITTEN } when the file is written, or ${ FAILED } with the tool's answer when it is not.`,
   ].join('\n');
-}
-
-// The failure line of a run that wrote no file. A resume reads the answer of
-// an agent that answered from its cache, where `failed` would come back, so
-// the line for that answer carries it and names the write, not a resume.
-function getSynthesizeError(synthesized) {
-  if (synthesized?.outcome !== FAILED) {
-    return SYNTHESIZE_ERROR;
-  }
-
-  return `deep-dive: the research file was not written: ${ toOneLine(synthesized.detail) }; write the returned content to the returned researchPath`;
 }
 
 // Launches the agent of one stage and gives its answer, or undefined for an
