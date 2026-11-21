@@ -25,7 +25,7 @@ paths:
 
 ## CODE-7. Name every violation a check finds by its file and line, or by the input it concerns when it has no line.
 
-## CODE-8. Write a command-line program to run with no person present: it asks no question, prints no color code and expects no terminal.
+## CODE-8. Write a command-line program to run with no human present: it asks no question, prints no color code and expects no terminal.
 
 ## CODE-9. Put a time limit on every wait; when it passes, stop the work it waited for and fail.
 
