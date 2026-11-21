@@ -1,6 +1,6 @@
 ---
 name: runner
-description: "Runs exactly the commands the brief names and returns the evidence: exit codes, failing test names and the first error lines. For checks whose output would flood the main session, and for a check re-run until it passes. Not for choosing what to run, fixing code or judging it."
+description: "Runs exactly the commands the brief names and returns the evidence: exit codes, failing test names and the first error lines. For checks whose output would flood the session, and for a check re-run until it passes. Not for choosing what to run, fixing code or judging it."
 tools: Bash, Read
 model: haiku
 effort: low
