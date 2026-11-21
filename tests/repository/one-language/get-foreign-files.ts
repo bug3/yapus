@@ -16,6 +16,8 @@ const SHELL_ENTRIES: readonly string[] = [
 const YAML_DIRECTORY = '.github/';
 // SVG only where VitePress serves static files.
 const SVG_DIRECTORY = 'docs/public/';
+// JavaScript only where Claude Code reads the workflow scripts of a plugin.
+const WORKFLOW_SCRIPT = /^plugins\/[a-z0-9-]+\/workflows\/[a-z0-9-]+\.js$/;
 
 // Every kept file under root in a language or format the repository does
 // not use.
@@ -28,7 +30,8 @@ function isKept(path: string): boolean {
     || KEPT_NAMES.includes(basename(path))
     || SHELL_ENTRIES.includes(path)
     || isGitHubYaml(path)
-    || isSiteSvg(path);
+    || isSiteSvg(path)
+    || WORKFLOW_SCRIPT.test(path);
 }
 
 function isGitHubYaml(path: string): boolean {
