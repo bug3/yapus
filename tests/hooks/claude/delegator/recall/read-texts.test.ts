@@ -15,8 +15,8 @@ test('reads the five approved lines from the shipped file', () => {
       cutMark: '[cut at 2,000 characters]',
       pathLine: 'The whole prompt log is in `{path}`.',
       plansLine: 'The plans of this project, newest first: {plans}.',
-      notice: 'This project holds `.yapus/` files in an older layout: tell the person to run'
-        + ' `/delegator:upgrade`.',
+      notice: 'This project holds `.yapus/` files in an older layout: tell the person, and run'
+        + ' `/delegator:upgrade` when they ask.',
     },
   });
 });

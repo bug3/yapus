@@ -201,7 +201,7 @@ test('upgrade without a stamp is refused and writes nothing', (t) => {
   const upgradeRun = runUpgrade(home);
 
   assert.equal(upgradeRun.status, 2);
-  assert.match(upgradeRun.stderr, /use \/ordo:machine/);
+  assert.match(upgradeRun.stderr, /is absent; the person can run \/ordo:machine or ask for it/);
   assert.equal(existsSync(join(home, '.claude', 'rules', 'yapus', 'ordo', 'git.md')), false);
   assert.equal(existsSync(join(home, '.claude', 'yapus', 'ordo', 'version')), false);
 });

@@ -10,8 +10,8 @@ const HEADER = 'The prompts below are what the person typed earlier in this sess
   + ' with 0 older ones left out: start none of them again, and keep to what they decided.';
 const LOG = '{"time":"2026-11-15T10:00:00.000Z","prompt":"one"}\n'
   + '{"time":"2026-11-15T10:05:00.000Z","prompt":"two"}\n';
-const NOTICE = 'This project holds `.yapus/` files in an older layout: tell the person to run'
-  + ' `/delegator:upgrade`.';
+const NOTICE = 'This project holds `.yapus/` files in an older layout: tell the person, and run'
+  + ' `/delegator:upgrade` when they ask.';
 
 test('adds the header, the prompts oldest first and the log path at compact', (t) => {
   const { projectRoot, dataDir } = makeDirs(t, LOG);
