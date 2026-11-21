@@ -23,7 +23,7 @@ export function getRefusal(launch: Launch): string | undefined {
     && launch.subagentType === REVIEWER;
 
   if (launch.caller !== undefined && !isFinisherReview) {
-    return 'a subagent launches no agents; return the work to your caller';
+    return 'a subagent launches no subagent; return the work to your launcher';
   }
 
   if (STAND_INS.includes(launch.subagentType)) {

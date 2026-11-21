@@ -25,7 +25,8 @@ test('exits 2 and names the reason for a nested launch', (t) => {
 
   assert.deepEqual(
     [hookRun.status, hookRun.stderr],
-    [2, 'yapus delegator launch: a subagent launches no agents; return the work to your caller\n'],
+    [2, 'yapus delegator launch: '
+      + 'a subagent launches no subagent; return the work to your launcher\n'],
   );
 });
 

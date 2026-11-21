@@ -16,7 +16,7 @@ const LAUNCH = {
   model: undefined,
   effort: undefined,
 };
-const NESTED = 'a subagent launches no agents; return the work to your caller';
+const NESTED = 'a subagent launches no subagent; return the work to your launcher';
 const REVIEW = {
   ...LAUNCH,
   caller: { agentId: 'a1', agentType: 'delegator:finisher' },
@@ -48,14 +48,14 @@ test('passes an off-roster type that stands in for no agent type of the roster',
 test('refuses a launch from inside a subagent', () => {
   assert.equal(
     getRefusal({ ...LAUNCH, caller: { agentId: 'a1', agentType: 'delegator:reader' } }),
-    'a subagent launches no agents; return the work to your caller',
+    'a subagent launches no subagent; return the work to your launcher',
   );
 });
 
 test('refuses a nested launch whose launcher type is unknown', () => {
   assert.equal(
     getRefusal({ ...LAUNCH, caller: { agentId: 'a1', agentType: undefined } }),
-    'a subagent launches no agents; return the work to your caller',
+    'a subagent launches no subagent; return the work to your launcher',
   );
 });
 
@@ -147,7 +147,7 @@ test('keeps the nested and depth rules for an off-roster type', () => {
   ];
 
   assert.deepEqual(refusals, [
-    'a subagent launches no agents; return the work to your caller',
+    'a subagent launches no subagent; return the work to your launcher',
     'start the description with the depth in brackets: [quick], [standard] or [deep]',
     'a quick task launches no subagent; do it in this session, or raise the depth',
   ]);
