@@ -773,10 +773,18 @@ function formatCompletenessPrompt(task, researched) {
   ].join('\n');
 }
 
-function formatQuestionReturn({ id, lane, text, claims, unsearched }) {
+// A gatherer that returned nothing left no length. Its question has no
+// count to give: counts of 0 would read as a search that found nothing.
+function formatQuestionReturn({ id, lane, text, gatherLength, claims, unsearched }) {
+  const title = formatQuestionTitle({ id, lane, text });
+
+  if (gatherLength === undefined) {
+    return `${ title }: returned nothing`;
+  }
+
   const unsearchedList = unsearched.length === 0 ? NOTHING_NAMED : unsearched.join('; ');
 
-  return `${ formatQuestionTitle({ id, lane, text }) }: ${ claims.length } claims, ${ countOutcome(claims, VERIFIED) } verified; not searched: ${ unsearchedList }`;
+  return `${ title }: ${ claims.length } claims, ${ countOutcome(claims, VERIFIED) } verified; not searched: ${ unsearchedList }`;
 }
 
 function formatQuestionTitle({ id, lane, text }) {

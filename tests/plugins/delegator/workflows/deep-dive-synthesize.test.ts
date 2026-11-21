@@ -15,7 +15,7 @@ const COMPLETENESS_PROMPT = [
   '## Questions and what came back',
   'Q1 (repository): Where does the return gate count a send-back?: 2 claims, 1 verified; not searched: hooks/claude/delegator/status',
   'Q2 (repository): Which hook entries run the return gate?: 1 claims, 0 verified; not searched: nothing named',
-  'Q3 (repository): Which tests hold the verdicts of the return gate?: 0 claims, 0 verified; not searched: nothing named',
+  'Q3 (repository): Which tests hold the verdicts of the return gate?: returned nothing',
   'Q4 (web): What does Claude Code do when a SubagentStop hook blocks twice?: 2 claims, 2 verified; not searched: The changelog: no entry on a repeated block was looked for',
   '',
   '## Files the claims cite',
@@ -293,6 +293,24 @@ test('lists what a gatherer named as not searched after its question', async () 
   assert.match(
     findCall(run, 'completeness')?.prompt ?? '',
     /\nQ1 \(repository\): What blocks a return\?: 0 claims, 0 verified; not searched: docs; tests\/hooks\n\n## Files/u,
+  );
+});
+
+test('tells the completeness agent of a question whose gatherer returned nothing', async () => {
+  const run = await runSmall(new Map([['gather-repo:Q1', JSON_NULL]]));
+
+  assert.match(
+    findCall(run, 'completeness')?.prompt ?? '',
+    /\nQ1 \(repository\): What blocks a return\?: returned nothing\n\n## Files/u,
+  );
+});
+
+test('gives the counts of a question whose gatherer found no claim', async () => {
+  const run = await runSmall(new Map([['gather-repo:Q1', { claims: [], notSearched: [] }]]));
+
+  assert.match(
+    findCall(run, 'completeness')?.prompt ?? '',
+    /\nQ1 \(repository\): What blocks a return\?: 0 claims, 0 verified; not searched: nothing named\n\n## Files/u,
   );
 });
 

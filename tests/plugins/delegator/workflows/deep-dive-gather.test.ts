@@ -322,6 +322,15 @@ test('writes that a question returned nothing when its gatherer rejects', async 
   );
 });
 
+test('tells the completeness agent of a question whose gatherer rejects', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, rejectFirstGatherer);
+
+  assert.match(
+    findCall(run, 'completeness')?.prompt ?? '',
+    /\n## Questions and what came back\nQ1 \(repository\): Where does the return gate count a send-back\?: returned nothing\nQ2 /u,
+  );
+});
+
 test('counts the gather answers that came back and the longest of them', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
