@@ -21,7 +21,7 @@ test('names /ordo:machine when there is no stamp', (t) => {
 
   assert.equal(
     getContext(stdout),
-    'yapus ordo is not installed on this machine; run /ordo:machine.',
+    'yapus ordo is not installed on this machine; tell the person, and run /ordo:machine when they ask.',
   );
 });
 
@@ -30,7 +30,7 @@ test('names /ordo:upgrade when the stamp differs from the plugin version', (t) =
 
   assert.equal(
     getContext(stdout),
-    `yapus ordo 0.0.1 is installed, the plugin is ${ PLUGIN_VERSION }; run /ordo:upgrade.`,
+    `yapus ordo 0.0.1 is installed, the plugin is ${ PLUGIN_VERSION }; tell the person, and run /ordo:upgrade when they ask.`,
   );
 });
 
@@ -39,7 +39,7 @@ test('names /ordo:upgrade when the global hooks path is unset', (t) => {
 
   assert.equal(
     getContext(stdout),
-    'yapus ordo: the global core.hooksPath is unset; run /ordo:upgrade.',
+    'yapus ordo: the global core.hooksPath is unset; tell the person, and run /ordo:upgrade when they ask.',
   );
 });
 

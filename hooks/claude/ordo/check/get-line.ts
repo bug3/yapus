@@ -15,7 +15,8 @@ export function getLine(state: State): string | undefined {
   const ownHooksPath = getHooksPath(home);
 
   if (stamp === undefined) {
-    return 'yapus ordo is not installed on this machine; run /ordo:machine.';
+    return 'yapus ordo is not installed on this machine;'
+      + ' tell the person, and run /ordo:machine when they ask.';
   }
 
   if (globalHooksPath !== undefined && globalHooksPath !== ownHooksPath) {
@@ -30,11 +31,12 @@ export function getLine(state: State): string | undefined {
 
   if (stamp !== pluginVersion) {
     return `yapus ordo ${ stamp } is installed, the plugin is ${ pluginVersion };`
-      + ' run /ordo:upgrade.';
+      + ' tell the person, and run /ordo:upgrade when they ask.';
   }
 
   if (globalHooksPath === undefined) {
-    return 'yapus ordo: the global core.hooksPath is unset; run /ordo:upgrade.';
+    return 'yapus ordo: the global core.hooksPath is unset;'
+      + ' tell the person, and run /ordo:upgrade when they ask.';
   }
 
   return undefined;

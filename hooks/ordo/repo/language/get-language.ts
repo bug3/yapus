@@ -33,7 +33,8 @@ export function getLanguage(root: string, requested: Language | undefined): Lang
 
   if (isConflict) {
     return {
-      refusal: `this repository is set up for ${ language }; run /ordo:repo ${ language }`,
+      refusal: `this repository is set up for ${ language };`
+        + ` the person can run /ordo:repo ${ language } or ask for it`,
     };
   }
 
