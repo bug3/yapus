@@ -20,6 +20,7 @@ const REPOSITORY_GATHER_PROMPT = [
   '',
   '## Rules',
   '- Return each thing you found as one claim: a statement a reader can check, the file, the line and the shortest excerpt at that line that proves it.',
+  "- Write each file as its path from the repository's root, such as hooks/run.sh, never as an absolute path and never with ..: such a path is not accepted.",
   '- Claim only what a line you read shows; give no claim from a file name or from memory.',
   '- In notSearched, name every area you did not search or could not find.',
   '- Return through the structured output alone: it is the one form of return here, in place of any other your rules name.',

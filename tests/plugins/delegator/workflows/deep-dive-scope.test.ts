@@ -30,6 +30,7 @@ const SCOPE_PROMPT = [
   '- Give each question one lane: repository for what the files of this repository answer, web for external facts such as library behavior, vendor documentation or published reports. Use only the lanes listed above.',
   '- Bound each question so one agent answers it in one launch: name the module, the behavior or the external subject it covers, and let no two questions overlap.',
   '- For a repository question, name the paths to start from when you know them.',
+  '- Return through the structured output alone: it is the one form of return here, in place of any other your rules name.',
   "- Look at the repository's layout before you split; change no file.",
 ].join('\n');
 
@@ -92,9 +93,9 @@ test('launches one scope agent with the options of its stage', async () => {
         },
         required: ['questions'],
       },
+      agentType: 'delegator:reader',
       model: 'opus',
       effort: 'high',
-      disallowedTools: ['Bash', 'Edit', 'NotebookEdit', 'PowerShell', 'Agent', 'Write'],
     },
   ]);
 });
