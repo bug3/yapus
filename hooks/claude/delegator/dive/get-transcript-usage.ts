@@ -53,7 +53,7 @@ export function getTranscriptUsage(text: string): TranscriptUsage {
   ];
   const times = lines.flatMap(getTimes);
   const calls = assistantLines.flatMap(getBlocks).flatMap(getCalls);
-  const notHeldIds = new Set<unknown>(lines.flatMap(getBlocks).flatMap(getNotHeldIds));
+  const errors = new Map<unknown, string>(lines.flatMap(getBlocks).flatMap(getErrors));
 
   return {
     turns: responses.length,
@@ -66,9 +66,11 @@ export function getTranscriptUsage(text: string): TranscriptUsage {
     ),
     lastMs: times.reduce<number | undefined>((latest, time) => getLater(latest, time), undefined),
     models: [...new Set(responses.flatMap(({ model }) => (model === undefined ? [] : [model])))],
-    tools: countNames(calls.filter(({ id }) => !notHeldIds.has(id)).map(({ name }) => name)),
+    tools: countNames(
+      calls.filter((call) => !isNotHeld(call, errors)).map(({ name }) => name),
+    ),
     toolsNotHeld: countNames(
-      calls.filter(({ id }) => notHeldIds.has(id)).map(({ name }) => name),
+      calls.filter((call) => isNotHeld(call, errors)).map(({ name }) => name),
     ),
   };
 }
@@ -115,15 +117,22 @@ function getCalls(block: TranscriptLine): Call[] {
   return type === 'tool_use' && typeof name === 'string' ? [{ id, name }] : [];
 }
 
-// The id of the call the block answers, when the block says the agent does
-// not hold the tool. Another error and an answer that only quotes the words
-// are the answers of a tool the agent holds.
-function getNotHeldIds(block: TranscriptLine): string[] {
+// The id of the call the block answers and the text of the answer, when the
+// block is an answer that is an error.
+function getErrors(block: TranscriptLine): [string, string][] {
   const { type, content, is_error: isError, tool_use_id: callId } = block;
-  const isNotHeld = type === 'tool_result' && isError === true
-    && typeof content === 'string' && content.includes(NOT_HELD_ANSWER);
 
-  return isNotHeld && typeof callId === 'string' ? [callId] : [];
+  return type === 'tool_result' && isError === true
+    && typeof callId === 'string' && typeof content === 'string'
+    ? [[callId, content]]
+    : [];
+}
+
+// Whether the error that answers the call says the agent does not hold the
+// tool. Another error and an answer that only quotes the words are the
+// answers of a tool the agent holds.
+function isNotHeld({ id }: Call, errors: ReadonlyMap<unknown, string>): boolean {
+  return errors.get(id)?.includes(NOT_HELD_ANSWER) === true;
 }
 
 function countNames(names: readonly string[]): Record<string, number> {
