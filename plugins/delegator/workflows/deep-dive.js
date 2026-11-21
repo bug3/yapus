@@ -230,6 +230,8 @@ const NO_QUESTION_ERROR =
   'deep-dive: no question stands in the lanes given; pass other lanes or run it again';
 const SYNTHESIZE_ERROR =
   'deep-dive: no research file was written; resume the run with its run id';
+const WRITE_ERROR =
+  'deep-dive: the research file was not written; write the returned content to the returned researchPath';
 
 const NO_LINES = 'none';
 const NO_START_PATH = 'no path given';
@@ -338,19 +340,15 @@ const synthesized = await launchAgent(
 // No file was written, so each return below gives the path and the content
 // the run handed the agent beside the failure line, and the session can write
 // the file. A resume reads the answer of an agent that answered from its
-// cache, where `failed` would come back, so the line for that answer carries
-// it and names the write, not a resume.
+// cache, where `failed` would come back, so the line for that answer names
+// the write, not a resume. The line tells the session what to do, so it holds
+// no text of the agent: the answer's detail stands in a field of its own.
 if (synthesized?.outcome === FAILED) {
   const detail = toOneLine(synthesized.detail);
 
   log(`synthesize failed: ${ detail }`);
 
-  return {
-    error: `deep-dive: the research file was not written: ${ detail }; write the returned content to the returned researchPath`,
-    researchPath,
-    content,
-    stats,
-  };
+  return { error: WRITE_ERROR, detail, researchPath, content, stats };
 }
 
 if (synthesized?.outcome !== WRITTEN) {

@@ -153,7 +153,7 @@ const SYNTHESIZE_PROMPT = [
 ].join('\n');
 const SYNTHESIZE_ERROR = 'deep-dive: no research file was written; resume the run with its run id';
 const WRITE_ERROR =
-  'deep-dive: the research file was not written: The tool refused the path.; write the returned content to the returned researchPath';
+  'deep-dive: the research file was not written; write the returned content to the returned researchPath';
 
 // What the run on FIXED_ARGS counts before its last agent is launched.
 const LANE_COUNTS = {
@@ -459,13 +459,14 @@ test('returns the resume error, the path and the content when no answer comes ba
   });
 });
 
-test('returns the write error, the path and the content when the answer is failed', async () => {
+test('returns the write error and the detail of a failed answer in two fields', async () => {
   const failed = { outcome: 'failed', detail: 'The tool refused the path.' };
 
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, answerFixedBut('synthesize', failed));
 
   assert.deepEqual(run.returned, {
     error: WRITE_ERROR,
+    detail: 'The tool refused the path.',
     researchPath: RESEARCH_PATH,
     content: CONTENT,
     stats: {
@@ -478,14 +479,14 @@ test('returns the write error, the path and the content when the answer is faile
   });
 });
 
-test('puts the answer of a failed synthesize agent on one line of the write error', async () => {
+test('puts the answer of a failed synthesize agent on one line under detail', async () => {
   const failed = { outcome: 'failed', detail: 'The tool refused the path:\n  no permission.' };
 
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, answerFixedBut('synthesize', failed));
 
   assert.partialDeepStrictEqual(run.returned, {
-    error:
-      'deep-dive: the research file was not written: The tool refused the path: no permission.; write the returned content to the returned researchPath',
+    error: WRITE_ERROR,
+    detail: 'The tool refused the path: no permission.',
   });
 });
 
