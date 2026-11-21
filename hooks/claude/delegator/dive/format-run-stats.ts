@@ -46,7 +46,7 @@ function getStageCells(stage: string, usages: readonly AgentUsage[]): string[] {
     formatSeconds(getMedian(seconds)),
     formatSeconds(seconds.length === 0 ? undefined : Math.max(...seconds)),
     formatList([...new Set(usages.flatMap((usage) => usage.models))].sort()),
-    formatList(getToolCounts(usages)),
+    formatList(getToolCounts(usages.map((usage) => usage.tools))),
   ];
 }
 
@@ -71,9 +71,10 @@ function getSeconds(usage: AgentUsage): number[] {
   return firstMs === undefined || lastMs === undefined ? [] : [(lastMs - firstMs) / MS_PER_SECOND];
 }
 
-// Each tool the agents called as "<name> <calls>", in the order of the names.
-function getToolCounts(usages: readonly AgentUsage[]): string[] {
-  const calls = usages.flatMap((usage) => Object.entries(usage.tools));
+// Each tool of the tallies, one tally per agent, as "<name> <calls>", in the
+// order of the names.
+function getToolCounts(tallies: readonly Readonly<Record<string, number>>[]): string[] {
+  const calls = tallies.flatMap((tally) => Object.entries(tally));
   const names = [...new Set(calls.map(([name]) => name))].sort();
 
   return names.map((name) => {

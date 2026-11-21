@@ -51,7 +51,7 @@ export function getTranscriptUsage(text: string): TranscriptUsage {
     ),
     lastMs: times.reduce<number | undefined>((latest, time) => getLater(latest, time), undefined),
     models: [...new Set(responses.flatMap(({ model }) => (model === undefined ? [] : [model])))],
-    tools: countTools(assistantLines),
+    tools: countNames(assistantLines.flatMap(getBlocks).flatMap(getCallNames)),
   };
 }
 
@@ -91,12 +91,15 @@ function getLater(latest: number | undefined, time: number): number {
   return latest === undefined ? time : Math.max(latest, time);
 }
 
-function countTools(assistantLines: readonly TranscriptLine[]): Record<string, number> {
-  return assistantLines
-    .flatMap(getBlocks)
-    .flatMap(({ type, name }) => (type === 'tool_use' && typeof name === 'string' ? [name] : []))
-    .reduce<Record<string, number>>(
-      (counts, name) => ({ ...counts, [name]: (counts[name] ?? 0) + 1 }),
-      {},
-    );
+function getCallNames(block: TranscriptLine): string[] {
+  const { type, name } = block;
+
+  return type === 'tool_use' && typeof name === 'string' ? [name] : [];
+}
+
+function countNames(names: readonly string[]): Record<string, number> {
+  return names.reduce<Record<string, number>>(
+    (counts, name) => ({ ...counts, [name]: (counts[name] ?? 0) + 1 }),
+    {},
+  );
 }
