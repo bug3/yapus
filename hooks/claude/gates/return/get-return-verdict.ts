@@ -3,6 +3,7 @@ import type { ReturnRow } from '../../delegator/record-row.ts';
 import { recordRow } from '../../delegator/record-row.ts';
 import type { TranscriptStats } from './get-transcript-stats.ts';
 import { readTranscriptStats } from './get-transcript-stats.ts';
+import { isWorkflowAgent } from './is-workflow-agent.ts';
 import { MISSING_FIELDS, parseStop } from './parse-stop.ts';
 
 export interface Input {
@@ -18,7 +19,9 @@ export type ReturnVerdict =
   | { readonly kind: 'shorten'; readonly detail: string };
 
 // Whether the subagent's return may reach the main session: within the cap,
-// or past it on the second try, which passes so the subagent cannot loop.
+// or past it on the second try, which passes so the subagent cannot loop. A
+// workflow agent returns to its script and stops with no message, so its
+// stop passes with nothing judged and nothing logged.
 export function getReturnVerdict(input: Input): ReturnVerdict {
   const parsed = parseStop(input.stdinText);
 
@@ -28,6 +31,10 @@ export function getReturnVerdict(input: Input): ReturnVerdict {
 
   const { stop } = parsed;
   const { message } = stop;
+
+  if (stop.transcriptPath !== undefined && isWorkflowAgent(stop.transcriptPath)) {
+    return { kind: 'pass' };
+  }
 
   if (message === undefined) {
     return { kind: 'shorten', detail: `${ MISSING_FIELDS }; the stop is blocked` };

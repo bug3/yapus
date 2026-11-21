@@ -136,6 +136,19 @@ test('judges without a log when the plugin data directory is empty', () => {
   assert.deepEqual(verdict, { kind: 'pass' });
 });
 
+test('passes the return of a workflow agent over the cap and logs nothing', (t) => {
+  const dataDir = makeTempDir(t);
+  const stop = JSON.stringify({
+    ...LONG_FIELDS,
+    agent_transcript_path: join(dataDir, 'agent-a1.jsonl'),
+  });
+
+  writeFileSync(join(dataDir, 'agent-a1.meta.json'), '{"inWorkflowRun":true}');
+
+  assert.deepEqual(getReturnVerdict({ stdinText: stop, dataDir, time: 't' }), { kind: 'pass' });
+  assert.deepEqual(readdirSync(dataDir), ['agent-a1.meta.json']);
+});
+
 test('blocks a stop without its message and logs nothing', (t) => {
   const dataDir = makeTempDir(t);
 
