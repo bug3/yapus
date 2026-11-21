@@ -10,7 +10,7 @@ import { getGitEnv, runGit } from '../../../helpers/run-git.ts';
 const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', 'hooks', 'git');
 const SUBPROCESS_TIMEOUT_MS = 60000;
 const AGENT: NodeJS.ProcessEnv = { CLAUDECODE: '1' };
-const PERSON: NodeJS.ProcessEnv = {};
+const HUMAN: NodeJS.ProcessEnv = {};
 const SUBJECT = 'feat(hooks): add x';
 const TRAILERS = 'Assisted-by: Claude Code\nCo-authored-by: yapus <noreply@yapus.dev>\n';
 // Writes a valid subject above the template git hands the editor.
@@ -104,7 +104,7 @@ test('adds no trailer to a commit without CLAUDECODE', (t) => {
   const repository = makeHookedRepo(t);
 
   const commitRun = runRealGit(t, {
-    repository, args: ['commit', '--allow-empty', '-m', SUBJECT], who: PERSON,
+    repository, args: ['commit', '--allow-empty', '-m', SUBJECT], who: HUMAN,
   });
 
   assert.deepEqual([commitRun.status, getHeadMessage(repository)], [0, `${ SUBJECT }\n`]);

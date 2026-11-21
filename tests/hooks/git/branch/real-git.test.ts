@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { runGit } from '../../../helpers/run-git.ts';
 import {
-  hasRef, makeBranchRepo, makeUnbornRepo, runAgentGit, runPersonGit,
+  hasRef, makeBranchRepo, makeUnbornRepo, runAgentGit, runHumanGit,
 } from './make-branch-repo.ts';
 
 const BAD_NAME_REFUSAL = /^yapus branch: branch `Bad_Name` is not `<type>\/<slug>` \(type from \S+types\.json, slug of lowercase letters, digits and hyphens, at most 50\); name it so$/m;
@@ -120,10 +120,10 @@ test('lets an agent check out a branch a remote has under any name', (t) => {
   assert.equal(hasRef(repository, 'refs/heads/Bad_Name'), true);
 });
 
-test('lets a person git checkout -b a branch of any name', (t) => {
+test('lets a human git checkout -b a branch of any name', (t) => {
   const repository = makeBranchRepo(t);
 
-  const checkoutRun = runPersonGit(t, repository, ['checkout', '--quiet', '-b', 'Bad_Name']);
+  const checkoutRun = runHumanGit(t, repository, ['checkout', '--quiet', '-b', 'Bad_Name']);
 
   assert.deepEqual([checkoutRun.status, checkoutRun.stderr], [0, '']);
   assert.equal(hasRef(repository, 'refs/heads/Bad_Name'), true);
