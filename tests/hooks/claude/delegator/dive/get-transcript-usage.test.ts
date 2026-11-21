@@ -17,7 +17,8 @@ const NO_USAGE = {
   tools: {},
   toolsNotHeld: {},
 };
-// The answer of Claude Code 2.1.330 to a call of Bash by an agent without it.
+// The answer of Claude Code 2.1.330 to a call of Bash by a workflow agent
+// without it.
 const NOT_HELD_ANSWER =
   '<tool_use_error>Error: No such tool available: Bash. Bash is not among the tools available here. Continue with the tools you have.</tool_use_error>';
 const USAGE = {

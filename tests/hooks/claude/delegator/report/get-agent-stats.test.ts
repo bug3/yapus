@@ -77,7 +77,7 @@ const RESUME: ResumeRow = {
   toolUseId: 'toolu_1',
 };
 
-test('counts launches, ends and returns of one agent and takes the medians', () => {
+test('counts launches, ends and returns of one agent type and takes the medians', () => {
   const stats = getAgentStats([
     LAUNCH,
     { ...LAUNCH, allowed: false, reason: 'r' },
@@ -164,7 +164,7 @@ test('counts a background launch without a return as no return and not completed
   assert.deepEqual([stats?.completed, stats?.noReturn], [0, 1]);
 });
 
-test('gives one entry per agent, sorted by name, with undefined medians without ends', () => {
+test('gives one entry per agent type, sorted by name, with undefined medians without ends', () => {
   const stats = getAgentStats([{ ...LAUNCH, subject: 'delegator:diff-reviewer' }, LAUNCH]);
 
   assert.deepEqual(stats.map((entry) => entry.agent), [BUILDER, 'delegator:diff-reviewer']);
@@ -227,7 +227,7 @@ test('leaves a return while a nested launch runs out of the return counts', () =
   assert.deepEqual(getReturnCounts(finisher), [0, 0, 0, {}]);
 });
 
-test('counts a return after the nested agent returned', () => {
+test('counts a return after the nested subagent returned', () => {
   const [, finisher] = getAgentStats([
     NESTED_LAUNCH,
     REVIEWER_END,
@@ -238,7 +238,7 @@ test('counts a return after the nested agent returned', () => {
   assert.deepEqual(getReturnCounts(finisher), [1, 1, 1, { REWORK: 1 }]);
 });
 
-test('counts every return of an agent without a nested launch', () => {
+test('counts every return of a subagent without a nested launch', () => {
   const [, finisher] = getAgentStats([
     NESTED_LAUNCH,
     REVIEWER_END,

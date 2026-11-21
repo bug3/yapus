@@ -15,7 +15,7 @@ const LINES = [
     + '"description":"x"}',
 ];
 
-test('reports the extent, the agents, the rules and the refusals of a record text', () => {
+test('reports the extent, the agent types, the rules and the refusals of a record text', () => {
   const markdown = getReport('/d/decisions.jsonl', `${ LINES.join('\n') }\n`);
 
   assert.match(

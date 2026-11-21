@@ -38,7 +38,7 @@ const REPORT: Report = {
   refusals: [],
 };
 
-test('writes the extent, one row per agent with rounded medians and the findings', () => {
+test('writes the extent, one row per agent type with rounded medians and the findings', () => {
   const markdown = formatReport(REPORT);
 
   assert.match(markdown, /^# delegator record report\n\nRecord `\/d\/decisions\.jsonl`: 3 rows, 1 skipped, 1 sessions, from t1 to t3\.\n/u);

@@ -25,7 +25,7 @@ const QUEUED = {
   },
 };
 
-test('reads a resume with the session, the resumed agent and the call', () => {
+test('reads a resume with the session, the resumed subagent and the call', () => {
   assert.deepEqual(parseResume(JSON.stringify(RESUMED)), {
     kind: 'resume',
     resume: { sessionId: 's1', agentId: 'a1', toolUseId: 'toolu_1' },

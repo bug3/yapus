@@ -98,7 +98,7 @@ test('takes a total the end lacks from the return', () => {
   assert.deepEqual([entry?.durationMs, entry?.tokens, entry?.toolUses], [100, 70, 3]);
 });
 
-test('takes the source and the totals from the last return of an agent sent back', () => {
+test('takes the source and the totals from the last return of a subagent sent back', () => {
   const first = {
     ...RETURN, allowed: false, tokens: 50, durationMs: 100, toolUses: 1, time: 't1',
   };

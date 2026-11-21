@@ -7,7 +7,7 @@ const HEADER = [
   '| Stage | Agents | Returned | Turns | Output tokens | Input tokens | Cache-read tokens | Median s | Longest s | Models | Tools |',
   '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
 ].join('\n');
-// An agent that started and left no transcript.
+// A workflow agent that started and left no transcript.
 const IDLE: AgentUsage = {
   stage: 'scope',
   isReturned: false,
@@ -95,7 +95,7 @@ test('writes a dash for the seconds, the models and the tools of a stage that ha
   ].join('\n'));
 });
 
-test('keeps the stages in the order of their first agent', () => {
+test('keeps the stages in the order of their first workflow agent', () => {
   const report = formatRunStats([
     { ...IDLE, stage: 'scope' },
     { ...IDLE, stage: 'gather-web' },
@@ -110,7 +110,7 @@ test('keeps the stages in the order of their first agent', () => {
   ]);
 });
 
-test('gives the turns of a stage as the mean per agent with one decimal', () => {
+test('gives the turns of a stage as the mean per workflow agent with one decimal', () => {
   const report = formatRunStats([
     { ...IDLE, turns: 1 },
     { ...IDLE, turns: 2 },
@@ -120,7 +120,7 @@ test('gives the turns of a stage as the mean per agent with one decimal', () => 
   assert.equal(report.split('\n')[2], '| scope | 3 | 0 | 1.7 | 0 | 0 | 0 | - | - | - | - |');
 });
 
-test('takes the median and the longest seconds from the agents that have times', () => {
+test('takes the median and the longest seconds from the workflow agents that have times', () => {
   const report = formatRunStats([
     { ...IDLE, firstMs: 1000, lastMs: 61000 },
     IDLE,

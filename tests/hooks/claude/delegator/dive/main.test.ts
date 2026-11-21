@@ -9,7 +9,7 @@ const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', '..', 'hooks');
 const MAIN = join(HOOKS, 'claude', 'delegator', 'dive', 'main.ts');
 const RUN_SH = join(HOOKS, 'run.sh');
 const SUBPROCESS_TIMEOUT_MS = 10000;
-// Four agents in two stages; a3 has no result row.
+// Four workflow agents in two stages; a3 has no result row.
 const JOURNAL = [
   '{"type":"started","agentId":"a1","label":"scope","phase":"Scope"}',
   '{"type":"result","agentId":"a1","result":{"questions":[]}}',
@@ -39,7 +39,8 @@ const REPORT = [
   'Total: 4 agents, 13 output tokens, 114 input tokens, 212 cache-read tokens, 40 s from first to last',
   '',
 ].join('\n');
-// One agent that called Bash, a tool it does not hold, and Read, which ran.
+// One workflow agent that called Bash, a tool it does not hold, and Read,
+// which ran.
 const NOT_HELD_JOURNAL =
   '{"type":"started","agentId":"a1","label":"gather-repo:Q1","phase":"Gather"}\n';
 const NOT_HELD_TRANSCRIPT = [
@@ -52,7 +53,7 @@ const NOT_HELD_TRANSCRIPT = [
 const USAGE_LINE =
   'yapus delegator dive: usage: delegator dive <run directory>; give the directory of one workflow run and nothing else\n';
 
-// The fourth agent, a4, gets no transcript.
+// The fourth workflow agent, a4, gets no transcript.
 function makeRunDirectory(t: TestContext): string {
   const runDirectory = makeTempDir(t);
 
@@ -71,7 +72,7 @@ test('exits 0 and prints the report of the run directory', (t) => {
   assert.equal(run.stdout, REPORT);
 });
 
-test('prints a call of a tool the agent did not hold after the tool it held', (t) => {
+test('prints a call of a tool the workflow agent did not hold after the tool it held', (t) => {
   const runDirectory = makeTempDir(t);
 
   writeFileSync(join(runDirectory, 'journal.jsonl'), NOT_HELD_JOURNAL);

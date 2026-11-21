@@ -78,7 +78,7 @@ function makeRunDirectory(t: TestContext, ...journal: readonly unknown[]): strin
   return runDirectory;
 }
 
-test('reads the four agents of a run in two stages, in the order of the journal', (t) => {
+test('reads the four workflow agents of a run in two stages, in the order of the journal', (t) => {
   const runDirectory = makeRunDirectory(
     t,
     { type: 'launched' },
@@ -172,7 +172,7 @@ test('gives one usage for an agent id of two started rows, with the later label'
   });
 });
 
-test('gives an agent without a result row as not returned', (t) => {
+test('gives a workflow agent without a result row as not returned', (t) => {
   const runDirectory = makeRunDirectory(
     t,
     { type: 'started', agentId: 'a1', label: 'scope' },
@@ -188,7 +188,7 @@ test('gives an agent without a result row as not returned', (t) => {
   );
 });
 
-test('gives an agent whose result row holds null as not returned', (t) => {
+test('gives a workflow agent whose result row holds null as not returned', (t) => {
   const runDirectory = makeRunDirectory(
     t,
     { type: 'started', agentId: 'a1', label: 'scope' },
@@ -204,7 +204,7 @@ test('gives an agent whose result row holds null as not returned', (t) => {
   );
 });
 
-test('gives an agent without a transcript zeros and no times', (t) => {
+test('gives a workflow agent without a transcript zeros and no times', (t) => {
   const runDirectory = makeRunDirectory(
     t,
     { type: 'started', agentId: 'a1', label: 'scope' },
