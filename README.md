@@ -109,6 +109,12 @@ Deep work is a task rated `deep`: it is planned in writing before the first edit
 
 Outside deep work, a change of more than 150 lines goes once to `delegator:diff-reviewer` before the agent reports it done.
 
+### Deep Dive
+
+A deep dive gathers and checks the context of a task rated `deep` before its plan is written. `/delegator:deep-dive` is a workflow, a script Claude Code runs in the background with agents of its own: it splits the task into 3 to 12 questions, answers each from the repository with the `reader` definition or from the web with the `web-researcher` definition, has every claim checked against the lines or the page it cites, and has `.yapus/plans/<YYYY-MM>/<topic>/research_<digest>.md` written, a file a plan-writer is given as a source beside the hand-kept `research.md`.
+
+A claim a check refuted stays in the file under `Refuted` and one no check decided under `Unverified`, and the file ends with the run's counts per stage. The digest in the file's name is computed from the run's claims, so a run with other content writes another file, and a deep dive never writes `research.md`. The launch budget does not count the agents of a deep dive. `/delegator:dive-report <run directory>` prints their tokens, time, models and tools per stage.
+
 ### Launch Limits
 
 The launch budget is the number of subagent launches one session may make. delegator counts the launches of a session and refuses the one past the budget.
@@ -138,6 +144,8 @@ Off means no rules at the session's start, no check on its launches, and no prom
 | `/delegator:agent-report` | the record's counts per agent |
 | `/delegator:upgrade` | the `.yapus/` files of an older layout moved into the present one |
 | `/delegator:write-plan` | the deep work flow, from the plan to the slices |
+| `/delegator:deep-dive` | the research before a plan: questions, claims checked against their sources, `research_<digest>.md` beside the plan |
+| `/delegator:dive-report <run directory>` | the agents, tokens, time, models and tools of one workflow run per stage |
 
 <!-- #endregion delegator -->
 
