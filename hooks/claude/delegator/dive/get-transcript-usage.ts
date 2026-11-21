@@ -3,8 +3,8 @@ import { getBlocks } from '../transcript/get-blocks.ts';
 import { readTranscriptLines, type TranscriptLine } from '../transcript/read-transcript-lines.ts';
 
 // What Claude Code answers a call of a tool the agent does not hold with, in
-// a tool_result that is an error.
-const NOT_HELD_ANSWER = 'No such tool available';
+// a tool_result that is an error: these words, then the name of the tool.
+const NOT_HELD_ANSWER = 'No such tool available: ';
 
 // What the transcript of one agent holds of its work.
 export interface TranscriptUsage {
@@ -129,10 +129,10 @@ function getErrors(block: TranscriptLine): [string, string][] {
 }
 
 // Whether the error that answers the call says the agent does not hold the
-// tool. Another error and an answer that only quotes the words are the
-// answers of a tool the agent holds.
-function isNotHeld({ id }: Call, errors: ReadonlyMap<unknown, string>): boolean {
-  return errors.get(id)?.includes(NOT_HELD_ANSWER) === true;
+// tool of that call. An error that quotes the words for another tool is the
+// output of a tool the agent holds, such as a command that printed them.
+function isNotHeld({ id, name }: Call, errors: ReadonlyMap<unknown, string>): boolean {
+  return errors.get(id)?.includes(`${ NOT_HELD_ANSWER }${ name }`) === true;
 }
 
 function countNames(names: readonly string[]): Record<string, number> {

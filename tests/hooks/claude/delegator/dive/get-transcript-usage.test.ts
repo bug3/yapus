@@ -132,11 +132,23 @@ test('counts a call answered with another error as a tool held', () => {
 
 test('counts a call whose answer is no error and quotes the words as a tool held', () => {
   const usage = getTranscriptUsage(toText(
-    makeCallLine('t1', 'Read'),
+    makeCallLine('t1', 'Bash'),
     makeAnswerLine('t1', { content: NOT_HELD_ANSWER }),
   ));
 
-  assert.deepEqual([usage.tools, usage.toolsNotHeld], [{ Read: 1 }, {}]);
+  assert.deepEqual([usage.tools, usage.toolsNotHeld], [{ Bash: 1 }, {}]);
+});
+
+test('counts a call that failed with an output quoting the words of another tool as held', () => {
+  const usage = getTranscriptUsage(toText(
+    makeCallLine('t1', 'Bash'),
+    makeAnswerLine('t1', {
+      is_error: true,
+      content: 'Exit code 1\nError: No such tool available: Read. Read is not among the tools',
+    }),
+  ));
+
+  assert.deepEqual([usage.tools, usage.toolsNotHeld], [{ Bash: 1 }, {}]);
 });
 
 test('counts a call with no answer as a tool held', () => {
