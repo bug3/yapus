@@ -260,13 +260,6 @@ const RUN_AGENT_LIMIT = 1000;
 const LAST_STAGE_IDS = ['completeness', 'synthesize'];
 const GATHER_AND_VERIFY_LIMIT = RUN_AGENT_LIMIT - LAST_STAGE_IDS.length;
 
-// A gatherer is told to keep its return within RETURN_LIMIT characters, and
-// may cut its claims to do so; a return of NEAR_RETURN_LIMIT characters
-// counts as near it. A script can load no module, so the limit of
-// hooks/claude/delegator/contract/ stands here a second time.
-const RETURN_LIMIT = 12000;
-const NEAR_RETURN_LIMIT = 10000;
-
 // The digest in the name of the research file is FNV-1a of 32 bits, written
 // in DIGEST_LENGTH hexadecimal characters.
 const FNV_OFFSET_BASIS = 0x811c9dc5;
@@ -748,8 +741,7 @@ function getStats(questionCounts, droppedQuestions, researched) {
   };
 }
 
-// The gatherers that returned an answer, those whose answer is near the
-// return limit, and the length of the longest answer.
+// The gatherers that returned an answer and the length of the longest answer.
 function getGatherReturns(researched) {
   const lengths = researched
     .map(({ gatherLength }) => gatherLength)
@@ -757,7 +749,6 @@ function getGatherReturns(researched) {
 
   return {
     count: lengths.length,
-    near: lengths.filter((gatherLength) => gatherLength >= NEAR_RETURN_LIMIT).length,
     longest: Math.max(0, ...lengths),
   };
 }
@@ -892,7 +883,7 @@ function formatDroppedLine({ lane, question }) {
 // The counts of the run as the research file holds them. The agent that
 // writes the file is launched after they are taken, so its stage has no row.
 function formatRunBlock(stats) {
-  const { count, near, longest } = stats.gatherReturns;
+  const { count, longest } = stats.gatherReturns;
 
   return formatBlock('Run', [
     '| Stage | Launched | Returned |',
@@ -910,7 +901,7 @@ function formatRunBlock(stats) {
     formatCountLine('Undecided', stats.undecided),
     `- Not launched at the limit of ${ RUN_AGENT_LIMIT } agents: ${ stats.notLaunched }`,
     `- Claims not sent to a verifier for their path: ${ stats.pathsRefused }`,
-    `- Gather returns of ${ NEAR_RETURN_LIMIT } characters or more: ${ near } of ${ count }, the longest ${ longest } (the return limit is ${ RETURN_LIMIT })`,
+    `- Gather returns: ${ count }, the longest ${ longest } characters`,
   ]);
 }
 

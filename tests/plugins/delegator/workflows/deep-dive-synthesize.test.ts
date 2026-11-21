@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { RETURN_CAP_CHARACTERS } from '../../../../hooks/claude/delegator/contract/get-context.ts';
 import { findCall } from './find-call.ts';
 import { FIXED_ARGS, JSON_NULL, SCRIPT_PATH, getFixedAnswer } from './get-fixed-answer.ts';
 import { runWorkflow } from './run-workflow.ts';
@@ -32,7 +31,7 @@ const COMPLETENESS_PROMPT = [
 
 // The digest is FNV-1a of 32 bits over the UTF-16 units of CONTENT below,
 // worked out by a program apart from the script.
-const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_f7458fc5.md';
+const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_7bd6231a.md';
 const BLOCKS = [
   '## Refuted',
   '',
@@ -69,7 +68,7 @@ const BLOCKS = [
   '- Undecided: 1 (1 repository, 0 web)',
   '- Not launched at the limit of 1000 agents: 0',
   '- Claims not sent to a verifier for their path: 0',
-  '- Gather returns of 10000 characters or more: 0 of 3, the longest 475 (the return limit is 12000)',
+  '- Gather returns: 3, the longest 475 characters',
 ].join('\n');
 
 // The fixed run with the repository lane alone: the web question of its scope
@@ -112,7 +111,7 @@ const REPOSITORY_LANE_BLOCKS = [
   '- Undecided: 1 (1 repository, 0 web)',
   '- Not launched at the limit of 1000 agents: 0',
   '- Claims not sent to a verifier for their path: 0',
-  '- Gather returns of 10000 characters or more: 0 of 2, the longest 437 (the return limit is 12000)',
+  '- Gather returns: 2, the longest 437 characters',
 ].join('\n');
 
 // What the run on FIXED_ARGS hands the synthesize agent as its content: the
@@ -137,7 +136,7 @@ const SYNTHESIZE_PROMPT = [
   'Add a retry limit to the return gate',
   '',
   '## File',
-  ".yapus/plans/2026-11/return-retry/research_f7458fc5.md, under the project's root",
+  ".yapus/plans/2026-11/return-retry/research_7bd6231a.md, under the project's root",
   '',
   CONTENT,
   '',
@@ -165,7 +164,7 @@ const LANE_COUNTS = {
   undecided: { repository: 1, web: 0 },
   notLaunched: 0,
   pathsRefused: 0,
-  gatherReturns: { count: 3, near: 0, longest: 475 },
+  gatherReturns: { count: 3, longest: 475 },
 } as const;
 const STAGES_BEFORE_SYNTHESIZE = [
   ['scope', { launched: 1, returned: 1 }],
@@ -398,12 +397,12 @@ test('names no Glob in the synthesize prompt', async () => {
   assert.doesNotMatch(findCall(run, 'synthesize')?.prompt ?? 'Glob', /Glob/u);
 });
 
-test('names the limit of the return contract in the last line of the Run block', async () => {
+test('writes the count and the longest of the Gather returns last in the Run block', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.equal(
     readBlocks(run).split('\n').at(-1),
-    `- Gather returns of 10000 characters or more: 0 of 3, the longest 475 (the return limit is ${ String(RETURN_CAP_CHARACTERS) })`,
+    '- Gather returns: 3, the longest 475 characters',
   );
 });
 
@@ -684,15 +683,15 @@ test('names another file when no gatherer returns and the Unmeasured block diffe
   assert.match(readFileLine(changedRun), FILE_LINE_FORM);
 });
 
-// The digest of the content with the unread area `area 4` is 0x04320f38,
+// The digest of the content with the unread area `area 29` is 0x0d21cbda,
 // worked out by a program apart from the script.
 test('writes a digest that begins with a zero in 8 characters', async () => {
-  const gaps = { unreadAreas: ['area 4'], unansweredQuestions: [] };
+  const gaps = { unreadAreas: ['area 29'], unansweredQuestions: [] };
 
   const run = await runSmall(new Map([['completeness', gaps]]));
 
   assert.partialDeepStrictEqual(run.returned, {
-    researchPath: '.yapus/plans/2026-11/return-retry/research_04320f38.md',
+    researchPath: '.yapus/plans/2026-11/return-retry/research_0d21cbda.md',
   });
 });
 

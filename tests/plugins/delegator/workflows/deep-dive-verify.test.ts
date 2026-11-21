@@ -136,7 +136,7 @@ const WIDE_RUN_RUN_BLOCK = [
   '- Undecided: 48 (0 repository, 48 web)',
   '- Not launched at the limit of 1000 agents: 96',
   '- Claims not sent to a verifier for their path: 0',
-  '- Gather returns of 10000 characters or more: 0 of 12, the longest 6823 (the return limit is 12000)',
+  '- Gather returns: 12, the longest 6823 characters',
 ].join('\n');
 
 const REFUSED_PATHS_UNVERIFIED_BLOCK = [
@@ -455,7 +455,7 @@ test('counts the launches held back and leaves their claims undecided', async ()
       refuted: { repository: 0, web: 0 },
       undecided: { repository: 0, web: 48 },
       notLaunched: 96,
-      gatherReturns: { count: 12, near: 0, longest: 6823 },
+      gatherReturns: { count: 12, longest: 6823 },
       stages: Object.fromEntries([
         ['scope', { launched: 1, returned: 1 }],
         ['gather-repo', { launched: 0, returned: 0 }],

@@ -207,7 +207,7 @@ test('returns the no-question error and the counts when the lanes leave no quest
       undecided: { repository: 0, web: 0 },
       notLaunched: 0,
       pathsRefused: 0,
-      gatherReturns: { count: 0, near: 0, longest: 0 },
+      gatherReturns: { count: 0, longest: 0 },
       stages: Object.fromEntries([
         ['scope', { launched: 1, returned: 1 }],
         ['gather-repo', { launched: 0, returned: 0 }],
