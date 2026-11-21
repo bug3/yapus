@@ -64,11 +64,11 @@ At the start of a session in a set-up repository, ordo lists the repository's co
 <!-- #region delegator -->
 ## delegator
 
-The main session is the shared workspace of the person and the agent, and it keeps only what the next decision needs. delegator puts the orchestration rules [ORCH-1 to ORCH-7](https://github.com/bug3/yapus/blob/main/hooks/claude/delegator/policy/policy.md) at the start of every session, and again after a resume, a clear or a compaction: they hand reading, running, judging and edits to subagents, launch independent ones together and let into the main session only what a decision needs. Hooks, the programs Claude Code runs at fixed points of a session, hold what a program can check: the launch check judges each subagent launch before it starts, and the return check caps what each subagent sends back. delegator also checks the form of `gh pr create` and `gh issue create` calls. `claude plugin uninstall delegator@yapus` removes the plugin.
+The main session is the shared workspace of the person and the main agent, and it keeps only what the next decision needs. delegator puts the orchestration rules [ORCH-1 to ORCH-7](https://github.com/bug3/yapus/blob/main/hooks/claude/delegator/policy/policy.md) at the start of every session, and again after a resume, a clear or a compaction: they hand reading, running, judging and edits to subagents, launch independent ones together and let into the main session only what a decision needs. Hooks, the programs Claude Code runs at fixed points of a session, hold what a program can check: the launch check judges each subagent launch before it starts, and the return check caps what each subagent sends back. delegator also checks the form of `gh pr create` and `gh issue create` calls. `claude plugin uninstall delegator@yapus` removes the plugin.
 
 ### Depths
 
-A depth is the size class the agent names for a task before its first tool call. Every subagent description starts with it in brackets, such as `[deep] S3 ...`, and the launch check refuses a description without one. An oracle is the command whose exit code says whether a change passes, such as `npm test`.
+A depth is the size class the main agent names for a task before its first tool call. Every subagent description starts with it in brackets, such as `[deep] S3 ...`, and the launch check refuses a description without one. An oracle is the command whose exit code says whether a change passes, such as `npm test`.
 
 | Depth | When | How the work runs |
 | --- | --- | --- |
@@ -76,13 +76,13 @@ A depth is the size class the agent names for a task before its first tool call.
 | `standard` | the default | subagents for reading, running, judging and edits |
 | `deep` | about 400 changed lines, several unknowns, multi-source research or work that outlives one context | a written plan, built and committed one part at a time |
 
-The agent raises the depth when an oracle fails twice or a review asks for rework; lowering it is left to the person.
+The main agent raises the depth when an oracle fails twice or a review asks for rework; lowering it is left to the person.
 
 ### Subagents
 
 Each subagent is launched as `delegator:<name>`. The launch check refuses the built-in agent types that stand in for the roster (`general-purpose`, `Explore`, `Plan`, `fork`, `claude`), and a subagent launches no other subagent, except a finisher that launches the diff reviewer for its own diff.
 
-| Agent | Job |
+| Agent definition | Job |
 | --- | --- |
 | `builder` | decided edits against an oracle, until it passes |
 | `reader` | read-only search, distilling long files, logs or diffs |
@@ -94,7 +94,7 @@ Each subagent is launched as `delegator:<name>`. The launch check refuses the bu
 | `finisher` | one part of a plan: edit, oracle, review, commit |
 | `diff-reviewer` | an APPROVE or REWORK verdict on a finished diff |
 
-Every subagent receives a return contract at its start: a return written as text opens with DONE, PARTIAL, QUESTIONS or BLOCKED and stays within 12,000 characters, about 3,000 tokens, so one return cannot flood the main session. A longer return is sent back once to be shortened and passes on the second try. The agents of a workflow answer a script through a structured answer, which the limit does not bind and the gate does not judge.
+Every subagent receives a return contract at its start: a return written as text opens with DONE, PARTIAL, QUESTIONS or BLOCKED and stays within 12,000 characters, about 3,000 tokens, so one return cannot flood the main session. A longer return is sent back once to be shortened and passes on the second try. A workflow agent answers a script through a structured answer, which the limit does not bind and the gate does not judge.
 
 ### Deep Work
 
@@ -102,34 +102,34 @@ Deep work is a task rated `deep`: it is planned in writing before the first edit
 
 1. Plan: `delegator:plan-writer` writes `.yapus/plans/<YYYY-MM>/<topic>/plan.md`, under the month the plan starts in, and a subagent measures each fact the plan marks unmeasured.
 2. Plan review: when the plan touches more than one module or a public interface, `delegator:plan-reviewer` judges it once before the first edit, and the plan-writer folds each defect in.
-3. The person's decisions: the agent asks the person each open decision that is theirs as one question with its recommendation first, takes the others as recommended, and records both in the plan.
+3. The person's decisions: the main agent asks the person each open decision that is theirs as one question with its recommendation first, takes the others as recommended, and records both in the plan.
 4. Slices: one `delegator:finisher` per slice edits only the slice's files and runs its oracle until it passes or one failure survives two repairs.
 5. Diff review: the finisher writes the slice's diff to a file and launches `delegator:diff-reviewer`, the one nested launch the launch check admits, then repairs what a REWORK names.
 6. Commit: the finisher commits the slice alone, never pushes, and returns the commits, the oracle's exit code, the verdict and the path of the detail file `<slice id>.md` beside the plan, which holds the rest.
 
-Outside deep work, a change of more than 150 lines goes once to `delegator:diff-reviewer` before the agent reports it done.
+Outside deep work, a change of more than 150 lines goes once to `delegator:diff-reviewer` before the main agent reports it done.
 
 ### Deep Dive
 
-A deep dive gathers and checks the context of a task rated `deep` before its plan is written. `/delegator:deep-dive` is a workflow, a script Claude Code runs in the background with agents of its own: it splits the task into 3 to 12 questions, answers each from the repository with the `reader` definition or from the web with the `web-researcher` definition, has every claim checked against the lines or the page it cites, and has `.yapus/plans/<YYYY-MM>/<topic>/research_<digest>.md` written, a file a plan-writer is given as a source beside the hand-kept `research.md`.
+A deep dive gathers and checks the context of a task rated `deep` before its plan is written. `/delegator:deep-dive` is a workflow, a script Claude Code runs in the background with workflow agents of its own: it splits the task into 3 to 12 questions, answers each from the repository with the `reader` definition or from the web with the `web-researcher` definition, has every claim checked against the lines or the page it cites, and has `.yapus/plans/<YYYY-MM>/<topic>/research_<digest>.md` written, a file a plan-writer is given as a source beside the hand-kept `research.md`.
 
-A claim a check refuted stays in the file under `Refuted` and one no check decided under `Unverified`, and the file ends with the run's counts per stage. The digest in the file's name is computed from the run's claims, so a run with other content writes another file, and a deep dive never writes `research.md`. The launch budget does not count the agents of a deep dive. `/delegator:dive-report <run directory>` prints their tokens, time, models and tools per stage, and lists apart a call of a tool an agent did not hold.
+A claim a check refuted stays in the file under `Refuted` and one no check decided under `Unverified`, and the file ends with the run's counts per stage. The digest in the file's name is computed from the run's claims, so a run with other content writes another file, and a deep dive never writes `research.md`. The launch budget does not count the workflow agents of a deep dive. `/delegator:dive-report <run directory>` prints their tokens, time, models and tools per stage, and lists apart a call of a tool a workflow agent did not hold.
 
 ### Launch Limits
 
-The launch budget is the number of subagent launches one session may make. delegator counts the launches of a session and refuses the one past the budget.
+The launch budget is the number of subagent launches admitted in one session. delegator counts the launches of a session and refuses the one past the budget.
 
 The budget is 60 by default, above the 53 launches of the busiest measured session. `/delegator:agent-limit <n>` sets another whole number for the session, or with `--global` for every session.
 
-The launch check also refuses a `quick` launch and a finisher outside `deep`. After a refusal the agent tells the person what was refused and why, and does not split the work into smaller launches.
+The launch check also refuses a `quick` launch and a finisher outside `deep`. After a refusal the main agent tells the person what was refused and why, and does not split the work into smaller launches.
 
-delegator records every launch and return verdict in a file that never leaves the machine; `/delegator:agent-report` prints the record's counts per agent.
+delegator records every launch and return verdict in a file that never leaves the machine; `/delegator:agent-report` prints the record's counts per agent type.
 
 ### Prompt Log
 
 The prompt log keeps what the person typed, so a compaction does not lose it. delegator writes each prompt, with its time, as one JSON line to the session's file, `.yapus/sessions/<YYYY-MM>/<DD>T<HH-MM-SS>Z_<session id>.jsonl` under the directory the session opened in, named for the UTC time of the session's first prompt. A write to a file in a plan's directory adds a line that names the plan and the file. Right after a compaction it gives the session those prompts back, the newest that fit in 6,000 characters, with the paths of the five newest plans in `.yapus/plans/`.
 
-It creates the sessions directory with a `.gitignore` that keeps it out of git; a person who wants their prompts in git changes that file. `/delegator:upgrade` moves the files of an older layout, `.yapus/prompts/` and the plans directly in `.yapus/plans/`, into this one and prints each move.
+It creates the sessions directory with a `.gitignore` that keeps it out of git; the person changes that file to keep their prompts in git. `/delegator:upgrade` moves the files of an older layout, `.yapus/prompts/` and the plans directly in `.yapus/plans/`, into this one and prints each move.
 
 ### Commands
 
@@ -141,11 +141,11 @@ Off means no rules at the session's start, no check on its launches, and no prom
 | `/delegator:switch on` | delegator back on |
 | `/delegator:status` | the mode and the limit in force, the session's launches, the tool calls its background subagents wait on |
 | `/delegator:agent-limit <n>` | the launch budget for the session, or with `--global` for every session |
-| `/delegator:agent-report` | the record's counts per agent |
+| `/delegator:agent-report` | the record's counts per agent type |
 | `/delegator:upgrade` | the `.yapus/` files of an older layout moved into the present one |
 | `/delegator:write-plan` | the deep work flow, from the plan to the slices |
 | `/delegator:deep-dive` | the research before a plan: questions, claims checked against their sources, `research_<digest>.md` beside the plan |
-| `/delegator:dive-report <run directory>` | the agents, tokens, time, models and tools of one workflow run per stage |
+| `/delegator:dive-report <run directory>` | the workflow agents, tokens, time, models and tools of one workflow run per stage |
 
 <!-- #endregion delegator -->
 
@@ -171,7 +171,7 @@ During a session, ordo refuses a Write or Edit that puts a Unicode dash other th
 | [ENGINEERING.md](standards/ENGINEERING.md) | modules, types and boundaries |
 | [GIT.md](standards/GIT.md) | commit scopes |
 | [GO.md](standards/GO.md) | Go code |
-| [IDENTIFIERS.md](standards/IDENTIFIERS.md) | machine identifiers and text for people |
+| [IDENTIFIERS.md](standards/IDENTIFIERS.md) | machine identifiers and text for humans |
 | [INSTRUCTIONS.md](standards/INSTRUCTIONS.md) | instruction files for agents |
 | [MARKDOWN.md](standards/MARKDOWN.md) | Markdown prose |
 | [PRINCIPLES.md](standards/PRINCIPLES.md) | principles for every change |
