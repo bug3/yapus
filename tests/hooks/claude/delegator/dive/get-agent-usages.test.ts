@@ -185,6 +185,22 @@ test('gives an agent without a result row as not returned', (t) => {
   );
 });
 
+test('gives an agent whose result row holds null as not returned', (t) => {
+  const runDirectory = makeRunDirectory(
+    t,
+    { type: 'started', agentId: 'a1', label: 'scope' },
+    '{"type":"result","agentId":"a1","result":null}',
+    { type: 'started', agentId: 'a2', label: 'scope' },
+    { type: 'result', agentId: 'a2', result: {} },
+  );
+  const run = getAgentUsages(runDirectory);
+
+  assert.deepEqual(
+    run.kind === 'usages' ? run.usages.map((usage) => usage.isReturned) : run,
+    [false, true],
+  );
+});
+
 test('gives an agent without a transcript zeros and no times', (t) => {
   const runDirectory = makeRunDirectory(
     t,

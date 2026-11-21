@@ -10,7 +10,7 @@ const JOURNAL_FILE = 'journal.jsonl';
 export interface AgentUsage extends TranscriptUsage {
   // The label's text before its first colon.
   readonly stage: string;
-  // Whether the journal holds a result row of the agent.
+  // Whether the journal holds a result row of the agent with an answer.
   readonly isReturned: boolean;
 }
 
@@ -40,7 +40,11 @@ export function getAgentUsages(runDirectory: string): RunRead {
   // The journal is JSON lines as a transcript is: a row that does not parse
   // is left out.
   const rows = readTranscriptLines(journal);
-  const returned = new Set(rows.filter((row) => row.type === 'result').map((row) => row.agentId));
+  // An agent that is skipped or dies gives its script null, so a result row
+  // that holds null is no return.
+  const returned = new Set(
+    rows.filter((row) => row.type === 'result' && row.result !== null).map((row) => row.agentId),
+  );
   // An agent id names one transcript, so its second started row is no second
   // agent: the id keeps its place in the journal and takes the later label.
   const agents = new Map(rows.flatMap(getStartedAgents).map((agent) => [agent.id, agent]));
