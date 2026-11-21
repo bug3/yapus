@@ -16,7 +16,7 @@ const LAUNCH = {
   model: undefined,
   effort: undefined,
 };
-const NESTED = 'a subagent launches no agents; return the work to your caller';
+const NESTED = 'a subagent launches no subagent; return the work to your launcher';
 const REVIEW = {
   ...LAUNCH,
   caller: { agentId: 'a1', agentType: 'delegator:finisher' },
@@ -36,7 +36,7 @@ test('passes a roster launch tagged standard or deep', () => {
   assert.deepEqual(refusals, [undefined, undefined]);
 });
 
-test('passes an off-roster type that stands in for no roster agent', () => {
+test('passes an off-roster type that stands in for no agent type of the roster', () => {
   const refusals = OFF_ROSTER.flatMap((subagentType) => [
     getRefusal({ ...LAUNCH, subagentType }),
     getRefusal({ ...LAUNCH, subagentType, description: '[deep] Do x' }),
@@ -48,14 +48,14 @@ test('passes an off-roster type that stands in for no roster agent', () => {
 test('refuses a launch from inside a subagent', () => {
   assert.equal(
     getRefusal({ ...LAUNCH, caller: { agentId: 'a1', agentType: 'delegator:reader' } }),
-    'a subagent launches no agents; return the work to your caller',
+    'a subagent launches no subagent; return the work to your launcher',
   );
 });
 
-test('refuses a nested launch whose caller type is unknown', () => {
+test('refuses a nested launch whose launcher type is unknown', () => {
   assert.equal(
     getRefusal({ ...LAUNCH, caller: { agentId: 'a1', agentType: undefined } }),
-    'a subagent launches no agents; return the work to your caller',
+    'a subagent launches no subagent; return the work to your launcher',
   );
 });
 
@@ -73,14 +73,14 @@ test('refuses a finisher launching a type other than the diff reviewer', () => {
   assert.deepEqual(refusals, [NESTED, NESTED, NESTED]);
 });
 
-test('refuses a caller other than the finisher launching the diff reviewer', () => {
+test('refuses a launcher other than the finisher launching the diff reviewer', () => {
   assert.equal(
     getRefusal({ ...REVIEW, caller: { agentId: 'a1', agentType: 'delegator:builder' } }),
     NESTED,
   );
 });
 
-test('refuses a caller of unknown type launching the diff reviewer', () => {
+test('refuses a launcher of unknown type launching the diff reviewer', () => {
   assert.equal(getRefusal({ ...REVIEW, caller: { agentId: 'a1', agentType: undefined } }), NESTED);
 });
 
@@ -147,7 +147,7 @@ test('keeps the nested and depth rules for an off-roster type', () => {
   ];
 
   assert.deepEqual(refusals, [
-    'a subagent launches no agents; return the work to your caller',
+    'a subagent launches no subagent; return the work to your launcher',
     'start the description with the depth in brackets: [quick], [standard] or [deep]',
     'a quick task launches no subagent; do it in this session, or raise the depth',
   ]);

@@ -31,7 +31,7 @@ async function readInput(): Promise<Input> {
 
 // Always exit 0, an exemption from CODE-4 for this program alone: exit 2 at
 // UserPromptSubmit blocks the prompt, and a log that cannot write must not
-// lock the person out. stdout stays empty, since it would reach the model.
+// lock the person out. stdout stays empty, since it would reach the main agent.
 // writeSync, because process.exit can drop a pending write to a pipe.
 // A write to stderr that throws is dropped, so the exit always runs.
 function stop(outcome: Outcome): never {

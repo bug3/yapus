@@ -17,7 +17,7 @@ const EXECUTE_BITS = 0o111;
 // A malformed line the branch check would refuse, so a pass shows Node never ran.
 const MALFORMED_CREATION = '0000000000000000000000000000000000000000 x refs/heads/bad\n';
 const AGENT: NodeJS.ProcessEnv = { CLAUDECODE: '1' };
-const PERSON: NodeJS.ProcessEnv = {};
+const HUMAN: NodeJS.ProcessEnv = {};
 
 interface HookRun {
   readonly state: string;
@@ -30,8 +30,8 @@ test('lets a transaction through at a state other than prepared', (t) => {
   assert.deepEqual([hookRun.status, hookRun.stderr], [0, '']);
 });
 
-test('lets a person\'s transaction through without the branch check', (t) => {
-  const hookRun = runHook(t, { state: 'prepared', who: PERSON });
+test('lets a human\'s transaction through without the branch check', (t) => {
+  const hookRun = runHook(t, { state: 'prepared', who: HUMAN });
 
   assert.deepEqual([hookRun.status, hookRun.stderr], [0, '']);
 });

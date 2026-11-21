@@ -1,8 +1,8 @@
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-// What every row of the record carries: the time, the session and the agent
-// type it is about.
+// What every row of the record carries: the time, the session and the
+// agent type it is about.
 interface Base {
   readonly time: string;
   readonly sessionId: string;
@@ -68,9 +68,10 @@ export interface EndRow extends Base {
   readonly capped: boolean;
 }
 
-// A SendMessage that resumed a subagent that had stopped: the resumed agent's
-// id (joins the end and return rows) and the call id. It names no agent type,
-// so it has no subject: the report joins it to its launch through the agent id.
+// A SendMessage that resumed a subagent that had stopped: the resumed
+// subagent's id (joins the end and return rows) and the call id. It names no
+// agent type, so it has no subject: the report joins it to its launch
+// through the agent id.
 export interface ResumeRow {
   readonly time: string;
   readonly hook: 'resume';

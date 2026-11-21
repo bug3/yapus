@@ -11,9 +11,9 @@ const STAGE_TABLE_LAST_LINE = '\n};\n';
 // Every model and every effort the workflow runtime takes, as a quoted name.
 const MODEL_OR_EFFORT = /(['"`])(?:haiku|sonnet|opus|fable|low|medium|high|xhigh|max)\1/u;
 
-// How each agent of the run on FIXED_ARGS runs, in the order of the labels:
-// its label, then the agent type, the model and the effort its options name,
-// with a dash for one they do not name.
+// How each workflow agent of the run on FIXED_ARGS runs, in the order of the
+// labels: its label, then the agent type, the model and the effort its
+// options name, with a dash for one they do not name.
 const AGENTS_OF_FIXED_RUN = [
   'completeness delegator:reader opus high',
   'gather-repo:Q1 delegator:reader - -',
@@ -35,8 +35,8 @@ const AGENTS_OF_FIXED_RUN = [
 const RETURN_RULE =
   '- Return through the structured output alone: it is the one form of return here, in place of any other your rules name.';
 
-// The label of one agent of each stage that runs as a definition, in the run
-// on FIXED_ARGS.
+// The label of one workflow agent of each stage that runs as a definition, in
+// the run on FIXED_ARGS.
 const DEFINITION_AGENT_LABELS = [
   'scope',
   'gather-repo:Q1',
@@ -48,7 +48,7 @@ const DEFINITION_AGENT_LABELS = [
 ] as const;
 
 // Those of them whose prompt holds the return rule before its last rule; the
-// prompt of the web gatherer holds two rules after it.
+// prompt of the web gather agent holds two rules after it.
 const RULE_BEFORE_LAST_LABELS = DEFINITION_AGENT_LABELS.filter(
   (label) => label !== 'gather-web:Q4',
 );
@@ -64,7 +64,10 @@ test('holds the approved meta', async () => {
       'When the person asks for a deep dive before a plan is written. Pass args as an object: task (the task in the person\'s words), directory (the plan\'s directory, .yapus/plans/<YYYY-MM>/<topic>, under the month that already holds the topic or else the current month, UTC), and optionally questions (a list the research must answer), paths (repository paths to start from) and lanes (a list: ["repository"], ["web"] or ["repository", "web"]; both lanes when absent).',
     phases: [
       { title: 'Scope', detail: '3 to 12 questions, each for the repository or the web' },
-      { title: 'Gather', detail: 'one agent per question returns claims with their sources' },
+      {
+        title: 'Gather',
+        detail: 'one gather agent per question returns claims with their sources',
+      },
       { title: 'Verify', detail: 'each claim checked against the lines or the page it cites' },
       { title: 'Completeness', detail: 'unread areas and unanswered questions' },
       { title: 'Synthesize', detail: 'research_<digest>.md written beside the plan' },
@@ -84,7 +87,7 @@ test('names no model and no effort after the stage table', () => {
   assert.doesNotMatch(readStageTable().afterTable, MODEL_OR_EFFORT);
 });
 
-test('launches every agent with the agent type, model and effort of its stage', async () => {
+test('gives each workflow agent the agent type, model and effort of its stage', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.deepEqual(run.calls.map(describeAgent).toSorted(), AGENTS_OF_FIXED_RUN);
@@ -98,7 +101,7 @@ test('denies tools by name to the synthesize agent alone', async () => {
   assert.deepEqual(denyingCalls.map((call) => call.options.label), ['synthesize']);
 });
 
-test('gives every agent that runs as a definition the return rule once', async () => {
+test('gives every workflow agent that runs as a definition the return rule once', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.deepEqual(

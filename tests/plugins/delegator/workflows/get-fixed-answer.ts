@@ -5,8 +5,8 @@ const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 
 export const SCRIPT_PATH = join(ROOT, 'plugins', 'delegator', 'workflows', 'deep-dive.js');
 
-// What the runtime gives a script for an agent that was skipped or died; the
-// lint refuses the literal.
+// What the runtime gives a script for a workflow agent that was skipped or
+// died; the lint refuses the literal.
 export const JSON_NULL: unknown = JSON.parse('null');
 
 // The input of the run whose prompts and lines the tests write out whole.
@@ -33,10 +33,11 @@ export const MIXED_PATHS = [
   'a..b/x.ts',
 ] as const;
 
-// What each agent of the run on FIXED_ARGS returns, by its label. The
-// gatherer of the third question has no answer; the claims come out as one
-// verified, one refuted and one undecided for the repository, and for the
-// web one verified by two votes and one by the third; the file is written.
+// What each workflow agent of the run on FIXED_ARGS returns, by its label.
+// The gather agent of the third question has no answer; the claims come out
+// as one verified, one refuted and one undecided for the repository, and for
+// the web one verified by two votes and one by the third; the file is
+// written.
 const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['scope', {
     questions: [
@@ -139,8 +140,8 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['synthesize', { outcome: 'written', detail: '' }],
 ]);
 
-// The stand-in for the agents of a deep-dive run on FIXED_ARGS: the answer of
-// a call by its label, and JSON null for a label that has none.
+// The stand-in for the workflow agents of a deep-dive run on FIXED_ARGS: the
+// answer of a call by its label, and JSON null for a label that has none.
 export function getFixedAnswer(call: AgentCall): unknown {
   return FIXED_ANSWERS.get(String(call.options.label)) ?? JSON_NULL;
 }

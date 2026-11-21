@@ -8,7 +8,7 @@
 
 ## ORCH-4. Give subagents that run at the same time disjoint files and name those files in each brief; touch none of them until its task returns, launch no other writer into a working tree while a delegator:finisher runs in it, and run checks only after every writer has finished, with the check naming the state it verified.
 
-## ORCH-5. Write each brief self-contained: the goal, the constraints, the acceptance criteria and the oracle command, or for a finisher the plan file, the slice and the prompt log's path when you have it; never forward the conversation's history, and leave the return's shape to the agent's definition and the return cap.
+## ORCH-5. Write each brief self-contained: the goal, the constraints, the acceptance criteria and the oracle command, or for a finisher the plan file, the slice and the prompt log's path when you have it; never forward the conversation's history, and leave the return's shape to the agent definition and the return cap.
 
 ## ORCH-6. When a launch is refused, do not pull the work into this session unless it fits quick, and never split it into smaller launches to get past the refusal; tell the person what was refused and why, and leave raising the budget or changing the plan to them.
 

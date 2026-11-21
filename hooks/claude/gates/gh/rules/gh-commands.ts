@@ -118,7 +118,7 @@ export const ghCommands = {
   maxBodyBytes: 65_536,
   readerReasons: {
     unknownOption: (command: string, shown: string): string =>
-      `\`${ command } ${ shown }\` is not an option this check knows; remove it, or a person `
+      `\`${ command } ${ shown }\` is not an option this check knows; remove it, or the person `
       + 'runs the command',
     missingValue: (command: string, shown: string): string =>
       `\`${ command } ${ shown }\` has no value; write the value after the option`,

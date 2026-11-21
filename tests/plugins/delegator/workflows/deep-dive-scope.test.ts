@@ -37,7 +37,7 @@ const SCOPE_PROMPT = [
   '- Return 3 to 12 questions by the size of the task: 3 for a change inside one module, 12 for one that crosses the repository.',
   "- Keep every question the person asked, in the person's words.",
   '- Give each question one lane: repository for what the files of this repository answer, web for external facts such as library behavior, vendor documentation or published reports. Use only the lanes listed above.',
-  '- Bound each question so one agent answers it in one launch: name the module, the behavior or the external subject it covers, and let no two questions overlap.',
+  '- Bound each question so one workflow agent answers it in one launch: name the module, the behavior or the external subject it covers, and let no two questions overlap.',
   '- For a repository question, name the paths to start from when you know them.',
   '- Return through the structured output alone: it is the one form of return here, in place of any other your rules name.',
   "- Look at the repository's layout before you split; change no file.",

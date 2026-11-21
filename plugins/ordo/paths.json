@@ -1,9 +1,13 @@
 {
   "map": {
+    "README.md": null,
+    "hooks/**": null,
     "hooks/git/commit-msg": null,
     "hooks/git/forward": null,
     "hooks/git/reference-transaction": null,
     "hooks/shared/catalogs/scopes.json": null,
+    "plugins/**": null,
+    "tests/**": null,
     "tests/repository/**": null
   },
   "keep": [

@@ -104,10 +104,10 @@ test('reads rework after builder from the rework counts', () => {
   assert.deepEqual([finding?.value, finding?.state], ['10 of 40, 25 percent', 'ok']);
 });
 
-test('names every roster agent never launched, acting only after 30 sessions', () => {
-  const unused = getFindings(MEASURED).filter((finding) => finding.rule === 'unused agent');
+test('names every agent type of the roster never launched, acting only after 30 sessions', () => {
+  const unused = getFindings(MEASURED).filter((finding) => finding.rule === 'unused agent type');
   const early = getFindings({ ...MEASURED, sessions: 29 })
-    .filter((finding) => finding.rule === 'unused agent');
+    .filter((finding) => finding.rule === 'unused agent type');
 
   assert.deepEqual(unused.map((finding) => finding.agent), [
     'delegator:diff-reviewer',
@@ -121,7 +121,7 @@ test('names every roster agent never launched, acting only after 30 sessions', (
   assert.deepEqual([unused[0]?.state, early[0]?.state], ['act', 'wait']);
 });
 
-test('applies the rate rules to roster agents only, not to a refused launch', () => {
+test('applies the rate rules to agent types of the roster only, not to a refused launch', () => {
   const explore = { ...BUILDER, agent: 'Explore', launches: 0, refused: 1, completed: 0,
     capped: 0, returns: 0, sentBack: 0, contractWords: 0 };
   const findings = getFindings({ ...MEASURED, stats: [explore, BUILDER] });

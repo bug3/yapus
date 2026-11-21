@@ -32,7 +32,7 @@ function stop(outcome: Outcome): never {
   process.exit(write(outcome));
 }
 
-// Exit 2 after a tool call stops nothing; it shows Claude the reason on
+// Exit 2 after a tool call stops nothing; it shows the agent the reason on
 // stderr. writeSync, because process.exit can drop a pending write to a pipe.
 function write(outcome: Outcome): 0 | 2 {
   switch (outcome.kind) {

@@ -9,7 +9,7 @@ export interface Resume {
 }
 
 // 'none' is a message that resumed nothing. A resume carries resumedAgentId;
-// a message queued to a running agent does not.
+// a message queued to a running subagent does not.
 export type Parsed =
   | { readonly kind: 'resume'; readonly resume: Resume }
   | { readonly kind: 'none' }

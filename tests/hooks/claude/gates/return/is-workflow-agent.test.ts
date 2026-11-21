@@ -11,23 +11,23 @@ test('tells a workflow agent by the field of the meta file beside its transcript
   assert.equal(isWorkflowAgent(makeTranscriptPath(t, meta)), true);
 });
 
-test('reads a meta file without the field as that of a session subagent', (t) => {
+test('reads a meta file without the field as that of no workflow agent', (t) => {
   assert.equal(isWorkflowAgent(makeTranscriptPath(t, '{"agentType":"delegator:reader"}')), false);
 });
 
-test('reads a field that is not true as that of a session subagent', (t) => {
+test('reads a field that is not true as that of no workflow agent', (t) => {
   assert.equal(isWorkflowAgent(makeTranscriptPath(t, '{"inWorkflowRun":"true"}')), false);
 });
 
-test('reads a meta file that is not JSON as that of a session subagent', (t) => {
+test('reads a meta file that is not JSON as that of no workflow agent', (t) => {
   assert.equal(isWorkflowAgent(makeTranscriptPath(t, '{"inWorkflowRun":true')), false);
 });
 
-test('reads a meta file that holds no JSON object as that of a session subagent', (t) => {
+test('reads a meta file that holds no JSON object as that of no workflow agent', (t) => {
   assert.equal(isWorkflowAgent(makeTranscriptPath(t, 'null')), false);
 });
 
-test('reads a transcript with no meta file as that of a session subagent', (t) => {
+test('reads a transcript with no meta file as that of no workflow agent', (t) => {
   assert.equal(isWorkflowAgent(join(makeTempDir(t), 'agent-a1.jsonl')), false);
 });
 

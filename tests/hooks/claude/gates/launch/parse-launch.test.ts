@@ -8,7 +8,7 @@ const MAIN_CALL = {
   tool_input: { subagent_type: 'delegator:reader', description: '[deep] Find x', prompt: 'p' },
 };
 
-test('reads a launch from the main session', () => {
+test('reads a launch by the main agent', () => {
   assert.deepEqual(parseLaunch(JSON.stringify(MAIN_CALL)), {
     kind: 'launch',
     launch: {

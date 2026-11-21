@@ -100,7 +100,7 @@ function findLogMove(projectRoot: string, entry: Dirent): Found {
     return leave(from, session.detail);
   }
 
-  // A session resumed across the plugin's update logged a prompt in the
+  // A session resumed across the plugin's update had a prompt logged in the
   // present layout before the upgrade ran; two logs are never merged.
   if (session.kind === 'file') {
     const present = relative(stateDirectory, session.path);

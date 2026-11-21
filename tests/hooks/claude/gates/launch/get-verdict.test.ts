@@ -59,7 +59,7 @@ test('denies a nested launch, logs why and leaves the budget alone', (t) => {
 
   assert.deepEqual(getVerdict({ stdinText: nested, dataDir, time: 't' }), {
     kind: 'deny',
-    detail: 'a subagent launches no agents; return the work to your caller',
+    detail: 'a subagent launches no subagent; return the work to your launcher',
   });
   assert.equal(existsSync(join(dataDir, 'launches')), false);
   assert.match(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /"allowed":false/);
@@ -82,7 +82,7 @@ test('logs the caller id of an allowed nested launch', (t) => {
   assert.match(readFileSync(join(dataDir, 'decisions.jsonl'), 'utf8'), /"allowed":true.*"callerId":"a1"/);
 });
 
-test('logs a launch from the main session without a caller id', (t) => {
+test('logs a launch by the main agent without a caller id', (t) => {
   const dataDir = makeTempDir(t);
 
   getVerdict({ stdinText: CALL, dataDir, time: 't' });

@@ -8,7 +8,7 @@ import { readLabels, type Label } from './read-labels.ts';
 const CATALOGS = join(import.meta.dirname, '..', 'catalogs');
 const GH_TIMEOUT_MS = 30_000;
 
-// A person runs it: `node hooks/shared/labels/sync-labels.ts`, in the repository
+// The person runs it: `node hooks/shared/labels/sync-labels.ts`, in the repository
 // whose labels it makes. It creates or updates every catalog label with gh and
 // stops at the first failure. Importing the module runs nothing: the tests that
 // import every module must not call gh.

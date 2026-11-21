@@ -172,7 +172,7 @@ test('counts a finisher once however many of its reviewers send it back', () => 
   assert.deepEqual(rework, { builders: 0, reworked: 0, finishers: 1, reworkedFinishers: 1 });
 });
 
-test('lands a return without a caller on the builder even after a finisher completed', () => {
+test('lands a return of a launch by the main agent on the builder, not the finisher', () => {
   const rework = getRework([
     { ...END, time: 't1' },
     FINISHER,
@@ -196,7 +196,7 @@ test('lands a return that reaches no launch row on the builder as before', () =>
   assert.deepEqual(rework, { builders: 1, reworked: 1, finishers: 1, reworkedFinishers: 0 });
 });
 
-test('lands a return whose caller matches no completion on nothing', () => {
+test('lands a return whose launcher matches no completion on nothing', () => {
   const rework = getRework([
     { ...END, time: 't1' },
     { ...NESTED_LAUNCH, callerId: 'x' },
@@ -207,7 +207,7 @@ test('lands a return whose caller matches no completion on nothing', () => {
   assert.deepEqual(rework, { builders: 1, reworked: 0, finishers: 0, reworkedFinishers: 0 });
 });
 
-test('lands a return whose caller is a builder on nothing', () => {
+test('lands a return whose launcher is a builder on nothing', () => {
   const rework = getRework([
     { ...END, time: 't1' },
     { ...NESTED_LAUNCH, callerId: 'a' },

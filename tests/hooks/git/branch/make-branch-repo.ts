@@ -8,7 +8,7 @@ import { getGitEnv, runGit } from '../../../helpers/run-git.ts';
 const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', 'hooks', 'git');
 const SUBPROCESS_TIMEOUT_MS = 60000;
 const AGENT: NodeJS.ProcessEnv = { CLAUDECODE: '1' };
-const PERSON: NodeJS.ProcessEnv = {};
+const HUMAN: NodeJS.ProcessEnv = {};
 
 // A repository on main with no commit and the hooks of this repository as its
 // hooks.
@@ -42,13 +42,13 @@ export function runAgentGit(
   return runHookedGit(t, { repository, args, who: AGENT });
 }
 
-// A real git command through the hooks, as a person.
-export function runPersonGit(
+// A real git command through the hooks, as a human.
+export function runHumanGit(
   t: TestContext,
   repository: string,
   args: readonly string[],
 ): SpawnSyncReturns<string> {
-  return runHookedGit(t, { repository, args, who: PERSON });
+  return runHookedGit(t, { repository, args, who: HUMAN });
 }
 
 // Whether the ref exists in the repository.

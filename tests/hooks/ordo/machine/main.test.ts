@@ -11,7 +11,7 @@ import { makeEnv, runInstall, spawnInstall } from './run-install.ts';
 
 const PLUGIN = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'ordo');
 
-test('writes 15 rendered rule files and the version stamp', (t) => {
+test('writes 16 rendered rule files and the version stamp', (t) => {
   const { home, installRun } = runInstall(t, 'machine');
   const rules = join(home, '.claude', 'rules', 'yapus', 'ordo');
   const manifest: unknown = JSON.parse(
@@ -19,7 +19,7 @@ test('writes 15 rendered rule files and the version stamp', (t) => {
   );
 
   assert.equal(installRun.status, 0, installRun.stderr);
-  assert.equal(readdirSync(rules).length, 15);
+  assert.equal(readdirSync(rules).length, 16);
   assert.ok(!readFileSync(join(rules, 'principles.md'), 'utf8').startsWith('---'));
   const gitRule = readFileSync(join(rules, 'git.md'), 'utf8');
 
@@ -123,5 +123,5 @@ test('leaves no rule, stamp or git config when hooks fail, and a re-run installs
   const rerun = spawnInstall({ root, home, mode: 'machine' });
 
   assert.equal(rerun.status, 0, rerun.stderr);
-  assert.equal(readdirSync(join(home, '.claude', 'rules', 'yapus', 'ordo')).length, 15);
+  assert.equal(readdirSync(join(home, '.claude', 'rules', 'yapus', 'ordo')).length, 16);
 });

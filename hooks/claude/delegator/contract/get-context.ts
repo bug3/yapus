@@ -4,7 +4,7 @@ import { getFirstLine } from '../../../shared/get-first-line.ts';
 
 export const CONTRACT_PATH = join(import.meta.dirname, 'contract.md');
 
-// The most characters a subagent's return may carry into the main session,
+// The most characters a subagent's return may carry into the session,
 // stated to every subagent through the contract: 3000 tokens at four
 // characters a token.
 export const RETURN_CAP_CHARACTERS = 12000;

@@ -175,7 +175,7 @@ test('prints the line of a launch whose return was sent back', (t) => {
   assert.equal(getWaits(dataDir, 's1', NOW), WAITING);
 });
 
-test('prints the line of a launch when only another agent returned', (t) => {
+test('prints the line of a launch when only another subagent returned', (t) => {
   const outputFile = writeTranscript(t, [BASH_CALL]);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }, { ...RETURN, agentId: 'a9' }]);
 

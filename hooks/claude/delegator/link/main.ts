@@ -32,8 +32,8 @@ function stop(outcome: Outcome): never {
   process.exit(write(outcome));
 }
 
-// Exit 2 after a tool call stops nothing; it shows Claude the reason on
-// stderr. stdout stays empty, since it would reach the model. writeSync,
+// Exit 2 after a tool call stops nothing; it shows the agent the reason on
+// stderr. stdout stays empty, since it would reach the agent. writeSync,
 // because process.exit can drop a pending write to a pipe.
 function write(outcome: Outcome): 0 | 2 {
   switch (outcome.kind) {

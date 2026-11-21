@@ -14,15 +14,15 @@ export interface Report {
 }
 
 const AGENT_HEAD: readonly string[] = [
-  'agent', 'launches', 'refused', 'completed', 'capped', 'no return', 'returns', 'sent back',
+  'agent type', 'launches', 'refused', 'completed', 'capped', 'no return', 'returns', 'sent back',
   'contract words', 'verdicts', 'wall median s', 'tokens median', 'tool calls median',
 ];
-const FINDING_HEAD: readonly string[] = ['rule', 'agent', 'value', 'n', 'threshold', 'state'];
+const FINDING_HEAD: readonly string[] = ['rule', 'agent type', 'value', 'n', 'threshold', 'state'];
 const REFUSAL_HEAD: readonly string[] = ['reason', 'count'];
 const MS_PER_SECOND = 1000;
 
 // The report as markdown: the record's extent, one table of counts per
-// agent, the reading rules with their state and the refusals.
+// agent type, the reading rules with their state and the refusals.
 export function formatReport(report: Report): string {
   const span = report.first === undefined
     ? ''
@@ -35,7 +35,7 @@ export function formatReport(report: Report): string {
     '',
     `Record \`${ report.path }\`: ${ extent }.`,
     '',
-    '## Agents',
+    '## Agent types',
     '',
     ...formatTable(AGENT_HEAD, report.stats.map(formatStats)),
     '',

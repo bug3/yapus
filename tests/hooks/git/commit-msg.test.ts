@@ -17,7 +17,7 @@ const NO_EDITOR = ':';
 const SCISSORS = '# ------------------------ >8 ------------------------';
 const AGENT: NodeJS.ProcessEnv = { CLAUDECODE: '1' };
 // spawnSync leaves out a variable whose value is undefined.
-const PERSON: NodeJS.ProcessEnv = { CLAUDECODE: undefined };
+const HUMAN: NodeJS.ProcessEnv = { CLAUDECODE: undefined };
 const VALID_MESSAGE = 'feat(hooks): add a check\n';
 
 interface CommitMsgRun {
@@ -28,7 +28,7 @@ interface CommitMsgRun {
 
 test('lets a commit through when its subject keeps the rule', (t) => {
   const messageRun = runCommitMsg(t, {
-    messageText: VALID_MESSAGE, editor: NO_EDITOR, who: PERSON,
+    messageText: VALID_MESSAGE, editor: NO_EDITOR, who: HUMAN,
   });
 
   assert.deepEqual([messageRun.status, messageRun.stderr], [0, '']);
@@ -58,7 +58,7 @@ test('lets a commit through that git commit -v wrote with an editor', (t) => {
     '',
   ].join('\n');
 
-  const messageRun = runCommitMsg(t, { messageText, editor: 'vi', who: PERSON });
+  const messageRun = runCommitMsg(t, { messageText, editor: 'vi', who: HUMAN });
 
   assert.deepEqual([messageRun.status, messageRun.stderr], [0, '']);
 });
@@ -80,7 +80,7 @@ test('adds the trailers to an agent message that keeps the rule', (t) => {
 
 test('leaves the message of a commit without CLAUDECODE as it is', (t) => {
   const messageRun = runCommitMsg(t, {
-    messageText: VALID_MESSAGE, editor: NO_EDITOR, who: PERSON,
+    messageText: VALID_MESSAGE, editor: NO_EDITOR, who: HUMAN,
   });
 
   assert.deepEqual(
@@ -103,7 +103,7 @@ test('passes shellcheck with no findings', () => {
 });
 
 // The hook run as git runs it: from the repository root, with the path of
-// the message file, as an agent or a person whatever runs the test; the
+// the message file, as an agent or a human whatever runs the test; the
 // message file as the hook left it.
 function runCommitMsg(t: TestContext, { messageText, editor, who }: CommitMsgRun) {
   const tempDir = makeTempDir(t);

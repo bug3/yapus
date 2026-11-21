@@ -10,7 +10,7 @@ interface Agent {
   readonly text: string;
 }
 
-test('finds nothing in a read-only agent and a writing agent within their tools', (t) => {
+test('finds nothing in a read-only and a writing agent definition within their tools', (t) => {
   const root = makeAgents(t, [
     { name: 'reader', text: makeHead('reader', 'Read, Grep, Glob') },
     { name: 'builder', text: makeHead('builder', 'Read, Edit, Write, Bash') },
@@ -30,7 +30,7 @@ test('names every missing field of a definition without a head', (t) => {
   ]);
 });
 
-test('names a launching tool anywhere and a changing tool in a read-only agent', (t) => {
+test('names any launching tool and a changing tool of a read-only agent definition', (t) => {
   const root = makeAgents(t, [
     { name: 'builder', text: makeHead('builder', 'Read, Agent') },
     { name: 'diff-reviewer', text: makeHead('diff-reviewer', 'Read, Bash') },
@@ -50,7 +50,7 @@ test('finds nothing in the finisher that lists Agent', (t) => {
   assert.deepEqual(getAgentProblems(root), []);
 });
 
-test('names Agent in an agent other than the finisher', (t) => {
+test('names Agent in an agent definition other than the finisher', (t) => {
   const root = makeAgents(t, [
     { name: 'finisher', text: makeHead('finisher', 'Read, Agent') },
     { name: 'runner', text: makeHead('runner', 'Read, Agent') },
@@ -59,7 +59,7 @@ test('names Agent in an agent other than the finisher', (t) => {
   assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/runner.md: lists Agent']);
 });
 
-test('names Bash in the plan-writer and not in another writing agent', (t) => {
+test('names Bash in the plan-writer and not in another writing agent definition', (t) => {
   const root = makeAgents(t, [
     { name: 'plan-writer', text: makeHead('plan-writer', 'Read, Write, Bash') },
     { name: 'builder', text: makeHead('builder', 'Read, Write, Bash') },
@@ -82,13 +82,13 @@ test('names a name that is not the file name', (t) => {
   assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/reader.md: name is not reader']);
 });
 
-test('names an agent with neither tools nor disallowedTools', (t) => {
+test('names an agent definition with neither tools nor disallowedTools', (t) => {
   const root = makeAgents(t, [{ name: 'builder', text: makeHeadWith('builder', []) }]);
 
   assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/builder.md: no tools']);
 });
 
-test('names an agent without tools whose disallowedTools lacks Agent', (t) => {
+test('names an agent definition without tools whose disallowedTools lacks Agent', (t) => {
   const root = makeAgents(t, [
     { name: 'builder', text: makeHeadWith('builder', ['disallowedTools: Read, Grep']) },
   ]);
@@ -98,7 +98,7 @@ test('names an agent without tools whose disallowedTools lacks Agent', (t) => {
   ]);
 });
 
-test('names the changing tools a read-only agent without tools does not disallow', (t) => {
+test('names changing tools a read-only agent definition without tools does not disallow', (t) => {
   const root = makeAgents(t, [
     {
       name: 'reader',
@@ -112,7 +112,7 @@ test('names the changing tools a read-only agent without tools does not disallow
   ]);
 });
 
-test('finds nothing in a read-only agent without tools that disallows all six', (t) => {
+test('finds nothing in a read-only agent definition without tools that disallows all six', (t) => {
   const disallowed = 'Agent, Bash, Edit, NotebookEdit, PowerShell, Write';
   const root = makeAgents(t, [
     { name: 'reader', text: makeHeadWith('reader', [`disallowedTools: ${ disallowed }`]) },
@@ -121,7 +121,7 @@ test('finds nothing in a read-only agent without tools that disallows all six', 
   assert.deepEqual(getAgentProblems(root), []);
 });
 
-test('finds nothing in a read-only agent with both lines whose tools hold no denied tool', (t) => {
+test('finds nothing in a read-only agent definition with both lines and no denied tool', (t) => {
   const root = makeAgents(t, [
     {
       name: 'reader',
@@ -132,7 +132,7 @@ test('finds nothing in a read-only agent with both lines whose tools hold no den
   assert.deepEqual(getAgentProblems(root), []);
 });
 
-test('names a changing tool a read-only agent with both lines lists and disallows', (t) => {
+test('names a changing tool a read-only agent definition both lists and disallows', (t) => {
   const root = makeAgents(t, [
     {
       name: 'reader',
@@ -149,7 +149,7 @@ test('names a scoped entry of a denied tool as written', (t) => {
   assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/reader.md: lists Bash(git *)']);
 });
 
-test('finds nothing in a writing agent that lists a scoped entry', (t) => {
+test('finds nothing in a writing agent definition that lists a scoped entry', (t) => {
   const root = makeAgents(t, [
     { name: 'builder', text: makeHead('builder', 'Read, Bash(npm test)') },
   ]);
@@ -157,7 +157,7 @@ test('finds nothing in a writing agent that lists a scoped entry', (t) => {
   assert.deepEqual(getAgentProblems(root), []);
 });
 
-test('names the tool a read-only agent without tools disallows only as a scoped entry', (t) => {
+test('names the tool a read-only agent definition without tools disallows only scoped', (t) => {
   const disallowed = 'Agent, Bash(git *), Edit, NotebookEdit, PowerShell, Write';
   const root = makeAgents(t, [
     { name: 'reader', text: makeHeadWith('reader', [`disallowedTools: ${ disallowed }`]) },
@@ -182,13 +182,13 @@ test('names a denied tool in an inline YAML list of quoted tools', (t) => {
   assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/reader.md: lists Bash']);
 });
 
-test('names an agent whose tools line holds no value', (t) => {
+test('names an agent definition whose tools line holds no value', (t) => {
   const root = makeAgents(t, [{ name: 'reader', text: makeHead('reader', '') }]);
 
   assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/reader.md: no tools']);
 });
 
-test('finds nothing in a read-only agent without tools whose quoted line disallows all', (t) => {
+test('finds nothing in a read-only agent definition without tools that quotes all six', (t) => {
   const disallowed = '"Agent, Bash, Edit, NotebookEdit, PowerShell, Write"';
   const root = makeAgents(t, [
     { name: 'reader', text: makeHeadWith('reader', [`disallowedTools: ${ disallowed }`]) },
@@ -197,7 +197,7 @@ test('finds nothing in a read-only agent without tools whose quoted line disallo
   assert.deepEqual(getAgentProblems(root), []);
 });
 
-test('names PowerShell in a read-only agent', (t) => {
+test('names PowerShell in a read-only agent definition', (t) => {
   const root = makeAgents(t, [
     { name: 'diff-reviewer', text: makeHead('diff-reviewer', 'Read, PowerShell') },
   ]);

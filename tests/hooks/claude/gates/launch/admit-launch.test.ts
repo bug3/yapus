@@ -20,7 +20,7 @@ test('refuses the launch past the default limit of 60', (t) => {
 
   assert.equal(
     admitLaunch(dataDir, 's1'),
-    'this session has launched 60 subagents and its limit is 60; the person can raise it '
+    '60 subagents were launched in this session and its limit is 60; the person can raise it '
       + 'with /delegator:agent-limit <n>',
   );
 });
@@ -32,7 +32,7 @@ test('states the count and the limit when the count is past the limit', (t) => {
 
   assert.equal(
     admitLaunch(dataDir, 's1'),
-    'this session has launched 7 subagents and its limit is 5; the person can raise it '
+    '7 subagents were launched in this session and its limit is 5; the person can raise it '
       + 'with /delegator:agent-limit <n>',
   );
 });
@@ -65,7 +65,7 @@ test('takes the session limit over the global one', (t) => {
 
   assert.equal(
     admitLaunch(dataDir, 's1'),
-    'this session has launched 5 subagents and its limit is 5; the person can raise it '
+    '5 subagents were launched in this session and its limit is 5; the person can raise it '
       + 'with /delegator:agent-limit <n>',
   );
 });

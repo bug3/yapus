@@ -20,7 +20,7 @@ test('exits 0 with no output and appends the typed prompt to the log', (t) => {
   assert.match(readFileSync(getLogPath(env), 'utf8'), ISO_LINE);
 });
 
-// A session that ran cd: the payload's cwd moved, the session's root did not.
+// A session in which cd ran: the payload's cwd moved, the session's root did not.
 test('appends the prompt under CLAUDE_PROJECT_DIR when the payload cwd differs', (t) => {
   const env = makeHookEnv(t);
   const movedDir = makeTempDir(t);

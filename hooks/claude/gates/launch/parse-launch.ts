@@ -11,7 +11,7 @@ export interface Caller {
 export interface Launch {
   readonly sessionId: string;
   // Claude Code sends agent_id only from inside a subagent; undefined for a
-  // launch from the main session.
+  // launch by the main agent.
   readonly caller: Caller | undefined;
   readonly subagentType: string;
   readonly description: string;
@@ -87,7 +87,7 @@ export function parseLaunch(stdinText: string): Parsed {
 }
 
 // A present agent_id marks the launch nested whatever its type, so a malformed
-// id cannot pass as the main session; the record keeps its text.
+// id cannot pass as a launch by the main agent; the record keeps its text.
 function getCaller(agentId: unknown, agentType: unknown): Caller {
   return { agentId: String(agentId), agentType: getString(agentType) };
 }

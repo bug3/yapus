@@ -12,9 +12,9 @@ export type Applied =
   | { readonly kind: 'failure'; readonly detail: string };
 
 // Writes the mode to the session's file, or to the global one, and returns
-// what the model needs for the mode now in force: a first line naming the
-// file and that mode with its source, then the policy for on, the off line
-// for off. A mode file that holds neither on nor off gets the policy, so
+// what the main agent needs for the mode now in force: a first line naming
+// the file and that mode with its source, then the policy for on, the off
+// line for off. A mode file that holds neither on nor off gets the policy, so
 // the rules hold. The mode is written even when the policy cannot be read.
 export function applyMode(dataDir: string, sessionId: string, change: ModeChange): Applied {
   const path = write(dataDir, sessionId, change);

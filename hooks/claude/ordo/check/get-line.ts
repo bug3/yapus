@@ -9,7 +9,8 @@ export interface State {
   readonly env: NodeJS.ProcessEnv;
 }
 
-// The one line the session should see, or undefined when all is in order.
+// The one line the main agent should see, or undefined when all is in
+// order.
 export function getLine(state: State): string | undefined {
   const { pluginVersion, stamp, home, globalHooksPath, env } = state;
   const ownHooksPath = getHooksPath(home);

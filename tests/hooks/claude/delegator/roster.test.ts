@@ -6,7 +6,7 @@ import { ROSTER } from '../../../../hooks/claude/gates/launch/get-refusal.ts';
 
 const AGENTS = join(import.meta.dirname, '..', '..', '..', '..', 'plugins', 'delegator', 'agents');
 
-test('lets launch exactly the agents the plugin defines', () => {
+test('lets launch exactly the agent types the plugin defines', () => {
   const definedAgents = readdirSync(AGENTS).map((file) => basename(file, '.md')).sort();
 
   assert.deepEqual([...ROSTER], definedAgents);

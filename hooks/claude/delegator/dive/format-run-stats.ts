@@ -2,8 +2,8 @@ import { getMedian } from '../report/get-median.ts';
 import type { AgentUsage } from './get-agent-usages.ts';
 
 const HEAD: readonly string[] = [
-  'Stage', 'Agents', 'Returned', 'Turns', 'Output tokens', 'Input tokens', 'Cache-read tokens',
-  'Median s', 'Longest s', 'Models', 'Tools',
+  'Stage', 'Workflow agents', 'Returned', 'Turns', 'Output tokens', 'Input tokens',
+  'Cache-read tokens', 'Median s', 'Longest s', 'Models', 'Tools',
 ];
 const ABSENT = '-';
 const NOT_HELD_TITLE = 'not held: ';
@@ -11,10 +11,12 @@ const MS_PER_SECOND = 1000;
 
 // The report of one workflow run as markdown: a table with one row per stage,
 // in the order the stages first appear, then one line of totals. Turns is the
-// mean per agent and the tokens are sums. The seconds of a stage come from its
-// agents that have times, and those of the run from its earliest to its latest
-// time. A stage with no times, no model or no tool call gets a dash there.
-// The calls of a tool an agent did not hold follow those of the tools held.
+// mean per workflow agent and the tokens are sums. The seconds of a stage
+// come from its workflow agents that have times, and those of the run from
+// its earliest to its latest time. A stage with no times, no model or no
+// tool call gets a dash there.
+// The calls of a tool a workflow agent did not hold follow those of the
+// tools held.
 export function formatRunStats(usages: readonly AgentUsage[]): string {
   const stages = [...new Set(usages.map((usage) => usage.stage))];
 
@@ -60,7 +62,7 @@ function formatTotal(usages: readonly AgentUsage[]): string {
     ? 0
     : (Math.max(...lasts) - Math.min(...firsts)) / MS_PER_SECOND;
 
-  return `Total: ${ String(usages.length) } agents, `
+  return `Total: ${ String(usages.length) } workflow agents, `
     + `${ String(getSum(usages.map((usage) => usage.outputTokens))) } output tokens, `
     + `${ String(getSum(usages.map((usage) => usage.inputTokens))) } input tokens, `
     + `${ String(getSum(usages.map((usage) => usage.cacheReadTokens))) } cache-read tokens, `
@@ -84,8 +86,8 @@ function formatTools(usages: readonly AgentUsage[]): string {
   return parts.length === 0 ? ABSENT : parts.join('; ');
 }
 
-// Each tool of the tallies, one tally per agent, as "<name> <calls>", in the
-// order of the names.
+// Each tool of the tallies, one tally per workflow agent, as "<name> <calls>",
+// in the order of the names.
 function getToolCounts(tallies: readonly Readonly<Record<string, number>>[]): string[] {
   const calls = tallies.flatMap((tally) => Object.entries(tally));
   const names = [...new Set(calls.map(([name]) => name))].sort();

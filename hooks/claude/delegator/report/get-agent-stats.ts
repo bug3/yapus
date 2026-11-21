@@ -93,11 +93,11 @@ function getStats(
   };
 }
 
-// The return rows an agent left when it only stopped to wait for a subagent
-// it launched in the background: at the time of the return, the agent had a
-// nested launch whose subagent had not yet returned. A nested launch reaches
-// its subagent through the end row that shares its call id; one without that
-// end row makes no return a waiting stop.
+// The return rows a subagent left when it only stopped to wait for a subagent
+// it launched in the background: at the time of the return, the subagent
+// had a nested launch whose subagent had not yet returned. A nested launch
+// reaches its subagent through the end row that shares its call id; one
+// without that end row makes no return a waiting stop.
 function getWaitingStops(rows: readonly Row[]): ReadonlySet<ReturnRow> {
   const returns = rows.filter((row): row is ReturnRow => row.hook === 'return');
   const nested = rows.flatMap((row) => getNestedLaunch(rows, row) ?? []);
