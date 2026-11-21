@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { findCall, listLabels } from './find-call.ts';
 import { FIXED_ARGS, JSON_NULL, SCRIPT_PATH, getFixedAnswer } from './get-fixed-answer.ts';
 import { runWorkflow } from './run-workflow.ts';
 import type { AgentCall, WorkflowRun } from './run-workflow.ts';
@@ -284,19 +285,6 @@ test('counts a gather answer of 9999 characters as not near the return limit', a
     stats: { gatherReturns: { count: 1, near: 0, longest: 9999 } },
   });
 });
-
-function findCall(run: WorkflowRun, label: string): AgentCall | undefined {
-  return run.calls.find((call) => call.options.label === label);
-}
-
-// The labels of the calls of the stages whose id starts with `stagePrefix`,
-// sorted, since the order of the calls of one barrier is no promise.
-function listLabels(run: WorkflowRun, stagePrefix: string): string[] {
-  return run.calls
-    .map((call) => String(call.options.label))
-    .filter((label) => label.startsWith(stagePrefix))
-    .toSorted();
-}
 
 // The run of one question the scope agent returns; its gatherer answers with
 // `gathered`, or with nothing when none is given.

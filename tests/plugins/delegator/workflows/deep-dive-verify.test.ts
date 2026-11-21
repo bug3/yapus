@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { findCall, listLabels } from './find-call.ts';
 import { FIXED_ARGS, JSON_NULL, SCRIPT_PATH, getFixedAnswer } from './get-fixed-answer.ts';
 import { runWorkflow } from './run-workflow.ts';
 import type { AgentCall, WorkflowRun } from './run-workflow.ts';
@@ -170,7 +171,7 @@ test('launches the third verifier of a web claim with the options of its stage',
 test('launches one verifier for a repository claim and two or three for a web claim', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
-  assert.deepEqual(listVerifyLabels(run), [
+  assert.deepEqual(listLabels(run, 'verify'), [
     'verify-repo:Q1.C1',
     'verify-repo:Q1.C2',
     'verify-repo:Q2.C1',
@@ -185,7 +186,7 @@ test('launches one verifier for a repository claim and two or three for a web cl
 test('launches a verifier for each of 30 claims of one repository question', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, answerByStage(THIRTY_CLAIMS_ANSWERS));
 
-  assert.equal(listVerifyLabels(run).length, 30);
+  assert.equal(listLabels(run, 'verify').length, 30);
   assert.equal(findCall(run, 'verify-repo:Q1.C30')?.options.phase, 'Verify');
   assert.equal(run.logs[1], 'Q1: 30 claims, 30 verified, 0 refuted, 0 undecided');
 });
@@ -218,21 +219,21 @@ test('verifies a web claim on two supported votes, with no third', async () => {
   const run = await runClaim('web', [SUPPORTED, SUPPORTED, UNSUPPORTED]);
 
   assert.equal(run.logs[1], 'Q1: 1 claims, 1 verified, 0 refuted, 0 undecided');
-  assert.deepEqual(listVerifyLabels(run), ['verify-web:Q1.C1.v1', 'verify-web:Q1.C1.v2']);
+  assert.deepEqual(listLabels(run, 'verify'), ['verify-web:Q1.C1.v1', 'verify-web:Q1.C1.v2']);
 });
 
 test('refutes a web claim on two unsupported votes, with no third', async () => {
   const run = await runClaim('web', [UNSUPPORTED, UNSUPPORTED, SUPPORTED]);
 
   assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 1 refuted, 0 undecided');
-  assert.deepEqual(listVerifyLabels(run), ['verify-web:Q1.C1.v1', 'verify-web:Q1.C1.v2']);
+  assert.deepEqual(listLabels(run, 'verify'), ['verify-web:Q1.C1.v1', 'verify-web:Q1.C1.v2']);
 });
 
 test('verifies a web claim whose votes differ on a supported third', async () => {
   const run = await runClaim('web', [SUPPORTED, UNSUPPORTED, SUPPORTED]);
 
   assert.equal(run.logs[1], 'Q1: 1 claims, 1 verified, 0 refuted, 0 undecided');
-  assert.deepEqual(listVerifyLabels(run), [
+  assert.deepEqual(listLabels(run, 'verify'), [
     'verify-web-third:Q1.C1.v3',
     'verify-web:Q1.C1.v1',
     'verify-web:Q1.C1.v2',
@@ -261,14 +262,14 @@ test('leaves a web claim undecided on one vote of each kind and an unopened page
   const run = await runClaim('web', [SUPPORTED, UNOPENED, UNSUPPORTED]);
 
   assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 refuted, 1 undecided');
-  assert.equal(listVerifyLabels(run).length, 3);
+  assert.equal(listLabels(run, 'verify').length, 3);
 });
 
 test('leaves a web claim undecided with no third when no vote was cast', async () => {
   const run = await runClaim('web', [JSON_NULL, UNOPENED, SUPPORTED]);
 
   assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 refuted, 1 undecided');
-  assert.deepEqual(listVerifyLabels(run), ['verify-web:Q1.C1.v1', 'verify-web:Q1.C1.v2']);
+  assert.deepEqual(listLabels(run, 'verify'), ['verify-web:Q1.C1.v1', 'verify-web:Q1.C1.v2']);
 });
 
 test('takes a verifier that rejects as no vote and logs its failure', async () => {
@@ -342,19 +343,6 @@ test('logs each launch held back under its label', async () => {
   assert.equal(heldBack.includes(`verify-web:Q12.C45.v2${ NOT_LAUNCHED }`), true);
   assert.equal(heldBack.includes(`verify-web-third:Q11.C43.v3${ NOT_LAUNCHED }`), true);
 });
-
-function findCall(run: WorkflowRun, label: string): AgentCall | undefined {
-  return run.calls.find((call) => call.options.label === label);
-}
-
-// The labels of the verifiers of a run, sorted, since the order of the calls
-// of one barrier is no promise.
-function listVerifyLabels(run: WorkflowRun): string[] {
-  return run.calls
-    .map((call) => String(call.options.label))
-    .filter((label) => label.startsWith('verify'))
-    .toSorted();
-}
 
 // The run of one question with one claim of `lane`, whose verifiers answer
 // with `verdicts` in the order of their votes; a verifier past the list
