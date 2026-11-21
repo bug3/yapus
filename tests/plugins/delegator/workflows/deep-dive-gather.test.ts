@@ -51,10 +51,6 @@ const WEB_GATHER_PROMPT = [
   '- Answer this question only; another agent answers each other question.',
 ].join('\n');
 
-// The length of {"claims":[],"notSearched":[""]}, the JSON text of a gather
-// answer whose one unsearched area has no letter.
-const BARE_ANSWER_LENGTH = 32;
-
 test('gives the gatherer of a repository question the approved prompt', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
@@ -335,7 +331,7 @@ test('counts the gather answers that came back and the longest of them', async (
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.partialDeepStrictEqual(run.returned, {
-    stats: { gatherReturns: { count: 3, near: 0, longest: 475 } },
+    stats: { gatherReturns: { count: 3, longest: 475 } },
   });
 });
 
@@ -343,54 +339,18 @@ test('counts no gather answer when no gatherer returns one', async () => {
   const run = await runQuestion({ lane: 'repository', question: 'Where is the gate?' });
 
   assert.partialDeepStrictEqual(run.returned, {
-    stats: { gatherReturns: { count: 0, near: 0, longest: 0 } },
-  });
-});
-
-test('counts a gather answer of 10000 characters as near the return limit', async () => {
-  const run = await runQuestion(
-    { lane: 'repository', question: 'Where is the gate?' },
-    makeGatherAnswer(10000),
-  );
-
-  assert.partialDeepStrictEqual(run.returned, {
-    stats: { gatherReturns: { count: 1, near: 1, longest: 10000 } },
-  });
-});
-
-test('counts a gather answer of 9999 characters as not near the return limit', async () => {
-  const run = await runQuestion(
-    { lane: 'repository', question: 'Where is the gate?' },
-    makeGatherAnswer(9999),
-  );
-
-  assert.partialDeepStrictEqual(run.returned, {
-    stats: { gatherReturns: { count: 1, near: 0, longest: 9999 } },
+    stats: { gatherReturns: { count: 0, longest: 0 } },
   });
 });
 
 // The run of one question the scope agent returns; its gatherer answers with
-// `gathered`, or with nothing when none is given.
-async function runQuestion(
-  question: unknown,
-  gathered: unknown = JSON_NULL,
-): Promise<WorkflowRun> {
-  const answers = new Map<string, unknown>([
-    ['scope', { questions: [question] }],
-    ['gather-repo:Q1', gathered],
-    ['gather-web:Q1', gathered],
-  ]);
-
+// nothing.
+async function runQuestion(question: unknown): Promise<WorkflowRun> {
   return await runWorkflow(
     SCRIPT_PATH,
     FIXED_ARGS,
-    (call) => answers.get(String(call.options.label)) ?? JSON_NULL,
+    (call) => (call.options.label === 'scope' ? { questions: [question] } : JSON_NULL),
   );
-}
-
-// A gather answer with no claim, whose JSON text has `jsonLength` characters.
-function makeGatherAnswer(jsonLength: number): unknown {
-  return { claims: [], notSearched: ['a'.repeat(jsonLength - BARE_ANSWER_LENGTH)] };
 }
 
 // The stand-in of the fixed run, but for the gatherer of its first question,

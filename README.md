@@ -94,7 +94,7 @@ Each subagent is launched as `delegator:<name>`. The launch check refuses the bu
 | `finisher` | one part of a plan: edit, oracle, review, commit |
 | `diff-reviewer` | an APPROVE or REWORK verdict on a finished diff |
 
-Every subagent receives a return contract at its start: the return opens with DONE, PARTIAL, QUESTIONS or BLOCKED and stays within 12,000 characters, about 3,000 tokens, so one return cannot flood the main session. A longer return is sent back once to be shortened and passes on the second try.
+Every subagent receives a return contract at its start: a return written as text opens with DONE, PARTIAL, QUESTIONS or BLOCKED and stays within 12,000 characters, about 3,000 tokens, so one return cannot flood the main session. A longer return is sent back once to be shortened and passes on the second try. The agents of a workflow answer a script through a structured answer, which the limit does not bind and the gate does not judge.
 
 ### Deep Work
 
@@ -113,7 +113,7 @@ Outside deep work, a change of more than 150 lines goes once to `delegator:diff-
 
 A deep dive gathers and checks the context of a task rated `deep` before its plan is written. `/delegator:deep-dive` is a workflow, a script Claude Code runs in the background with agents of its own: it splits the task into 3 to 12 questions, answers each from the repository with the `reader` definition or from the web with the `web-researcher` definition, has every claim checked against the lines or the page it cites, and has `.yapus/plans/<YYYY-MM>/<topic>/research_<digest>.md` written, a file a plan-writer is given as a source beside the hand-kept `research.md`.
 
-A claim a check refuted stays in the file under `Refuted` and one no check decided under `Unverified`, and the file ends with the run's counts per stage. The digest in the file's name is computed from the run's claims, so a run with other content writes another file, and a deep dive never writes `research.md`. The launch budget does not count the agents of a deep dive. `/delegator:dive-report <run directory>` prints their tokens, time, models and tools per stage.
+A claim a check refuted stays in the file under `Refuted` and one no check decided under `Unverified`, and the file ends with the run's counts per stage. The digest in the file's name is computed from the run's claims, so a run with other content writes another file, and a deep dive never writes `research.md`. The launch budget does not count the agents of a deep dive. `/delegator:dive-report <run directory>` prints their tokens, time, models and tools per stage, and lists apart a call of a tool an agent did not hold.
 
 ### Launch Limits
 

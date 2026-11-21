@@ -19,6 +19,7 @@ const IDLE: AgentUsage = {
   lastMs: undefined,
   models: [],
   tools: {},
+  toolsNotHeld: {},
 };
 
 test('writes the header, one row per stage and the total line', () => {
@@ -34,6 +35,7 @@ test('writes the header, one row per stage and the total line', () => {
       lastMs: 12000,
       models: ['model-a'],
       tools: { Glob: 2, Read: 5 },
+      toolsNotHeld: {},
     },
     {
       stage: 'gather-repo',
@@ -46,6 +48,7 @@ test('writes the header, one row per stage and the total line', () => {
       lastMs: 20000,
       models: ['model-b'],
       tools: { Read: 2, Grep: 1 },
+      toolsNotHeld: {},
     },
     {
       stage: 'gather-repo',
@@ -58,6 +61,7 @@ test('writes the header, one row per stage and the total line', () => {
       lastMs: 45000,
       models: ['model-b'],
       tools: { Read: 4 },
+      toolsNotHeld: {},
     },
     { ...IDLE, stage: 'gather-repo', isReturned: true },
   ]);
@@ -165,6 +169,36 @@ test('adds up the calls of each tool over a stage, in the order of the names', (
     '| scope | 2 | 0 | 0.0 | 0 | 0 | 0 | - | - | - | Bash 1, Grep 1, Read 6 |',
     '| synthesize | 1 | 0 | 0.0 | 0 | 0 | 0 | - | - | - | Write 1 |',
   ]);
+});
+
+test('writes the calls of a tool not held after those of the tools held', () => {
+  const report = formatRunStats([{ ...IDLE, tools: { Read: 1 }, toolsNotHeld: { Bash: 1 } }]);
+
+  assert.equal(
+    report.split('\n')[2],
+    '| scope | 1 | 0 | 0.0 | 0 | 0 | 0 | - | - | - | Read 1; not held: Bash 1 |',
+  );
+});
+
+test('writes the calls of a tool not held alone for a stage with no call of a tool held', () => {
+  const report = formatRunStats([{ ...IDLE, toolsNotHeld: { Bash: 1 } }]);
+
+  assert.equal(
+    report.split('\n')[2],
+    '| scope | 1 | 0 | 0.0 | 0 | 0 | 0 | - | - | - | not held: Bash 1 |',
+  );
+});
+
+test('adds up the calls of each tool not held over a stage, in the order of the names', () => {
+  const report = formatRunStats([
+    { ...IDLE, tools: { Read: 2 }, toolsNotHeld: { Write: 1, Bash: 1 } },
+    { ...IDLE, tools: { Glob: 1 }, toolsNotHeld: { Bash: 2 } },
+  ]);
+
+  assert.equal(
+    report.split('\n')[2],
+    '| scope | 2 | 0 | 0.0 | 0 | 0 | 0 | - | - | - | Glob 1, Read 2; not held: Bash 3, Write 1 |',
+  );
 });
 
 test('counts the seconds of the run from its earliest to its latest time', () => {

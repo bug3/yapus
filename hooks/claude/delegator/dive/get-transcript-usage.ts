@@ -2,6 +2,10 @@ import { isRecord } from '../../../shared/is-record.ts';
 import { getBlocks } from '../transcript/get-blocks.ts';
 import { readTranscriptLines, type TranscriptLine } from '../transcript/read-transcript-lines.ts';
 
+// What Claude Code answers a call of a tool the agent does not hold with, in
+// a tool_result that is an error: these words, then the name of the tool.
+const NOT_HELD_ANSWER = 'No such tool available: ';
+
 // What the transcript of one agent holds of its work.
 export interface TranscriptUsage {
   // The API responses, each counted once.
@@ -15,8 +19,10 @@ export interface TranscriptUsage {
   readonly lastMs: number | undefined;
   // In the order of their first response.
   readonly models: readonly string[];
-  // The tool calls, counted by the tool's name.
+  // The calls of the tools the agent held, counted by the tool's name.
   readonly tools: Readonly<Record<string, number>>;
+  // The calls of a tool the agent did not hold, counted the same way.
+  readonly toolsNotHeld: Readonly<Record<string, number>>;
 }
 
 // One API response: an assistant message with an id.
@@ -26,6 +32,13 @@ interface Response {
   readonly outputTokens: number;
   readonly inputTokens: number;
   readonly cacheReadTokens: number;
+}
+
+// One tool call: a tool_use block with a name.
+interface Call {
+  // What a tool_result names the call by.
+  readonly id: unknown;
+  readonly name: string;
 }
 
 // The usage over the text of a transcript file; zeros and no times for a
@@ -39,6 +52,8 @@ export function getTranscriptUsage(text: string): TranscriptUsage {
       .values(),
   ];
   const times = lines.flatMap(getTimes);
+  const calls = assistantLines.flatMap(getBlocks).flatMap(getCalls);
+  const errors = new Map<unknown, string>(lines.flatMap(getBlocks).flatMap(getErrors));
 
   return {
     turns: responses.length,
@@ -51,7 +66,12 @@ export function getTranscriptUsage(text: string): TranscriptUsage {
     ),
     lastMs: times.reduce<number | undefined>((latest, time) => getLater(latest, time), undefined),
     models: [...new Set(responses.flatMap(({ model }) => (model === undefined ? [] : [model])))],
-    tools: countTools(assistantLines),
+    tools: countNames(
+      calls.filter((call) => !isNotHeld(call, errors)).map(({ name }) => name),
+    ),
+    toolsNotHeld: countNames(
+      calls.filter((call) => isNotHeld(call, errors)).map(({ name }) => name),
+    ),
   };
 }
 
@@ -91,12 +111,33 @@ function getLater(latest: number | undefined, time: number): number {
   return latest === undefined ? time : Math.max(latest, time);
 }
 
-function countTools(assistantLines: readonly TranscriptLine[]): Record<string, number> {
-  return assistantLines
-    .flatMap(getBlocks)
-    .flatMap(({ type, name }) => (type === 'tool_use' && typeof name === 'string' ? [name] : []))
-    .reduce<Record<string, number>>(
-      (counts, name) => ({ ...counts, [name]: (counts[name] ?? 0) + 1 }),
-      {},
-    );
+function getCalls(block: TranscriptLine): Call[] {
+  const { type, id, name } = block;
+
+  return type === 'tool_use' && typeof name === 'string' ? [{ id, name }] : [];
+}
+
+// The id of the call the block answers and the text of the answer, when the
+// block is an answer that is an error.
+function getErrors(block: TranscriptLine): [string, string][] {
+  const { type, content, is_error: isError, tool_use_id: callId } = block;
+
+  return type === 'tool_result' && isError === true
+    && typeof callId === 'string' && typeof content === 'string'
+    ? [[callId, content]]
+    : [];
+}
+
+// Whether the error that answers the call says the agent does not hold the
+// tool of that call. An error that quotes the words for another tool is the
+// output of a tool the agent holds, such as a command that printed them.
+function isNotHeld({ id, name }: Call, errors: ReadonlyMap<unknown, string>): boolean {
+  return errors.get(id)?.includes(`${ NOT_HELD_ANSWER }${ name }`) === true;
+}
+
+function countNames(names: readonly string[]): Record<string, number> {
+  return names.reduce<Record<string, number>>(
+    (counts, name) => ({ ...counts, [name]: (counts[name] ?? 0) + 1 }),
+    {},
+  );
 }

@@ -15,7 +15,11 @@ const NO_USAGE = {
   lastMs: undefined,
   models: [],
   tools: {},
+  toolsNotHeld: {},
 };
+// The answer of Claude Code 2.1.330 to a call of Bash by an agent without it.
+const NOT_HELD_ANSWER =
+  '<tool_use_error>Error: No such tool available: Bash. Bash is not among the tools available here. Continue with the tools you have.</tool_use_error>';
 const USAGE = {
   input_tokens: 10,
   output_tokens: 5,
@@ -33,6 +37,17 @@ function makeResponse(id: string, message: Readonly<Record<string, unknown>>): u
 
 function makeToolLine(id: string, name: unknown): unknown {
   return makeResponse(id, { content: [{ type: 'tool_use', id: 't1', name }] });
+}
+
+function makeCallLine(callId: string, name: string): unknown {
+  return makeResponse(`m-${ callId }`, { content: [{ type: 'tool_use', id: callId, name }] });
+}
+
+function makeAnswerLine(callId: string, fields: Readonly<Record<string, unknown>>): unknown {
+  return {
+    type: 'user',
+    message: { content: [{ type: 'tool_result', tool_use_id: callId, ...fields }] },
+  };
 }
 
 test('counts the turns, tokens, times, models and tools of a transcript', () => {
@@ -69,6 +84,7 @@ test('counts the turns, tokens, times, models and tools of a transcript', () => 
     lastMs: MIDNIGHT_MS + 12500,
     models: ['model-a', 'model-b'],
     tools: { Read: 1 },
+    toolsNotHeld: {},
   });
 });
 
@@ -92,6 +108,53 @@ test('counts the tool calls of every line of one response, by name', () => {
   );
 
   assert.deepEqual(getTranscriptUsage(text).tools, { Read: 2, Grep: 1 });
+});
+
+test('counts a call answered with no such tool apart from the call of a tool that ran', () => {
+  const usage = getTranscriptUsage(toText(
+    makeCallLine('t1', 'Bash'),
+    makeAnswerLine('t1', { is_error: true, content: NOT_HELD_ANSWER }),
+    makeCallLine('t2', 'Read'),
+    makeAnswerLine('t2', { content: 'the text of a file' }),
+  ));
+
+  assert.deepEqual([usage.tools, usage.toolsNotHeld], [{ Read: 1 }, { Bash: 1 }]);
+});
+
+test('counts a call answered with another error as a tool held', () => {
+  const usage = getTranscriptUsage(toText(
+    makeCallLine('t1', 'Read'),
+    makeAnswerLine('t1', { is_error: true, content: 'File does not exist.' }),
+  ));
+
+  assert.deepEqual([usage.tools, usage.toolsNotHeld], [{ Read: 1 }, {}]);
+});
+
+test('counts a call whose answer is no error and quotes the words as a tool held', () => {
+  const usage = getTranscriptUsage(toText(
+    makeCallLine('t1', 'Bash'),
+    makeAnswerLine('t1', { content: NOT_HELD_ANSWER }),
+  ));
+
+  assert.deepEqual([usage.tools, usage.toolsNotHeld], [{ Bash: 1 }, {}]);
+});
+
+test('counts a call that failed with an output quoting the words of another tool as held', () => {
+  const usage = getTranscriptUsage(toText(
+    makeCallLine('t1', 'Bash'),
+    makeAnswerLine('t1', {
+      is_error: true,
+      content: 'Exit code 1\nError: No such tool available: Read. Read is not among the tools',
+    }),
+  ));
+
+  assert.deepEqual([usage.tools, usage.toolsNotHeld], [{ Bash: 1 }, {}]);
+});
+
+test('counts a call with no answer as a tool held', () => {
+  const usage = getTranscriptUsage(toText(makeCallLine('t1', 'Bash')));
+
+  assert.deepEqual([usage.tools, usage.toolsNotHeld], [{ Bash: 1 }, {}]);
 });
 
 test('counts no tool call without a name', () => {

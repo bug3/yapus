@@ -6,6 +6,7 @@ const HEAD: readonly string[] = [
   'Median s', 'Longest s', 'Models', 'Tools',
 ];
 const ABSENT = '-';
+const NOT_HELD_TITLE = 'not held: ';
 const MS_PER_SECOND = 1000;
 
 // The report of one workflow run as markdown: a table with one row per stage,
@@ -13,6 +14,7 @@ const MS_PER_SECOND = 1000;
 // mean per agent and the tokens are sums. The seconds of a stage come from its
 // agents that have times, and those of the run from its earliest to its latest
 // time. A stage with no times, no model or no tool call gets a dash there.
+// The calls of a tool an agent did not hold follow those of the tools held.
 export function formatRunStats(usages: readonly AgentUsage[]): string {
   const stages = [...new Set(usages.map((usage) => usage.stage))];
 
@@ -46,7 +48,7 @@ function getStageCells(stage: string, usages: readonly AgentUsage[]): string[] {
     formatSeconds(getMedian(seconds)),
     formatSeconds(seconds.length === 0 ? undefined : Math.max(...seconds)),
     formatList([...new Set(usages.flatMap((usage) => usage.models))].sort()),
-    formatList(getToolCounts(usages)),
+    formatTools(usages),
   ];
 }
 
@@ -71,9 +73,21 @@ function getSeconds(usage: AgentUsage): number[] {
   return firstMs === undefined || lastMs === undefined ? [] : [(lastMs - firstMs) / MS_PER_SECOND];
 }
 
-// Each tool the agents called as "<name> <calls>", in the order of the names.
-function getToolCounts(usages: readonly AgentUsage[]): string[] {
-  const calls = usages.flatMap((usage) => Object.entries(usage.tools));
+function formatTools(usages: readonly AgentUsage[]): string {
+  const held = getToolCounts(usages.map((usage) => usage.tools));
+  const notHeld = getToolCounts(usages.map((usage) => usage.toolsNotHeld));
+  const parts = [
+    ...(held.length === 0 ? [] : [held.join(', ')]),
+    ...(notHeld.length === 0 ? [] : [`${ NOT_HELD_TITLE }${ notHeld.join(', ') }`]),
+  ];
+
+  return parts.length === 0 ? ABSENT : parts.join('; ');
+}
+
+// Each tool of the tallies, one tally per agent, as "<name> <calls>", in the
+// order of the names.
+function getToolCounts(tallies: readonly Readonly<Record<string, number>>[]): string[] {
+  const calls = tallies.flatMap((tally) => Object.entries(tally));
   const names = [...new Set(calls.map(([name]) => name))].sort();
 
   return names.map((name) => {

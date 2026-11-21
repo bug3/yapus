@@ -39,6 +39,16 @@ const REPORT = [
   'Total: 4 agents, 13 output tokens, 114 input tokens, 212 cache-read tokens, 40 s from first to last',
   '',
 ].join('\n');
+// One agent that called Bash, a tool it does not hold, and Read, which ran.
+const NOT_HELD_JOURNAL =
+  '{"type":"started","agentId":"a1","label":"gather-repo:Q1","phase":"Gather"}\n';
+const NOT_HELD_TRANSCRIPT = [
+  '{"type":"assistant","message":{"id":"m1","content":[{"type":"tool_use","id":"t1","name":"Bash"}]}}',
+  '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t1","is_error":true,"content":"<tool_use_error>Error: No such tool available: Bash. Bash is not among the tools available here. Continue with the tools you have.</tool_use_error>"}]}}',
+  '{"type":"assistant","message":{"id":"m2","content":[{"type":"tool_use","id":"t2","name":"Read"}]}}',
+  '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"t2","content":"the text of a file"}]}}',
+  '',
+].join('\n');
 const USAGE_LINE =
   'yapus delegator dive: usage: delegator dive <run directory>; give the directory of one workflow run and nothing else\n';
 
@@ -59,6 +69,18 @@ test('exits 0 and prints the report of the run directory', (t) => {
 
   assert.deepEqual([run.status, run.stderr], [0, '']);
   assert.equal(run.stdout, REPORT);
+});
+
+test('prints a call of a tool the agent did not hold after the tool it held', (t) => {
+  const runDirectory = makeTempDir(t);
+
+  writeFileSync(join(runDirectory, 'journal.jsonl'), NOT_HELD_JOURNAL);
+  writeFileSync(join(runDirectory, 'agent-a1.jsonl'), NOT_HELD_TRANSCRIPT);
+
+  assert.equal(
+    runDive([runDirectory]).stdout.split('\n')[2],
+    '| gather-repo | 1 | 0 | 2.0 | 0 | 0 | 0 | - | - | - | Read 1; not held: Bash 1 |',
+  );
 });
 
 test('runs through run.sh', (t) => {
