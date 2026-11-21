@@ -5,7 +5,7 @@ import { getRefusal, STAND_INS } from '../../../../../hooks/claude/gates/launch/
 const ROSTER_LIST = 'delegator:builder, delegator:diff-reviewer, delegator:finisher, '
   + 'delegator:mcp-operator, delegator:plan-reviewer, delegator:plan-writer, delegator:reader, '
   + 'delegator:runner, delegator:web-researcher';
-const OFF_ROSTER = ['claude-code-guide', 'other-plugin:agent', 'db-migrator'];
+const OFF_ROSTER = ['claude-code-guide', 'other-plugin:agent', 'db-migrator', 'fork'];
 const LAUNCH = {
   sessionId: 's',
   caller: undefined,
@@ -120,7 +120,6 @@ test('refuses each stand-in type and names the roster', () => {
   assert.deepEqual(refusals, [
     `claude stands in for the roster; launch one of ${ ROSTER_LIST }`,
     `Explore stands in for the roster; launch one of ${ ROSTER_LIST }`,
-    `fork stands in for the roster; launch one of ${ ROSTER_LIST }`,
     `general-purpose stands in for the roster; launch one of ${ ROSTER_LIST }`,
     `Plan stands in for the roster; launch one of ${ ROSTER_LIST }`,
   ]);
