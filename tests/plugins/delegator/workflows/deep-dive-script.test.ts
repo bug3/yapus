@@ -8,7 +8,8 @@ import type { AgentCall, WorkflowRun } from './run-workflow.ts';
 
 const STAGE_TABLE_FIRST_LINE = '\nconst STAGES = {\n';
 const STAGE_TABLE_LAST_LINE = '\n};\n';
-const MODEL_OR_EFFORT = /(['"`])(?:opus|sonnet|haiku|low|medium|high)\1/u;
+// Every model and every effort the workflow runtime takes, as a quoted name.
+const MODEL_OR_EFFORT = /(['"`])(?:haiku|sonnet|opus|fable|low|medium|high|xhigh|max)\1/u;
 
 // How each agent of the run on FIXED_ARGS runs, in the order of the labels:
 // its label, then the agent type, the model and the effort its options name,
