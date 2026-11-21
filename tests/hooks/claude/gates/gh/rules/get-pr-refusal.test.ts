@@ -389,7 +389,7 @@ test('refuses a title that git writes for a merge', (t) => {
 test('refuses an option it does not know', (t) => {
   assert.equal(
     getPrRefusal(words('--nope'), bodyDir(t), CATALOGS),
-    '`gh pr create --nope` is not an option this check knows; remove it, or a person runs '
+    '`gh pr create --nope` is not an option this check knows; remove it, or the person runs '
     + 'the command',
   );
 });
