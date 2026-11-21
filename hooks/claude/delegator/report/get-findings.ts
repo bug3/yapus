@@ -54,7 +54,7 @@ const RATE_RULES: readonly RateRule[] = [
     rule: 'sent-back rate',
     getCounts: (stats) => [stats.sentBack, stats.returns],
     isOver: (percent) => percent > 50,
-    threshold: `over 50 percent at n ${ String(MIN_SAMPLE) }: a cap per agent or a shorter `
+    threshold: `over 50 percent at n ${ String(MIN_SAMPLE) }: a cap per agent type or a shorter `
       + 'return form',
   },
   {
@@ -143,7 +143,7 @@ function getUnusedFindings(measured: Measured): Finding[] {
   return ROSTER_AGENTS
     .filter((agent) => !launched.has(agent))
     .map((agent) => ({
-      rule: 'unused agent',
+      rule: 'unused agent type',
       agent,
       value: `0 launches in ${ String(measured.sessions) } sessions`,
       n: measured.sessions,

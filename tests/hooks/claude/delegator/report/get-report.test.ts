@@ -30,6 +30,6 @@ test('reports the extent, the agent types, the rules and the refusals of a recor
     markdown,
     /\n\| delegator:runner \| 1 \| 0 \| 1 \| 0 \| 0 \| 1 \| 0 \| 1 \| {2}\| 1 \| - \| - \|\n/u,
   );
-  assert.match(markdown, /\n\| unused agent \| delegator:builder \| 0 launches in 2 sessions \| 2 \| /u);
+  assert.match(markdown, /\n\| unused agent type \| delegator:builder \| 0 launches in 2 sessions \| 2 \| /u);
   assert.match(markdown, /\n\| start the description with the depth in brackets \| 1 \|\n$/u);
 });

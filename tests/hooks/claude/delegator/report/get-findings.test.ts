@@ -105,9 +105,9 @@ test('reads rework after builder from the rework counts', () => {
 });
 
 test('names every agent type of the roster never launched, acting only after 30 sessions', () => {
-  const unused = getFindings(MEASURED).filter((finding) => finding.rule === 'unused agent');
+  const unused = getFindings(MEASURED).filter((finding) => finding.rule === 'unused agent type');
   const early = getFindings({ ...MEASURED, sessions: 29 })
-    .filter((finding) => finding.rule === 'unused agent');
+    .filter((finding) => finding.rule === 'unused agent type');
 
   assert.deepEqual(unused.map((finding) => finding.agent), [
     'delegator:diff-reviewer',
