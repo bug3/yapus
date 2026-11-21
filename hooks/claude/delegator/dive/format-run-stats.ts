@@ -2,8 +2,8 @@ import { getMedian } from '../report/get-median.ts';
 import type { AgentUsage } from './get-agent-usages.ts';
 
 const HEAD: readonly string[] = [
-  'Stage', 'Agents', 'Returned', 'Turns', 'Output tokens', 'Input tokens', 'Cache-read tokens',
-  'Median s', 'Longest s', 'Models', 'Tools',
+  'Stage', 'Workflow agents', 'Returned', 'Turns', 'Output tokens', 'Input tokens',
+  'Cache-read tokens', 'Median s', 'Longest s', 'Models', 'Tools',
 ];
 const ABSENT = '-';
 const NOT_HELD_TITLE = 'not held: ';
@@ -62,7 +62,7 @@ function formatTotal(usages: readonly AgentUsage[]): string {
     ? 0
     : (Math.max(...lasts) - Math.min(...firsts)) / MS_PER_SECOND;
 
-  return `Total: ${ String(usages.length) } agents, `
+  return `Total: ${ String(usages.length) } workflow agents, `
     + `${ String(getSum(usages.map((usage) => usage.outputTokens))) } output tokens, `
     + `${ String(getSum(usages.map((usage) => usage.inputTokens))) } input tokens, `
     + `${ String(getSum(usages.map((usage) => usage.cacheReadTokens))) } cache-read tokens, `

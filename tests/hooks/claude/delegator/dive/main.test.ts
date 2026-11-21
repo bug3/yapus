@@ -31,12 +31,12 @@ const GATHER_TRANSCRIPT = [
   '',
 ].join('\n');
 const REPORT = [
-  '| Stage | Agents | Returned | Turns | Output tokens | Input tokens | Cache-read tokens | Median s | Longest s | Models | Tools |',
+  '| Stage | Workflow agents | Returned | Turns | Output tokens | Input tokens | Cache-read tokens | Median s | Longest s | Models | Tools |',
   '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |',
   '| scope | 1 | 1 | 1.0 | 5 | 110 | 200 | 3 | 3 | model-a | Glob 1 |',
   '| gather-repo | 3 | 2 | 1.3 | 8 | 4 | 12 | 30 | 30 | model-b | Grep 2, Read 2 |',
   '',
-  'Total: 4 agents, 13 output tokens, 114 input tokens, 212 cache-read tokens, 40 s from first to last',
+  'Total: 4 workflow agents, 13 output tokens, 114 input tokens, 212 cache-read tokens, 40 s from first to last',
   '',
 ].join('\n');
 // One workflow agent that called Bash, a tool it does not hold, and Read,
