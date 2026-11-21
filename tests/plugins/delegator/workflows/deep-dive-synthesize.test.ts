@@ -152,6 +152,8 @@ const SYNTHESIZE_PROMPT = [
   "- Return written when the file is written, or failed with the tool's answer when it is not.",
 ].join('\n');
 const SYNTHESIZE_ERROR = 'deep-dive: no research file was written; resume the run with its run id';
+const WRITE_ERROR =
+  'deep-dive: the research file was not written: The tool refused the path.; write the returned content to the returned researchPath';
 
 // What the run on FIXED_ARGS counts before its last agent is launched.
 const LANE_COUNTS = {
@@ -422,11 +424,13 @@ test('logs the path of the file after the synthesize agent wrote it', async () =
   assert.equal(run.logs.at(-1), `wrote ${ RESEARCH_PATH }`);
 });
 
-test('returns the synthesize error with the counts when no answer comes back', async () => {
+test('returns the resume error, the path and the content when no answer comes back', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, answerFixedBut('synthesize', JSON_NULL));
 
   assert.deepEqual(run.returned, {
     error: SYNTHESIZE_ERROR,
+    researchPath: RESEARCH_PATH,
+    content: CONTENT,
     stats: {
       ...LANE_COUNTS,
       stages: Object.fromEntries([
@@ -437,13 +441,15 @@ test('returns the synthesize error with the counts when no answer comes back', a
   });
 });
 
-test('returns the synthesize error with the counts when the agent answers failed', async () => {
+test('returns the write error, the path and the content when the answer is failed', async () => {
   const failed = { outcome: 'failed', detail: 'The tool refused the path.' };
 
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, answerFixedBut('synthesize', failed));
 
   assert.deepEqual(run.returned, {
-    error: SYNTHESIZE_ERROR,
+    error: WRITE_ERROR,
+    researchPath: RESEARCH_PATH,
+    content: CONTENT,
     stats: {
       ...LANE_COUNTS,
       stages: Object.fromEntries([
@@ -451,6 +457,17 @@ test('returns the synthesize error with the counts when the agent answers failed
         ['synthesize', { launched: 1, returned: 1 }],
       ]),
     },
+  });
+});
+
+test('puts the answer of a failed synthesize agent on one line of the write error', async () => {
+  const failed = { outcome: 'failed', detail: 'The tool refused the path:\n  no permission.' };
+
+  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, answerFixedBut('synthesize', failed));
+
+  assert.partialDeepStrictEqual(run.returned, {
+    error:
+      'deep-dive: the research file was not written: The tool refused the path: no permission.; write the returned content to the returned researchPath',
   });
 });
 
