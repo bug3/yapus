@@ -1,5 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { isRecord } from '../../../shared/is-record.ts';
+import { getBlocks } from '../../delegator/transcript/get-blocks.ts';
+import {
+  readTranscriptLines,
+  type TranscriptLine,
+} from '../../delegator/transcript/read-transcript-lines.ts';
 
 export interface TranscriptStats {
   readonly turns: number;
@@ -8,8 +13,6 @@ export interface TranscriptStats {
   readonly durationMs: number;
   readonly model: string | undefined;
 }
-
-type Line = Readonly<Record<string, unknown>>;
 
 interface Message {
   readonly id: string;
@@ -45,7 +48,7 @@ export function readTranscriptStats(path: string | undefined): TranscriptStats |
 // Totals over the text of a transcript file; undefined when it holds no
 // assistant message with an id.
 export function getTranscriptStats(text: string): TranscriptStats | undefined {
-  const lines = text.split('\n').map(parseLine).filter((line) => line !== undefined);
+  const lines = readTranscriptLines(text);
   const messages = lines.map(getMessage).filter((message) => message !== undefined);
   // One API response is written as several lines that repeat id and usage.
   const distinct = new Map(messages.map((message) => [message.id, message]));
@@ -64,17 +67,7 @@ export function getTranscriptStats(text: string): TranscriptStats | undefined {
   };
 }
 
-function parseLine(text: string): Line | undefined {
-  try {
-    const parsed: unknown = JSON.parse(text);
-
-    return isRecord(parsed) ? parsed : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function getMessage(line: Line): Message | undefined {
+function getMessage(line: TranscriptLine): Message | undefined {
   const { message } = line;
 
   if (line.type !== 'assistant' || !isRecord(message) || typeof message.id !== 'string') {
@@ -84,15 +77,10 @@ function getMessage(line: Line): Message | undefined {
   return { id: message.id, model: message.model, usage: message.usage };
 }
 
-function countToolUses(line: Line): number {
-  const { message } = line;
-
-  if (line.type !== 'assistant' || !isRecord(message) || !Array.isArray(message.content)) {
-    return 0;
-  }
-
-  return message.content.filter((block) => isRecord(block) && block.type === 'tool_use')
-    .length;
+function countToolUses(line: TranscriptLine): number {
+  return line.type === 'assistant'
+    ? getBlocks(line).filter((block) => block.type === 'tool_use').length
+    : 0;
 }
 
 function sumUsage(usage: unknown): number {
@@ -107,7 +95,7 @@ function sumUsage(usage: unknown): number {
   }, 0);
 }
 
-function getDurationMs(lines: readonly Line[]): number {
+function getDurationMs(lines: readonly TranscriptLine[]): number {
   const times = lines
     .map((line) => line.timestamp)
     .filter((stamp) => typeof stamp === 'string')

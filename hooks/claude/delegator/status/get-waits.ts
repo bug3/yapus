@@ -1,6 +1,5 @@
 import { closeSync, fstatSync, openSync, readFileSync, readSync } from 'node:fs';
 import { join } from 'node:path';
-import { isRecord } from '../../../shared/is-record.ts';
 import {
   type EndRow,
   type LaunchRow,
@@ -11,6 +10,8 @@ import {
 } from '../record-row.ts';
 import { CONTRACT_WORDS } from '../report/get-agent-stats.ts';
 import { readRows } from '../report/read-rows.ts';
+import { getBlocks } from '../transcript/get-blocks.ts';
+import { readTranscriptLines, type TranscriptLine } from '../transcript/read-transcript-lines.ts';
 
 // How much of a transcript's end is read: a call that waits is at the end,
 // and a transcript grows to megabytes.
@@ -18,8 +19,6 @@ const TAIL_BYTES = 65536;
 // The status the Agent tool reports for a background launch.
 const BACKGROUND = 'async_launched';
 const MS_PER_MINUTE = 60000;
-
-type Line = Readonly<Record<string, unknown>>;
 
 // A tool call of a transcript: its id, the tool and the time of its line.
 interface Call {
@@ -76,10 +75,10 @@ function getDescription(end: EndRow, rows: readonly Row[]): string {
 
 // The line of one launch, or no text when every call read has its result.
 function getLine(outputFile: string | undefined, description: string, now: Date): string {
-  const transcript = (outputFile === undefined ? '' : readTail(outputFile))
-    .split('\n')
-    .map(parseLine)
-    .filter((line) => line !== undefined);
+  // A read that starts inside the file starts inside a line, and the subagent
+  // may be appending to its transcript, so the first line and the last may be
+  // cut: neither parses, and both are left out.
+  const transcript = readTranscriptLines(outputFile === undefined ? '' : readTail(outputFile));
 
   if (transcript.length === 0) {
     return `no transcript to read: ${ description }\n`;
@@ -120,22 +119,9 @@ function readTail(path: string): string {
   }
 }
 
-// A read that starts inside the file starts inside a line, and the subagent
-// may be appending to its transcript, so the first line and the last may be
-// cut: neither parses, and both are left out.
-function parseLine(text: string): Line | undefined {
-  try {
-    const parsed: unknown = JSON.parse(text);
-
-    return isRecord(parsed) ? parsed : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 // A line holds a call as a tool_use block, and a later line answers it with a
 // tool_result block that names the call's id.
-function getOldestOpenCall(transcript: readonly Line[]): Call | undefined {
+function getOldestOpenCall(transcript: readonly TranscriptLine[]): Call | undefined {
   const answered = new Set(transcript.flatMap(getBlocks).map((block) => block.tool_use_id));
 
   return transcript
@@ -150,7 +136,7 @@ function getOldestOpenCall(transcript: readonly Line[]): Call | undefined {
 // A call without an id, a tool name or a time on its line cannot be matched
 // or aged, so it is no call; the copy a transcript keeps of an API request
 // holds its calls on a line without a time.
-function getCalls(line: Line): Call[] {
+function getCalls(line: TranscriptLine): Call[] {
   const time = typeof line.timestamp === 'string' ? Date.parse(line.timestamp) : Number.NaN;
 
   return getBlocks(line).flatMap((block) => {
@@ -161,12 +147,4 @@ function getCalls(line: Line): Call[] {
       ? [{ id, name, time }]
       : [];
   });
-}
-
-function getBlocks(line: Line): Line[] {
-  const { message } = line;
-
-  return isRecord(message) && Array.isArray(message.content)
-    ? message.content.filter(isRecord)
-    : [];
 }
