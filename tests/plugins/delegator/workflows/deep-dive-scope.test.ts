@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { FIXED_ARGS, JSON_NULL, SCRIPT_PATH, getFixedAnswer } from './get-fixed-answer.ts';
+import {
+  FIXED_ARGS,
+  JSON_NULL,
+  MIXED_PATHS,
+  SCRIPT_PATH,
+  getFixedAnswer,
+} from './get-fixed-answer.ts';
 import { runWorkflow } from './run-workflow.ts';
 import type { AgentCall } from './run-workflow.ts';
 
@@ -75,6 +81,33 @@ test('puts a question that holds a line break on one line', async () => {
     run.calls[0]?.prompt ?? '',
     /\n## Questions the person asked\nWhere is the gate, and who calls it\?\n\n## Paths to start from\n/u,
   );
+});
+
+test('names no path of the args that may lead out of the repository', async () => {
+  const args = { task: TASK, directory: DIRECTORY, paths: MIXED_PATHS };
+
+  const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
+
+  assert.match(
+    run.calls[0]?.prompt ?? '',
+    /\n## Paths to start from\nhooks\/run\.sh\na\.\.b\/x\.ts\n\n## Lanes\n/u,
+  );
+});
+
+test('writes none for the paths when every path of the args is refused', async () => {
+  const args = { task: TASK, directory: DIRECTORY, paths: ['/etc/hosts', '../x.ts'] };
+
+  const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
+
+  assert.match(run.calls[0]?.prompt ?? '', /\n## Paths to start from\nnone\n\n## Lanes\n/u);
+});
+
+test('refuses a path of the args that starts at a root once it is on one line', async () => {
+  const args = { task: TASK, directory: DIRECTORY, paths: ['\n/etc/hosts'] };
+
+  const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
+
+  assert.match(run.calls[0]?.prompt ?? '', /\n## Paths to start from\nnone\n\n## Lanes\n/u);
 });
 
 test('launches one scope agent with the options of its stage', async () => {

@@ -242,8 +242,12 @@ const NO_CLAIM_LINE = '- None.';
 const RETURN_RULE =
   '- Return through the structured output alone: it is the one form of return here, in place of any other your rules name.';
 
-// A path that may lead out of the repository: one that starts at a root or
-// at a drive, or one that holds a `..` between two separators.
+// The form of a path that may lead out of the repository: it starts at a
+// root, `/` or `\`, or at a drive, a letter and a colon, or one of its
+// segments, the names between `/` or `\`, is `..`. The path of a claim, the
+// start paths of a question and the paths of the args are judged by it. It
+// reads the text of a path and opens nothing: `~/x` passes, and so does a
+// link that points out of the repository.
 const OUTSIDE_PATH = /^[/\\]|^[A-Za-z]:|(?:^|[/\\])\.\.(?:[/\\]|$)/u;
 
 // The runtime ends a run at RUN_AGENT_LIMIT agents. Gathering and verifying
@@ -424,7 +428,7 @@ function formatScopePrompt({ task, questions, paths, lanes }) {
     formatLines(questions, NO_LINES),
     '',
     '## Paths to start from',
-    formatLines(paths, NO_LINES),
+    formatLines(selectInsidePaths(paths), NO_LINES),
     '',
     '## Lanes',
     lanes.join(', '),
@@ -450,6 +454,13 @@ function formatLines(entries, absentLine) {
 // it cannot open a heading or a rule of its own there.
 function toOneLine(text) {
   return text.replace(/\s*[\n\r]\s*/gu, ' ').trim();
+}
+
+// The paths of a list that an agent may be handed: a path that may lead out
+// of the repository is left out, and each is judged as the one line a prompt
+// would hold.
+function selectInsidePaths(paths) {
+  return paths.map(toOneLine).filter((path) => !OUTSIDE_PATH.test(path));
 }
 
 // How many of the questions or of the claims stand in each lane.
@@ -546,7 +557,7 @@ function formatRepositoryGatherPrompt(task, question) {
     toOneLine(question.question),
     '',
     '## Start at',
-    formatLines(question.startAt ?? [], NO_START_PATH),
+    formatLines(selectInsidePaths(question.startAt ?? []), NO_START_PATH),
     '',
     '## Rules',
     '- Return each thing you found as one claim: a statement a reader can check, the file, the line and the shortest excerpt at that line that proves it.',

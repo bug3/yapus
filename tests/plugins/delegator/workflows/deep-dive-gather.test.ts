@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { findCall, listLabels } from './find-call.ts';
-import { FIXED_ARGS, JSON_NULL, SCRIPT_PATH, getFixedAnswer } from './get-fixed-answer.ts';
+import {
+  FIXED_ARGS,
+  JSON_NULL,
+  MIXED_PATHS,
+  SCRIPT_PATH,
+  getFixedAnswer,
+} from './get-fixed-answer.ts';
 import { runWorkflow } from './run-workflow.ts';
 import type { AgentCall, WorkflowRun } from './run-workflow.ts';
 
@@ -61,6 +67,45 @@ test('writes no path given for a repository question that names no path', async 
   assert.match(
     findCall(run, 'gather-repo:Q3')?.prompt ?? '',
     /\n## Question\nWhich tests hold the verdicts of the return gate\?\n\n## Start at\nno path given\n\n## Rules\n/u,
+  );
+});
+
+test('names no start path that may lead out of the repository', async () => {
+  const run = await runQuestion({
+    lane: 'repository',
+    question: 'Where is the gate?',
+    startAt: MIXED_PATHS,
+  });
+
+  assert.match(
+    findCall(run, 'gather-repo:Q1')?.prompt ?? '',
+    /\n## Start at\nhooks\/run\.sh\na\.\.b\/x\.ts\n\n## Rules\n/u,
+  );
+});
+
+test('writes no path given when every start path of a question is refused', async () => {
+  const run = await runQuestion({
+    lane: 'repository',
+    question: 'Where is the gate?',
+    startAt: ['/etc/hosts', '../x.ts'],
+  });
+
+  assert.match(
+    findCall(run, 'gather-repo:Q1')?.prompt ?? '',
+    /\n## Start at\nno path given\n\n## Rules\n/u,
+  );
+});
+
+test('refuses a start path that starts at a root once it is on one line', async () => {
+  const run = await runQuestion({
+    lane: 'repository',
+    question: 'Where is the gate?',
+    startAt: ['\n/etc/hosts'],
+  });
+
+  assert.match(
+    findCall(run, 'gather-repo:Q1')?.prompt ?? '',
+    /\n## Start at\nno path given\n\n## Rules\n/u,
   );
 });
 
