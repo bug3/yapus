@@ -20,6 +20,19 @@ export const FIXED_ARGS = {
   paths: ['hooks/claude/gates/return', 'plugins/delegator/hooks/hooks.json'],
 } as const;
 
+// The paths a test gives where the script judges one: five that may lead
+// out of the repository, each in a form of its own, then two that stay
+// inside it.
+export const MIXED_PATHS = [
+  '/etc/hosts',
+  '../x.ts',
+  'hooks/../../x.ts',
+  '\\x.ts',
+  'C:\\x.ts',
+  'hooks/run.sh',
+  'a..b/x.ts',
+] as const;
+
 // What each agent of the run on FIXED_ARGS returns, by its label. The
 // gatherer of the third question has no answer; the claims come out as one
 // verified, one refuted and one undecided for the repository, and for the

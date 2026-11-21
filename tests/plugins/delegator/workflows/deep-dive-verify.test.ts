@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { findCall, listLabels } from './find-call.ts';
-import { FIXED_ARGS, JSON_NULL, SCRIPT_PATH, getFixedAnswer } from './get-fixed-answer.ts';
+import {
+  FIXED_ARGS,
+  JSON_NULL,
+  MIXED_PATHS,
+  SCRIPT_PATH,
+  getFixedAnswer,
+} from './get-fixed-answer.ts';
 import { runWorkflow } from './run-workflow.ts';
 import type { AgentCall, WorkflowRun } from './run-workflow.ts';
 
@@ -133,17 +139,6 @@ const WIDE_RUN_RUN_BLOCK = [
   '- Gather returns of 10000 characters or more: 0 of 12, the longest 6823 (the return limit is 12000)',
 ].join('\n');
 
-// The paths of the claims of one repository question: five that may lead out
-// of the repository, each in a form of its own, then two that stay inside it.
-const MIXED_PATHS = [
-  '/etc/hosts',
-  '../x.ts',
-  'hooks/../../x.ts',
-  '\\x.ts',
-  'C:\\x.ts',
-  'hooks/run.sh',
-  'a..b/x.ts',
-] as const;
 const REFUSED_PATHS_UNVERIFIED_BLOCK = [
   '## Unverified',
   '',
