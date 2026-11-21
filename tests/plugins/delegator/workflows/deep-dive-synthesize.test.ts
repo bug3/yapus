@@ -684,7 +684,7 @@ test('names another file with no gather answer when the Unmeasured block differs
   assert.match(readFileLine(changedRun), FILE_LINE_FORM);
 });
 
-// The digest of the content with the unread area `area 29` is 0x0d21cbda,
+// The digest of the content with the unread area `area 12` is 0x06299427,
 // worked out by a program apart from the script.
 test('writes a digest that begins with a zero in 8 characters', async () => {
   const gaps = { unreadAreas: ['area 12'], unansweredQuestions: [] };
