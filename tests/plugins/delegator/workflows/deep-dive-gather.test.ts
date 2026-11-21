@@ -176,15 +176,34 @@ test('launches no gatherer for a question in a lane the args leave out', async (
   ]);
 });
 
-test('counts no question in a lane the args leave out', async () => {
+test('counts a question in a lane the args leave out as dropped, not as a question', async () => {
   const args = { task: TASK, directory: DIRECTORY, lanes: ['repository'] };
 
   const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
 
   assert.equal(run.logs[0], 'scope: 3 questions (3 repository, 0 web)');
   assert.partialDeepStrictEqual(run.returned, {
-    stats: { questions: { repository: 3, web: 0 } },
+    stats: { questions: { repository: 3, web: 0 }, dropped: 1 },
   });
+});
+
+test('numbers the repository questions without a gap past a dropped web question', async () => {
+  const args = { task: TASK, directory: DIRECTORY, lanes: ['repository'] };
+  const scope = {
+    questions: [
+      { lane: 'repository', question: 'Where is the gate?' },
+      { lane: 'web', question: 'What does the hook return?' },
+      { lane: 'repository', question: 'Who calls the gate?' },
+    ],
+  };
+
+  const run = await runWorkflow(
+    SCRIPT_PATH,
+    args,
+    (call) => (call.options.label === 'scope' ? scope : JSON_NULL),
+  );
+
+  assert.deepEqual(listLabels(run, 'gather'), ['gather-repo:Q1', 'gather-repo:Q2']);
 });
 
 test('numbers the questions it keeps when the args leave a lane out', async () => {

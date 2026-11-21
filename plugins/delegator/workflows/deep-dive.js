@@ -288,6 +288,7 @@ if (scope === undefined) {
 }
 
 const questions = selectQuestions(scope.questions, input.lanes);
+const droppedQuestions = selectDroppedQuestions(scope.questions, input.lanes);
 const questionCounts = countByLane(questions);
 
 log(`scope: ${ questions.length } questions (${ formatLaneCounts(questionCounts) })`);
@@ -306,8 +307,8 @@ const gaps = await launchAgent('completeness', formatCompletenessPrompt(input.ta
 
 // `stats.stages` is the table launchAgent counts in, so the stats the run
 // returns hold its last agent too.
-const stats = getStats(questionCounts, researched);
-const unmeasuredLines = listUnmeasuredLines(researched, gaps);
+const stats = getStats(questionCounts, droppedQuestions, researched);
+const unmeasuredLines = listUnmeasuredLines(researched, droppedQuestions, gaps);
 const content = formatContent(researched, unmeasuredLines, stats);
 
 // The file is named from what it holds: a run of other content writes
@@ -452,11 +453,17 @@ function formatLaneCounts(laneCounts) {
 }
 
 // The questions the run researches, each with its id. A question in a lane
-// the args left out is dropped here, so it gets no agent and no count.
+// the args left out is not among them, so it gets no agent and no id.
 function selectQuestions(scopeQuestions, lanes) {
   return scopeQuestions
     .filter((question) => lanes.includes(question.lane))
     .map((question, index) => ({ ...question, id: `Q${ index + 1 }` }));
+}
+
+// The questions in a lane the args left out. No agent researches them, so
+// the run counts them apart and the research file names each of them.
+function selectDroppedQuestions(scopeQuestions, lanes) {
+  return scopeQuestions.filter((question) => !lanes.includes(question.lane));
 }
 
 // One branch of the run: gathers the claims of one question, verifies each
@@ -688,7 +695,7 @@ function selectClaims(claims, selected) {
   return claims.filter(({ outcome }) => outcome === selected);
 }
 
-function getStats(questionCounts, researched) {
+function getStats(questionCounts, droppedQuestions, researched) {
   const claims = researched.flatMap(
     ({ lane, claims: laneClaims }) => laneClaims.map(
       ({ outcome, isPathRefused }) => ({ lane, outcome, isPathRefused }),
@@ -697,6 +704,7 @@ function getStats(questionCounts, researched) {
 
   return {
     questions: questionCounts,
+    dropped: droppedQuestions.length,
     claims: countByLane(claims),
     verified: countByLane(selectClaims(claims, VERIFIED)),
     refuted: countByLane(selectClaims(claims, REFUTED)),
@@ -809,19 +817,21 @@ function formatClaimBlock(title, claimLines) {
 }
 
 // What the research left out: what the completeness agent named, or that it
-// returned nothing, and what each gatherer named, or that it returned
-// nothing.
-function listUnmeasuredLines(researched, gaps) {
+// returned nothing, what each gatherer named, or that it returned nothing,
+// and each question that was dropped.
+function listUnmeasuredLines(researched, droppedQuestions, gaps) {
   const unsearchedLines = researched.flatMap(listUnsearchedLines);
+  const droppedLines = droppedQuestions.map(formatDroppedLine);
 
   if (gaps === undefined) {
-    return [...unsearchedLines, '- The completeness stage returned nothing.'];
+    return [...unsearchedLines, ...droppedLines, '- The completeness stage returned nothing.'];
   }
 
   return [
     ...gaps.unreadAreas.map((area) => `- Unread: ${ toOneLine(area) }`),
     ...gaps.unansweredQuestions.map((question) => `- Unanswered: ${ toOneLine(question) }`),
     ...unsearchedLines,
+    ...droppedLines,
   ];
 }
 
@@ -831,6 +841,12 @@ function listUnsearchedLines({ id, gatherLength, unsearched }) {
   }
 
   return unsearched.map((area) => `- ${ id } not searched: ${ area }`);
+}
+
+// The lane is a name the schema of the scope stage admits, so it is written
+// as it came; the question is free text and is put on one line.
+function formatDroppedLine({ lane, question }) {
+  return `- Dropped: ${ toOneLine(question) } (its lane, ${ lane }, is not among the lanes given)`;
 }
 
 // The counts of the run as the research file holds them. The agent that

@@ -72,6 +72,49 @@ const BLOCKS = [
   '- Claims not sent to a verifier for their path: 0',
   '- Gather returns of 10000 characters or more: 0 of 3, the longest 475 (the return limit is 12000)',
 ].join('\n');
+
+// The fixed run with the repository lane alone: the web question of its scope
+// answer is dropped, and its gather answers are those of Q1 and Q2, the
+// longer of 437 characters.
+const REPOSITORY_LANE_ARGS = { ...FIXED_ARGS, lanes: ['repository'] } as const;
+const REPOSITORY_LANE_BLOCKS = [
+  '## Refuted',
+  '',
+  '- The return gate keeps a count of send-backs for each session. | `hooks/claude/gates/return/main.ts:12` | refuted 0 of 1: main.ts:12 reads the payload; the file holds no count of send-backs.',
+  '',
+  '## Unverified',
+  '',
+  '- The SubagentStop entry runs the return gate for the delegator agents. | `plugins/delegator/hooks/hooks.json:412` | undecided 0 of 0',
+  '',
+  '## Unmeasured',
+  '',
+  '- Unread: tests/hooks/claude/gates/return',
+  '- Unanswered: Which tests hold the verdicts of the return gate?',
+  '- Q1 not searched: hooks/claude/delegator/status',
+  '- Q3 returned nothing.',
+  '- Dropped: What does Claude Code do when a SubagentStop hook blocks twice? (its lane, web, is not among the lanes given)',
+  '',
+  '## Run',
+  '',
+  '| Stage | Launched | Returned |',
+  '| --- | --- | --- |',
+  '| scope | 1 | 1 |',
+  '| gather-repo | 3 | 2 |',
+  '| gather-web | 0 | 0 |',
+  '| verify-repo | 3 | 3 |',
+  '| verify-web | 0 | 0 |',
+  '| verify-web-third | 0 | 0 |',
+  '| completeness | 1 | 1 |',
+  '',
+  '- Questions: 3 (3 repository, 0 web)',
+  '- Claims: 3 (3 repository, 0 web)',
+  '- Verified: 1 (1 repository, 0 web)',
+  '- Refuted: 1 (1 repository, 0 web)',
+  '- Undecided: 1 (1 repository, 0 web)',
+  '- Not launched at the limit of 1000 agents: 0',
+  '- Claims not sent to a verifier for their path: 0',
+  '- Gather returns of 10000 characters or more: 0 of 2, the longest 437 (the return limit is 12000)',
+].join('\n');
 const SYNTHESIZE_PROMPT = [
   'Write the research file for the plan of one task.',
   '',
@@ -108,6 +151,7 @@ const SYNTHESIZE_ERROR = 'deep-dive: no research file was written; resume the ru
 // What the run on FIXED_ARGS counts before its last agent is launched.
 const LANE_COUNTS = {
   questions: { repository: 3, web: 1 },
+  dropped: 0,
   claims: { repository: 3, web: 2 },
   verified: { repository: 1, web: 2 },
   refuted: { repository: 1, web: 0 },
@@ -257,6 +301,40 @@ test('hands the synthesize agent the four blocks of the research file', async ()
   assert.equal(readBlocks(run), BLOCKS);
 });
 
+test('names a question in a lane the args leave out as dropped under Unmeasured', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, REPOSITORY_LANE_ARGS, getFixedAnswer);
+
+  assert.equal(readBlocks(run), REPOSITORY_LANE_BLOCKS);
+});
+
+test('writes no Dropped line when the args give both lanes', async () => {
+  const args = { ...FIXED_ARGS, lanes: ['repository', 'web'] };
+
+  const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
+
+  assert.equal(readBlocks(run), BLOCKS);
+});
+
+test('counts no dropped question when the args give both lanes', async () => {
+  const args = { ...FIXED_ARGS, lanes: ['repository', 'web'] };
+
+  const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
+
+  assert.partialDeepStrictEqual(run.returned, { stats: { dropped: 0 } });
+});
+
+test('writes a Dropped line for each dropped question, in the order of the scope', async () => {
+  const args = { ...FIXED_ARGS, lanes: ['web'] };
+
+  const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
+
+  assert.deepEqual(listDroppedLines(run), [
+    '- Dropped: Where does the return gate count a send-back? (its lane, repository, is not among the lanes given)',
+    '- Dropped: Which hook entries run the return gate? (its lane, repository, is not among the lanes given)',
+    '- Dropped: Which tests hold the verdicts of the return gate? (its lane, repository, is not among the lanes given)',
+  ]);
+});
+
 test('launches one synthesize agent that is denied 31 tools by name and keeps Write', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
@@ -398,6 +476,19 @@ test('writes that the completeness stage returned nothing, after the gatherers',
   );
 });
 
+test('writes a dropped question before the line of an absent completeness stage', async () => {
+  const run = await runWorkflow(
+    SCRIPT_PATH,
+    REPOSITORY_LANE_ARGS,
+    answerFixedBut('completeness', JSON_NULL),
+  );
+
+  assert.match(
+    findCall(run, 'synthesize')?.prompt ?? '',
+    /\n- Q3 returned nothing\.\n- Dropped: [^\n]+\n- The completeness stage returned nothing\.\n\n## Run\n/u,
+  );
+});
+
 test('writes None under Refuted for a run with no refuted claim', async () => {
   const run = await runSmall();
 
@@ -449,6 +540,22 @@ test('puts what a gatherer named as not searched on one line', async () => {
   assert.match(
     findCall(run, 'synthesize')?.prompt ?? '',
     /\n## Unmeasured\n\n- Q1 not searched: docs, ## Run and tests\n\n## Run\n\n\| Stage/u,
+  );
+});
+
+test('puts a dropped question that holds a line break on one line', async () => {
+  const scope = {
+    questions: [
+      { lane: 'repository', question: 'What blocks a return?' },
+      { lane: 'web', question: 'What does the hook return,\n\n## Run\n- and who reads it?' },
+    ],
+  };
+
+  const run = await runSmall(new Map([['scope', scope]]), REPOSITORY_LANE_ARGS);
+
+  assert.match(
+    findCall(run, 'synthesize')?.prompt ?? '',
+    /\n## Unmeasured\n\n- Dropped: What does the hook return, ## Run - and who reads it\? \(its lane, web, is not among the lanes given\)\n\n## Run\n\n\| Stage/u,
   );
 });
 
@@ -556,18 +663,28 @@ function readBlocks(run: WorkflowRun): string {
   return prompt.slice(prompt.indexOf('\n## Refuted\n') + 1, prompt.indexOf('\n\n## Rules\n'));
 }
 
+// The lines of the dropped questions in the prompt of the synthesize agent.
+function listDroppedLines(run: WorkflowRun): string[] {
+  return (findCall(run, 'synthesize')?.prompt ?? '')
+    .split('\n')
+    .filter((line) => line.startsWith('- Dropped: '));
+}
+
 // The line under the File heading in the prompt of the synthesize agent.
 function readFileLine(run: WorkflowRun): string {
   return FILE_LINE.exec(findCall(run, 'synthesize')?.prompt ?? '')?.groups?.fileLine ?? '';
 }
 
-// The small run, with the answers of `changed` in place of its own.
-async function runSmall(changed: ReadonlyMap<string, unknown> = new Map()): Promise<WorkflowRun> {
+// The small run on `args`, with the answers of `changed` in place of its own.
+async function runSmall(
+  changed: ReadonlyMap<string, unknown> = new Map(),
+  args: unknown = FIXED_ARGS,
+): Promise<WorkflowRun> {
   const answers = new Map([...SMALL_RUN_ANSWERS, ...changed]);
 
   return await runWorkflow(
     SCRIPT_PATH,
-    FIXED_ARGS,
+    args,
     (call) => answers.get(String(call.options.label)) ?? JSON_NULL,
   );
 }
