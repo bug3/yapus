@@ -163,9 +163,44 @@ test('returns the lanes error and launches no agent for a lane that is neither',
   const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
 
   assert.deepEqual(run.returned, {
-    error: 'deep-dive: lanes holds "mail"; pass repository, web or both',
+    error: 'deep-dive: lanes holds "mail"; pass ["repository"], ["web"] or ["repository", "web"]',
   });
   assert.deepEqual(run.calls, []);
+});
+
+test('returns the lanes error and launches no agent for a lane named both', async () => {
+  const args = { task: TASK, directory: DIRECTORY, lanes: ['both'] };
+
+  const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
+
+  assert.deepEqual(run.returned, {
+    error: 'deep-dive: lanes holds "both"; pass ["repository"], ["web"] or ["repository", "web"]',
+  });
+  assert.deepEqual(run.calls, []);
+});
+
+test('launches the scope agent for the repository lane alone', async () => {
+  const args = { task: TASK, directory: DIRECTORY, lanes: ['repository'] };
+
+  const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
+
+  assert.equal(run.calls[0]?.options.label, 'scope');
+});
+
+test('launches the scope agent for the web lane alone', async () => {
+  const args = { task: TASK, directory: DIRECTORY, lanes: ['web'] };
+
+  const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
+
+  assert.equal(run.calls[0]?.options.label, 'scope');
+});
+
+test('launches the scope agent for the two lanes named together', async () => {
+  const args = { task: TASK, directory: DIRECTORY, lanes: ['repository', 'web'] };
+
+  const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
+
+  assert.equal(run.calls[0]?.options.label, 'scope');
 });
 
 test('launches the scope agent with both lanes for a task and a directory alone', async () => {
