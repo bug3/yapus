@@ -307,7 +307,8 @@ const gaps = await launchAgent('completeness', formatCompletenessPrompt(input.ta
 // `stats.stages` is the table launchAgent counts in, so the stats the run
 // returns hold its last agent too.
 const stats = getStats(questionCounts, researched);
-const content = formatContent(researched, gaps, stats);
+const unmeasuredLines = listUnmeasuredLines(researched, gaps);
+const content = formatContent(researched, unmeasuredLines, stats);
 
 // The file is named from what it holds: a run of other content writes
 // another file, and a file a run replaces held the same content.
@@ -764,7 +765,7 @@ function listCitedFiles(researched) {
 // The content of the run as the writer of the research file is given it:
 // the verified claims under their questions, then the four blocks the file
 // holds as they stand here. The name of the file is a digest of this text.
-function formatContent(researched, gaps, stats) {
+function formatContent(researched, unmeasuredLines, stats) {
   const claims = researched.flatMap(({ claims: questionClaims }) => questionClaims);
 
   return [
@@ -776,7 +777,7 @@ function formatContent(researched, gaps, stats) {
     '',
     formatClaimBlock('Unverified', selectClaims(claims, UNDECIDED).map(formatClaimLine)),
     '',
-    formatBlock('Unmeasured', listUnmeasuredLines(researched, gaps)),
+    formatBlock('Unmeasured', unmeasuredLines),
     '',
     formatRunBlock(stats),
   ].join('\n');
