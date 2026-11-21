@@ -20,7 +20,7 @@ export function admitLaunch(dataDir: string, sessionId: string): string | undefi
   const count = countLaunches(dataDir, sessionId);
 
   if (count >= limit.value) {
-    return `this session has launched ${ String(count) } subagents and its limit is `
+    return `${ String(count) } subagents were launched in this session and its limit is `
       + `${ String(limit.value) }; the person can raise it with /delegator:agent-limit <n>`;
   }
 
