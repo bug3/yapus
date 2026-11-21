@@ -30,9 +30,8 @@ const COMPLETENESS_PROMPT = [
   '- Name what is missing; do not answer it, and change no file.',
 ].join('\n');
 
-// The digest is FNV-1a of 32 bits over the UTF-16 units of the prompt below
-// from `## Verified claims` through the last line of BLOCKS, worked out by a
-// program apart from the script.
+// The digest is FNV-1a of 32 bits over the UTF-16 units of CONTENT below,
+// worked out by a program apart from the script.
 const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_f7458fc5.md';
 const BLOCKS = [
   '## Refuted',
@@ -115,15 +114,10 @@ const REPOSITORY_LANE_BLOCKS = [
   '- Claims not sent to a verifier for their path: 0',
   '- Gather returns of 10000 characters or more: 0 of 2, the longest 437 (the return limit is 12000)',
 ].join('\n');
-const SYNTHESIZE_PROMPT = [
-  'Write the research file for the plan of one task.',
-  '',
-  '## Task',
-  'Add a retry limit to the return gate',
-  '',
-  '## File',
-  ".yapus/plans/2026-11/return-retry/research_f7458fc5.md, under the project's root",
-  '',
+
+// What the run on FIXED_ARGS hands the synthesize agent as its content: the
+// verified claims under their questions, then the four blocks.
+const CONTENT = [
   '## Verified claims',
   'Q1 (repository): Where does the return gate count a send-back?',
   '- The return gate sends a return over the limit back once. | `hooks/claude/gates/return/get-return-verdict.ts:31` | verified 1 of 1',
@@ -135,6 +129,17 @@ const SYNTHESIZE_PROMPT = [
   '',
   '## Blocks to copy',
   BLOCKS,
+].join('\n');
+const SYNTHESIZE_PROMPT = [
+  'Write the research file for the plan of one task.',
+  '',
+  '## Task',
+  'Add a retry limit to the return gate',
+  '',
+  '## File',
+  ".yapus/plans/2026-11/return-retry/research_f7458fc5.md, under the project's root",
+  '',
+  CONTENT,
   '',
   '## Rules',
   '- Write the file with these parts in this order: the title line `# return-retry: research`, `## Goal`, one `## Facts: <subject>` section per subject, then the blocks above.',
