@@ -1,10 +1,14 @@
 import { isRecord } from '../../../shared/is-record.ts';
 import { isSafeId } from '../../../shared/is-safe-id.ts';
 
+// What a stop that lacks a field the gate judges by is refused with.
+export const MISSING_FIELDS = 'agent_type, last_assistant_message or stop_hook_active is missing';
+
 export interface Stop {
   readonly sessionId: string;
   readonly agentType: string;
-  readonly message: string;
+  // The subagent's return; undefined when the payload lacks it.
+  readonly message: string | undefined;
   // Claude Code sets stop_hook_active when a stop hook already sent the
   // subagent back once.
   readonly isRetry: boolean;
@@ -46,10 +50,11 @@ export function parseStop(stdinText: string): Parsed {
     return makeFailure('session_id is not letters, digits and hyphens');
   }
 
-  const hasFields = typeof agentType === 'string' && typeof message === 'string';
+  const hasFields = typeof agentType === 'string'
+    && (message === undefined || typeof message === 'string');
 
   if (!hasFields || typeof isRetry !== 'boolean') {
-    return makeFailure('agent_type, last_assistant_message or stop_hook_active is missing');
+    return makeFailure(MISSING_FIELDS);
   }
 
   return {

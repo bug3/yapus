@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import {
@@ -134,6 +134,17 @@ test('judges without a log when the plugin data directory is empty', () => {
   const verdict = getReturnVerdict({ stdinText: SHORT, dataDir: '', time: 't' });
 
   assert.deepEqual(verdict, { kind: 'pass' });
+});
+
+test('blocks a stop without its message and logs nothing', (t) => {
+  const dataDir = makeTempDir(t);
+
+  assert.deepEqual(getReturnVerdict({ stdinText: JSON.stringify(FIELDS), dataDir, time: 't' }), {
+    kind: 'shorten',
+    detail: 'agent_type, last_assistant_message or stop_hook_active is missing; '
+      + 'the stop is blocked',
+  });
+  assert.deepEqual(readdirSync(dataDir), []);
 });
 
 test('blocks a stop it cannot read', () => {

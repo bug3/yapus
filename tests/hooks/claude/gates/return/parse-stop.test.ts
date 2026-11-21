@@ -48,14 +48,30 @@ test('reads a stop with stop_hook_active as a retry', () => {
   assert.equal(parsed.stop.isRetry, true);
 });
 
-test('names stdin that is not JSON and a stop without its message', () => {
-  const noMessage = { session_id: 's1', agent_type: 'delegator:reader' };
+test('reads a stop without its message as a stop of no message', () => {
+  const parsed = parseStop(JSON.stringify({ session_id: 's1', agent_type: 'delegator:reader' }));
 
-  assert.deepEqual([parseStop('{'), parseStop(JSON.stringify(noMessage))], [
+  assert.ok(parsed.kind === 'stop');
+  assert.equal(parsed.stop.message, undefined);
+});
+
+test('names stdin that is not JSON and a stop without its agent type', () => {
+  const noAgentType = { session_id: 's1', last_assistant_message: 'DONE' };
+
+  assert.deepEqual([parseStop('{'), parseStop(JSON.stringify(noAgentType))], [
     { kind: 'failure', reason: 'stdin is not JSON' },
     {
       kind: 'failure',
       reason: 'agent_type, last_assistant_message or stop_hook_active is missing',
     },
   ]);
+});
+
+test('names a stop whose message is not a text', () => {
+  const parsed = parseStop(JSON.stringify({ ...FIELDS, last_assistant_message: 7 }));
+
+  assert.deepEqual(parsed, {
+    kind: 'failure',
+    reason: 'agent_type, last_assistant_message or stop_hook_active is missing',
+  });
 });
