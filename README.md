@@ -6,7 +6,7 @@
 
 **Standards and orchestration for coding with an AI agent.** yapus is a set of Claude Code plugins for keeping AI-written software sound and maintainable: standards for the work, an orchestrator that divides it among subagents, and the mechanisms that hold both.
 
-- **delegator** is the orchestrator: a fixed roster of subagents, a limit on launches and a cap on what returns to the main session
+- **delegator** is the orchestrator: a fixed roster of subagents, a limit on launches and a cap on what returns to the session
 - **ordo** installs the standards and the git hooks once per machine, and adds lint, CI and commit checks to a repository with one command
 
 <!-- #region features -->
@@ -14,7 +14,7 @@
 
 - **Quality held by checks.** Standards are written files; a rule a program can check is held by a hook or a test, and a pass-or-fail command, not a sentence, decides that a change is done.
 - **Independent review.** A plan and a finished diff are judged by a subagent that never saw the conversation that produced them.
-- **Context management.** The main session keeps what a decision needs; subagents do the reading, running and editing, each return is capped, and a standard other than the principles loads only when a file of its kind is touched.
+- **Context management.** The session holds what a decision needs; subagents do the reading, running and editing, each return is capped, and a standard other than the principles loads only when a file of its kind is touched.
 - **Parallel work.** Independent tasks launch together, each subagent on its own files.
 - **Work sized to the task.** A small change runs with no plan; a large one gets a written plan, built and committed one part at a time.
 - **Survives compaction.** The prompts the person typed are logged and given back to the session after a compaction, with the paths of the newest plans.
@@ -64,7 +64,7 @@ At the start of a session in a set-up repository, ordo lists the repository's co
 <!-- #region delegator -->
 ## delegator
 
-The main session is the shared workspace of the person and the main agent, and it keeps only what the next decision needs. delegator puts the orchestration rules [ORCH-1 to ORCH-7](https://github.com/bug3/yapus/blob/main/hooks/claude/delegator/policy/policy.md) at the start of every session, and again after a resume, a clear or a compaction: they hand reading, running, judging and edits to subagents, launch independent ones together and let into the main session only what a decision needs. Hooks, the programs Claude Code runs at fixed points of a session, hold what a program can check: the launch check judges each subagent launch before it starts, and the return check caps what each subagent sends back. delegator also checks the form of `gh pr create` and `gh issue create` calls. `claude plugin uninstall delegator@yapus` removes the plugin.
+The session is the shared workspace of the person and the main agent, and it holds only what the next decision needs. delegator puts the orchestration rules [ORCH-1 to ORCH-7](https://github.com/bug3/yapus/blob/main/hooks/claude/delegator/policy/policy.md) at the start of every session, and again after a resume, a clear or a compaction: they hand reading, running, judging and edits to subagents, launch independent ones together and let into the session only what a decision needs. Hooks, the programs Claude Code runs at fixed points of a session, hold what a program can check: the launch check judges each subagent launch before it starts, and the return check caps what each subagent sends back. delegator also checks the form of `gh pr create` and `gh issue create` calls. `claude plugin uninstall delegator@yapus` removes the plugin.
 
 ### Depths
 
@@ -72,7 +72,7 @@ A depth is the size class the main agent names for a task before its first tool 
 
 | Depth | When | How the work runs |
 | --- | --- | --- |
-| `quick` | one file, a decided change, a one-command oracle | in the main session, no plan, no subagent |
+| `quick` | one file, a decided change, a one-command oracle | by the main agent, no plan, no subagent |
 | `standard` | the default | subagents for reading, running, judging and edits |
 | `deep` | about 400 changed lines, several unknowns, multi-source research or work that outlives one context | a written plan, built and committed one part at a time |
 
@@ -94,7 +94,7 @@ Each subagent is launched as `delegator:<name>`. The launch check refuses the bu
 | `finisher` | one part of a plan: edit, oracle, review, commit |
 | `diff-reviewer` | an APPROVE or REWORK verdict on a finished diff |
 
-Every subagent receives a return contract at its start: a return written as text opens with DONE, PARTIAL, QUESTIONS or BLOCKED and stays within 12,000 characters, about 3,000 tokens, so one return cannot flood the main session. A longer return is sent back once to be shortened and passes on the second try. A workflow agent answers a script through a structured answer, which the limit does not bind and the gate does not judge.
+Every subagent receives a return contract at its start: a return written as text opens with DONE, PARTIAL, QUESTIONS or BLOCKED and stays within 12,000 characters, about 3,000 tokens, so one return cannot flood the session. A longer return is sent back once to be shortened and passes on the second try. A workflow agent answers a script through a structured answer, which the limit does not bind and the gate does not judge.
 
 ### Deep Work
 
