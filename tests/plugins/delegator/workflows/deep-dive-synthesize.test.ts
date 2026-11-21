@@ -154,7 +154,8 @@ const SYNTHESIZE_ERROR = 'deep-dive: no research file was written; resume the ru
 const WRITE_ERROR =
   'deep-dive: the research file was not written; write the returned content to the returned researchPath';
 
-// What the run on FIXED_ARGS counts before its last agent is launched.
+// What the run on FIXED_ARGS counts before its last workflow agent is
+// launched.
 const LANE_COUNTS = {
   questions: { repository: 3, web: 1 },
   dropped: 0,
@@ -176,8 +177,8 @@ const STAGES_BEFORE_SYNTHESIZE = [
   ['completeness', { launched: 1, returned: 1 }],
 ] as const;
 
-// The 31 names the synthesize agent is denied: every tool an agent of no
-// definition was seen to hold, but for Write and its structured output.
+// The 31 names the synthesize agent is denied: every tool a workflow agent of
+// no definition was seen to hold, but for Write and its structured output.
 const WRITER_DENIED_TOOLS = [
   'Bash',
   'PowerShell',
@@ -213,7 +214,7 @@ const WRITER_DENIED_TOOLS = [
 ] as const;
 
 // The answers, by label, of a run on one repository question with one claim
-// that its verifier supports, where no agent names a thing left out.
+// that its verify agent supports, where no agent names a thing left out.
 const SMALL_RUN_CLAIM = {
   claim: 'The gate blocks a return with no status word.',
   path: 'hooks/claude/gates/return/main.ts',
@@ -284,7 +285,7 @@ test('names a file two claims cite once', async () => {
   );
 });
 
-test('lists what a gatherer named as not searched after its question', async () => {
+test('lists what a gather agent named as not searched after its question', async () => {
   const gathered = { claims: [], notSearched: ['docs', 'tests/hooks'] };
 
   const run = await runSmall(new Map([['gather-repo:Q1', gathered]]));
@@ -295,7 +296,7 @@ test('lists what a gatherer named as not searched after its question', async () 
   );
 });
 
-test('tells the completeness agent of a question whose gatherer returned nothing', async () => {
+test('tells the completeness agent of a question whose gather agent returns nothing', async () => {
   const run = await runSmall(new Map([['gather-repo:Q1', JSON_NULL]]));
 
   assert.match(
@@ -304,7 +305,7 @@ test('tells the completeness agent of a question whose gatherer returned nothing
   );
 });
 
-test('gives the counts of a question whose gatherer found no claim', async () => {
+test('gives the counts of a question whose gather agent found no claim', async () => {
   const run = await runSmall(new Map([['gather-repo:Q1', { claims: [], notSearched: [] }]]));
 
   assert.match(
@@ -503,7 +504,7 @@ test('logs no written file for a synthesize agent that returns nothing', async (
   assert.deepEqual(run.logs.filter((line) => line.startsWith('wrote')), []);
 });
 
-test('writes that the completeness stage returned nothing, after the gatherers', async () => {
+test('writes that the completeness agent returned nothing, after the gather agents', async () => {
   const run = await runWorkflow(
     SCRIPT_PATH,
     FIXED_ARGS,
@@ -516,7 +517,7 @@ test('writes that the completeness stage returned nothing, after the gatherers',
   );
 });
 
-test('writes a dropped question before the line of an absent completeness stage', async () => {
+test('writes a dropped question before the line of an absent completeness agent', async () => {
   const run = await runWorkflow(
     SCRIPT_PATH,
     REPOSITORY_LANE_ARGS,
@@ -572,7 +573,7 @@ test('puts an unanswered question that holds a line break on one line', async ()
   );
 });
 
-test('puts what a gatherer named as not searched on one line', async () => {
+test('puts what a gather agent named as not searched on one line', async () => {
   const gathered = { claims: [], notSearched: ['docs,\n\n## Run\nand tests'] };
 
   const run = await runSmall(new Map([['gather-repo:Q1', gathered]]));
@@ -664,13 +665,13 @@ test('names another file when one unmeasured area differs', async () => {
   assert.match(readFileLine(changedRun), FILE_LINE_FORM);
 });
 
-test('names a file when no gatherer returns an answer', async () => {
+test('names a file when no gather agent returns an answer', async () => {
   const run = await runSmall(new Map([['gather-repo:Q1', JSON_NULL]]));
 
   assert.match(readFileLine(run), FILE_LINE_FORM);
 });
 
-test('names another file when no gatherer returns and the Unmeasured block differs', async () => {
+test('names another file with no gather answer when the Unmeasured block differs', async () => {
   const gaps = { unreadAreas: ['docs'], unansweredQuestions: [] };
 
   const run = await runSmall(new Map([['gather-repo:Q1', JSON_NULL]]));
@@ -729,8 +730,8 @@ async function runSmall(
   );
 }
 
-// The stand-in of the fixed run, but for the agent under `label`, which
-// answers with `answer`.
+// The stand-in of the fixed run, but for the workflow agent under `label`,
+// which answers with `answer`.
 function answerFixedBut(label: string, answer: unknown): (call: AgentCall) => unknown {
   return (call) => (call.options.label === label ? answer : getFixedAnswer(call));
 }

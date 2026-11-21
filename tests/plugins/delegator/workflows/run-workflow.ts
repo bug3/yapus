@@ -30,10 +30,11 @@ const DROP_CLOCK_AND_RANDOM = 'delete globalThis.Date; delete Math.random;';
 // Runs a workflow script of a plugin against stand-ins for what the workflow
 // runtime gives it: `agent`, `parallel`, `phase`, `log` and `args`, and no
 // `pipeline`, `workflow`, `Date`, `Math.random`, `process` or `require`.
-// `answer` gives what an agent returns, JSON null for a skipped agent, and
-// throws for a rejected one. `returned` and the options of each call are
-// copies a test compares with deepEqual. The promise rejects for a meta that
-// is not JSON, a script that does not parse and an error the script throws.
+// `answer` gives what a workflow agent returns, JSON null for a skipped
+// workflow agent, and throws for a rejected one. `returned` and the options
+// of each call are copies a test compares with deepEqual. The promise rejects
+// for a meta that is not JSON, a script that does not parse and an error the
+// script throws.
 export async function runWorkflow(
   scriptPath: string,
   args: unknown,

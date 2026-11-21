@@ -51,7 +51,7 @@ const WEB_GATHER_PROMPT = [
   '- Answer this question only; another agent answers each other question.',
 ].join('\n');
 
-test('gives the gatherer of a repository question the approved prompt', async () => {
+test('gives the gather agent of a repository question the approved prompt', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.equal(findCall(run, 'gather-repo:Q1')?.prompt, REPOSITORY_GATHER_PROMPT);
@@ -105,7 +105,7 @@ test('refuses a start path that starts at a root once it is on one line', async 
   );
 });
 
-test('gives the gatherer of a web question the approved prompt', async () => {
+test('gives the gather agent of a web question the approved prompt', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.equal(findCall(run, 'gather-web:Q4')?.prompt, WEB_GATHER_PROMPT);
@@ -135,7 +135,7 @@ test('puts a web question that holds a line break on one line', async () => {
   );
 });
 
-test('launches the gatherer of a repository question as the reader definition', async () => {
+test('launches the gather agent of a repository question as the reader definition', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.deepEqual(findCall(run, 'gather-repo:Q1')?.options, {
@@ -165,7 +165,7 @@ test('launches the gatherer of a repository question as the reader definition', 
   });
 });
 
-test('launches the gatherer of a web question as the web-researcher definition', async () => {
+test('launches the gather agent of a web question as the web-researcher definition', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.deepEqual(findCall(run, 'gather-web:Q4')?.options, {
@@ -194,7 +194,7 @@ test('launches the gatherer of a web question as the web-researcher definition',
   });
 });
 
-test('launches one gatherer for each question, in the stage of its lane', async () => {
+test('launches one gather agent for each question, in the stage of its lane', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.deepEqual(listLabels(run, 'gather'), [
@@ -205,7 +205,7 @@ test('launches one gatherer for each question, in the stage of its lane', async 
   ]);
 });
 
-test('launches no gatherer for a question in a lane the args leave out', async () => {
+test('launches no gather agent for a question in a lane the args leave out', async () => {
   const args = { task: TASK, directory: DIRECTORY, lanes: ['repository'] };
 
   const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
@@ -272,7 +272,7 @@ test('logs the claims of each question with their outcomes', async () => {
   ]);
 });
 
-test('researches the other questions when a gatherer returns nothing', async () => {
+test('researches the other questions when a gather agent returns nothing', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.partialDeepStrictEqual(run.returned, {
@@ -286,7 +286,7 @@ test('researches the other questions when a gatherer returns nothing', async () 
   });
 });
 
-test('logs the failure of a gatherer that rejects', async () => {
+test('logs the failure of a gather agent that rejects', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, rejectFirstGatherer);
 
   assert.equal(
@@ -295,7 +295,7 @@ test('logs the failure of a gatherer that rejects', async () => {
   );
 });
 
-test('researches the other questions when a gatherer rejects', async () => {
+test('researches the other questions when a gather agent rejects', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, rejectFirstGatherer);
 
   assert.partialDeepStrictEqual(run.returned, {
@@ -309,7 +309,7 @@ test('researches the other questions when a gatherer rejects', async () => {
   });
 });
 
-test('writes that a question returned nothing when its gatherer rejects', async () => {
+test('writes that a question returned nothing when its gather agent rejects', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, rejectFirstGatherer);
 
   assert.match(
@@ -318,7 +318,7 @@ test('writes that a question returned nothing when its gatherer rejects', async 
   );
 });
 
-test('tells the completeness agent of a question whose gatherer rejects', async () => {
+test('tells the completeness agent of a question whose gather agent rejects', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, rejectFirstGatherer);
 
   assert.match(
@@ -335,7 +335,7 @@ test('counts the gather answers that came back and the longest of them', async (
   });
 });
 
-test('counts no gather answer when no gatherer returns one', async () => {
+test('counts no gather answer when no gather agent returns one', async () => {
   const run = await runQuestion({ lane: 'repository', question: 'Where is the gate?' });
 
   assert.partialDeepStrictEqual(run.returned, {
@@ -343,8 +343,8 @@ test('counts no gather answer when no gatherer returns one', async () => {
   });
 });
 
-// The run of one question the scope agent returns; its gatherer answers with
-// nothing.
+// The run of one question the scope agent returns; its gather agent answers
+// with nothing.
 async function runQuestion(question: unknown): Promise<WorkflowRun> {
   return await runWorkflow(
     SCRIPT_PATH,
@@ -353,8 +353,8 @@ async function runQuestion(question: unknown): Promise<WorkflowRun> {
   );
 }
 
-// The stand-in of the fixed run, but for the gatherer of its first question,
-// which rejects.
+// The stand-in of the fixed run, but for the gather agent of its first
+// question, which rejects.
 function rejectFirstGatherer(call: AgentCall): unknown {
   if (call.options.label === 'gather-repo:Q1') {
     throw new Error('agent died\nat the second turn');
