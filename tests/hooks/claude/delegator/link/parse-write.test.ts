@@ -30,7 +30,7 @@ test('reads the session and the file path of an Edit', () => {
 });
 
 // The path in the tool's response and the payload's cwd name no file to link.
-test('takes the session of the main session and the path of the input alone', () => {
+test('takes the session id and the path of the input alone', () => {
   const stdinText = JSON.stringify({
     ...WRITE,
     agent_id: 'a1',

@@ -33,8 +33,8 @@ test('appends a plan line for an Edit of a file in a plan directory', (t) => {
   );
 });
 
-// A subagent's call carries the main session's id beside its own.
-test('appends the plan line of a subagent to the file of the main session', (t) => {
+// A subagent's call carries the session's id beside its own.
+test('appends the plan line of a subagent to the file of the session', (t) => {
   const { projectRoot, dataDir } = makeDirs(t);
   const logPath = writeLog(projectRoot);
   const stdinText = JSON.stringify({

@@ -18,7 +18,7 @@ export type ReturnVerdict =
   | { readonly kind: 'pass' }
   | { readonly kind: 'shorten'; readonly detail: string };
 
-// Whether the subagent's return may reach the main session: within the cap,
+// Whether the subagent's return may reach the session: within the cap,
 // or past it on the second try, which passes so the subagent cannot loop. A
 // workflow agent returns to its script and stops with no message, so its
 // stop passes with nothing judged and nothing logged.
