@@ -128,7 +128,7 @@ test('registers every delegator hook', () => {
       ],
       SubagentStop: [
         {
-          matcher: '^delegator:',
+          matcher: '^delegator:|^fork$',
           hooks: [
             {
               type: 'command',
