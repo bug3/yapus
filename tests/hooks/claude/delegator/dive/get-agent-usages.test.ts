@@ -16,6 +16,7 @@ const NO_USAGE = {
   lastMs: undefined,
   models: [],
   tools: {},
+  toolsNotHeld: {},
 };
 // One API response on two lines, each with one tool call.
 const SCOPE_TRANSCRIPT = toText(
@@ -104,6 +105,7 @@ test('reads the four agents of a run in two stages, in the order of the journal'
     lastMs: MIDNIGHT_MS + 40000,
     models: ['model-b'],
     tools: { Read: 2, Grep: 1 },
+    toolsNotHeld: {},
   };
 
   assert.deepEqual(getAgentUsages(runDirectory), {
@@ -120,6 +122,7 @@ test('reads the four agents of a run in two stages, in the order of the journal'
         lastMs: MIDNIGHT_MS + 3000,
         models: ['model-a'],
         tools: { Glob: 1, Read: 1 },
+        toolsNotHeld: {},
       },
       { stage: 'gather-repo', isReturned: true, ...gatherUsage },
       { stage: 'gather-repo', isReturned: false, ...gatherUsage },

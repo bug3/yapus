@@ -2,6 +2,10 @@ import { isRecord } from '../../../shared/is-record.ts';
 import { getBlocks } from '../transcript/get-blocks.ts';
 import { readTranscriptLines, type TranscriptLine } from '../transcript/read-transcript-lines.ts';
 
+// What Claude Code answers a call of a tool the agent does not hold with, in
+// a tool_result that is an error.
+const NOT_HELD_ANSWER = 'No such tool available';
+
 // What the transcript of one agent holds of its work.
 export interface TranscriptUsage {
   // The API responses, each counted once.
@@ -15,8 +19,10 @@ export interface TranscriptUsage {
   readonly lastMs: number | undefined;
   // In the order of their first response.
   readonly models: readonly string[];
-  // The tool calls, counted by the tool's name.
+  // The calls of the tools the agent held, counted by the tool's name.
   readonly tools: Readonly<Record<string, number>>;
+  // The calls of a tool the agent did not hold, counted the same way.
+  readonly toolsNotHeld: Readonly<Record<string, number>>;
 }
 
 // One API response: an assistant message with an id.
@@ -26,6 +32,13 @@ interface Response {
   readonly outputTokens: number;
   readonly inputTokens: number;
   readonly cacheReadTokens: number;
+}
+
+// One tool call: a tool_use block with a name.
+interface Call {
+  // What a tool_result names the call by.
+  readonly id: unknown;
+  readonly name: string;
 }
 
 // The usage over the text of a transcript file; zeros and no times for a
@@ -39,6 +52,8 @@ export function getTranscriptUsage(text: string): TranscriptUsage {
       .values(),
   ];
   const times = lines.flatMap(getTimes);
+  const calls = assistantLines.flatMap(getBlocks).flatMap(getCalls);
+  const notHeldIds = new Set<unknown>(lines.flatMap(getBlocks).flatMap(getNotHeldIds));
 
   return {
     turns: responses.length,
@@ -51,7 +66,10 @@ export function getTranscriptUsage(text: string): TranscriptUsage {
     ),
     lastMs: times.reduce<number | undefined>((latest, time) => getLater(latest, time), undefined),
     models: [...new Set(responses.flatMap(({ model }) => (model === undefined ? [] : [model])))],
-    tools: countNames(assistantLines.flatMap(getBlocks).flatMap(getCallNames)),
+    tools: countNames(calls.filter(({ id }) => !notHeldIds.has(id)).map(({ name }) => name)),
+    toolsNotHeld: countNames(
+      calls.filter(({ id }) => notHeldIds.has(id)).map(({ name }) => name),
+    ),
   };
 }
 
@@ -91,10 +109,21 @@ function getLater(latest: number | undefined, time: number): number {
   return latest === undefined ? time : Math.max(latest, time);
 }
 
-function getCallNames(block: TranscriptLine): string[] {
-  const { type, name } = block;
+function getCalls(block: TranscriptLine): Call[] {
+  const { type, id, name } = block;
 
-  return type === 'tool_use' && typeof name === 'string' ? [name] : [];
+  return type === 'tool_use' && typeof name === 'string' ? [{ id, name }] : [];
+}
+
+// The id of the call the block answers, when the block says the agent does
+// not hold the tool. Another error and an answer that only quotes the words
+// are the answers of a tool the agent holds.
+function getNotHeldIds(block: TranscriptLine): string[] {
+  const { type, content, is_error: isError, tool_use_id: callId } = block;
+  const isNotHeld = type === 'tool_result' && isError === true
+    && typeof content === 'string' && content.includes(NOT_HELD_ANSWER);
+
+  return isNotHeld && typeof callId === 'string' ? [callId] : [];
 }
 
 function countNames(names: readonly string[]): Record<string, number> {
