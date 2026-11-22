@@ -36,8 +36,8 @@ export const MIXED_PATHS = [
 // What each workflow agent of the run on FIXED_ARGS returns, by its label.
 // The gather agent of the third question has no answer; the claims come out
 // as one verified, one refuted and one undecided for the repository, and for
-// the web one verified by two votes and one by the third; the file is
-// written.
+// the web one verified by its first vote and one by the third; the
+// completeness agent writes no follow-up question; the file is written.
 const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['scope', {
     questions: [
@@ -64,12 +64,14 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
         claim: 'The return gate sends a return over the limit back once.',
         path: 'hooks/claude/gates/return/get-return-verdict.ts',
         line: 31,
+        endLine: 31,
         excerpt: 'const isOver = length > RETURN_CAP_CHARACTERS;',
       },
       {
         claim: 'The return gate keeps a count of send-backs for each session.',
         path: 'hooks/claude/gates/return/main.ts',
         line: 12,
+        endLine: 12,
         excerpt: 'const sendBacks = countSendBacks(session);',
       },
     ],
@@ -81,6 +83,7 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
         claim: 'The SubagentStop entry runs the return gate for the delegator agents.',
         path: 'plugins/delegator/hooks/hooks.json',
         line: 412,
+        endLine: 412,
         excerpt: '"matcher": "^delegator:"',
       },
     ],
@@ -117,17 +120,13 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
     verdict: 'supported',
     evidence: 'The page says: Exit code 2 blocks the stop and shows stderr to the subagent',
   }],
-  ['verify-web:Q4.C1.v2', {
-    verdict: 'supported',
-    evidence: 'The quote stands in the section on exit codes.',
-  }],
   ['verify-web:Q4.C2.v1', {
-    verdict: 'supported',
-    evidence: 'The page holds the quote under Hooks.',
-  }],
-  ['verify-web:Q4.C2.v2', {
     verdict: 'unsupported',
     evidence: 'The page names no second block.',
+  }],
+  ['verify-web:Q4.C2.v2', {
+    verdict: 'supported',
+    evidence: 'The page holds the quote under Hooks.',
   }],
   ['verify-web-third:Q4.C2.v3', {
     verdict: 'supported',
@@ -136,12 +135,88 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['completeness', {
     unreadAreas: ['tests/hooks/claude/gates/return'],
     unansweredQuestions: ['Which tests hold the verdicts of the return gate?'],
+    followUps: [],
   }],
   ['synthesize', { outcome: 'written', detail: '' }],
+]);
+
+// What the workflow agents of the run on FIXED_ARGS return when the
+// completeness agent writes a repository and a web follow-up question, by
+// label, where they differ from FIXED_ANSWERS. The claims of the repository
+// one come out as one verified, one refuted and one undecided, and the claim
+// of the web one is verified by its first vote.
+const FOLLOW_UP_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
+  ['completeness', {
+    unreadAreas: ['tests/hooks/claude/gates/return'],
+    unansweredQuestions: ['Which tests hold the verdicts of the return gate?'],
+    followUps: [
+      {
+        lane: 'repository',
+        question: 'Which tests hold the verdicts of the return gate?',
+        startAt: ['tests/hooks/claude/gates/return'],
+      },
+      { lane: 'web', question: 'Does the Claude Code changelog name a limit on stop blocks?' },
+    ],
+  }],
+  ['follow-up-repo:F1', {
+    claims: [
+      {
+        claim: 'The verdict tests send back a return over the limit.',
+        path: 'tests/hooks/claude/gates/return/get-return-verdict.test.ts',
+        line: 20,
+        endLine: 34,
+        excerpt: "test('sends back a return over the limit', () => {",
+      },
+      {
+        claim: 'The verdict tests count the send-backs of a session.',
+        path: 'tests/hooks/claude/gates/return/get-return-verdict.test.ts',
+        line: 40,
+        endLine: 40,
+        excerpt: "test('passes a return under the limit', () => {",
+      },
+      {
+        claim: 'The return gate has a test of its entry.',
+        path: 'tests/hooks/claude/gates/return/main.test.ts',
+        line: 8,
+        endLine: 12,
+        excerpt: "test('reads the payload', () => {",
+      },
+    ],
+    notSearched: ['tests/hooks/claude/gates/shared'],
+  }],
+  ['follow-up-web:F2', {
+    claims: [
+      {
+        claim: 'The changelog names no limit on the blocks of a stop.',
+        url: 'https://code.claude.com/docs/en/changelog',
+        quote: 'SubagentStop hooks can block a stop',
+      },
+    ],
+    notChecked: [],
+  }],
+  ['verify-repo:F1.C1', {
+    verdict: 'supported',
+    evidence: 'get-return-verdict.test.ts:20 names the test.',
+  }],
+  ['verify-repo:F1.C2', {
+    verdict: 'unsupported',
+    evidence: 'get-return-verdict.test.ts:40 tests a return under the limit.',
+  }],
+  ['verify-web:F2.C1.v1', {
+    verdict: 'supported',
+    evidence: 'The page says: SubagentStop hooks can block a stop',
+  }],
 ]);
 
 // The stand-in for the workflow agents of a deep-dive run on FIXED_ARGS: the
 // answer of a call by its label, and JSON null for a label that has none.
 export function getFixedAnswer(call: AgentCall): unknown {
   return FIXED_ANSWERS.get(String(call.options.label)) ?? JSON_NULL;
+}
+
+// The stand-in for the workflow agents of a deep-dive run on FIXED_ARGS with
+// a follow-up round: the answer of FOLLOW_UP_ANSWERS for a label it holds, and
+// that of the fixed run otherwise. `verify-repo:F1.C3` has none.
+export function getFollowUpAnswer(call: AgentCall): unknown {
+  return FOLLOW_UP_ANSWERS.get(String(call.options.label)) ?? getFixedAnswer(call);
 }

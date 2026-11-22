@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { findCall } from './find-call.ts';
-import { FIXED_ARGS, SCRIPT_PATH, getFixedAnswer } from './get-fixed-answer.ts';
+import {
+  FIXED_ARGS,
+  SCRIPT_PATH,
+  getFixedAnswer,
+  getFollowUpAnswer,
+} from './get-fixed-answer.ts';
 import { runWorkflow } from './run-workflow.ts';
 import type { AgentCall, WorkflowRun } from './run-workflow.ts';
 
@@ -27,7 +32,6 @@ const AGENTS_OF_FIXED_RUN = [
   'verify-repo:Q2.C1 delegator:reader - -',
   'verify-web-third:Q4.C2.v3 delegator:web-researcher opus -',
   'verify-web:Q4.C1.v1 delegator:web-researcher - -',
-  'verify-web:Q4.C1.v2 delegator:web-researcher - -',
   'verify-web:Q4.C2.v1 delegator:web-researcher - -',
   'verify-web:Q4.C2.v2 delegator:web-researcher - -',
 ] as const;
@@ -69,7 +73,11 @@ test('holds the approved meta', async () => {
         detail: 'one gather agent per question returns claims with their sources',
       },
       { title: 'Verify', detail: 'each claim checked against the lines or the page it cites' },
-      { title: 'Completeness', detail: 'unread areas and unanswered questions' },
+      {
+        title: 'Completeness',
+        detail:
+          'unread areas, unanswered questions and up to 4 follow-up questions for one more round',
+      },
       { title: 'Synthesize', detail: 'research_<digest>.md written beside the plan' },
     ],
   });
@@ -91,6 +99,18 @@ test('gives each workflow agent the agent type, model and effort of its stage', 
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.deepEqual(run.calls.map(describeAgent).toSorted(), AGENTS_OF_FIXED_RUN);
+});
+
+test('gives a follow-up gather agent the agent type, model and effort of its stage', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFollowUpAnswer);
+
+  assert.deepEqual(
+    run.calls
+      .filter((call) => String(call.options.label).startsWith('follow-up'))
+      .map(describeAgent)
+      .toSorted(),
+    ['follow-up-repo:F1 delegator:reader - -', 'follow-up-web:F2 delegator:web-researcher - -'],
+  );
 });
 
 test('denies tools by name to the synthesize agent alone', async () => {
