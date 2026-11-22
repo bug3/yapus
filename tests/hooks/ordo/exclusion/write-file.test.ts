@@ -47,3 +47,15 @@ test('writes through a link and keeps the link', (t) => {
   assert.equal(lstatSync(link).isSymbolicLink(), true);
   assert.equal(readFileSync(target, 'utf8'), '{"model": "opus"}\n');
 });
+
+test('leaves the staging file of another writer alone', (t) => {
+  const directory = makeTempDir(t);
+  const path = join(directory, 'excluded.json');
+  const otherStaging = `${ path }.new`;
+
+  writeFileSync(otherStaging, '["/a/oth');
+  writeFile(path, '["/a/new"]\n');
+
+  assert.equal(readFileSync(otherStaging, 'utf8'), '["/a/oth');
+  assert.equal(readFileSync(path, 'utf8'), '["/a/new"]\n');
+});
