@@ -7,6 +7,7 @@ import {
   MIXED_PATHS,
   SCRIPT_PATH,
   getFixedAnswer,
+  getFollowUpAnswer,
 } from './get-fixed-answer.ts';
 import { runWorkflow } from './run-workflow.ts';
 import type { AgentCall, WorkflowRun } from './run-workflow.ts';
@@ -109,8 +110,21 @@ const WIDE_RUN_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>(
   ],
   ['gather-web', { claims: Array.from({ length: 45 }, () => WEB_CLAIM), notChecked: [] }],
   ['verify-web', UNSUPPORTED],
-  ['completeness', { unreadAreas: [], unansweredQuestions: [] }],
+  ['completeness', { unreadAreas: [], unansweredQuestions: [], followUps: [] }],
   ['synthesize', { outcome: 'written', detail: '' }],
+]);
+// The wide run, where the completeness agent writes one web follow-up
+// question, which comes past the 998 and is held back.
+const WIDE_RUN_FOLLOW_UP_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
+  ...WIDE_RUN_ANSWERS,
+  [
+    'completeness',
+    {
+      unreadAreas: [],
+      unansweredQuestions: [],
+      followUps: [{ lane: 'web', question: 'What else blocks?' }],
+    },
+  ],
 ]);
 const NOT_LAUNCHED = ' not launched: the run is at 998 workflow agents';
 const WIDE_RUN_UNVERIFIED_BLOCK = [
@@ -130,8 +144,13 @@ const WIDE_RUN_RUN_BLOCK = [
   '| verify-web | 985 | 985 |',
   '| verify-web-third | 0 | 0 |',
   '| completeness | 1 | 1 |',
+  '| follow-up-repo | 0 | 0 |',
+  '| follow-up-web | 0 | 0 |',
   '',
   '- Questions: 12 (0 repository, 12 web)',
+  '- Follow-up questions: 0 (0 repository, 0 web)',
+  '- Follow-up claims: 0 (0 repository, 0 web)',
+  '- Follow-up verified: 0 (0 repository, 0 web)',
   '- Claims: 540 (0 repository, 540 web)',
   '- Verified: 0 (0 repository, 0 web)',
   '- Refuted: 445 (0 repository, 445 web)',
@@ -261,6 +280,24 @@ test('launches one verify agent per repository claim and one to three per web cl
     'verify-repo:Q1.C2',
     'verify-repo:Q2.C1',
     'verify-web-third:Q4.C2.v3',
+    'verify-web:Q4.C1.v1',
+    'verify-web:Q4.C2.v1',
+    'verify-web:Q4.C2.v2',
+  ]);
+});
+
+test('verifies the claims of the follow-up questions under their ids', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFollowUpAnswer);
+
+  assert.deepEqual(listLabels(run, 'verify'), [
+    'verify-repo:F1.C1',
+    'verify-repo:F1.C2',
+    'verify-repo:F1.C3',
+    'verify-repo:Q1.C1',
+    'verify-repo:Q1.C2',
+    'verify-repo:Q2.C1',
+    'verify-web-third:Q4.C2.v3',
+    'verify-web:F2.C1.v1',
     'verify-web:Q4.C1.v1',
     'verify-web:Q4.C2.v1',
     'verify-web:Q4.C2.v2',
@@ -531,6 +568,28 @@ test('logs each launch held back under its label', async () => {
   assert.equal(heldBack.includes(`verify-web-third:Q12.C45.v3${ NOT_LAUNCHED }`), true);
 });
 
+test('holds back a follow-up gather agent past the 998 and still ends the run', async () => {
+  const run = await runWorkflow(
+    SCRIPT_PATH,
+    FIXED_ARGS,
+    answerByStage(WIDE_RUN_FOLLOW_UP_ANSWERS),
+  );
+
+  assert.equal(run.calls.length, 1000);
+  assert.deepEqual(
+    run.calls.slice(-2).map((call) => call.options.label),
+    ['completeness', 'synthesize'],
+  );
+  assert.equal(run.logs.includes(`follow-up-web:F1${ NOT_LAUNCHED }`), true);
+  assert.partialDeepStrictEqual(run.returned, {
+    stats: {
+      followUps: { questions: { repository: 0, web: 1 } },
+      notLaunched: 191,
+      stages: Object.fromEntries([['follow-up-web', { launched: 0, returned: 0 }]]),
+    },
+  });
+});
+
 test('sends no verify agent to a claim whose path may lead out of the repository', async () => {
   const run = await runPaths(MIXED_PATHS);
 
@@ -643,7 +702,7 @@ async function runPaths(paths: readonly string[]): Promise<WorkflowRun> {
     ['scope', { questions: [{ lane: 'repository', question: 'What blocks a return?' }] }],
     ['gather-repo', { claims, notSearched: [] }],
     ['verify-repo', SUPPORTED],
-    ['completeness', { unreadAreas: [], unansweredQuestions: [] }],
+    ['completeness', { unreadAreas: [], unansweredQuestions: [], followUps: [] }],
     ['synthesize', { outcome: 'written', detail: '' }],
   ]);
 
@@ -659,7 +718,7 @@ async function runLines(line: number, endLine: number): Promise<WorkflowRun> {
     ['scope', { questions: [{ lane: 'repository', question: 'What blocks a return?' }] }],
     ['gather-repo', { claims: [claim], notSearched: [] }],
     ['verify-repo', UNSUPPORTED],
-    ['completeness', { unreadAreas: [], unansweredQuestions: [] }],
+    ['completeness', { unreadAreas: [], unansweredQuestions: [], followUps: [] }],
     ['synthesize', { outcome: 'written', detail: '' }],
   ]);
 

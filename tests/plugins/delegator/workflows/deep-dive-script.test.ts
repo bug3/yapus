@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { findCall } from './find-call.ts';
-import { FIXED_ARGS, SCRIPT_PATH, getFixedAnswer } from './get-fixed-answer.ts';
+import {
+  FIXED_ARGS,
+  SCRIPT_PATH,
+  getFixedAnswer,
+  getFollowUpAnswer,
+} from './get-fixed-answer.ts';
 import { runWorkflow } from './run-workflow.ts';
 import type { AgentCall, WorkflowRun } from './run-workflow.ts';
 
@@ -90,6 +95,18 @@ test('gives each workflow agent the agent type, model and effort of its stage', 
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.deepEqual(run.calls.map(describeAgent).toSorted(), AGENTS_OF_FIXED_RUN);
+});
+
+test('gives a follow-up gather agent the agent type, model and effort of its stage', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFollowUpAnswer);
+
+  assert.deepEqual(
+    run.calls
+      .filter((call) => String(call.options.label).startsWith('follow-up'))
+      .map(describeAgent)
+      .toSorted(),
+    ['follow-up-repo:F1 delegator:reader - -', 'follow-up-web:F2 delegator:web-researcher - -'],
+  );
 });
 
 test('denies tools by name to the synthesize agent alone', async () => {

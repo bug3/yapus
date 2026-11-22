@@ -200,6 +200,11 @@ test('returns the no-question error and the counts when the lanes leave no quest
     error: NO_QUESTION_ERROR,
     stats: {
       questions: { repository: 0, web: 0 },
+      followUps: {
+        questions: { repository: 0, web: 0 },
+        claims: { repository: 0, web: 0 },
+        verified: { repository: 0, web: 0 },
+      },
       dropped: 3,
       claims: { repository: 0, web: 0 },
       verified: { repository: 0, web: 0 },
@@ -216,6 +221,8 @@ test('returns the no-question error and the counts when the lanes leave no quest
         ['verify-web', { launched: 0, returned: 0 }],
         ['verify-web-third', { launched: 0, returned: 0 }],
         ['completeness', { launched: 0, returned: 0 }],
+        ['follow-up-repo', { launched: 0, returned: 0 }],
+        ['follow-up-web', { launched: 0, returned: 0 }],
         ['synthesize', { launched: 0, returned: 0 }],
       ]),
     },

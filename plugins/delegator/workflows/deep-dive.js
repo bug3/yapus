@@ -73,6 +73,8 @@ const STAGES = {
     model: 'opus',
     effort: 'high',
   },
+  'follow-up-repo': { phase: 'Gather', agentType: 'delegator:reader' },
+  'follow-up-web': { phase: 'Gather', agentType: 'delegator:web-researcher' },
   'synthesize': {
     phase: 'Synthesize',
     model: 'opus',
@@ -82,11 +84,13 @@ const STAGES = {
 };
 
 // How a question of each lane is researched: the stage that gathers its
-// claims, the prompt of that stage, what its gather agent names as left out,
-// and how one of its claims is cited and verified.
+// claims in the scope's round and the one in the follow-up round, the prompt
+// of those stages, what its gather agent names as left out, and how one of its
+// claims is cited and verified.
 const LANE_RESEARCH = {
   repository: {
     gatherStageId: 'gather-repo',
+    followUpStageId: 'follow-up-repo',
     formatGatherPrompt: formatRepositoryGatherPrompt,
     listUnsearched: (gathered) => gathered.notSearched,
     citeClaim: citeRepositoryClaim,
@@ -94,6 +98,7 @@ const LANE_RESEARCH = {
   },
   web: {
     gatherStageId: 'gather-web',
+    followUpStageId: 'follow-up-web',
     formatGatherPrompt: formatWebGatherPrompt,
     listUnsearched: (gathered) => gathered.notChecked,
     citeClaim: citeWebClaim,
@@ -104,6 +109,7 @@ const LANE_RESEARCH = {
 const LANES = Object.keys(LANE_RESEARCH);
 const MIN_QUESTIONS = 3;
 const MAX_QUESTIONS = 12;
+const FOLLOW_UP_LIMIT = 4;
 
 // The verdicts of a verify agent. The first two are a vote; a source that
 // would not open is no vote against its claim.
@@ -215,9 +221,12 @@ const SCHEMAS = {
     properties: {
       unreadAreas: { type: 'array', items: { type: 'string' } },
       unansweredQuestions: { type: 'array', items: { type: 'string' } },
+      followUps: { type: 'array', maxItems: FOLLOW_UP_LIMIT, items: QUESTION_SCHEMA },
     },
-    required: ['unreadAreas', 'unansweredQuestions'],
+    required: ['unreadAreas', 'unansweredQuestions', 'followUps'],
   },
+  'follow-up-repo': REPOSITORY_GATHER_SCHEMA,
+  'follow-up-web': WEB_GATHER_SCHEMA,
   'synthesize': {
     type: 'object',
     properties: {
@@ -311,7 +320,7 @@ log(`scope: ${ questions.length } questions (${ formatLaneCounts(questionCounts)
 // out, so nothing is left to research: the run ends here, before the
 // workflow agents that would end it with a research file of no claim.
 if (questions.length === 0) {
-  return { error: NO_QUESTION_ERROR, stats: getStats(questionCounts, droppedQuestions, []) };
+  return { error: NO_QUESTION_ERROR, stats: getStats(questionCounts, droppedQuestions, [], []) };
 }
 
 // Gathering and verifying run with no barrier between them: the run enters
@@ -327,13 +336,35 @@ const researched = await parallel(
 
 phase(STAGES.completeness.phase);
 
-const gaps = await launchAgent('completeness', formatCompletenessPrompt(input.task, researched));
+const gaps = await launchAgent('completeness', formatCompletenessPrompt(input, researched));
+
+// The follow-up round: the questions the completeness agent wrote from the
+// gaps it named, kept, numbered and researched as the scope's are, with no
+// completeness agent after them. Each of its workflow agents carries the
+// phase of its stage.
+const followUps = gaps === undefined ? [] : gaps.followUps;
+const followUpQuestions = selectQuestions(followUps, input.lanes, 'F');
+
+log(
+  `follow-up: ${ followUpQuestions.length } questions (${ formatLaneCounts(countByLane(followUpQuestions)) })`,
+);
+
+const followedUp = await parallel(
+  followUpQuestions.map((question) => () => (
+    researchQuestion(input.task, question, LANE_RESEARCH[question.lane].followUpStageId)
+  )),
+);
+const bothRounds = [...researched, ...followedUp];
+const bothRoundsDropped = [
+  ...droppedQuestions,
+  ...selectDroppedQuestions(followUps, input.lanes),
+];
 
 // `stats.stages` is the table launchAgent counts in, so the stats the run
 // returns hold its last workflow agent too.
-const stats = getStats(questionCounts, droppedQuestions, researched);
-const unmeasuredLines = listUnmeasuredLines(researched, droppedQuestions, gaps);
-const content = formatContent(researched, unmeasuredLines, stats);
+const stats = getStats(questionCounts, bothRoundsDropped, bothRounds, followedUp);
+const unmeasuredLines = listUnmeasuredLines(bothRounds, bothRoundsDropped, gaps);
+const content = formatContent(bothRounds, unmeasuredLines, stats);
 
 // The file is named from what it holds: a run of other content writes
 // another file, and a file a run replaces held the same content.
@@ -755,11 +786,19 @@ function selectClaims(claims, selected) {
   return claims.filter(({ outcome }) => outcome === selected);
 }
 
-function getStats(questionCounts, droppedQuestions, researched) {
+// The counts of the run, of both rounds but for `questions`, the scope's
+// alone, and `followUps`, the follow-up round's alone.
+function getStats(questionCounts, droppedQuestions, researched, followedUp) {
   const claims = listLaneClaims(researched);
+  const followUpClaims = listLaneClaims(followedUp);
 
   return {
     questions: questionCounts,
+    followUps: {
+      questions: countByLane(followedUp),
+      claims: countByLane(followUpClaims),
+      verified: countByLane(selectClaims(followUpClaims, VERIFIED)),
+    },
     dropped: droppedQuestions.length,
     claims: countByLane(claims),
     verified: countByLane(selectClaims(claims, VERIFIED)),
@@ -794,12 +833,15 @@ function getGatherReturns(researched) {
   };
 }
 
-function formatCompletenessPrompt(task, researched) {
+function formatCompletenessPrompt({ task, lanes }, researched) {
   return [
     'Find what the research for one task left out.',
     '',
     '## Task',
     task,
+    '',
+    '## Lanes',
+    lanes.join(', '),
     '',
     '## Questions and what came back',
     researched.map(formatQuestionReturn).join('\n'),
@@ -810,6 +852,7 @@ function formatCompletenessPrompt(task, researched) {
     '## Rules',
     "- In unreadAreas, name each part of the repository the task touches that no claim cites; look at the repository's layout to find them.",
     '- In unansweredQuestions, name each question above that came back with no verified claim, and each question the task raises that none of them covers.',
+    `- In followUps, write at most ${ FOLLOW_UP_LIMIT } questions, each one a gather agent can answer in one launch to close a gap you named, the ones the plan needs most: give each one of the lanes listed above, name the paths to start from for a repository question when you know them, and let none overlap a question above; write none when no gap needs one.`,
     RETURN_RULE,
     '- Name what is missing; do not answer it, and change no file.',
   ].join('\n');
@@ -936,6 +979,9 @@ function formatRunBlock(stats) {
       )),
     '',
     formatCountLine('Questions', stats.questions),
+    formatCountLine('Follow-up questions', stats.followUps.questions),
+    formatCountLine('Follow-up claims', stats.followUps.claims),
+    formatCountLine('Follow-up verified', stats.followUps.verified),
     formatCountLine('Claims', stats.claims),
     formatCountLine('Verified', stats.verified),
     formatCountLine('Refuted', stats.refuted),

@@ -7,6 +7,7 @@ import {
   MIXED_PATHS,
   SCRIPT_PATH,
   getFixedAnswer,
+  getFollowUpAnswer,
 } from './get-fixed-answer.ts';
 import { runWorkflow } from './run-workflow.ts';
 import type { AgentCall, WorkflowRun } from './run-workflow.ts';
@@ -256,6 +257,62 @@ test('numbers the questions it keeps when the args leave a lane out', async () =
   assert.deepEqual(listLabels(run, 'gather'), ['gather-web:Q1']);
 });
 
+test('gives the follow-up gather agent of each lane the prompt of its lane', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFollowUpAnswer);
+
+  assert.equal(
+    findCall(run, 'follow-up-repo:F1')?.prompt,
+    REPOSITORY_GATHER_PROMPT.replace(
+      'Where does the return gate count a send-back?\n\n## Start at\nhooks',
+      'Which tests hold the verdicts of the return gate?\n\n## Start at\ntests/hooks',
+    ),
+  );
+  assert.equal(
+    findCall(run, 'follow-up-web:F2')?.prompt,
+    WEB_GATHER_PROMPT.replace(
+      'What does Claude Code do when a SubagentStop hook blocks twice?',
+      'Does the Claude Code changelog name a limit on stop blocks?',
+    ),
+  );
+});
+
+test('launches a follow-up gather agent with the options of the gather of its lane', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFollowUpAnswer);
+
+  assert.deepEqual(findCall(run, 'follow-up-repo:F1')?.options, {
+    ...findCall(run, 'gather-repo:Q1')?.options,
+    label: 'follow-up-repo:F1',
+  });
+  assert.deepEqual(findCall(run, 'follow-up-web:F2')?.options, {
+    ...findCall(run, 'gather-web:Q4')?.options,
+    label: 'follow-up-web:F2',
+  });
+});
+
+test('launches the follow-up gather agents after the completeness agent', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFollowUpAnswer);
+  const labels = run.calls.map((call) => String(call.options.label));
+
+  assert.deepEqual(labels.slice(labels.indexOf('completeness')).filter(isGatherLabel), [
+    'follow-up-repo:F1',
+    'follow-up-web:F2',
+  ]);
+  assert.deepEqual(labels.slice(0, labels.indexOf('completeness')).filter(isGatherLabel), [
+    'gather-repo:Q1',
+    'gather-repo:Q2',
+    'gather-repo:Q3',
+    'gather-web:Q4',
+  ]);
+});
+
+test('numbers the follow-up questions it keeps without a gap past a dropped one', async () => {
+  const args = { ...FIXED_ARGS, lanes: ['web'] };
+
+  const run = await runWorkflow(SCRIPT_PATH, args, getFollowUpAnswer);
+
+  assert.deepEqual(listLabels(run, 'follow-up'), ['follow-up-web:F1']);
+});
+
 test('enters the Gather phase after the Scope phase', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
@@ -343,6 +400,11 @@ test('counts no gather answer when no gather agent returns one', async () => {
     stats: { gatherReturns: { count: 0, longest: 0 } },
   });
 });
+
+// A label of a gather agent of either round.
+function isGatherLabel(label: string): boolean {
+  return /^(?:gather|follow-up)-/u.test(label);
+}
 
 // The run of one question the scope agent returns; its gather agent answers
 // with nothing.
