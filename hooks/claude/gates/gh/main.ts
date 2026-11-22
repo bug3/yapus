@@ -12,22 +12,23 @@ const LIMIT_SECONDS = 3;
 async function main(): Promise<void> {
   try {
     const stdinText = await getWithinLimit(text(process.stdin), LIMIT_SECONDS);
+    const home = process.env.HOME ?? '';
 
     stop(stdinText === undefined
       ? refuse(`stdin did not arrive within ${ String(LIMIT_SECONDS) } s; retry the call`)
-      : await judge(stdinText));
+      : await judge(stdinText, home, process.env));
   } catch (error) {
     stop(refuse(`crashed: ${ getFirstLine(error) }; retry the call, `
       + 'or the person fixes the hook'));
   }
 }
 
-async function judge(stdinText: string): Promise<Verdict> {
+async function judge(stdinText: string, home: string, env: NodeJS.ProcessEnv): Promise<Verdict> {
   const payload = parsePayload(stdinText);
 
   switch (payload.kind) {
     case 'call':
-      return getVerdict(payload.command, payload.cwd);
+      return getVerdict(payload.command, payload.cwd, { home, env });
     case 'other':
       return PASS;
     case 'failure':

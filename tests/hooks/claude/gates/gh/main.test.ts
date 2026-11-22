@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
+import { makeTempRepo } from '../../../../helpers/make-temp-repo.ts';
 
 const MAIN = join(
   import.meta.dirname, '..', '..', '..', '..', '..', 'hooks', 'claude', 'gates', 'gh', 'main.ts',
@@ -15,10 +17,12 @@ interface HookRun {
   readonly stderr: string;
 }
 
-function runHook(cwd: string, input: string): HookRun {
+// The hook run with home as HOME, so it reads no exclusion list of the machine.
+function runHook(cwd: string, input: string, home: string): HookRun {
   const { status, stdout, stderr } = spawnSync(process.execPath, [MAIN], {
     cwd,
     encoding: 'utf8',
+    env: { ...process.env, HOME: home },
     input,
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
@@ -34,7 +38,7 @@ test('exits 0 with no output for a command it does not judge', (t) => {
   const dir = makeTempDir(t);
 
   assert.deepEqual(
-    runHook(dir, makeCall('gh pr list', dir)),
+    runHook(dir, makeCall('gh pr list', dir), makeTempDir(t)),
     { status: 0, stdout: '', stderr: '' },
   );
 });
@@ -42,7 +46,7 @@ test('exits 0 with no output for a command it does not judge', (t) => {
 test('exits 2 with one stderr line for a refused call', (t) => {
   const dir = makeTempDir(t);
 
-  assert.deepEqual(runHook(dir, makeCall('gh pr create --web', dir)), {
+  assert.deepEqual(runHook(dir, makeCall('gh pr create --web', dir), makeTempDir(t)), {
     status: 2,
     stdout: '',
     stderr: 'yapus gh check: `gh pr create --web` takes its text from where this check cannot '
@@ -51,7 +55,7 @@ test('exits 2 with one stderr line for a refused call', (t) => {
 });
 
 test('exits 2 with one stderr line for a malformed payload', (t) => {
-  assert.deepEqual(runHook(makeTempDir(t), 'nope'), {
+  assert.deepEqual(runHook(makeTempDir(t), 'nope', makeTempDir(t)), {
     status: 2,
     stdout: '',
     stderr: 'yapus gh check: cannot read the tool call (stdin is not JSON); retry the call\n',
@@ -59,7 +63,7 @@ test('exits 2 with one stderr line for a malformed payload', (t) => {
 });
 
 test('exits 2 for a Bash call whose directory is not absolute', (t) => {
-  assert.deepEqual(runHook(makeTempDir(t), makeCall('ls', 'x')), {
+  assert.deepEqual(runHook(makeTempDir(t), makeCall('ls', 'x'), makeTempDir(t)), {
     status: 2,
     stdout: '',
     stderr: 'yapus gh check: cannot read the tool call (cwd is not absolute); retry the call\n',
@@ -69,5 +73,23 @@ test('exits 2 for a Bash call whose directory is not absolute', (t) => {
 test('exits 0 with no output for a tool other than Bash', (t) => {
   const payload = JSON.stringify({ tool_name: 'Read', tool_input: { file_path: '/x' } });
 
-  assert.deepEqual(runHook(makeTempDir(t), payload), { status: 0, stdout: '', stderr: '' });
+  assert.deepEqual(
+    runHook(makeTempDir(t), payload, makeTempDir(t)),
+    { status: 0, stdout: '', stderr: '' },
+  );
+});
+
+test('exits 0 with no output for gh pr create in a listed repository', (t) => {
+  const repo = makeTempRepo(t);
+  const home = makeTempDir(t);
+  const listDirectory = join(home, '.claude', 'yapus', 'ordo');
+  const listText = `${ JSON.stringify([realpathSync(repo)]) }\n`;
+
+  mkdirSync(listDirectory, { recursive: true });
+  writeFileSync(join(listDirectory, 'excluded.json'), listText);
+
+  assert.deepEqual(
+    runHook(repo, makeCall('gh pr create', repo), home),
+    { status: 0, stdout: '', stderr: '' },
+  );
 });
