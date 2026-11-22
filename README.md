@@ -66,7 +66,7 @@ At the start of a session in a set-up repository, ordo lists the repository's co
 <!-- #region delegator -->
 ## delegator
 
-The session is the shared workspace of the person and the main agent, and it holds only what the next decision needs. delegator puts the orchestration rules [ORCH-1 to ORCH-7](https://github.com/bug3/yapus/blob/main/hooks/claude/delegator/policy/policy.md) at the start of every session, and again after a resume, a clear or a compaction: they hand reading, running, judging and edits to subagents, launch independent ones together and let into the session only what a decision needs. Hooks, the programs Claude Code runs at fixed points of a session, hold what a program can check: the launch check judges each subagent launch before it starts, and the return check caps what each subagent sends back. delegator also checks the form of `gh pr create` and `gh issue create` calls. `claude plugin uninstall delegator@yapus` removes the plugin.
+The session is the shared workspace of the person and the main agent, and it holds only what the next decision needs. delegator puts the orchestration rules [ORCH-1 to ORCH-7](https://github.com/bug3/yapus/blob/main/hooks/claude/delegator/policy/policy.md) at the start of every session, and again after a resume, a clear or a compaction: they hand reading, running, judging and edits to subagents, launch independent ones together and let into the session only what a decision needs. Hooks, the programs Claude Code runs at fixed points of a session, hold what a program can check: the launch check judges each subagent launch before it starts, and the return check caps what each subagent sends back. delegator also checks the form of `gh pr create` and `gh issue create` calls, except in a project ordo excludes. `claude plugin uninstall delegator@yapus` removes the plugin.
 
 ### Depths
 
@@ -162,6 +162,8 @@ At the start of every session, ordo reports when it is not installed on the mach
 
 During a session, ordo refuses a Write or Edit that puts a Unicode dash other than the ASCII hyphen into a Markdown file.
 
+`/ordo:exclude` turns ordo off in the session's project and its worktrees: it adds the repository's root to `~/.claude/yapus/ordo/excluded.json` and a `claudeMdExcludes` entry for the ordo standards to the project's `.claude/settings.local.json`. There the git hooks check no subject or branch and add no trailer, the repository's own hooks still run, the dashes check and the scopes line are off, and delegator judges no `gh pr create` or `gh issue create` form. `/ordo:include` takes both out.
+
 ### Standards
 
 | File | Subject |
@@ -227,6 +229,8 @@ The command writes nothing while a path it would write or remove has an uncommit
 | `/ordo:upgrade` | installed standards and git hooks up to the plugin's version |
 | `/ordo:repo` | TypeScript setup of a new repository, upgrade of a set-up one in its recorded language |
 | `/ordo:repo go` | Go setup of a new repository |
+| `/ordo:exclude` | ordo off in the session's project and its worktrees |
+| `/ordo:include` | ordo back on there |
 
 <!-- #endregion ordo -->
 

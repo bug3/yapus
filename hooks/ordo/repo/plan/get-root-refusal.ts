@@ -1,5 +1,5 @@
 import { realpathSync } from 'node:fs';
-import { runGit } from './run-git.ts';
+import { runGit } from '../../../shared/git/run-git.ts';
 
 // The refusal line when root is not the top level of a git work tree.
 export function getRootRefusal(root: string, env: NodeJS.ProcessEnv): string | undefined {

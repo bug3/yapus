@@ -1,4 +1,4 @@
-import { runGit } from './run-git.ts';
+import { runGit } from '../../../shared/git/run-git.ts';
 
 // One line for each touched path with an uncommitted or untracked change, in
 // the order of touched; root must be the top level of a git work tree.

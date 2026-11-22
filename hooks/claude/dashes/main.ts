@@ -1,14 +1,22 @@
 import { writeSync } from 'node:fs';
 import { getFirstLine } from '../../shared/get-first-line.ts';
 import { getMessagesWithinLimit } from './get-messages-within-limit.ts';
+import { isExcluded } from './is-excluded.ts';
 import { formatMessage } from './output/format-message.ts';
 import { getExitCode } from './output/get-exit-code.ts';
 
 const LIMIT_SECONDS = 5;
 
+// In a project on the ordo exclusion list a call whose input ends within the
+// limit passes unjudged; one whose input does not is blocked, as anywhere.
 async function main(): Promise<void> {
   try {
-    stop(await getMessagesWithinLimit(process.stdin, LIMIT_SECONDS));
+    const projectDir = process.env.CLAUDE_PROJECT_DIR ?? '';
+    const home = process.env.HOME ?? '';
+    const { env } = process;
+    const isProjectExcluded = () => isExcluded(projectDir, home, env);
+
+    stop(await getMessagesWithinLimit(process.stdin, LIMIT_SECONDS, isProjectExcluded));
   } catch (error) {
     stop([formatMessage(`crashed: ${ getFirstLine(error) }; the call is blocked, fix the hook`)]);
   }

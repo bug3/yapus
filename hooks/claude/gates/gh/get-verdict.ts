@@ -1,3 +1,4 @@
+import { getExclusion } from '../../../shared/exclusion/get-exclusion.ts';
 import { findGhCalls } from './calls/find-gh-calls.ts';
 import { getIssueRefusal } from './rules/get-issue-refusal.ts';
 import { getPrRefusal } from './rules/get-pr-refusal.ts';
@@ -44,19 +45,30 @@ const MENTIONS: readonly RegExp[] = Object.values(ghCommands.actions)
 // Whether a Bash command may run, judged from `cwd`, the absolute directory it
 // starts in. Only the gh actions in the catalog are judged, each by the
 // catalogs of the repository it runs in, or of the starting directory when a
-// `cd` hid where it runs; a command that cannot be split is refused only when
-// it mentions one of them.
-export async function getVerdict(command: string, cwd: string): Promise<Verdict> {
+// `cd` hid where it runs; a call in a project on ordo's exclusion list under
+// `home` is not judged. A command that cannot be split is refused only when it
+// mentions one of them outside an excluded starting directory.
+export async function getVerdict(
+  command: string,
+  cwd: string,
+  { home, env }: { readonly home: string; readonly env: NodeJS.ProcessEnv },
+): Promise<Verdict> {
   const split = splitCommands(command);
 
   if ('failure' in split) {
-    return MENTIONS.some((mention) => mention.test(command))
+    return MENTIONS.some((mention) => mention.test(command)) && !isExcluded(cwd, home, env)
       ? refuse(ghCommands.reasons.unreadableCommand(split.failure))
       : PASS;
   }
 
   for (const call of findGhCalls(split, cwd)) {
-    const catalogs = await readRepositoryCatalogs(call.cwd ?? cwd);
+    const directory = call.cwd ?? cwd;
+
+    if (isExcluded(directory, home, env)) {
+      continue;
+    }
+
+    const catalogs = await readRepositoryCatalogs(directory);
 
     if (catalogs !== undefined && 'violation' in catalogs) {
       return refuse(catalogs.violation);
@@ -70,6 +82,12 @@ export async function getVerdict(command: string, cwd: string): Promise<Verdict>
   }
 
   return PASS;
+}
+
+// An invalid list leaves ordo on, as an absent one does; the session check
+// shows its violation.
+function isExcluded(directory: string, home: string, env: NodeJS.ProcessEnv): boolean {
+  return getExclusion(directory, home, env).kind === 'excluded';
 }
 
 export function refuse(reason: string): Refuse {

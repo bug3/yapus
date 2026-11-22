@@ -1,4 +1,4 @@
-import { runGit } from './run-git.ts';
+import { runGit } from '../../../shared/git/run-git.ts';
 
 const SCOPE_FORM = /^[a-z0-9-]+$/;
 const FIXED_SCOPE = 'project';

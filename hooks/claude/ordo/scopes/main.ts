@@ -10,8 +10,9 @@ const PROGRAM = 'ordo scopes';
 async function main(): Promise<void> {
   try {
     const projectDir = process.env.CLAUDE_PROJECT_DIR ?? '';
+    const home = process.env.HOME ?? '';
 
-    stop(await getLine(projectDir));
+    stop(await getLine(projectDir, home, process.env));
   } catch (error) {
     fail(`crashed: ${ getFirstLine(error) }; fix the hook`);
   }

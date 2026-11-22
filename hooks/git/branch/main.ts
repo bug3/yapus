@@ -1,5 +1,6 @@
 import { writeSync } from 'node:fs';
 import { text } from 'node:stream/consumers';
+import { getExclusion } from '../../shared/exclusion/get-exclusion.ts';
 import { formatMessage } from '../../shared/format-message.ts';
 import { getFirstLine } from '../../shared/get-first-line.ts';
 import { getWithinLimit } from '../../shared/get-within-limit.ts';
@@ -12,12 +13,22 @@ const NO_STDIN = `no ref lines within ${
 
 async function main(): Promise<void> {
   try {
+    if (isExcluded()) {
+      stop(undefined);
+    }
+
     const branchInput = await readBranchInput();
 
     stop(branchInput === undefined ? NO_STDIN : await getBranchViolation(branchInput));
   } catch (error) {
     stop(`crashed: ${ getFirstLine(error) }; the branch is refused, fix the hook`);
   }
+}
+
+// ordo checks nothing in a project on the exclusion list under HOME; git runs
+// the hook inside the repository, whose main root the list holds.
+function isExcluded(): boolean {
+  return getExclusion(process.cwd(), process.env.HOME ?? '', process.env).kind === 'excluded';
 }
 
 // git runs the hook where the command runs, inside the repository, and its

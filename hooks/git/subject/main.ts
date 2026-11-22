@@ -1,5 +1,6 @@
 import { writeSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { getExclusion } from '../../shared/exclusion/get-exclusion.ts';
 import { getFirstLine } from '../../shared/get-first-line.ts';
 import { findScopesPath } from './find-scopes-path.ts';
 import type { HookInput } from './get-messages.ts';
@@ -11,12 +12,22 @@ const CATALOGS = join(import.meta.dirname, '..', '..', 'shared', 'catalogs');
 
 async function main(): Promise<void> {
   try {
+    if (isExcluded()) {
+      stop([]);
+    }
+
     stop(await getMessagesWithinLimit(readHookInput(), LIMIT_SECONDS));
   } catch (error) {
     stop([
       formatMessage(`crashed: ${ getFirstLine(error) }; the commit is blocked, fix the hook`),
     ]);
   }
+}
+
+// ordo checks nothing in a project on the exclusion list under HOME; git runs
+// the hook inside the repository, whose main root the list holds.
+function isExcluded(): boolean {
+  return getExclusion(process.cwd(), process.env.HOME ?? '', process.env).kind === 'excluded';
 }
 
 // git sets GIT_EDITOR to ":" for its commit hooks when no editor opens. The
