@@ -58,34 +58,39 @@ test('exits 2 when the registered command runs on a Write that adds a dash', (t)
 test('exits 0 on a Write that adds a dash in a project on the exclusion list', (t) => {
   const project = makeTempRepo(t);
   const home = makeHome(t, [realpathSync(project)]);
-  const commandRun = runRegisteredCommand(t, home, project);
+  const commandRun = runRegisteredCommand(t, home, { project });
 
   assert.deepEqual([commandRun.status, commandRun.stderr], [0, '']);
 });
 
 test('exits 2 on a Write that adds a dash in a project off the exclusion list', (t) => {
   const home = makeHome(t, [OTHER_ROOT]);
-  const commandRun = runRegisteredCommand(t, home, makeTempRepo(t));
+  const commandRun = runRegisteredCommand(t, home, { project: makeTempRepo(t) });
 
   assert.deepEqual([commandRun.status, commandRun.stderr], [2, DASH_FINDING]);
 });
 
 test('exits 2 with the finding when the project directory does not exist', (t) => {
   const home = makeHome(t, [OTHER_ROOT]);
-  const commandRun = runRegisteredCommand(t, home, join(makeTempDir(t), 'missing'));
+  const commandRun = runRegisteredCommand(t, home, { project: join(makeTempDir(t), 'missing') });
 
   assert.deepEqual([commandRun.status, commandRun.stderr], [2, DASH_FINDING]);
 });
 
 test('exits 2 with the finding in a project when there is no exclusion list', (t) => {
-  const commandRun = runRegisteredCommand(t, makeTempDir(t), makeTempRepo(t));
+  const commandRun = runRegisteredCommand(t, makeTempDir(t), { project: makeTempRepo(t) });
 
   assert.deepEqual([commandRun.status, commandRun.stderr], [2, DASH_FINDING]);
 });
 
-// Runs the registered command on a Write that adds a dash, with home as HOME
-// and project, when given, as the session's project directory.
-function runRegisteredCommand(t: TestContext, home: string, project?: string) {
+// Runs the registered command on stdinText, a Write that adds a dash unless
+// given, with home as HOME and project, when given, as the session's project
+// directory.
+function runRegisteredCommand(
+  t: TestContext,
+  home: string,
+  { project, stdinText = EM_DASH_WRITE }: { project?: string; stdinText?: string } = {},
+) {
   const tempDir = makeTempDir(t);
   const sessionEnv = Object.fromEntries(
     Object.entries(process.env).filter(([name]) => name !== 'CLAUDE_PROJECT_DIR'),
@@ -95,7 +100,7 @@ function runRegisteredCommand(t: TestContext, home: string, project?: string) {
   return spawnSync('bash', ['-c', getRegisteredCommand()], {
     encoding: 'utf8',
     env: { ...sessionEnv, ...projectEnv, CLAUDE_PLUGIN_ROOT: PLUGIN, HOME: home, TMPDIR: tempDir },
-    input: EM_DASH_WRITE,
+    input: stdinText,
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
 }
