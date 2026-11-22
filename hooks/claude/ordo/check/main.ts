@@ -1,4 +1,5 @@
 import { readFileSync, writeSync } from 'node:fs';
+import { getExclusion } from '../../../shared/exclusion/get-exclusion.ts';
 import { formatMessage } from '../../../shared/format-message.ts';
 import { getFirstLine } from '../../../shared/get-first-line.ts';
 import { getStampPath } from '../../../shared/hooks-path/get-stamp-path.ts';
@@ -14,7 +15,9 @@ function main(): void {
   try {
     const root = process.argv[2] ?? '';
     const home = process.env.HOME ?? '';
+    const projectDir = process.env.CLAUDE_PROJECT_DIR ?? '';
     const line = getLine({
+      exclusion: getExclusion(projectDir, home, process.env),
       pluginVersion: readPluginVersion(root),
       stamp: readStamp(home),
       home,
