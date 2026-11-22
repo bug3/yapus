@@ -4,9 +4,9 @@ import { getWithinLimit } from '../../shared/get-within-limit.ts';
 import { getMessages } from './get-messages.ts';
 import { formatMessage } from './output/format-message.ts';
 
-// The limit covers the whole run: reading stdin, asking whether the project
-// is excluded and judging what stdin holds. The question can run git, which
-// blocks the run until runGit's own limit ends it.
+// The limit covers reading stdin and judging what it holds. The exclusion
+// question between them may run git synchronously, which holds the timer, so
+// only runGit's own limit bounds that part.
 export async function getMessagesWithinLimit(
   stdin: Readable,
   limitSeconds: number,

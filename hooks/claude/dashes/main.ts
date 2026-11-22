@@ -7,7 +7,8 @@ import { getExitCode } from './output/get-exit-code.ts';
 
 const LIMIT_SECONDS = 5;
 
-// In a project on the ordo exclusion list the check is off, whatever the call.
+// In a project on the ordo exclusion list a call whose input ends within the
+// limit passes unjudged; one whose input does not is blocked, as anywhere.
 async function main(): Promise<void> {
   try {
     const projectDir = process.env.CLAUDE_PROJECT_DIR ?? '';
