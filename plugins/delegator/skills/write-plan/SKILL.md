@@ -4,8 +4,8 @@ description: Have the plan of deep work written before its first edit, reviewed,
 ---
 
 - Launch `delegator:plan-writer` with the topic, the sources and the questions the plan must settle; it writes the plan to `.yapus/plans/<YYYY-MM>/<topic>/plan.md` in the project's root, and you name that path in every brief that rests on it.
-- Have a subagent measure each fact the plan-writer returns as unmeasured, and send the plan-writer the result.
-- Before the first edit, launch `delegator:plan-reviewer` once on the plan file and its acceptance criteria when the plan touches more than one module or a public interface, and have the plan-writer fold each defect into the section it names.
+- On the plan-writer's first return, launch in one message a subagent to measure each fact it returns as unmeasured, one for each probe or reading the plan names, and, before the first edit, `delegator:plan-reviewer` once on the plan file and its acceptance criteria when the plan touches more than one module or a public interface.
+- After the review, or at once when the plan needs none, ask the person the open decisions in one batch, in calls of up to four questions back to back with the most consequential first, then send the plan-writer the defects, the measurements and the answers in one message to fold each into the section it names.
 - Give each finisher one slice of the plan, with the brief ORCH-5 names for it; launch at once the slices whose needed slices are done and whose files are disjoint, each in a worktree of its own that the brief names.
 - When finishers ran side by side, land their commits on one branch in the plan's order and have the oracle run on the result before the next launch.
 - Ask the person, with the question tool, only the open decisions on architecture, authentication, data migration, the shape of a public interface, a dependency or technology choice, or one the project's instructions leave to the person: one question per decision, your recommendation first, its context inside the question.
