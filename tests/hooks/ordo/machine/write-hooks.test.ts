@@ -4,6 +4,9 @@ import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { readNameList } from '../../../../hooks/ordo/machine/read-name-list.ts';
+import {
+  getEnvWithoutCompileCache,
+} from '../../../helpers/compile-cache/get-env-without-compile-cache.ts';
 import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
 import { getGitEnv } from '../../../helpers/run-git.ts';
 import { runInstall } from './run-install.ts';
@@ -56,7 +59,10 @@ test('runs the repository hook of its name with the arguments', (t) => {
   writeFileSync(local, '#!/bin/sh\nexit "$1"\n', { mode: 0o755 });
 
   const stubRun = spawnSync(join(hooks, 'git', 'post-commit'), ['7'], {
-    cwd: repository, encoding: 'utf8', env: getGitEnv(process.env), timeout: SUBPROCESS_TIMEOUT_MS,
+    cwd: repository,
+    encoding: 'utf8',
+    env: getGitEnv(getEnvWithoutCompileCache(process.env)),
+    timeout: SUBPROCESS_TIMEOUT_MS,
   });
 
   assert.equal(stubRun.status, 7);

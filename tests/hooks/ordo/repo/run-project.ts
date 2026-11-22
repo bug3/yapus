@@ -3,6 +3,9 @@ import { type SpawnSyncReturns, spawnSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
+import {
+  getEnvWithoutCompileCache,
+} from '../../../helpers/compile-cache/get-env-without-compile-cache.ts';
 import { getGitEnv } from '../../../helpers/run-git.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 
@@ -29,7 +32,7 @@ export function copyPlugin(t: TestContext): string {
 }
 
 // The program ordo/repo run through the plugin copy's run.sh on repo,
-// with the language argument when one is given.
+// with the language argument when one is given, and no NODE_COMPILE_CACHE.
 export function runProject(
   root: string,
   repo: string,
@@ -44,6 +47,10 @@ export function runProject(
       repo,
       ...language === undefined ? [] : [language],
     ],
-    { encoding: 'utf8', env: getGitEnv(process.env), timeout: SUBPROCESS_TIMEOUT_MS },
+    {
+      encoding: 'utf8',
+      env: getGitEnv(getEnvWithoutCompileCache(process.env)),
+      timeout: SUBPROCESS_TIMEOUT_MS,
+    },
   );
 }

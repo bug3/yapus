@@ -4,6 +4,9 @@ import { mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } fro
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
+import {
+  getEnvWithoutCompileCache,
+} from '../../../helpers/compile-cache/get-env-without-compile-cache.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
 
@@ -183,7 +186,7 @@ function runCheck(
   }
 
   const sessionEnv = Object.fromEntries(
-    Object.entries(process.env)
+    Object.entries(getEnvWithoutCompileCache(process.env))
       .filter(([name]) => !name.startsWith('GIT_') && name !== 'CLAUDE_PROJECT_DIR'),
   );
   const projectEnv =

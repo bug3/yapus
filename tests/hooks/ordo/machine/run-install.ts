@@ -3,6 +3,9 @@ import { type SpawnSyncReturns, spawnSync } from 'node:child_process';
 import { mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { TestContext } from 'node:test';
+import {
+  getEnvWithoutCompileCache,
+} from '../../../helpers/compile-cache/get-env-without-compile-cache.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { getGitEnv } from '../../../helpers/run-git.ts';
 
@@ -18,8 +21,8 @@ const SUBPROCESS_TIMEOUT_MS = 20000;
 // Runs the program ordo/machine in mode from a copy of the plugin with its links
 // followed, as an installed plugin is, and a temporary HOME that arrange may
 // fill first and arrangePlugin may change the plugin copy. The environment has
-// no GIT_* variable of the caller, the global git config is the file
-// .gitconfig in the home, and extraEnv comes last.
+// no GIT_* variable of the caller and no NODE_COMPILE_CACHE, the global git
+// config is the file .gitconfig in the home, and extraEnv comes last.
 // Returns the plugin copy, the home and the run.
 export function runInstall(
   t: TestContext,
@@ -78,7 +81,7 @@ function copyPlugin(root: string): void {
 
 export function makeEnv(home: string, extraEnv: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
   return {
-    ...getGitEnv(process.env),
+    ...getGitEnv(getEnvWithoutCompileCache(process.env)),
     HOME: home,
     GIT_CONFIG_GLOBAL: join(home, '.gitconfig'),
     ...extraEnv,

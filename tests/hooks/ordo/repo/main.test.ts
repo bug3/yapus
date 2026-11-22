@@ -4,6 +4,9 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
+import {
+  getEnvWithoutCompileCache,
+} from '../../../helpers/compile-cache/get-env-without-compile-cache.ts';
 import { getGitEnv, runGit } from '../../../helpers/run-git.ts';
 import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
 import {
@@ -182,7 +185,7 @@ test('prints the usage and exits 2 without two arguments', (t) => {
   const root = copyPlugin(t);
   const run = spawnSync('bash', [join(root, 'runtime', 'run.sh'), 'ordo/repo', root], {
     encoding: 'utf8',
-    env: getGitEnv(process.env),
+    env: getGitEnv(getEnvWithoutCompileCache(process.env)),
     timeout: 20000,
   });
 

@@ -3,6 +3,9 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
+import {
+  getEnvWithoutCompileCache,
+} from '../helpers/compile-cache/get-env-without-compile-cache.ts';
 import { makeTempDir } from '../helpers/make-temp-dir.ts';
 
 interface RunOptions {
@@ -226,7 +229,7 @@ function run(sandbox: string, hookName: string, { input, env, cwd }: RunOptions)
     {
       cwd,
       encoding: 'utf8',
-      env: { ...env, HOME: sandbox, TMPDIR: sandbox },
+      env: { ...getEnvWithoutCompileCache(env), HOME: sandbox, TMPDIR: sandbox },
       input,
       timeout: SUBPROCESS_TIMEOUT_MS,
     },
