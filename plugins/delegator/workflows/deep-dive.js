@@ -275,9 +275,10 @@ const RETURN_RULE =
 const OUTSIDE_PATH = /^[/\\]|^[A-Za-z]:|(?:^|[/\\])\.\.(?:[/\\]|$)/u;
 
 // The runtime ends a run at RUN_AGENT_LIMIT workflow agents. Gathering and
-// verifying stop short of it by the workflow agents that end a run, which
-// leaves those their launches: a run that met the limit before its file is
-// written would cost the most and write nothing.
+// verifying, in the scope's round and in the follow-up round, stop short of it
+// by the completeness and synthesize workflow agents, which leaves those their
+// launches: a run that met the limit before its file is written would cost the
+// most and write nothing.
 const RUN_AGENT_LIMIT = 1000;
 const LAST_STAGE_IDS = ['completeness', 'synthesize'];
 const GATHER_AND_VERIFY_LIMIT = RUN_AGENT_LIMIT - LAST_STAGE_IDS.length;
@@ -1038,8 +1039,9 @@ function formatSynthesizePrompt({ task, directory }, researchPath, content) {
 
 // Launches the workflow agent of one stage and gives its answer, or undefined
 // for a workflow agent that was skipped, died, was rejected or was held back
-// at the limit; a rejection and a launch held back are logged, and no agent
-// that ends a run is held back. Every launch of the run goes through here, so
+// at the limit; a rejection and a launch held back are logged, and no
+// completeness or synthesize workflow agent is held back, though the follow-up
+// round runs between them. Every launch of the run goes through here, so
 // the counts hold them all. `item` names the question, the claim or the vote
 // of the workflow agent, and a stage of one workflow agent has none.
 async function launchAgent(stageId, prompt, item) {
