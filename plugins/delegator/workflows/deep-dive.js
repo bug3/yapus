@@ -531,6 +531,10 @@ const SOURCE_LIMIT = 4;
 // The lane whose questions name sources of SOURCES.
 const WEB_LANE = 'web';
 
+// The host of a URL: the text after `://` up to the first `/`, `?`, `#` or
+// `:`.
+const URL_HOST = /:\/\/(?<host>[^/?#:]*)/u;
+
 // The verdicts of a verify agent. The first two are a vote; a source that
 // would not open is no vote against its claim.
 const SUPPORTED = 'supported';
@@ -1071,8 +1075,25 @@ function formatLineSource({ path, line, endLine }) {
   return `${ toOneLine(path) }:${ lines }`;
 }
 
+// The source of a web claim as the research file prints it, and the id of the
+// row of SOURCES its URL meets, which the Sources table counts it under.
 function citeWebClaim({ url }) {
-  return { source: `<${ toOneLine(url) }>` };
+  return { source: `<${ toOneLine(url) }>`, sourceId: findSourceId(url) };
+}
+
+// The id of the row of SOURCES a URL meets, or undefined when it meets none:
+// its host, lowercased, is one of the row's hosts or ends with a dot and one
+// of them. A host that holds `@` meets no row.
+function findSourceId(url) {
+  const host = URL_HOST.exec(url)?.groups.host.toLowerCase();
+
+  if (host === undefined || host.includes('@')) {
+    return undefined;
+  }
+
+  return SOURCES.find((source) => source.hosts.some(
+    (sourceHost) => host === sourceHost || host.endsWith(`.${ sourceHost }`),
+  ))?.id;
 }
 
 function formatRepositoryGatherPrompt(task, question) {
@@ -1299,7 +1320,35 @@ function getStats(questionCounts, droppedQuestions, researched, followedUp) {
     notLaunched: notLaunchedCount,
     pathsRefused: claims.filter(({ isPathRefused }) => isPathRefused === true).length,
     gatherReturns: getGatherReturns(researched),
+    sources: countSources(researched),
     stages: stageCounts,
+  };
+}
+
+// Per row of SOURCES, the web questions that named it and the web claims
+// whose URL meets it, with their verified and refuted ones; a row with
+// neither is left out. `other` counts the web claims whose URL meets no row.
+function countSources(researched) {
+  const webQuestions = researched.filter(({ lane }) => lane === WEB_LANE);
+  const webClaims = webQuestions.flatMap(({ claims: questionClaims }) => questionClaims);
+
+  return {
+    catalog: SOURCES
+      .map(({ id }) => ({
+        id,
+        assigned: webQuestions.filter(({ sources }) => sources.includes(id)).length,
+        ...countSourceClaims(webClaims.filter(({ sourceId }) => sourceId === id)),
+      }))
+      .filter(({ assigned, claims }) => assigned > 0 || claims > 0),
+    other: countSourceClaims(webClaims.filter(({ sourceId }) => sourceId === undefined)),
+  };
+}
+
+function countSourceClaims(claims) {
+  return {
+    claims: claims.length,
+    verified: countOutcome(claims, VERIFIED),
+    refuted: countOutcome(claims, REFUTED),
   };
 }
 
@@ -1465,6 +1514,7 @@ function formatDroppedLine({ lane, question }) {
 // is launched after they are taken, so its stage has no row.
 function formatRunBlock(stats) {
   const { count, longest } = stats.gatherReturns;
+  const { catalog, other } = stats.sources;
 
   return formatBlock('Run', [
     '| Stage | Launched | Returned |',
@@ -1486,6 +1536,13 @@ function formatRunBlock(stats) {
     `- Not launched at the limit of ${ RUN_AGENT_LIMIT } workflow agents: ${ stats.notLaunched }`,
     `- Claims not sent to a verify agent for their path: ${ stats.pathsRefused }`,
     `- Gather returns: ${ count }, the longest ${ longest } characters`,
+    '',
+    '| Source | Assigned | Claims | Verified | Refuted |',
+    '| --- | --- | --- | --- | --- |',
+    ...catalog.map(({ id, assigned, claims, verified, refuted }) => (
+      `| ${ id } | ${ assigned } | ${ claims } | ${ verified } | ${ refuted } |`
+    )),
+    `| other | - | ${ other.claims } | ${ other.verified } | ${ other.refuted } |`,
   ]);
 }
 

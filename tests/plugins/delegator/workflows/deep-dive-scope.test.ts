@@ -246,6 +246,7 @@ test('returns the no-question error and the counts when the lanes leave no quest
       notLaunched: 0,
       pathsRefused: 0,
       gatherReturns: { count: 0, longest: 0 },
+      sources: { catalog: [], other: { claims: 0, verified: 0, refuted: 0 } },
       stages: Object.fromEntries([
         ['scope', { launched: 1, returned: 1 }],
         ['gather-repo', { launched: 0, returned: 0 }],

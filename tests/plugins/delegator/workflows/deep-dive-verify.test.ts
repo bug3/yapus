@@ -158,6 +158,10 @@ const WIDE_RUN_RUN_BLOCK = [
   '- Not launched at the limit of 1000 workflow agents: 190',
   '- Claims not sent to a verify agent for their path: 0',
   '- Gather returns: 12, the longest 6823 characters',
+  '',
+  '| Source | Assigned | Claims | Verified | Refuted |',
+  '| --- | --- | --- | --- | --- |',
+  '| other | - | 540 | 0 | 445 |',
 ].join('\n');
 
 const REFUSED_PATHS_UNVERIFIED_BLOCK = [
@@ -621,7 +625,7 @@ test('names the claims whose path was refused in the Run block', async () => {
   const run = await runPaths(MIXED_PATHS);
 
   assert.equal(
-    readBlock(run, 'Run', 'Rules').split('\n').at(-2),
+    readBlock(run, 'Run', 'Rules').split('\n').at(-6),
     '- Claims not sent to a verify agent for their path: 5',
   );
 });
