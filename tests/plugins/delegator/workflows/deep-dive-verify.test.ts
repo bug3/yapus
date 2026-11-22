@@ -94,18 +94,21 @@ const THIRTY_CLAIMS_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unkn
 ]);
 
 // The answers, by stage id, of a run on 12 web questions of 45 claims each,
-// the two votes of every claim agreeing: 1095 launches with none held back.
-// The first 10 questions and 42 claims of the eleventh get both votes, 492
-// claims; the next claim gets one vote, and its second and its third are
-// held back with the two votes of each of the 47 claims left. The two
-// workflow agents that end the run are launched past the 998.
+// every vote unsupported, so each claim asks for a second vote once its
+// first has answered: 1 + 12 + 540 + 540 = 1093 launches with none held
+// back. The scope, the 12 gathers and the 540 first votes come to 553; the
+// second votes run in the order of the claims, so the first 9 questions and
+// 40 claims of the tenth get both, 445 claims refuted 0 of 2, which brings
+// the run to 998. Each of the 95 claims left keeps its first vote, and its
+// second and its third are held back: 190 launches. The two workflow agents
+// that end the run are launched past the 998.
 const WIDE_RUN_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   [
     'scope',
     { questions: Array.from({ length: 12 }, () => ({ lane: 'web', question: 'What blocks?' })) },
   ],
   ['gather-web', { claims: Array.from({ length: 45 }, () => WEB_CLAIM), notChecked: [] }],
-  ['verify-web', SUPPORTED],
+  ['verify-web', UNSUPPORTED],
   ['completeness', { unreadAreas: [], unansweredQuestions: [] }],
   ['synthesize', { outcome: 'written', detail: '' }],
 ]);
@@ -113,8 +116,7 @@ const NOT_LAUNCHED = ' not launched: the run is at 998 workflow agents';
 const WIDE_RUN_UNVERIFIED_BLOCK = [
   '## Unverified',
   '',
-  `${ WEB_CLAIM_LINE } | undecided 1 of 1`,
-  ...Array.from({ length: 47 }, () => `${ WEB_CLAIM_LINE } | undecided 0 of 0`),
+  ...Array.from({ length: 95 }, () => `${ WEB_CLAIM_LINE } | undecided 0 of 1`),
 ].join('\n');
 const WIDE_RUN_RUN_BLOCK = [
   '## Run',
@@ -131,10 +133,10 @@ const WIDE_RUN_RUN_BLOCK = [
   '',
   '- Questions: 12 (0 repository, 12 web)',
   '- Claims: 540 (0 repository, 540 web)',
-  '- Verified: 492 (0 repository, 492 web)',
-  '- Refuted: 0 (0 repository, 0 web)',
-  '- Undecided: 48 (0 repository, 48 web)',
-  '- Not launched at the limit of 1000 workflow agents: 96',
+  '- Verified: 0 (0 repository, 0 web)',
+  '- Refuted: 445 (0 repository, 445 web)',
+  '- Undecided: 95 (0 repository, 95 web)',
+  '- Not launched at the limit of 1000 workflow agents: 190',
   '- Claims not sent to a verify agent for their path: 0',
   '- Gather returns: 12, the longest 6823 characters',
 ].join('\n');
@@ -162,7 +164,7 @@ test('gives the verify agent of a web claim the approved prompt', async () => {
 });
 
 test('gives the three verify agents of a web claim one prompt', async () => {
-  const run = await runClaim('web', [SUPPORTED, UNSUPPORTED, SUPPORTED]);
+  const run = await runClaim('web', [UNSUPPORTED, SUPPORTED, SUPPORTED]);
   const verifyCalls = run.calls.filter((call) => String(call.options.label).startsWith('verify'));
 
   assert.equal(verifyCalls.length, 3);
@@ -201,8 +203,8 @@ test('launches the verify agent of a repository claim with the options of its st
 test('launches a first verify agent of a web claim with the options of its stage', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
-  assert.deepEqual(findCall(run, 'verify-web:Q4.C1.v2')?.options, {
-    label: 'verify-web:Q4.C1.v2',
+  assert.deepEqual(findCall(run, 'verify-web:Q4.C1.v1')?.options, {
+    label: 'verify-web:Q4.C1.v1',
     phase: 'Verify',
     schema: VERDICT_SCHEMA,
     agentType: 'delegator:web-researcher',
@@ -221,7 +223,7 @@ test('launches the third verify agent of a web claim with the options of its sta
   });
 });
 
-test('launches one verify agent per repository claim and two or three per web claim', async () => {
+test('launches one verify agent per repository claim and one to three per web claim', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.deepEqual(listLabels(run, 'verify'), [
@@ -230,7 +232,6 @@ test('launches one verify agent per repository claim and two or three per web cl
     'verify-repo:Q2.C1',
     'verify-web-third:Q4.C2.v3',
     'verify-web:Q4.C1.v1',
-    'verify-web:Q4.C1.v2',
     'verify-web:Q4.C2.v1',
     'verify-web:Q4.C2.v2',
   ]);
@@ -277,11 +278,11 @@ test('leaves a repository claim undecided when its verify agent returns nothing'
   assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 refuted, 1 undecided');
 });
 
-test('verifies a web claim on two supported votes, with no third', async () => {
-  const run = await runClaim('web', [SUPPORTED, SUPPORTED, UNSUPPORTED]);
+test('verifies a web claim on a supported first vote, with no second', async () => {
+  const run = await runClaim('web', [SUPPORTED, UNSUPPORTED, UNSUPPORTED]);
 
   assert.equal(run.logs[1], 'Q1: 1 claims, 1 verified, 0 refuted, 0 undecided');
-  assert.deepEqual(listLabels(run, 'verify'), ['verify-web:Q1.C1.v1', 'verify-web:Q1.C1.v2']);
+  assert.deepEqual(listLabels(run, 'verify'), ['verify-web:Q1.C1.v1']);
 });
 
 test('refutes a web claim on two unsupported votes, with no third', async () => {
@@ -292,7 +293,7 @@ test('refutes a web claim on two unsupported votes, with no third', async () => 
 });
 
 test('verifies a web claim whose votes differ on a supported third', async () => {
-  const run = await runClaim('web', [SUPPORTED, UNSUPPORTED, SUPPORTED]);
+  const run = await runClaim('web', [UNSUPPORTED, SUPPORTED, SUPPORTED]);
 
   assert.equal(run.logs[1], 'Q1: 1 claims, 1 verified, 0 refuted, 0 undecided');
   assert.deepEqual(listLabels(run, 'verify'), [
@@ -303,25 +304,25 @@ test('verifies a web claim whose votes differ on a supported third', async () =>
 });
 
 test('refutes a web claim whose votes differ on an unsupported third', async () => {
-  const run = await runClaim('web', [SUPPORTED, UNSUPPORTED, UNSUPPORTED]);
+  const run = await runClaim('web', [UNSUPPORTED, SUPPORTED, UNSUPPORTED]);
 
   assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 1 refuted, 0 undecided');
 });
 
 test('leaves a web claim undecided when its votes differ and the third is nothing', async () => {
-  const run = await runClaim('web', [SUPPORTED, UNSUPPORTED, JSON_NULL]);
+  const run = await runClaim('web', [UNSUPPORTED, SUPPORTED, JSON_NULL]);
 
   assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 refuted, 1 undecided');
 });
 
 test('verifies a web claim on one supported vote and a supported third', async () => {
-  const run = await runClaim('web', [SUPPORTED, JSON_NULL, SUPPORTED]);
+  const run = await runClaim('web', [JSON_NULL, SUPPORTED, SUPPORTED]);
 
   assert.equal(run.logs[1], 'Q1: 1 claims, 1 verified, 0 refuted, 0 undecided');
 });
 
 test('leaves a web claim undecided on one vote of each kind and an unopened page', async () => {
-  const run = await runClaim('web', [SUPPORTED, UNOPENED, UNSUPPORTED]);
+  const run = await runClaim('web', [UNOPENED, SUPPORTED, UNSUPPORTED]);
 
   assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 refuted, 1 undecided');
   assert.equal(listLabels(run, 'verify').length, 3);
@@ -369,10 +370,10 @@ test('marks a repository claim whose verify agent gives nothing as undecided 0 o
   assert.deepEqual(listClaimLines(run), [`${ REPOSITORY_CLAIM_LINE } | undecided 0 of 0`]);
 });
 
-test('marks a web claim with two supported votes as verified 2 of 2', async () => {
+test('marks a web claim with a supported first vote as verified 1 of 1', async () => {
   const run = await runClaim('web', [SUPPORTED, SUPPORTED]);
 
-  assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | verified 2 of 2`]);
+  assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | verified 1 of 1`]);
 });
 
 test('marks a web claim with two unsupported votes as refuted 0 of 2', async () => {
@@ -384,13 +385,13 @@ test('marks a web claim with two unsupported votes as refuted 0 of 2', async () 
 });
 
 test('marks a web claim with a supported third vote as verified 2 of 3', async () => {
-  const run = await runClaim('web', [SUPPORTED, UNSUPPORTED, SUPPORTED]);
+  const run = await runClaim('web', [UNSUPPORTED, SUPPORTED, SUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | verified 2 of 3`]);
 });
 
 test('marks a web claim with an unsupported third vote as refuted 1 of 3', async () => {
-  const run = await runClaim('web', [SUPPORTED, UNSUPPORTED, UNSUPPORTED]);
+  const run = await runClaim('web', [UNSUPPORTED, SUPPORTED, UNSUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [
     `${ WEB_CLAIM_LINE } | refuted 1 of 3: The source says otherwise.`,
@@ -398,31 +399,38 @@ test('marks a web claim with an unsupported third vote as refuted 1 of 3', async
 });
 
 test('marks a web claim whose third verify agent gives nothing as undecided 1 of 2', async () => {
-  const run = await runClaim('web', [SUPPORTED, UNSUPPORTED, JSON_NULL]);
+  const run = await runClaim('web', [UNSUPPORTED, SUPPORTED, JSON_NULL]);
 
   assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | undecided 1 of 2`]);
 });
 
 test('marks a web claim with one vote and a supported third as verified 2 of 2', async () => {
-  const run = await runClaim('web', [SUPPORTED, JSON_NULL, SUPPORTED]);
+  const run = await runClaim('web', [UNOPENED, SUPPORTED, SUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | verified 2 of 2`]);
 });
 
 test('marks a web claim with a vote of each kind and an unopened page as undecided', async () => {
-  const run = await runClaim('web', [SUPPORTED, UNOPENED, UNSUPPORTED]);
+  const run = await runClaim('web', [UNOPENED, SUPPORTED, UNSUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | undecided 1 of 2`]);
 });
 
-test('marks a web claim with no vote cast as undecided 0 of 0', async () => {
-  const run = await runClaim('web', [JSON_NULL, JSON_NULL]);
+test('marks a web claim with no first vote and a vote of each kind as undecided', async () => {
+  const run = await runClaim('web', [JSON_NULL, SUPPORTED, UNSUPPORTED]);
+
+  assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | undecided 1 of 2`]);
+});
+
+test('marks a web claim with no vote cast as undecided 0 of 0, with no third', async () => {
+  const run = await runClaim('web', [JSON_NULL, JSON_NULL, SUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | undecided 0 of 0`]);
+  assert.deepEqual(listLabels(run, 'verify'), ['verify-web:Q1.C1.v1', 'verify-web:Q1.C1.v2']);
 });
 
 test('gives a refuted claim the evidence of its first vote against it, on one line', async () => {
-  const run = await runClaim('web', [SUPPORTED, UNSUPPORTED_FIRST, UNSUPPORTED]);
+  const run = await runClaim('web', [UNSUPPORTED_FIRST, SUPPORTED, UNSUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [
     `${ WEB_CLAIM_LINE } | refuted 1 of 3: The page names no stop.`,
@@ -451,10 +459,10 @@ test('counts the launches held back and leaves their claims undecided', async ()
     stats: {
       questions: { repository: 0, web: 12 },
       claims: { repository: 0, web: 540 },
-      verified: { repository: 0, web: 492 },
-      refuted: { repository: 0, web: 0 },
-      undecided: { repository: 0, web: 48 },
-      notLaunched: 96,
+      verified: { repository: 0, web: 0 },
+      refuted: { repository: 0, web: 445 },
+      undecided: { repository: 0, web: 95 },
+      notLaunched: 190,
       gatherReturns: { count: 12, longest: 6823 },
       stages: Object.fromEntries([
         ['scope', { launched: 1, returned: 1 }],
@@ -486,9 +494,11 @@ test('logs each launch held back under its label', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, answerByStage(WIDE_RUN_ANSWERS));
   const heldBack = run.logs.filter((line) => line.endsWith(NOT_LAUNCHED));
 
-  assert.equal(heldBack.length, 96);
+  assert.equal(heldBack.length, 190);
+  assert.equal(heldBack.includes(`verify-web:Q10.C40.v2${ NOT_LAUNCHED }`), false);
+  assert.equal(heldBack.includes(`verify-web:Q10.C41.v2${ NOT_LAUNCHED }`), true);
   assert.equal(heldBack.includes(`verify-web:Q12.C45.v2${ NOT_LAUNCHED }`), true);
-  assert.equal(heldBack.includes(`verify-web-third:Q11.C43.v3${ NOT_LAUNCHED }`), true);
+  assert.equal(heldBack.includes(`verify-web-third:Q12.C45.v3${ NOT_LAUNCHED }`), true);
 });
 
 test('sends no verify agent to a claim whose path may lead out of the repository', async () => {

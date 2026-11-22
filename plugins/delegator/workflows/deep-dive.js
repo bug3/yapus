@@ -111,8 +111,11 @@ const SUPPORTED = 'supported';
 const UNSUPPORTED = 'unsupported';
 const UNOPENED = 'unopened';
 
-// The votes of a kind that decide a claim of each lane.
+// The votes of a kind that decide a claim of each lane: a web claim is
+// verified on its first vote when that supports it, and otherwise decided
+// by WEB_QUORUM.
 const REPOSITORY_QUORUM = 1;
+const WEB_FIRST_QUORUM = 1;
 const WEB_QUORUM = 2;
 
 // What the votes make of a claim.
@@ -615,25 +618,30 @@ async function verifyRepositoryClaim(claim, claimId) {
   return { ...judgeClaim([answer], REPOSITORY_QUORUM), file };
 }
 
-// Two verify agents at once decide a claim about external facts when they
-// agree. When they leave it open and at least one of them voted, a third
-// votes.
+// One verify agent decides a claim about external facts when it supports it.
+// Otherwise a second votes once the first has answered, and the two decide
+// the claim when they agree. When they leave it open and at least one of
+// them voted, a third votes.
 async function verifyWebClaim(claim, claimId) {
   const prompt = formatWebVerifyPrompt(claim);
-  const firstAnswers = await parallel(
-    [1, 2].map((voteNumber) => () => (
-      launchAgent('verify-web', prompt, `${ claimId }.v${ voteNumber }`)
-    )),
-  );
-  const firstJudgment = judgeClaim(firstAnswers, WEB_QUORUM);
+  const firstAnswer = await launchAgent('verify-web', prompt, `${ claimId }.v1`);
+  const firstJudgment = judgeClaim([firstAnswer], WEB_FIRST_QUORUM);
 
-  if (firstJudgment.outcome !== UNDECIDED || !firstAnswers.some(isVote)) {
+  if (firstJudgment.outcome === VERIFIED) {
     return firstJudgment;
+  }
+
+  const secondAnswer = await launchAgent('verify-web', prompt, `${ claimId }.v2`);
+  const twoAnswers = [firstAnswer, secondAnswer];
+  const secondJudgment = judgeClaim(twoAnswers, WEB_QUORUM);
+
+  if (secondJudgment.outcome !== UNDECIDED || !twoAnswers.some(isVote)) {
+    return secondJudgment;
   }
 
   const thirdAnswer = await launchAgent('verify-web-third', prompt, `${ claimId }.v3`);
 
-  return judgeClaim([...firstAnswers, thirdAnswer], WEB_QUORUM);
+  return judgeClaim([...twoAnswers, thirdAnswer], WEB_QUORUM);
 }
 
 function formatRepositoryVerifyPrompt({ claim, path, line, excerpt }) {

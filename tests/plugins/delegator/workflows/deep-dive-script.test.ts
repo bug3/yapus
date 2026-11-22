@@ -27,7 +27,6 @@ const AGENTS_OF_FIXED_RUN = [
   'verify-repo:Q2.C1 delegator:reader - -',
   'verify-web-third:Q4.C2.v3 delegator:web-researcher opus -',
   'verify-web:Q4.C1.v1 delegator:web-researcher - -',
-  'verify-web:Q4.C1.v2 delegator:web-researcher - -',
   'verify-web:Q4.C2.v1 delegator:web-researcher - -',
   'verify-web:Q4.C2.v2 delegator:web-researcher - -',
 ] as const;

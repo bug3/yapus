@@ -31,7 +31,7 @@ const COMPLETENESS_PROMPT = [
 
 // The digest is FNV-1a of 32 bits over the UTF-16 units of CONTENT below,
 // worked out by a program apart from the script.
-const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_2321f25d.md';
+const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_d0d6c5af.md';
 const BLOCKS = [
   '## Refuted',
   '',
@@ -57,7 +57,7 @@ const BLOCKS = [
   '| gather-repo | 3 | 2 |',
   '| gather-web | 1 | 1 |',
   '| verify-repo | 3 | 3 |',
-  '| verify-web | 4 | 4 |',
+  '| verify-web | 3 | 3 |',
   '| verify-web-third | 1 | 1 |',
   '| completeness | 1 | 1 |',
   '',
@@ -123,7 +123,7 @@ const CONTENT = [
   'Q2 (repository): Which hook entries run the return gate?',
   'Q3 (repository): Which tests hold the verdicts of the return gate?',
   'Q4 (web): What does Claude Code do when a SubagentStop hook blocks twice?',
-  '- A SubagentStop hook that exits with code 2 keeps the subagent running. | <https://code.claude.com/docs/en/hooks> | verified 2 of 2',
+  '- A SubagentStop hook that exits with code 2 keeps the subagent running. | <https://code.claude.com/docs/en/hooks> | verified 1 of 1',
   '- Claude Code stops a subagent that a hook blocks twice in a row. | <https://code.claude.com/docs/en/sub-agents> | verified 2 of 3',
   '',
   '## Blocks to copy',
@@ -136,7 +136,7 @@ const SYNTHESIZE_PROMPT = [
   'Add a retry limit to the return gate',
   '',
   '## File',
-  ".yapus/plans/2026-11/return-retry/research_2321f25d.md, under the project's root",
+  ".yapus/plans/2026-11/return-retry/research_d0d6c5af.md, under the project's root",
   '',
   CONTENT,
   '',
@@ -172,7 +172,7 @@ const STAGES_BEFORE_SYNTHESIZE = [
   ['gather-repo', { launched: 3, returned: 2 }],
   ['gather-web', { launched: 1, returned: 1 }],
   ['verify-repo', { launched: 3, returned: 3 }],
-  ['verify-web', { launched: 4, returned: 4 }],
+  ['verify-web', { launched: 3, returned: 3 }],
   ['verify-web-third', { launched: 1, returned: 1 }],
   ['completeness', { launched: 1, returned: 1 }],
 ] as const;

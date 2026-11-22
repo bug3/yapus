@@ -36,7 +36,7 @@ export const MIXED_PATHS = [
 // What each workflow agent of the run on FIXED_ARGS returns, by its label.
 // The gather agent of the third question has no answer; the claims come out
 // as one verified, one refuted and one undecided for the repository, and for
-// the web one verified by two votes and one by the third; the file is
+// the web one verified by its first vote and one by the third; the file is
 // written.
 const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['scope', {
@@ -117,17 +117,13 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
     verdict: 'supported',
     evidence: 'The page says: Exit code 2 blocks the stop and shows stderr to the subagent',
   }],
-  ['verify-web:Q4.C1.v2', {
-    verdict: 'supported',
-    evidence: 'The quote stands in the section on exit codes.',
-  }],
   ['verify-web:Q4.C2.v1', {
-    verdict: 'supported',
-    evidence: 'The page holds the quote under Hooks.',
-  }],
-  ['verify-web:Q4.C2.v2', {
     verdict: 'unsupported',
     evidence: 'The page names no second block.',
+  }],
+  ['verify-web:Q4.C2.v2', {
+    verdict: 'supported',
+    evidence: 'The page holds the quote under Hooks.',
   }],
   ['verify-web-third:Q4.C2.v3', {
     verdict: 'supported',
