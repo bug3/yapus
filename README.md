@@ -147,7 +147,7 @@ Off means no rules at the session's start, no check on its launches, and no prom
 | `/delegator:upgrade` | the `.yapus/` files of an older layout moved into the present one |
 | `/delegator:write-plan` | the deep work flow, from the plan to the slices |
 | `/delegator:deep-dive` | the research before a plan: questions, claims checked against their sources, `research_<digest>.md` beside the plan |
-| `/delegator:dive-report <run directory>` | the workflow agents, tokens, time, models and tools of one workflow run per stage |
+| `/delegator:dive-report <run directory>` | the workflow agents, tokens, time, models and tools of one workflow run per stage, and its web fetches per host |
 
 <!-- #endregion delegator -->
 
