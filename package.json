@@ -15,6 +15,6 @@
     "vitepress": "1.6.4"
   },
   "scripts": {
-    "test": "tsc -p . && eslint --max-warnings 0 --flag unstable_native_nodejs_ts_config . && NODE_COMPILE_CACHE=\"$PWD/node_modules/.cache/yapus/node\" node --test 'tests/**/*.test.ts'"
+    "test": "tsc -p . && eslint --max-warnings 0 --flag unstable_native_nodejs_ts_config . && NODE_COMPILE_CACHE=\"${TMPDIR:+$TMPDIR/yapus/node}\" node --test 'tests/**/*.test.ts'"
   }
 }
