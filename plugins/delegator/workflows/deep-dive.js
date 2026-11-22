@@ -128,8 +128,7 @@ const KINDS = [
 // kind of KINDS, the hosts its URLs live on, the phrase the scope agent picks
 // it by, and the URL templates a web gather agent fills, a placeholder in
 // braces. Each row entered with a live open of its templates in WebFetch,
-// recorded in .yapus/plans/2026-11/deep-dive-sources/research_63f2f0d7.md and
-// research_99302c90.md beside it; a changed row needs a new one. KINDS and
+// recorded in a deep-dive research file; a changed row needs a new one. KINDS and
 // SOURCES are JSON, each from its first line through the first `];` alone:
 // the tests take them from the text without running it.
 const SOURCES = [
