@@ -147,8 +147,51 @@ const QUESTION_SCHEMA = {
   required: ['lane', 'question'],
 };
 
-// What the workflow agent of each stage returns, by stage id. No list of
-// claims has a longest length: the claims of a question are not capped.
+// What a gather agent of each lane returns. No list of claims has a longest
+// length: the claims of a question are not capped.
+const REPOSITORY_GATHER_SCHEMA = {
+  type: 'object',
+  properties: {
+    claims: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          claim: { type: 'string' },
+          path: { type: 'string' },
+          line: { type: 'integer', minimum: 1 },
+          endLine: { type: 'integer', minimum: 1 },
+          excerpt: { type: 'string' },
+        },
+        required: ['claim', 'path', 'line', 'endLine', 'excerpt'],
+      },
+    },
+    notSearched: { type: 'array', items: { type: 'string' } },
+  },
+  required: ['claims', 'notSearched'],
+};
+
+const WEB_GATHER_SCHEMA = {
+  type: 'object',
+  properties: {
+    claims: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          claim: { type: 'string' },
+          url: { type: 'string' },
+          quote: { type: 'string' },
+        },
+        required: ['claim', 'url', 'quote'],
+      },
+    },
+    notChecked: { type: 'array', items: { type: 'string' } },
+  },
+  required: ['claims', 'notChecked'],
+};
+
+// What the workflow agent of each stage returns, by stage id.
 const SCHEMAS = {
   'scope': {
     type: 'object',
@@ -162,46 +205,8 @@ const SCHEMAS = {
     },
     required: ['questions'],
   },
-  'gather-repo': {
-    type: 'object',
-    properties: {
-      claims: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            claim: { type: 'string' },
-            path: { type: 'string' },
-            line: { type: 'integer', minimum: 1 },
-            endLine: { type: 'integer', minimum: 1 },
-            excerpt: { type: 'string' },
-          },
-          required: ['claim', 'path', 'line', 'endLine', 'excerpt'],
-        },
-      },
-      notSearched: { type: 'array', items: { type: 'string' } },
-    },
-    required: ['claims', 'notSearched'],
-  },
-  'gather-web': {
-    type: 'object',
-    properties: {
-      claims: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            claim: { type: 'string' },
-            url: { type: 'string' },
-            quote: { type: 'string' },
-          },
-          required: ['claim', 'url', 'quote'],
-        },
-      },
-      notChecked: { type: 'array', items: { type: 'string' } },
-    },
-    required: ['claims', 'notChecked'],
-  },
+  'gather-repo': REPOSITORY_GATHER_SCHEMA,
+  'gather-web': WEB_GATHER_SCHEMA,
   'verify-repo': VERDICT_SCHEMA,
   'verify-web': VERDICT_SCHEMA,
   'verify-web-third': VERDICT_SCHEMA,
@@ -751,11 +756,7 @@ function selectClaims(claims, selected) {
 }
 
 function getStats(questionCounts, droppedQuestions, researched) {
-  const claims = researched.flatMap(
-    ({ lane, claims: laneClaims }) => laneClaims.map(
-      ({ outcome, isPathRefused }) => ({ lane, outcome, isPathRefused }),
-    ),
-  );
+  const claims = listLaneClaims(researched);
 
   return {
     questions: questionCounts,
@@ -769,6 +770,15 @@ function getStats(questionCounts, droppedQuestions, researched) {
     gatherReturns: getGatherReturns(researched),
     stages: stageCounts,
   };
+}
+
+// Each claim of the researched questions with the lane of its question.
+function listLaneClaims(researched) {
+  return researched.flatMap(
+    ({ lane, claims: laneClaims }) => laneClaims.map(
+      ({ outcome, isPathRefused }) => ({ lane, outcome, isPathRefused }),
+    ),
+  );
 }
 
 // The gather agents that returned an answer and the length of the longest
