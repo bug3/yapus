@@ -400,9 +400,10 @@ const SOURCES_HEADER = '| Source | Assigned | Claims | Verified | Refuted |';
 // four the catalog holds are kept; Q2 is a repository question that names a
 // source. Q1.C1 meets github in capitals and is verified; Q1.C2 is refuted
 // and Q1.C3 verified, both on hosts that only look like github; Q1.C4 holds
-// github before an `@` and Q1.C5 a github host after one, and neither gets a
-// vote. F1 names github and crossref, and its one claim meets rfc-editor,
-// which no question named, and is refuted.
+// github before an `@` and Q1.C5 a github host after one, Q1.C6 holds github
+// and a `:` before an `@`, and Q1.C7 meets github with a port, and none of the
+// four gets a vote. F1 names github and crossref, and its one claim meets
+// rfc-editor, which no question named, and is refuted.
 const COUNTED_SOURCES_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['scope', {
     questions: [
@@ -421,6 +422,8 @@ const COUNTED_SOURCES_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, un
       { claim: 'A third tool holds one.', url: 'https://evilgithub.com/x', quote: 'one' },
       { claim: 'A fourth tool holds one.', url: 'https://github.com@evil.example/x', quote: 'one' },
       { claim: 'A fifth tool holds one.', url: 'https://evil.example@api.github.com/x', quote: 'one' },
+      { claim: 'A sixth tool holds one.', url: 'https://github.com:x@evil.example/x', quote: 'one' },
+      { claim: 'A seventh tool holds one.', url: 'https://api.github.com:443/x', quote: 'one' },
     ],
     notChecked: [],
   }],
@@ -980,11 +983,11 @@ test('counts the web questions and claims of each catalog source in both rounds'
       { id: 'arxiv', assigned: 1, claims: 0, verified: 0, refuted: 0 },
       { id: 'crossref', assigned: 1, claims: 0, verified: 0, refuted: 0 },
       { id: 'pubmed', assigned: 1, claims: 0, verified: 0, refuted: 0 },
-      { id: 'github', assigned: 2, claims: 1, verified: 1, refuted: 0 },
+      { id: 'github', assigned: 2, claims: 2, verified: 1, refuted: 0 },
       { id: 'hn', assigned: 1, claims: 0, verified: 0, refuted: 0 },
       { id: 'rfc-editor', assigned: 0, claims: 1, verified: 0, refuted: 1 },
     ],
-    other: { claims: 4, verified: 1, refuted: 1 },
+    other: { claims: 5, verified: 1, refuted: 1 },
   });
 });
 

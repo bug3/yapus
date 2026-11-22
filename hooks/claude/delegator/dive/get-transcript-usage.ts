@@ -12,8 +12,8 @@ const NOT_HELD_ANSWER = 'No such tool available: ';
 const HTTP_STATUS_ANSWER = 'The server returned HTTP ';
 const REDIRECT_ANSWER = 'REDIRECT DETECTED: ';
 const WEB_FETCH = 'WebFetch';
-// The text of a URL after :// up to the first /, ?, # or :.
-const HOST_PATTERN = /:\/\/([^/?#:]+)/u;
+// The authority of a URL: the text after :// up to the first /, ? or #.
+const AUTHORITY_PATTERN = /:\/\/([^/?#]+)/u;
 const NO_FETCHES: HostFetches = { fetches: 0, failed: 0 };
 
 // The WebFetch calls to one host.
@@ -176,9 +176,12 @@ function getFetches(block: TranscriptLine): Fetch[] {
     return [];
   }
 
-  const host = HOST_PATTERN.exec(input.url)?.[1];
+  const authority = AUTHORITY_PATTERN.exec(input.url)?.[1] ?? '';
+  // The host: the whole authority when it holds @, else the authority up to
+  // the first :.
+  const host = authority.includes('@') ? authority : authority.split(':')[0] ?? '';
 
-  return host === undefined ? [] : [{ id, host: host.toLowerCase() }];
+  return host === '' ? [] : [{ id, host: host.toLowerCase() }];
 }
 
 // The id of the call the block answers, when the block is an answer that is

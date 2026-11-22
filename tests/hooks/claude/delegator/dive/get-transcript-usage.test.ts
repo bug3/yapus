@@ -206,18 +206,20 @@ test('counts a WebFetch call written twice under one id once', () => {
   assert.deepEqual(usage.fetches, Object.fromEntries([['a.example', { fetches: 1, failed: 1 }]]));
 });
 
-test('reads the host of a fetch up to the first /, ?, # or :, lowercased', () => {
+test('reads the host of a fetch up to the first /, ?, # or :, lowercased, whole with @', () => {
   const usage = getTranscriptUsage(toText(
     makeFetchLine('t1', 'https://API.Example.com/x'),
     makeFetchLine('t2', 'https://api.example.com?q=1'),
     makeFetchLine('t3', 'https://api.example.com#top'),
     makeFetchLine('t4', 'https://api.example.com:8443/x'),
     makeFetchLine('t5', 'https://a.example@b.example/x'),
+    makeFetchLine('t6', 'https://github.com:x@evil.example/x'),
   ));
 
   assert.deepEqual(usage.fetches, Object.fromEntries([
     ['api.example.com', { fetches: 4, failed: 0 }],
     ['a.example@b.example', { fetches: 1, failed: 0 }],
+    ['github.com:x@evil.example', { fetches: 1, failed: 0 }],
   ]));
 });
 

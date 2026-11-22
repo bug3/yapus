@@ -530,9 +530,9 @@ const SOURCE_LIMIT = 4;
 // The lane whose questions name sources of SOURCES.
 const WEB_LANE = 'web';
 
-// The host of a URL: the text after `://` up to the first `/`, `?`, `#` or
-// `:`.
-const URL_HOST = /:\/\/(?<host>[^/?#:]*)/u;
+// The authority of a URL: the text after `://` up to the first `/`, `?` or
+// `#`.
+const URL_AUTHORITY = /:\/\/(?<authority>[^/?#]*)/u;
 
 // The verdicts of a verify agent. The first two are a vote; a source that
 // would not open is no vote against its claim.
@@ -1081,14 +1081,17 @@ function citeWebClaim({ url }) {
 }
 
 // The id of the row of SOURCES a URL meets, or undefined when it meets none:
-// its host, lowercased, is one of the row's hosts or ends with a dot and one
-// of them. A host that holds `@` meets no row.
+// its host, the authority up to the first `:`, lowercased, is one of the
+// row's hosts or ends with a dot and one of them. An authority that holds `@`
+// meets no row.
 function findSourceId(url) {
-  const host = URL_HOST.exec(url)?.groups.host.toLowerCase();
+  const authority = URL_AUTHORITY.exec(url)?.groups.authority;
 
-  if (host === undefined || host.includes('@')) {
+  if (authority === undefined || authority.includes('@')) {
     return undefined;
   }
+
+  const host = authority.split(':')[0].toLowerCase();
 
   return SOURCES.find((source) => source.hosts.some(
     (sourceHost) => host === sourceHost || host.endsWith(`.${ sourceHost }`),
