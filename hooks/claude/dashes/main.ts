@@ -1,7 +1,7 @@
 import { writeSync } from 'node:fs';
-import { getExclusion } from '../../shared/exclusion/get-exclusion.ts';
 import { getFirstLine } from '../../shared/get-first-line.ts';
 import { getMessagesWithinLimit } from './get-messages-within-limit.ts';
+import { isExcluded } from './is-excluded.ts';
 import { formatMessage } from './output/format-message.ts';
 import { getExitCode } from './output/get-exit-code.ts';
 
@@ -14,9 +14,9 @@ async function main(): Promise<void> {
     const projectDir = process.env.CLAUDE_PROJECT_DIR ?? '';
     const home = process.env.HOME ?? '';
     const { env } = process;
-    const isExcluded = () => getExclusion(projectDir, home, env).kind === 'excluded';
+    const isProjectExcluded = () => isExcluded(projectDir, home, env);
 
-    stop(await getMessagesWithinLimit(process.stdin, LIMIT_SECONDS, isExcluded));
+    stop(await getMessagesWithinLimit(process.stdin, LIMIT_SECONDS, isProjectExcluded));
   } catch (error) {
     stop([formatMessage(`crashed: ${ getFirstLine(error) }; the call is blocked, fix the hook`)]);
   }
