@@ -26,6 +26,9 @@ const SOURCE_KEYS = ['id', 'kind', 'hosts', 'use', 'templates'] as const;
 const SOURCE_ID = /^[a-z0-9-]+$/u;
 const TEMPLATE_START = 'https://';
 
+// A placeholder of a template, in braces.
+const PLACEHOLDER = /\{[^{}]*\}/u;
+
 // The host of a URL ends at the first of these characters.
 const HOST_END = /[/?#:]/u;
 
@@ -62,6 +65,34 @@ const PLAIN_HTTP_CATALOG = [
 const SHARED_HOST_CATALOG = [
   { ...PASSING_CATALOG[0], hosts: ['github.com'], templates: ['https://api.github.com/x'] },
   { ...PASSING_CATALOG[1], hosts: ['github.com'], templates: ['https://github.com/x'] },
+] as const;
+const ID_FORM_CATALOG = [PASSING_CATALOG[0], { ...PASSING_CATALOG[1], id: 'Forum' }] as const;
+const UNKNOWN_KIND_CATALOG = [
+  ...PASSING_CATALOG,
+  {
+    ...PASSING_CATALOG[1],
+    id: 'news',
+    kind: 'news',
+    hosts: ['news.test'],
+    templates: ['https://news.test/search?q={terms}'],
+  },
+] as const;
+const KIND_WITHOUT_ROW_CATALOG = [PASSING_CATALOG[0]] as const;
+const OFF_HOST_CATALOG = [
+  PASSING_CATALOG[0],
+  { ...PASSING_CATALOG[1], templates: ['https://example.org/search?q={terms}'] },
+] as const;
+const MALFORMED_ROW_CATALOG = [
+  ...PASSING_CATALOG,
+  { ...PASSING_CATALOG[1], status: 'open' },
+] as const;
+const HOST_PLACEHOLDER_CATALOG = [
+  PASSING_CATALOG[0],
+  {
+    ...PASSING_CATALOG[1],
+    hosts: ['{lang}.otherexample.com'],
+    templates: ['https://{lang}.otherexample.com/search?q={terms}'],
+  },
 ] as const;
 
 interface CatalogRow {
@@ -232,6 +263,43 @@ test('blocks a catalog whose rows share a host', () => {
   ]);
 });
 
+test('blocks a catalog with an id outside lowercase letters, digits and hyphens', () => {
+  assert.deepEqual(listCatalogProblems(ID_FORM_CATALOG, TEST_KINDS), [
+    'Forum: the id is not lowercase letters, digits and hyphens',
+  ]);
+});
+
+test('blocks a catalog with a row of an unknown kind', () => {
+  assert.deepEqual(listCatalogProblems(UNKNOWN_KIND_CATALOG, TEST_KINDS), [
+    'news: the kind news is not a kind of the catalog',
+  ]);
+});
+
+test('blocks a catalog with a kind that no row holds', () => {
+  assert.deepEqual(listCatalogProblems(KIND_WITHOUT_ROW_CATALOG, TEST_KINDS), [
+    'discussions: no row is of this kind',
+  ]);
+});
+
+test('blocks a catalog with a template outside its row\'s hosts', () => {
+  assert.deepEqual(listCatalogProblems(OFF_HOST_CATALOG, TEST_KINDS), [
+    'forum: the template https://example.org/search?q={terms} is on none of its hosts',
+  ]);
+});
+
+test('blocks a catalog with a row of another shape', () => {
+  assert.deepEqual(listCatalogProblems(MALFORMED_ROW_CATALOG, TEST_KINDS), [
+    'row 3: not a row of id, kind, hosts, use, templates alone',
+  ]);
+});
+
+test('blocks a catalog with a placeholder in a host', () => {
+  assert.deepEqual(listCatalogProblems(HOST_PLACEHOLDER_CATALOG, TEST_KINDS), [
+    'forum: the host {lang}.otherexample.com holds a placeholder',
+    'forum: the template https://{lang}.otherexample.com/search?q={terms} holds a placeholder in its host',
+  ]);
+});
+
 // The label of a call, then the agent type, the model and the effort its
 // options name, with a dash for one they do not name.
 function describeAgent(call: AgentCall): string {
@@ -280,8 +348,8 @@ function readList(firstLine: string): unknown {
 // What breaks the source catalog's rules, one line per problem: a list of
 // rows, each with the keys of SOURCE_KEYS alone, a unique id of SOURCE_ID, a
 // kind of `kinds`, a host, a use and a template; each kind held by a row;
-// each template on https and on a host of its row; no host of one row met by
-// a host of another.
+// each template on https and on a host of its row; no placeholder in a host;
+// no host of one row met by a host of another.
 function listCatalogProblems(catalog: unknown, kinds: readonly string[]): string[] {
   if (!Array.isArray(catalog)) {
     return ['the catalog is not a list'];
@@ -301,6 +369,7 @@ function listCatalogProblems(catalog: unknown, kinds: readonly string[]): string
     ...listIdProblems(shapedRows),
     ...listKindProblems(shapedRows, kinds),
     ...shapedRows.flatMap(listTemplateProblems),
+    ...shapedRows.flatMap(listPlaceholderProblems),
     ...listHostProblems(shapedRows),
   ];
 }
@@ -367,6 +436,21 @@ function listTemplateProblems(row: CatalogRow): string[] {
       ? []
       : [`${ row.id }: the template ${ template } is on none of its hosts`]),
   ]);
+}
+
+// Each host of a row that holds a placeholder, and each template of the row
+// whose host holds one.
+function listPlaceholderProblems(row: CatalogRow): string[] {
+  return [
+    ...row.hosts
+      .filter((host) => PLACEHOLDER.test(host))
+      .map((host) => `${ row.id }: the host ${ host } holds a placeholder`),
+    ...row.templates
+      .filter((template) => PLACEHOLDER.test(readHost(template)))
+      .map(
+        (template) => `${ row.id }: the template ${ template } holds a placeholder in its host`,
+      ),
+  ];
 }
 
 // Each host of a row that a host of another row meets.
