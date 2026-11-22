@@ -130,7 +130,8 @@ const KINDS = [
 // braces. Each row entered with a live open of its templates in WebFetch,
 // recorded in a deep-dive research file; a changed row needs a new one. KINDS and
 // SOURCES are JSON, each from its first line through the first `];` alone:
-// the tests take them from the text without running it.
+// the tests take them from the text without running it. A workflow script
+// reads no file, so this data stands here and not in a JSON file of its own.
 const SOURCES = [
   {
     "id": "arxiv",
