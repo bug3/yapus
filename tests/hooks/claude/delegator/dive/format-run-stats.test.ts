@@ -20,6 +20,7 @@ const IDLE: AgentUsage = {
   models: [],
   tools: {},
   toolsNotHeld: {},
+  fetches: {},
 };
 
 test('writes the header, one row per stage and the total line', () => {
@@ -36,6 +37,7 @@ test('writes the header, one row per stage and the total line', () => {
       models: ['model-a'],
       tools: { Glob: 2, Read: 5 },
       toolsNotHeld: {},
+      fetches: {},
     },
     {
       stage: 'gather-repo',
@@ -49,6 +51,7 @@ test('writes the header, one row per stage and the total line', () => {
       models: ['model-b'],
       tools: { Read: 2, Grep: 1 },
       toolsNotHeld: {},
+      fetches: {},
     },
     {
       stage: 'gather-repo',
@@ -62,6 +65,7 @@ test('writes the header, one row per stage and the total line', () => {
       models: ['model-b'],
       tools: { Read: 4 },
       toolsNotHeld: {},
+      fetches: {},
     },
     { ...IDLE, stage: 'gather-repo', isReturned: true },
   ]);
@@ -212,4 +216,41 @@ test('counts the seconds of the run from its earliest to its latest time', () =>
     report.split('\n').at(-2),
     'Total: 3 workflow agents, 0 output tokens, 0 input tokens, 0 cache-read tokens, 30 s from first to last',
   );
+});
+
+test('writes the fetches and the failed ones per host after the total line', () => {
+  const report = formatRunStats([
+    {
+      ...IDLE,
+      stage: 'gather-web',
+      fetches: Object.fromEntries([['a.example', { fetches: 2, failed: 2 }]]),
+    },
+    {
+      ...IDLE,
+      stage: 'verify-web',
+      fetches: Object.fromEntries([
+        ['b.example', { fetches: 1, failed: 1 }],
+        ['a.example', { fetches: 1, failed: 0 }],
+        ['c.example', { fetches: 3, failed: 0 }],
+      ]),
+    },
+    {
+      ...IDLE,
+      stage: 'verify-web',
+      fetches: Object.fromEntries([['d.example', { fetches: 3, failed: 1 }]]),
+    },
+  ]);
+
+  assert.deepEqual(report.split('\n').slice(4), [
+    '',
+    'Total: 3 workflow agents, 0 output tokens, 0 input tokens, 0 cache-read tokens, 0 s from first to last',
+    '',
+    '| Host | Fetches | Failed |',
+    '| --- | --- | --- |',
+    '| a.example | 3 | 2 |',
+    '| c.example | 3 | 0 |',
+    '| d.example | 3 | 1 |',
+    '| b.example | 1 | 1 |',
+    '',
+  ]);
 });

@@ -16,11 +16,14 @@ const NO_USAGE = {
   models: [],
   tools: {},
   toolsNotHeld: {},
+  fetches: {},
 };
 // The answer of Claude Code 2.1.330 to a call of Bash by a workflow agent
 // without it.
 const NOT_HELD_ANSWER =
   '<tool_use_error>Error: No such tool available: Bash. Bash is not among the tools available here. Continue with the tools you have.</tool_use_error>';
+// The answer of WebFetch to a fetch that brought a status and no page.
+const HTTP_429_ANSWER = 'The server returned HTTP 429 Too Many Requests.';
 const USAGE = {
   input_tokens: 10,
   output_tokens: 5,
@@ -42,6 +45,12 @@ function makeToolLine(id: string, name: unknown): unknown {
 
 function makeCallLine(callId: string, name: string): unknown {
   return makeResponse(`m-${ callId }`, { content: [{ type: 'tool_use', id: callId, name }] });
+}
+
+function makeFetchLine(callId: string, url: unknown): unknown {
+  return makeResponse(`m-${ callId }`, {
+    content: [{ type: 'tool_use', id: callId, name: 'WebFetch', input: { url } }],
+  });
 }
 
 function makeAnswerLine(callId: string, fields: Readonly<Record<string, unknown>>): unknown {
@@ -86,6 +95,7 @@ test('counts the turns, tokens, times, models and tools of a transcript', () => 
     models: ['model-a', 'model-b'],
     tools: { Read: 1 },
     toolsNotHeld: {},
+    fetches: {},
   });
 });
 
@@ -156,6 +166,73 @@ test('counts a call with no answer as a tool held', () => {
   const usage = getTranscriptUsage(toText(makeCallLine('t1', 'Bash')));
 
   assert.deepEqual([usage.tools, usage.toolsNotHeld], [{ Bash: 1 }, {}]);
+});
+
+test('counts the WebFetch calls per host and the ones answered with an error or no page', () => {
+  const usage = getTranscriptUsage(toText(
+    makeFetchLine('t1', 'https://a.example/one'),
+    makeAnswerLine('t1', {
+      content: `${ HTTP_429_ANSWER }\n\nThe response body was not retrieved.`,
+    }),
+    makeFetchLine('t2', 'https://a.example/two'),
+    makeAnswerLine('t2', {
+      content: 'REDIRECT DETECTED: The URL redirects to a location that was not fetched',
+    }),
+    makeFetchLine('t3', 'https://a.example/three'),
+    makeAnswerLine('t3', { content: 'The page says the server returned HTTP 429.' }),
+    makeFetchLine('t4', 'https://b.example/'),
+    makeAnswerLine('t4', {
+      is_error: true,
+      content: 'Claude Code is unable to fetch from b.example',
+    }),
+  ));
+
+  assert.deepEqual([usage.tools, usage.fetches], [
+    { WebFetch: 4 },
+    Object.fromEntries([
+      ['a.example', { fetches: 3, failed: 2 }],
+      ['b.example', { fetches: 1, failed: 1 }],
+    ]),
+  ]);
+});
+
+test('counts a WebFetch call written twice under one id once', () => {
+  const usage = getTranscriptUsage(toText(
+    makeFetchLine('t1', 'https://a.example/'),
+    makeFetchLine('t1', 'https://a.example/'),
+    makeAnswerLine('t1', { is_error: true, content: 'getaddrinfo ENOTFOUND a.example' }),
+  ));
+
+  assert.deepEqual(usage.fetches, Object.fromEntries([['a.example', { fetches: 1, failed: 1 }]]));
+});
+
+test('reads the host of a fetch up to the first /, ?, # or :, lowercased', () => {
+  const usage = getTranscriptUsage(toText(
+    makeFetchLine('t1', 'https://API.Example.com/x'),
+    makeFetchLine('t2', 'https://api.example.com?q=1'),
+    makeFetchLine('t3', 'https://api.example.com#top'),
+    makeFetchLine('t4', 'https://api.example.com:8443/x'),
+    makeFetchLine('t5', 'https://a.example@b.example/x'),
+  ));
+
+  assert.deepEqual(usage.fetches, Object.fromEntries([
+    ['api.example.com', { fetches: 4, failed: 0 }],
+    ['a.example@b.example', { fetches: 1, failed: 0 }],
+  ]));
+});
+
+test('counts no fetch for a WebFetch call without a URL or a call of another tool', () => {
+  const usage = getTranscriptUsage(toText(
+    makeFetchLine('t1', 7),
+    makeFetchLine('t2', 'a.example/x'),
+    makeResponse('m3', {
+      content: [
+        { type: 'tool_use', id: 't3', name: 'WebSearch', input: { url: 'https://a.example/' } },
+      ],
+    }),
+  ));
+
+  assert.deepEqual([usage.tools, usage.fetches], [{ WebFetch: 2, WebSearch: 1 }, {}]);
 });
 
 test('counts no tool call without a name', () => {

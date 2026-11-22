@@ -5,6 +5,7 @@ const HEAD: readonly string[] = [
   'Stage', 'Workflow agents', 'Returned', 'Turns', 'Output tokens', 'Input tokens',
   'Cache-read tokens', 'Median s', 'Longest s', 'Models', 'Tools',
 ];
+const FETCH_HEAD: readonly string[] = ['Host', 'Fetches', 'Failed'];
 const ABSENT = '-';
 const NOT_HELD_TITLE = 'not held: ';
 const MS_PER_SECOND = 1000;
@@ -16,7 +17,9 @@ const MS_PER_SECOND = 1000;
 // its earliest to its latest time. A stage with no times, no model or no
 // tool call gets a dash there.
 // The calls of a tool a workflow agent did not hold follow those of the
-// tools held.
+// tools held. When a workflow agent called WebFetch, a table of the fetches
+// and the failed ones per host follows the total line, the most fetched host
+// first and then by name.
 export function formatRunStats(usages: readonly AgentUsage[]): string {
   const stages = [...new Set(usages.map((usage) => usage.stage))];
 
@@ -28,6 +31,7 @@ export function formatRunStats(usages: readonly AgentUsage[]): string {
     )),
     '',
     formatTotal(usages),
+    ...formatFetches(usages),
     '',
   ].join('\n');
 }
@@ -67,6 +71,34 @@ function formatTotal(usages: readonly AgentUsage[]): string {
     + `${ String(getSum(usages.map((usage) => usage.inputTokens))) } input tokens, `
     + `${ String(getSum(usages.map((usage) => usage.cacheReadTokens))) } cache-read tokens, `
     + `${ String(Math.round(seconds)) } s from first to last`;
+}
+
+function formatFetches(usages: readonly AgentUsage[]): string[] {
+  const calls = usages.flatMap((usage) => Object.entries(usage.fetches));
+  const hosts = [...new Set(calls.map(([host]) => host))].sort();
+  // The sort keeps the order of the names among hosts of equal fetches.
+  const rows = hosts
+    .map((host) => {
+      const counts = calls.flatMap(([name, count]) => (name === host ? [count] : []));
+
+      return {
+        host,
+        fetches: getSum(counts.map((count) => count.fetches)),
+        failed: getSum(counts.map((count) => count.failed)),
+      };
+    })
+    .sort((left, right) => right.fetches - left.fetches);
+
+  return rows.length === 0
+    ? []
+    : [
+      '',
+      formatRow(FETCH_HEAD),
+      formatRow(FETCH_HEAD.map(() => '---')),
+      ...rows.map(({ host, fetches, failed }) => (
+        formatRow([host, String(fetches), String(failed)])
+      )),
+    ];
 }
 
 function getSeconds(usage: AgentUsage): number[] {
