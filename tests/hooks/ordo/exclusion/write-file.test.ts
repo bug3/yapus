@@ -59,3 +59,17 @@ test('leaves the staging file of another writer alone', (t) => {
   assert.equal(readFileSync(otherStaging, 'utf8'), '["/a/oth');
   assert.equal(readFileSync(path, 'utf8'), '["/a/new"]\n');
 });
+
+test('refuses a link planted at its staging name and writes nothing through it', (t) => {
+  const directory = makeTempDir(t);
+  const path = join(directory, 'settings.local.json');
+  const outside = join(makeTempDir(t), 'outside.txt');
+
+  writeFileSync(path, '{}\n');
+  writeFileSync(outside, 'outside\n');
+  symlinkSync(outside, `${ path }.${ String(process.pid) }.new`);
+
+  assert.throws(() => writeFile(path, '{"model": "opus"}\n'), /EEXIST/);
+  assert.equal(readFileSync(outside, 'utf8'), 'outside\n');
+  assert.equal(readFileSync(path, 'utf8'), '{}\n');
+});
