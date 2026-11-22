@@ -136,6 +136,17 @@ const VERDICT_SCHEMA = {
   required: ['verdict', 'evidence'],
 };
 
+// One question the run researches, as the agent that writes it returns it.
+const QUESTION_SCHEMA = {
+  type: 'object',
+  properties: {
+    lane: { type: 'string', enum: LANES },
+    question: { type: 'string' },
+    startAt: { type: 'array', items: { type: 'string' } },
+  },
+  required: ['lane', 'question'],
+};
+
 // What the workflow agent of each stage returns, by stage id. No list of
 // claims has a longest length: the claims of a question are not capped.
 const SCHEMAS = {
@@ -146,15 +157,7 @@ const SCHEMAS = {
         type: 'array',
         minItems: MIN_QUESTIONS,
         maxItems: MAX_QUESTIONS,
-        items: {
-          type: 'object',
-          properties: {
-            lane: { type: 'string', enum: LANES },
-            question: { type: 'string' },
-            startAt: { type: 'array', items: { type: 'string' } },
-          },
-          required: ['lane', 'question'],
-        },
+        items: QUESTION_SCHEMA,
       },
     },
     required: ['questions'],
@@ -293,7 +296,7 @@ if (scope === undefined) {
   return { error: SCOPE_ERROR };
 }
 
-const questions = selectQuestions(scope.questions, input.lanes);
+const questions = selectQuestions(scope.questions, input.lanes, 'Q');
 const droppedQuestions = selectDroppedQuestions(scope.questions, input.lanes);
 const questionCounts = countByLane(questions);
 
@@ -312,7 +315,9 @@ if (questions.length === 0) {
 phase(STAGES['gather-repo'].phase);
 
 const researched = await parallel(
-  questions.map((question) => () => researchQuestion(input.task, question)),
+  questions.map((question) => () => (
+    researchQuestion(input.task, question, LANE_RESEARCH[question.lane].gatherStageId)
+  )),
 );
 
 phase(STAGES.completeness.phase);
@@ -484,12 +489,13 @@ function formatLaneCounts(laneCounts) {
   return LANES.map((lane) => `${ laneCounts[lane] } ${ lane }`).join(', ');
 }
 
-// The questions the run researches, each with its id. A question in a lane
-// the args left out is not among them, so it gets no agent and no id.
-function selectQuestions(scopeQuestions, lanes) {
+// The questions the run researches, each with its id: the id prefix of their
+// round and their number in it. A question in a lane the args left out is
+// not among them, so it gets no agent and no id.
+function selectQuestions(scopeQuestions, lanes, idPrefix) {
   return scopeQuestions
     .filter((question) => lanes.includes(question.lane))
-    .map((question, index) => ({ ...question, id: `Q${ index + 1 }` }));
+    .map((question, index) => ({ ...question, id: `${ idPrefix }${ index + 1 }` }));
 }
 
 // The questions in a lane the args left out. No agent researches them, so
@@ -498,16 +504,16 @@ function selectDroppedQuestions(scopeQuestions, lanes) {
   return scopeQuestions.filter((question) => !lanes.includes(question.lane));
 }
 
-// One branch of the run: gathers the claims of one question, verifies each
-// of them as soon as they are in, and gives the question under its own id
-// with what came back for it, so the run reads no place of a `parallel`. A
-// workflow agent that fails makes it give less and never reject, so it holds
-// under a `parallel` that rejects with its branch and under one that does
-// not.
-async function researchQuestion(task, question) {
+// One branch of the run: gathers the claims of one question under the stage
+// of its round, verifies each of them as soon as they are in, and gives the
+// question under its own id with what came back for it, so the run reads no
+// place of a `parallel`. A workflow agent that fails makes it give less and
+// never reject, so it holds under a `parallel` that rejects with its branch
+// and under one that does not.
+async function researchQuestion(task, question, gatherStageId) {
   const research = LANE_RESEARCH[question.lane];
   const gathered = await launchAgent(
-    research.gatherStageId,
+    gatherStageId,
     research.formatGatherPrompt(task, question),
     question.id,
   );
