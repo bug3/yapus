@@ -9,6 +9,8 @@ import { runGit } from '../../../helpers/run-git.ts';
 
 const RUN = join(import.meta.dirname, '..', '..', '..', '..', 'hooks', 'run.sh');
 const SUBPROCESS_TIMEOUT_MS = 20000;
+// Sorts before any temporary directory, so a list that ends with it is unsorted.
+const INVALID_ORDER_ROOT = '/a/one';
 
 test('shows the scopes of the project catalog as one line', (t) => {
   const project = makeProject(t, '["api", "cli", "docs"]');
@@ -81,6 +83,22 @@ test('shows the scopes in a project off the exclusion list', (t) => {
   runGit(['init', '--quiet'], project);
 
   const home = makeHome(t, ['/nowhere/other']);
+  const { status, stdout } = runScopes(t, project, { home });
+
+  assert.equal(status, 0);
+  assert.equal(
+    getContext(stdout),
+    'Commit scopes of this repository (.claude/yapus/ordo/scopes.json): api;'
+      + ' a new scope enters that file in the commit that first uses it.',
+  );
+});
+
+test('shows the scopes when the exclusion list is invalid', (t) => {
+  const project = makeProject(t, '["api"]');
+
+  runGit(['init', '--quiet'], project);
+
+  const home = makeHome(t, [realpathSync(project), INVALID_ORDER_ROOT]);
   const { status, stdout } = runScopes(t, project, { home });
 
   assert.equal(status, 0);

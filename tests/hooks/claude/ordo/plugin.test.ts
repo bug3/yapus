@@ -14,6 +14,8 @@ const CHECK_COMMAND =
 const SCOPES_COMMAND = 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/ordo/scopes';
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const OTHER_ROOT = '/nowhere/other';
+// Sorts before any temporary directory, so a list that ends with it is unsorted.
+const INVALID_ORDER_ROOT = '/a/one';
 const DASH_FINDING = 'yapus dashes: /r/a.md:1: U+2014; use the ASCII hyphen\n';
 const EM_DASH = String.fromCodePoint(0x2014);
 const EM_DASH_WRITE = JSON.stringify({
@@ -94,6 +96,14 @@ test('exits 2 with the finding when the project directory does not exist', (t) =
 
 test('exits 2 with the finding in a project when there is no exclusion list', (t) => {
   const commandRun = runRegisteredCommand(t, makeTempDir(t), { project: makeTempRepo(t) });
+
+  assert.deepEqual([commandRun.status, commandRun.stderr], [2, DASH_FINDING]);
+});
+
+test('exits 2 with the finding when the exclusion list is invalid', (t) => {
+  const project = makeTempRepo(t);
+  const home = makeHome(t, [realpathSync(project), INVALID_ORDER_ROOT]);
+  const commandRun = runRegisteredCommand(t, home, { project });
 
   assert.deepEqual([commandRun.status, commandRun.stderr], [2, DASH_FINDING]);
 });
