@@ -12,11 +12,10 @@ async function main(): Promise<void> {
   try {
     const projectDir = process.env.CLAUDE_PROJECT_DIR ?? '';
     const home = process.env.HOME ?? '';
-    const exclusion = getExclusion(projectDir, home, process.env);
+    const { env } = process;
+    const isExcluded = () => getExclusion(projectDir, home, env).kind === 'excluded';
 
-    stop(exclusion.kind === 'excluded'
-      ? []
-      : await getMessagesWithinLimit(process.stdin, LIMIT_SECONDS));
+    stop(await getMessagesWithinLimit(process.stdin, LIMIT_SECONDS, isExcluded));
   } catch (error) {
     stop([formatMessage(`crashed: ${ getFirstLine(error) }; the call is blocked, fix the hook`)]);
   }

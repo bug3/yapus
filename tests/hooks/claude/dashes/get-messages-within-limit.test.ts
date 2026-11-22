@@ -24,7 +24,7 @@ test('gives the finding message for a stream that ends with a dash', async () =>
     }),
   );
 
-  assert.deepEqual(await getMessagesWithinLimit(stdin, LIMIT_SECONDS), [
+  assert.deepEqual(await getMessagesWithinLimit(stdin, LIMIT_SECONDS, isIncluded), [
     'yapus dashes: /r/a.md:1: U+2014; use the ASCII hyphen',
   ]);
 });
@@ -36,7 +36,34 @@ test('gives the limit message for a stream that never ends', async (t) => {
     stdin.destroy();
   });
 
-  assert.deepEqual(await getMessagesWithinLimit(stdin, LIMIT_SECONDS), [LIMIT_MESSAGE]);
+  const messages = await getMessagesWithinLimit(stdin, LIMIT_SECONDS, isIncluded);
+
+  assert.deepEqual(messages, [LIMIT_MESSAGE]);
+});
+
+test('gives no message for an excluded call once its stream ends', async () => {
+  const stdin = new PassThrough();
+
+  stdin.end(
+    JSON.stringify({
+      tool_name: 'Write',
+      tool_input: { file_path: '/r/a.md', content: EM_DASH },
+    }),
+  );
+
+  assert.deepEqual(await getMessagesWithinLimit(stdin, LIMIT_SECONDS, isExcluded), []);
+});
+
+test('gives the limit message for an excluded call whose stream never ends', async (t) => {
+  const stdin = new PassThrough();
+
+  t.after(() => {
+    stdin.destroy();
+  });
+
+  const messages = await getMessagesWithinLimit(stdin, LIMIT_SECONDS, isExcluded);
+
+  assert.deepEqual(messages, [LIMIT_MESSAGE]);
 });
 
 // The test holds the FIFO open itself, so the read inside getMessages waits for data
@@ -60,5 +87,15 @@ test('gives the limit message when the file read of an Edit stalls', async (t) =
     }),
   );
 
-  assert.deepEqual(await getMessagesWithinLimit(stdin, LIMIT_SECONDS), [LIMIT_MESSAGE]);
+  const messages = await getMessagesWithinLimit(stdin, LIMIT_SECONDS, isIncluded);
+
+  assert.deepEqual(messages, [LIMIT_MESSAGE]);
 });
+
+function isIncluded(): boolean {
+  return false;
+}
+
+function isExcluded(): boolean {
+  return true;
+}

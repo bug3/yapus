@@ -20,6 +20,8 @@ const EM_DASH_WRITE = JSON.stringify({
   tool_name: 'Write',
   tool_input: { file_path: '/r/a.md', content: `a ${ EM_DASH } b\n` },
 });
+// Over the pipe buffer, so a hook that exits without reading it breaks the pipe.
+const LARGE_WRITE_BYTES = 1024 * 1024;
 
 test('registers the session check, the scope catalog and the dashes hook', () => {
   const hooks: unknown = JSON.parse(readFileSync(join(PLUGIN, 'hooks', 'hooks.json'), 'utf8'));
@@ -61,6 +63,19 @@ test('exits 0 on a Write that adds a dash in a project on the exclusion list', (
   const commandRun = runRegisteredCommand(t, home, { project });
 
   assert.deepEqual([commandRun.status, commandRun.stderr], [0, '']);
+});
+
+test('reads a Write larger than the pipe buffer and exits 0 in a listed project', (t) => {
+  const project = makeTempRepo(t);
+  const home = makeHome(t, [realpathSync(project)]);
+  const content = `${ 'a'.repeat(LARGE_WRITE_BYTES) }${ EM_DASH }\n`;
+  const stdinText = JSON.stringify({
+    tool_name: 'Write',
+    tool_input: { file_path: '/r/a.md', content },
+  });
+  const commandRun = runRegisteredCommand(t, home, { project, stdinText });
+
+  assert.deepEqual([commandRun.error, commandRun.status, commandRun.stderr], [undefined, 0, '']);
 });
 
 test('exits 2 on a Write that adds a dash in a project off the exclusion list', (t) => {
