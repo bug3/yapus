@@ -20,6 +20,55 @@ export const FIXED_ARGS = {
   paths: ['hooks/claude/gates/return', 'plugins/delegator/hooks/hooks.json'],
 } as const;
 
+// The lines a prompt of a run with the web lane gives the catalog of sources
+// in, one for each row in its order, its id, kind and use as the plan's
+// catalog table writes them.
+export const SOURCE_LINES = [
+  'arxiv (papers): preprints in physics, mathematics, computer science and nearby fields; quote the abs page, not the PDF',
+  'openalex (papers): scholarly works of every field, with citation counts',
+  'crossref (papers): metadata of published works, found by title or reference text',
+  'europepmc (papers): life-science and medical literature',
+  'pubmed (papers): biomedical papers: ids by search, then abstracts',
+  'opencitations (papers): citation counts of a DOI',
+  'biorxiv (papers): biology and medicine preprints by DOI; the server is biorxiv or medrxiv',
+  'github (code): public repositories, files, issues, discussions, releases and advisories; 60 API requests an hour per address',
+  'sourcegraph (code): code search across public repositories',
+  'devdocs (docs): language and framework reference pages by DevDocs slug, such as python~3.13',
+  'readthedocs (docs): search inside a project hosted on Read the Docs',
+  'mdn (docs): the web platform: HTML, CSS, JavaScript and browser APIs',
+  'microsoft-learn (docs): Microsoft and Azure documentation',
+  'docs-rs (docs): Rust crate documentation',
+  'claude-docs (docs): the Claude API and SDK documentation index',
+  'npm (packages): npm package metadata, with its repository and homepage',
+  'pypi (packages): Python package metadata; the version form lists its known vulnerabilities',
+  'crates (packages): Rust crate metadata and versions',
+  'go (packages): Go packages, their versions and vulnerabilities',
+  'deps-dev (packages): licenses and advisories of a package version, across ecosystems',
+  'osv (packages): one vulnerability record by its id, such as a GHSA id',
+  'huggingface (models): machine-learning models and datasets',
+  'nvd (advisories): CVE records with severity scores; 5 requests per 30 seconds',
+  'cisa-kev (advisories): vulnerabilities known to be exploited; one large file, so ask it about one CVE',
+  'endoflife (advisories): release and end-of-life dates of products',
+  'hn (discussions): Hacker News stories and their comments',
+  'lobsters (discussions): Lobsters stories by tag, with no search',
+  "discourse-meta (discussions): the Discourse project's own forum",
+  'mastodon (discussions): public posts on mastodon.social by hashtag',
+  'bluesky (discussions): Bluesky accounts and their posts, with no post search',
+  'lemmy (discussions): posts on lemmy.world',
+  "wikipedia (overviews): English Wikipedia: search, then an article's summary",
+  'wikidata (overviews): structured facts about entities by Q-id',
+  'dbpedia (overviews): Wikipedia infobox facts as data; long answers',
+  'rfc-editor (standards): RFC metadata and text, with section anchors',
+  'ietf-datatracker (standards): RFCs and Internet-Drafts by name',
+  'w3c (standards): W3C specifications and their status',
+  'whatwg (standards): WHATWG living standards, such as HTML and Fetch',
+  'ecmascript (standards): the ECMAScript language specification draft',
+  'iana (standards): IANA registries, such as HTTP status codes and media types',
+] as const;
+
+// The ids of the catalog in its order: the first word of each of its lines.
+export const SOURCE_IDS = SOURCE_LINES.map((line) => line.slice(0, line.indexOf(' ')));
+
 // The paths a test gives where the script judges one: five that may lead
 // out of the repository, each in a form of its own, then two that stay
 // inside it.
@@ -34,10 +83,11 @@ export const MIXED_PATHS = [
 ] as const;
 
 // What each workflow agent of the run on FIXED_ARGS returns, by its label.
-// The gather agent of the third question has no answer; the claims come out
-// as one verified, one refuted and one undecided for the repository, and for
-// the web one verified by its first vote and one by the third; the
-// completeness agent writes no follow-up question; the file is written.
+// The web question names one source twice; the gather agent of the third
+// question has no answer; the claims come out as one verified, one refuted
+// and one undecided for the repository, and for the web one verified by its
+// first vote and one by the third; the completeness agent writes no
+// follow-up question; the file is written.
 const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['scope', {
     questions: [
@@ -55,6 +105,7 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
       {
         lane: 'web',
         question: 'What does Claude Code do when a SubagentStop hook blocks twice?',
+        sources: ['github', 'hn', 'github'],
       },
     ],
   }],
@@ -142,9 +193,10 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
 
 // What the workflow agents of the run on FIXED_ARGS return when the
 // completeness agent writes a repository and a web follow-up question, by
-// label, where they differ from FIXED_ANSWERS. The claims of the repository
-// one come out as one verified, one refuted and one undecided, and the claim
-// of the web one is verified by its first vote.
+// label, where they differ from FIXED_ANSWERS. The web one names the sources
+// of the scope's web question. The claims of the repository one come out as
+// one verified, one refuted and one undecided, and the claim of the web one
+// is verified by its first vote.
 const FOLLOW_UP_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['completeness', {
     unreadAreas: ['tests/hooks/claude/gates/return'],
@@ -155,7 +207,11 @@ const FOLLOW_UP_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>
         question: 'Which tests hold the verdicts of the return gate?',
         startAt: ['tests/hooks/claude/gates/return'],
       },
-      { lane: 'web', question: 'Does the Claude Code changelog name a limit on stop blocks?' },
+      {
+        lane: 'web',
+        question: 'Does the Claude Code changelog name a limit on stop blocks?',
+        sources: ['github', 'hn', 'github'],
+      },
     ],
   }],
   ['follow-up-repo:F1', {

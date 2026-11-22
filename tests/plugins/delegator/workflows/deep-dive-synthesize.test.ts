@@ -5,6 +5,8 @@ import {
   FIXED_ARGS,
   JSON_NULL,
   SCRIPT_PATH,
+  SOURCE_IDS,
+  SOURCE_LINES,
   getFixedAnswer,
   getFollowUpAnswer,
 } from './get-fixed-answer.ts';
@@ -19,6 +21,9 @@ const COMPLETENESS_PROMPT = [
   '',
   '## Lanes',
   'repository, web',
+  '',
+  '## Sources',
+  ...SOURCE_LINES,
   '',
   '## Questions and what came back',
   'Q1 (repository): Where does the return gate count a send-back?: 2 claims, 1 verified; not searched: hooks/claude/delegator/status',
@@ -35,13 +40,14 @@ const COMPLETENESS_PROMPT = [
   "- In unreadAreas, name each part of the repository the task touches that no claim cites; look at the repository's layout to find them.",
   '- In unansweredQuestions, name each question above that came back with no verified claim, and each question the task raises that none of them covers.',
   '- In followUps, write at most 4 questions, each one a gather agent can answer in one launch to close a gap you named, the ones the plan needs most: give each one of the lanes listed above, name the paths to start from for a repository question when you know them, and let none overlap a question above; write none when no gap needs one.',
+  '- For each web question in followUps, name in sources up to 4 of the sources listed above that can answer it, the likeliest first, and none when none fits.',
   '- Return through the structured output alone: it is the one form of return here, in place of any other your rules name.',
   '- Name what is missing; do not answer it, and change no file.',
 ].join('\n');
 
 // The digest is FNV-1a of 32 bits over the UTF-16 units of CONTENT below,
 // worked out by a program apart from the script.
-const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_74a7af1e.md';
+const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_6e0def6a.md';
 const BLOCKS = [
   '## Refuted',
   '',
@@ -84,6 +90,12 @@ const BLOCKS = [
   '- Not launched at the limit of 1000 workflow agents: 0',
   '- Claims not sent to a verify agent for their path: 0',
   '- Gather returns: 3, the longest 475 characters',
+  '',
+  '| Source | Assigned | Claims | Verified | Refuted |',
+  '| --- | --- | --- | --- | --- |',
+  '| github | 1 | 0 | 0 | 0 |',
+  '| hn | 1 | 0 | 0 | 0 |',
+  '| other | - | 2 | 2 | 0 |',
 ].join('\n');
 
 // The fixed run with the repository lane alone: the web question of its scope
@@ -132,6 +144,10 @@ const REPOSITORY_LANE_BLOCKS = [
   '- Not launched at the limit of 1000 workflow agents: 0',
   '- Claims not sent to a verify agent for their path: 0',
   '- Gather returns: 2, the longest 463 characters',
+  '',
+  '| Source | Assigned | Claims | Verified | Refuted |',
+  '| --- | --- | --- | --- | --- |',
+  '| other | - | 0 | 0 | 0 |',
 ].join('\n');
 
 // What the run on FIXED_ARGS hands the synthesize agent as its content: the
@@ -156,7 +172,7 @@ const SYNTHESIZE_PROMPT = [
   'Add a retry limit to the return gate',
   '',
   '## File',
-  ".yapus/plans/2026-11/return-retry/research_74a7af1e.md, under the project's root",
+  ".yapus/plans/2026-11/return-retry/research_6e0def6a.md, under the project's root",
   '',
   CONTENT,
   '',
@@ -232,6 +248,12 @@ const FOLLOW_UP_BLOCKS = [
   '- Not launched at the limit of 1000 workflow agents: 0',
   '- Claims not sent to a verify agent for their path: 0',
   '- Gather returns: 5, the longest 672 characters',
+  '',
+  '| Source | Assigned | Claims | Verified | Refuted |',
+  '| --- | --- | --- | --- | --- |',
+  '| github | 2 | 0 | 0 | 0 |',
+  '| hn | 2 | 0 | 0 | 0 |',
+  '| other | - | 3 | 3 | 0 |',
 ].join('\n');
 const SYNTHESIZE_ERROR = 'deep-dive: no research file was written; resume the run with its run id';
 const WRITE_ERROR =
@@ -255,6 +277,13 @@ const LANE_COUNTS = {
   notLaunched: 0,
   pathsRefused: 0,
   gatherReturns: { count: 3, longest: 475 },
+  sources: {
+    catalog: [
+      { id: 'github', assigned: 1, claims: 0, verified: 0, refuted: 0 },
+      { id: 'hn', assigned: 1, claims: 0, verified: 0, refuted: 0 },
+    ],
+    other: { claims: 2, verified: 2, refuted: 0 },
+  },
 } as const;
 // The scope question item, which a follow-up question takes too.
 const QUESTION_SCHEMA = {
@@ -263,6 +292,7 @@ const QUESTION_SCHEMA = {
     lane: { type: 'string', enum: ['repository', 'web'] },
     question: { type: 'string' },
     startAt: { type: 'array', items: { type: 'string' } },
+    sources: { type: 'array', maxItems: 4, items: { type: 'string', enum: SOURCE_IDS } },
   },
   required: ['lane', 'question'],
 } as const;
@@ -329,6 +359,101 @@ const SMALL_RUN_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>
   ['completeness', { unreadAreas: [], unansweredQuestions: [], followUps: [] }],
   ['synthesize', { outcome: 'written', detail: '' }],
 ]);
+// The Run block of the small run: no web question and no web claim, so its
+// Sources table holds the other row alone.
+const SMALL_RUN_RUN_BLOCK = [
+  '## Run',
+  '',
+  '| Stage | Launched | Returned |',
+  '| --- | --- | --- |',
+  '| scope | 1 | 1 |',
+  '| gather-repo | 1 | 1 |',
+  '| gather-web | 0 | 0 |',
+  '| verify-repo | 1 | 1 |',
+  '| verify-web | 0 | 0 |',
+  '| verify-web-third | 0 | 0 |',
+  '| completeness | 1 | 1 |',
+  '| follow-up-repo | 0 | 0 |',
+  '| follow-up-web | 0 | 0 |',
+  '',
+  '- Questions: 1 (1 repository, 0 web)',
+  '- Follow-up questions: 0 (0 repository, 0 web)',
+  '- Follow-up claims: 0 (0 repository, 0 web)',
+  '- Follow-up verified: 0 (0 repository, 0 web)',
+  '- Claims: 1 (1 repository, 0 web)',
+  '- Verified: 1 (1 repository, 0 web)',
+  '- Refuted: 0 (0 repository, 0 web)',
+  '- Undecided: 0 (0 repository, 0 web)',
+  '- Not launched at the limit of 1000 workflow agents: 0',
+  '- Claims not sent to a verify agent for their path: 0',
+  '- Gather returns: 1, the longest 170 characters',
+  '',
+  '| Source | Assigned | Claims | Verified | Refuted |',
+  '| --- | --- | --- | --- | --- |',
+  '| other | - | 0 | 0 | 0 |',
+].join('\n');
+const SOURCES_HEADER = '| Source | Assigned | Claims | Verified | Refuted |';
+
+// The answers, by label, of a run on both lanes whose web questions name
+// sources and whose web claims cite catalog hosts and lookalikes of them, in
+// both rounds. Q1 names an unknown id and six ids in all, of which the first
+// four the catalog holds are kept; Q2 is a repository question that names a
+// source. Q1.C1 meets github in capitals and is verified; Q1.C2 is refuted
+// and Q1.C3 verified, both on hosts that only look like github; Q1.C4 holds
+// github before an `@` and Q1.C5 a github host after one, Q1.C6 holds github
+// and a `:` before an `@`, and Q1.C7 meets github with a port, and none of the
+// four gets a vote. F1 names github and crossref, and its one claim meets
+// rfc-editor, which no question named, and is refuted.
+const COUNTED_SOURCES_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
+  ['scope', {
+    questions: [
+      {
+        lane: 'web',
+        question: 'Which tools hold a retry limit?',
+        sources: ['nope', 'github', 'hn', 'arxiv', 'pubmed', 'nvd'],
+      },
+      { lane: 'repository', question: 'What blocks a return?', sources: ['openalex'] },
+    ],
+  }],
+  ['gather-web:Q1', {
+    claims: [
+      { claim: 'A tool holds a limit.', url: 'https://API.GitHub.com/x', quote: 'limit' },
+      { claim: 'A second tool holds one.', url: 'https://github.com.evil.example/x', quote: 'one' },
+      { claim: 'A third tool holds one.', url: 'https://evilgithub.com/x', quote: 'one' },
+      { claim: 'A fourth tool holds one.', url: 'https://github.com@evil.example/x', quote: 'one' },
+      { claim: 'A fifth tool holds one.', url: 'https://evil.example@api.github.com/x', quote: 'one' },
+      { claim: 'A sixth tool holds one.', url: 'https://github.com:x@evil.example/x', quote: 'one' },
+      { claim: 'A seventh tool holds one.', url: 'https://api.github.com:443/x', quote: 'one' },
+    ],
+    notChecked: [],
+  }],
+  ['gather-repo:Q2', { claims: [SMALL_RUN_CLAIM], notSearched: [] }],
+  ['verify-web:Q1.C1.v1', { verdict: 'supported', evidence: 'The page says limit.' }],
+  ['verify-web:Q1.C2.v1', { verdict: 'unsupported', evidence: 'The page says none.' }],
+  ['verify-web:Q1.C2.v2', { verdict: 'unsupported', evidence: 'The page says none.' }],
+  ['verify-web:Q1.C3.v1', { verdict: 'supported', evidence: 'The page says one.' }],
+  ['verify-repo:Q2.C1', { verdict: 'supported', evidence: 'The line says so.' }],
+  ['completeness', {
+    unreadAreas: [],
+    unansweredQuestions: [],
+    followUps: [
+      { lane: 'web', question: 'Which RFC names a retry?', sources: ['github', 'crossref'] },
+    ],
+  }],
+  ['follow-up-web:F1', {
+    claims: [
+      {
+        claim: 'An RFC names one.',
+        url: 'https://www.rfc-editor.org/rfc/rfc9110.html',
+        quote: 'one',
+      },
+    ],
+    notChecked: [],
+  }],
+  ['verify-web:F1.C1.v1', { verdict: 'unsupported', evidence: 'The page names none.' }],
+  ['verify-web:F1.C1.v2', { verdict: 'unsupported', evidence: 'The page names none.' }],
+  ['synthesize', { outcome: 'written', detail: '' }],
+]);
 const FILE_LINE = /\n## File\n(?<fileLine>[^\n]+)\n/u;
 const FILE_LINE_FORM =
   /^\.yapus\/plans\/2026-11\/return-retry\/research_[0-9a-f]{8}\.md, under the project's root$/u;
@@ -346,6 +471,12 @@ test('names the lanes of the args to the completeness agent', async () => {
     findCall(run, 'completeness')?.prompt ?? '',
     /\n## Task\n[^\n]+\n\n## Lanes\nrepository\n\n## Questions and what came back\n/u,
   );
+});
+
+test('lists no source to the completeness agent with the repository lane alone', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, REPOSITORY_LANE_ARGS, getFixedAnswer);
+
+  assert.doesNotMatch(findCall(run, 'completeness')?.prompt ?? '', /## Sources|name in sources/u);
 });
 
 test('launches one completeness agent with the options of its stage', async () => {
@@ -509,13 +640,15 @@ test('names no Glob in the synthesize prompt', async () => {
   assert.doesNotMatch(findCall(run, 'synthesize')?.prompt ?? 'Glob', /Glob/u);
 });
 
-test('writes the count and the longest of the Gather returns last in the Run block', async () => {
+test('writes the count and the longest of the Gather returns above the Sources', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
+  const runLines = readBlocks(run).split('\n');
+  const tableStart = runLines.indexOf(SOURCES_HEADER);
 
-  assert.equal(
-    readBlocks(run).split('\n').at(-1),
+  assert.deepEqual(runLines.slice(tableStart - 2, tableStart), [
     '- Gather returns: 3, the longest 475 characters',
-  );
+    '',
+  ]);
 });
 
 test('enters the Completeness and the Synthesize phases after the Gather phase', async () => {
@@ -651,6 +784,13 @@ test('returns the counts of both rounds and those of the follow-up round alone',
       notLaunched: 0,
       pathsRefused: 0,
       gatherReturns: { count: 5, longest: 672 },
+      sources: {
+        catalog: [
+          { id: 'github', assigned: 2, claims: 0, verified: 0, refuted: 0 },
+          { id: 'hn', assigned: 2, claims: 0, verified: 0, refuted: 0 },
+        ],
+        other: { claims: 3, verified: 3, refuted: 0 },
+      },
       stages: Object.fromEntries([
         ['scope', { launched: 1, returned: 1 }],
         ['gather-repo', { launched: 3, returned: 2 }],
@@ -831,6 +971,45 @@ test('puts a question that holds a line break on one line above its verified cla
   );
 });
 
+test('counts the web questions and claims of each catalog source in both rounds', async () => {
+  const run = await runWorkflow(
+    SCRIPT_PATH,
+    FIXED_ARGS,
+    (call) => COUNTED_SOURCES_ANSWERS.get(String(call.options.label)) ?? JSON_NULL,
+  );
+
+  assert.deepEqual(readSourceCounts(run), {
+    catalog: [
+      { id: 'arxiv', assigned: 1, claims: 0, verified: 0, refuted: 0 },
+      { id: 'crossref', assigned: 1, claims: 0, verified: 0, refuted: 0 },
+      { id: 'pubmed', assigned: 1, claims: 0, verified: 0, refuted: 0 },
+      { id: 'github', assigned: 2, claims: 2, verified: 1, refuted: 0 },
+      { id: 'hn', assigned: 1, claims: 0, verified: 0, refuted: 0 },
+      { id: 'rfc-editor', assigned: 0, claims: 1, verified: 0, refuted: 1 },
+    ],
+    other: { claims: 5, verified: 1, refuted: 1 },
+  });
+});
+
+test('counts no source for a dropped question that names sources', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, REPOSITORY_LANE_ARGS, getFixedAnswer);
+
+  assert.deepEqual(readSourceCounts(run), {
+    catalog: [],
+    other: { claims: 0, verified: 0, refuted: 0 },
+  });
+});
+
+test('writes the Sources table of a run with no web question', async () => {
+  const run = await runSmall();
+  const prompt = findCall(run, 'synthesize')?.prompt ?? '';
+
+  assert.equal(
+    prompt.slice(prompt.indexOf('\n## Run\n') + 1, prompt.indexOf('\n\n## Rules\n')),
+    SMALL_RUN_RUN_BLOCK,
+  );
+});
+
 test('names the same file for two runs on the same answers', async () => {
   const first = await runSmall();
   const second = await runSmall();
@@ -902,15 +1081,15 @@ test('names another file with no gather answer when the Unmeasured block differs
   assert.match(readFileLine(changedRun), FILE_LINE_FORM);
 });
 
-// The digest of the content with the unread area `area 7` is 0x01f1e2f2,
+// The digest of the content with the unread area `area 21` is 0x0e0cfd79,
 // worked out by a program apart from the script.
 test('writes a digest that begins with a zero in 8 characters', async () => {
-  const gaps = { unreadAreas: ['area 7'], unansweredQuestions: [], followUps: [] };
+  const gaps = { unreadAreas: ['area 21'], unansweredQuestions: [], followUps: [] };
 
   const run = await runSmall(new Map([['completeness', gaps]]));
 
   assert.partialDeepStrictEqual(run.returned, {
-    researchPath: '.yapus/plans/2026-11/return-retry/research_01f1e2f2.md',
+    researchPath: '.yapus/plans/2026-11/return-retry/research_0e0cfd79.md',
   });
 });
 
@@ -927,6 +1106,21 @@ function listDroppedLines(run: WorkflowRun): string[] {
   return (findCall(run, 'synthesize')?.prompt ?? '')
     .split('\n')
     .filter((line) => line.startsWith('- Dropped: '));
+}
+
+// The counts per source among the stats the run returned.
+function readSourceCounts({ returned }: WorkflowRun): unknown {
+  if (typeof returned !== 'object' || returned === null || !('stats' in returned)) {
+    return undefined;
+  }
+
+  const { stats } = returned;
+
+  if (typeof stats !== 'object' || stats === null || !('sources' in stats)) {
+    return undefined;
+  }
+
+  return stats.sources;
 }
 
 // The line under the File heading in the prompt of the synthesize agent.

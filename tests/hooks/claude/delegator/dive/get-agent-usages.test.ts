@@ -17,6 +17,7 @@ const NO_USAGE = {
   models: [],
   tools: {},
   toolsNotHeld: {},
+  fetches: {},
 };
 // One API response on two lines, each with one tool call.
 const SCOPE_TRANSCRIPT = toText(
@@ -106,6 +107,7 @@ test('reads the four workflow agents of a run in two stages, in the order of the
     models: ['model-b'],
     tools: { Read: 2, Grep: 1 },
     toolsNotHeld: {},
+    fetches: {},
   };
 
   assert.deepEqual(getAgentUsages(runDirectory), {
@@ -123,6 +125,7 @@ test('reads the four workflow agents of a run in two stages, in the order of the
         models: ['model-a'],
         tools: { Glob: 1, Read: 1 },
         toolsNotHeld: {},
+        fetches: {},
       },
       { stage: 'gather-repo', isReturned: true, ...gatherUsage },
       { stage: 'gather-repo', isReturned: false, ...gatherUsage },

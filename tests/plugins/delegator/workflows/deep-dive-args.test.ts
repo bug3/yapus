@@ -10,7 +10,7 @@ const ARGS_ERROR =
   'deep-dive: args is not an object with task and directory; pass {task, directory, questions, paths, lanes}';
 // A topic of 64 units is the longest a plan's directory takes.
 const LONGEST_TOPIC = 'a'.repeat(64);
-const BOTH_LANES = /\n## Lanes\nrepository, web\n\n## Rules\n/u;
+const BOTH_LANES = /\n## Lanes\nrepository, web\n\n## Sources\n/u;
 
 // A month and a topic the plans of the hooks take, to stand beside a sample
 // of the other name.
@@ -300,7 +300,7 @@ test('names the one lane the args name', async () => {
 
   const run = await runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
 
-  assert.match(run.calls[0]?.prompt ?? '', /\n## Lanes\nweb\n\n## Rules\n/u);
+  assert.match(run.calls[0]?.prompt ?? '', /\n## Lanes\nweb\n\n## Sources\n/u);
 });
 
 test('names each lane once, the repository first, whatever the order in the args', async () => {
