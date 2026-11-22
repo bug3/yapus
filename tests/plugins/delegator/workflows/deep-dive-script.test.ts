@@ -73,7 +73,11 @@ test('holds the approved meta', async () => {
         detail: 'one gather agent per question returns claims with their sources',
       },
       { title: 'Verify', detail: 'each claim checked against the lines or the page it cites' },
-      { title: 'Completeness', detail: 'unread areas and unanswered questions' },
+      {
+        title: 'Completeness',
+        detail:
+          'unread areas, unanswered questions and up to 4 follow-up questions for one more round',
+      },
       { title: 'Synthesize', detail: 'research_<digest>.md written beside the plan' },
     ],
   });
