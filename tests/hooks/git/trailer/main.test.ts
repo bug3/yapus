@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { test } from 'node:test';
-import { getExclusionPath } from '../../../../hooks/shared/exclusion/get-exclusion-path.ts';
+import { makeListingHome } from '../../../helpers/exclusion/make-listing-home.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
 import { getGitEnv } from '../../../helpers/run-git.ts';
@@ -37,12 +37,9 @@ test('exits 2 with one line for a missing message file', (t) => {
 
 test('leaves the message as it is in a listed repository', (t) => {
   const repository = makeTempRepo(t);
-  const home = makeTempDir(t);
-  const listPath = getExclusionPath(home);
+  const home = makeListingHome(t, [realpathSync(repository)]);
   const messageFile = join(home, 'COMMIT_EDITMSG');
 
-  mkdirSync(dirname(listPath), { recursive: true });
-  writeFileSync(listPath, `${ JSON.stringify([realpathSync(repository)]) }\n`);
   writeFileSync(messageFile, MESSAGE);
 
   const hookRun = spawnSync(process.execPath, [MAIN, messageFile], {

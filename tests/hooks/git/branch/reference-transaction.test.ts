@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { realpathSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { getExclusionPath } from '../../../../hooks/shared/exclusion/get-exclusion-path.ts';
+import { makeLinkedWorktree } from '../../../helpers/exclusion/make-linked-worktree.ts';
+import { makeListingHome } from '../../../helpers/exclusion/make-listing-home.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
-import { getGitEnv, runGit } from '../../../helpers/run-git.ts';
+import { getGitEnv } from '../../../helpers/run-git.ts';
 import { hasRef, makeBranchRepo } from './make-branch-repo.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
@@ -66,9 +67,7 @@ test('lets an agent create a branch unchecked in a listed repository', (t) => {
 
 test('lets an agent create a branch unchecked in a listed repository\'s worktree', (t) => {
   const repository = makeBranchRepo(t);
-  const worktree = join(makeTempDir(t), 'worktree');
-
-  runGit(['worktree', 'add', '--quiet', '--detach', worktree], repository);
+  const worktree = makeLinkedWorktree(t, repository);
 
   const branchRun = runAgentBranch(t, {
     directory: worktree, roots: [realpathSync(repository)],
@@ -118,11 +117,7 @@ function runHook(t: TestContext, { state, who }: HookRun) {
 // A real git branch of UNCHECKED_BRANCH in directory through the hooks, as an
 // agent, with a temporary HOME whose exclusion list holds roots.
 function runAgentBranch(t: TestContext, { directory, roots }: BranchRun) {
-  const home = makeTempDir(t);
-  const listPath = getExclusionPath(home);
-
-  mkdirSync(dirname(listPath), { recursive: true });
-  writeFileSync(listPath, `${ JSON.stringify(roots) }\n`);
+  const home = makeListingHome(t, roots);
 
   return spawnSync('git', ['branch', UNCHECKED_BRANCH], {
     cwd: directory,

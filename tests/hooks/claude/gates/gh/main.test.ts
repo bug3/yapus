@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
+import { realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { makeListingHome } from '../../../../helpers/exclusion/make-listing-home.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../../helpers/make-temp-repo.ts';
 
@@ -81,12 +82,7 @@ test('exits 0 with no output for a tool other than Bash', (t) => {
 
 test('exits 0 with no output for gh pr create in a listed repository', (t) => {
   const repo = makeTempRepo(t);
-  const home = makeTempDir(t);
-  const listDirectory = join(home, '.claude', 'yapus', 'ordo');
-  const listText = `${ JSON.stringify([realpathSync(repo)]) }\n`;
-
-  mkdirSync(listDirectory, { recursive: true });
-  writeFileSync(join(listDirectory, 'excluded.json'), listText);
+  const home = makeListingHome(t, [realpathSync(repo)]);
 
   assert.deepEqual(
     runHook(repo, makeCall('gh pr create', repo), home),

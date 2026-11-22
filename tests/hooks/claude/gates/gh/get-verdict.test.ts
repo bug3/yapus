@@ -3,6 +3,7 @@ import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { getVerdict, type Verdict } from '../../../../../hooks/claude/gates/gh/get-verdict.ts';
+import { makeHomeWithListText } from '../../../../helpers/exclusion/make-listing-home.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../../helpers/make-temp-repo.ts';
 import { makeCatalogRoot } from './make-catalog-root.ts';
@@ -40,13 +41,7 @@ async function judge(t: TestContext, command: string, cwd: string): Promise<Verd
 // A temporary home whose exclusion list holds listText, with this process's
 // environment.
 function makeMachine(t: TestContext, listText: string): Machine {
-  const home = makeTempDir(t);
-  const directory = join(home, '.claude', 'yapus', 'ordo');
-
-  mkdirSync(directory, { recursive: true });
-  writeFileSync(join(directory, 'excluded.json'), listText);
-
-  return { home, env: process.env };
+  return { home: makeHomeWithListText(t, listText), env: process.env };
 }
 
 function makeListingMachine(t: TestContext, root: string): Machine {

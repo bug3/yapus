@@ -3,6 +3,7 @@ import { type SpawnSyncReturns, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
+import { makeLinkedWorktree } from '../../../helpers/exclusion/make-linked-worktree.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
 import { getGitEnv, runGit } from '../../../helpers/run-git.ts';
@@ -225,11 +226,10 @@ test('refuses a project directory that does not exist', (t) => {
 
 test('exclude from a linked worktree writes the main root and its settings', (t) => {
   const { root, home, listPath, settingsPath } = makeProject(t);
-  const worktree = join(makeTempDir(t), 'worktree');
 
   runGit(['add', '.gitignore'], root);
-  runGit(['commit', '--quiet', '-m', 'start'], root);
-  runGit(['worktree', 'add', '--quiet', '-b', 'linked', worktree], root);
+
+  const worktree = makeLinkedWorktree(t, root);
 
   assert.equal(runExclusion(worktree, 'exclude', { home }).status, 0);
   assert.equal(readFileSync(listPath, 'utf8'), `[\n  "${ root }"\n]\n`);

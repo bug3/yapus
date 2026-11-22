@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { mkdirSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, type TestContext } from 'node:test';
+import { test } from 'node:test';
 import { getMainRoot } from '../../../../hooks/shared/exclusion/get-main-root.ts';
+import { makeLinkedWorktree } from '../../../helpers/exclusion/make-linked-worktree.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
 import { getGitEnv, runGit } from '../../../helpers/run-git.ts';
@@ -43,12 +44,3 @@ test('gives a bare repository itself, whose git directory is not named .git', (t
 
   assert.equal(getMainRoot(bare, GIT_ENV), realpathSync(bare));
 });
-
-function makeLinkedWorktree(t: TestContext, repo: string): string {
-  const worktree = join(makeTempDir(t), 'worktree');
-
-  runGit(['commit', '--quiet', '--allow-empty', '-m', 'start'], repo);
-  runGit(['worktree', 'add', '--quiet', '-b', 'linked', worktree], repo);
-
-  return worktree;
-}

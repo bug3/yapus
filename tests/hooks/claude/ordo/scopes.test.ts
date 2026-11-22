@@ -4,6 +4,7 @@ import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
+import { makeListingHome } from '../../../helpers/exclusion/make-listing-home.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { runGit } from '../../../helpers/run-git.ts';
 
@@ -71,7 +72,7 @@ test('stays silent in a project on the exclusion list', (t) => {
 
   runGit(['init', '--quiet'], project);
 
-  const home = makeHome(t, [realpathSync(project)]);
+  const home = makeListingHome(t, [realpathSync(project)]);
   const { status, stdout } = runScopes(t, project, { home });
 
   assert.deepEqual([status, stdout], [0, '']);
@@ -82,7 +83,7 @@ test('shows the scopes in a project off the exclusion list', (t) => {
 
   runGit(['init', '--quiet'], project);
 
-  const home = makeHome(t, ['/nowhere/other']);
+  const home = makeListingHome(t, ['/nowhere/other']);
   const { status, stdout } = runScopes(t, project, { home });
 
   assert.equal(status, 0);
@@ -98,7 +99,7 @@ test('shows the scopes when the exclusion list is invalid', (t) => {
 
   runGit(['init', '--quiet'], project);
 
-  const home = makeHome(t, [realpathSync(project), INVALID_ORDER_ROOT]);
+  const home = makeListingHome(t, [realpathSync(project), INVALID_ORDER_ROOT]);
   const { status, stdout } = runScopes(t, project, { home });
 
   assert.equal(status, 0);
@@ -118,17 +119,6 @@ function makeProject(t: TestContext, catalogText: string): string {
   writeFileSync(join(directory, 'scopes.json'), catalogText);
 
   return project;
-}
-
-// A temporary home whose ordo exclusion list holds roots.
-function makeHome(t: TestContext, roots: readonly string[]): string {
-  const home = makeTempDir(t);
-  const directory = join(home, '.claude', 'yapus', 'ordo');
-
-  mkdirSync(directory, { recursive: true });
-  writeFileSync(join(directory, 'excluded.json'), `${ JSON.stringify(roots) }\n`);
-
-  return home;
 }
 
 // Runs the program through run.sh as the harness would, with the project

@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
+import { makeListingHome } from '../../../helpers/exclusion/make-listing-home.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
 
@@ -61,7 +62,7 @@ test('exits 2 when the registered command runs on a Write that adds a dash', (t)
 
 test('exits 0 on a Write that adds a dash in a project on the exclusion list', (t) => {
   const project = makeTempRepo(t);
-  const home = makeHome(t, [realpathSync(project)]);
+  const home = makeListingHome(t, [realpathSync(project)]);
   const commandRun = runRegisteredCommand(t, home, { project });
 
   assert.deepEqual([commandRun.status, commandRun.stderr], [0, '']);
@@ -69,7 +70,7 @@ test('exits 0 on a Write that adds a dash in a project on the exclusion list', (
 
 test('reads a Write larger than the pipe buffer and exits 0 in a listed project', (t) => {
   const project = makeTempRepo(t);
-  const home = makeHome(t, [realpathSync(project)]);
+  const home = makeListingHome(t, [realpathSync(project)]);
   const content = `${ 'a'.repeat(LARGE_WRITE_BYTES) }${ EM_DASH }\n`;
   const stdinText = JSON.stringify({
     tool_name: 'Write',
@@ -81,14 +82,14 @@ test('reads a Write larger than the pipe buffer and exits 0 in a listed project'
 });
 
 test('exits 2 on a Write that adds a dash in a project off the exclusion list', (t) => {
-  const home = makeHome(t, [OTHER_ROOT]);
+  const home = makeListingHome(t, [OTHER_ROOT]);
   const commandRun = runRegisteredCommand(t, home, { project: makeTempRepo(t) });
 
   assert.deepEqual([commandRun.status, commandRun.stderr], [2, DASH_FINDING]);
 });
 
 test('exits 2 with the finding when the project directory does not exist', (t) => {
-  const home = makeHome(t, [OTHER_ROOT]);
+  const home = makeListingHome(t, [OTHER_ROOT]);
   const commandRun = runRegisteredCommand(t, home, { project: join(makeTempDir(t), 'missing') });
 
   assert.deepEqual([commandRun.status, commandRun.stderr], [2, DASH_FINDING]);
@@ -102,7 +103,7 @@ test('exits 2 with the finding in a project when there is no exclusion list', (t
 
 test('exits 2 with the finding when the exclusion list is invalid', (t) => {
   const project = makeTempRepo(t);
-  const home = makeHome(t, [realpathSync(project), INVALID_ORDER_ROOT]);
+  const home = makeListingHome(t, [realpathSync(project), INVALID_ORDER_ROOT]);
   const commandRun = runRegisteredCommand(t, home, { project });
 
   assert.deepEqual([commandRun.status, commandRun.stderr], [2, DASH_FINDING]);
@@ -128,17 +129,6 @@ function runRegisteredCommand(
     input: stdinText,
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
-}
-
-// A temporary home whose ordo exclusion list holds roots.
-function makeHome(t: TestContext, roots: readonly string[]): string {
-  const home = makeTempDir(t);
-  const directory = join(home, '.claude', 'yapus', 'ordo');
-
-  mkdirSync(directory, { recursive: true });
-  writeFileSync(join(directory, 'excluded.json'), `${ JSON.stringify(roots) }\n`);
-
-  return home;
 }
 
 // The command string of the hooks.json entry, as the harness would run it.

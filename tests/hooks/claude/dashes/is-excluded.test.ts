@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { type TestContext, test } from 'node:test';
+import { realpathSync } from 'node:fs';
+import { test } from 'node:test';
 import { isExcluded } from '../../../../hooks/claude/dashes/is-excluded.ts';
+import { makeListingHome } from '../../../helpers/exclusion/make-listing-home.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
 import { getGitEnv } from '../../../helpers/run-git.ts';
@@ -14,13 +14,13 @@ const INVALID_ORDER_ROOT = '/a/one';
 
 test('excludes a project on the list', (t) => {
   const project = makeTempRepo(t);
-  const home = makeHome(t, `${ JSON.stringify([realpathSync(project)]) }\n`);
+  const home = makeListingHome(t, [realpathSync(project)]);
 
   assert.equal(isExcluded(project, home, GIT_ENV), true);
 });
 
 test('includes a project off the list', (t) => {
-  const home = makeHome(t, `${ JSON.stringify([OTHER_ROOT]) }\n`);
+  const home = makeListingHome(t, [OTHER_ROOT]);
 
   assert.equal(isExcluded(makeTempRepo(t), home, GIT_ENV), false);
 });
@@ -31,18 +31,7 @@ test('includes a project when there is no list', (t) => {
 
 test('includes a project named by an invalid list', (t) => {
   const project = makeTempRepo(t);
-  const home = makeHome(t, `${ JSON.stringify([realpathSync(project), INVALID_ORDER_ROOT]) }\n`);
+  const home = makeListingHome(t, [realpathSync(project), INVALID_ORDER_ROOT]);
 
   assert.equal(isExcluded(project, home, GIT_ENV), false);
 });
-
-// A temporary home whose ordo exclusion list holds listText.
-function makeHome(t: TestContext, listText: string): string {
-  const home = makeTempDir(t);
-  const directory = join(home, '.claude', 'yapus', 'ordo');
-
-  mkdirSync(directory, { recursive: true });
-  writeFileSync(join(directory, 'excluded.json'), listText);
-
-  return home;
-}

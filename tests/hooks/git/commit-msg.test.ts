@@ -5,10 +5,11 @@ import {
 } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { getExclusionPath } from '../../../hooks/shared/exclusion/get-exclusion-path.ts';
+import { makeLinkedWorktree } from '../../helpers/exclusion/make-linked-worktree.ts';
+import { makeHomeWithListText } from '../../helpers/exclusion/make-listing-home.ts';
 import { makeTempDir } from '../../helpers/make-temp-dir.ts';
 import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
-import { getGitEnv, runGit } from '../../helpers/run-git.ts';
+import { getGitEnv } from '../../helpers/run-git.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 const COMMIT_MSG = join(ROOT, 'hooks', 'git', 'commit-msg');
@@ -198,12 +199,9 @@ function runCommitMsg(t: TestContext, { messageText, editor, who }: CommitMsgRun
 // and a temporary HOME whose exclusion list is listText; the message file as
 // the hook left it.
 function runAgentCommitMsg(t: TestContext, { directory, listText }: AgentCommitMsgRun) {
-  const home = makeTempDir(t);
-  const listPath = getExclusionPath(home);
+  const home = makeHomeWithListText(t, listText);
   const messageFile = join(home, 'COMMIT_EDITMSG');
 
-  mkdirSync(dirname(listPath), { recursive: true });
-  writeFileSync(listPath, listText);
   writeFileSync(messageFile, UNCHECKED_MESSAGE);
 
   const hookRun = spawnSync(BASH, [COMMIT_MSG, messageFile], {
@@ -219,16 +217,6 @@ function runAgentCommitMsg(t: TestContext, { directory, listText }: AgentCommitM
 // The exclusion list that holds the repository's real root.
 function makeListText(repository: string): string {
   return `${ JSON.stringify([realpathSync(repository)]) }\n`;
-}
-
-// A linked worktree of the repository at its first commit.
-function makeLinkedWorktree(t: TestContext, repository: string): string {
-  const worktree = join(makeTempDir(t), 'worktree');
-
-  runGit(['commit', '--quiet', '--allow-empty', '-m', 'feat(hooks): add a check'], repository);
-  runGit(['worktree', 'add', '--quiet', '--detach', worktree], repository);
-
-  return worktree;
 }
 
 // The repository's own commit-msg hook, which refuses every commit.
