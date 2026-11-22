@@ -16,7 +16,7 @@
 - **Independent review.** A plan and a finished diff are judged by a subagent that never saw the conversation that produced them.
 - **Context management.** The session holds what a decision needs; subagents do the reading, running and editing, each return is capped, and a standard other than the principles loads only when a file of its kind is touched.
 - **Parallel work.** Independent tasks launch together, each subagent on its own files.
-- **Work sized to the task.** A small change runs with no plan; a large one gets a written plan, built and committed one part at a time.
+- **Work sized to the task.** A small change runs with no plan; a large one gets a written plan, built in parts that run side by side where their files are disjoint.
 - **Survives compaction.** The prompts the person typed are logged and given back to the session after a compaction, with the paths of the newest plans.
 - **Cost control.** Each subagent runs on the model its definition names, a smaller one for running commands, reading and web research than for editing, and a session has a launch budget.
 
@@ -76,7 +76,7 @@ A depth is the size class the main agent names for a task before its first tool 
 | --- | --- | --- |
 | `quick` | one file, a decided change, a one-command oracle | by the main agent, no plan, no subagent |
 | `standard` | the default | subagents for reading, running, judging and edits |
-| `deep` | about 400 changed lines, several unknowns, multi-source research or work that outlives one context | a written plan, built and committed one part at a time |
+| `deep` | about 400 changed lines, several unknowns, multi-source research or work that outlives one context | a written plan, its parts built side by side where their files are disjoint |
 
 The main agent raises the depth when an oracle fails twice or a review asks for rework; lowering it is left to the person.
 
@@ -102,12 +102,13 @@ Every subagent receives a return contract at its start: a return written as text
 
 Deep work is a task rated `deep`: it is planned in writing before the first edit and carried out in slices. A slice is the part of the plan one finisher takes in one launch: its own files, acceptance criteria and oracle, and one or more commits of one intent each. The skill `/delegator:write-plan` runs the flow.
 
-1. Plan: `delegator:plan-writer` writes `.yapus/plans/<YYYY-MM>/<topic>/plan.md`, under the month the plan starts in, and a subagent measures each fact the plan marks unmeasured.
-2. Plan review: when the plan touches more than one module or a public interface, `delegator:plan-reviewer` judges it once before the first edit, and the plan-writer folds each defect in.
-3. The person's decisions: the main agent asks the person each open decision that is theirs as one question with its recommendation first, takes the others as recommended, and records both in the plan.
-4. Slices: one `delegator:finisher` per slice edits only the slice's files and runs its oracle until it passes or one failure survives two repairs.
+1. Plan: `delegator:plan-writer` writes `.yapus/plans/<YYYY-MM>/<topic>/plan.md`, under the month the plan starts in; on its first return the main agent launches in one message the measurement of each fact the plan marks unmeasured, each probe or reading it names, and, when the plan touches more than one module or a public interface, the plan review.
+2. Plan review: when the plan touches more than one module or a public interface, `delegator:plan-reviewer` judges it once before the first edit.
+3. The person's decisions: after the review, the main agent asks the person the open decisions that are theirs in one batch, in calls of up to four questions with the most consequential first, each question with its recommendation first, takes the others as recommended, records both in the plan, and sends the plan-writer the defects, the measurements and the answers in one message.
+4. Slices: one `delegator:finisher` per slice, in a worktree of its own, edits only the slice's files and runs its oracle until it passes or one failure survives two repairs; every slice whose needed slices have landed and whose files are disjoint from those of the running slices starts at once, and a decision a slice leaves for the person is asked when it returns.
 5. Diff review: the finisher writes the slice's diff to a file and launches `delegator:diff-reviewer`, the one nested launch the launch check admits, then repairs what a REWORK names.
 6. Commit: the finisher commits the slice alone, never pushes, and returns the commits, the oracle's exit code, the verdict and the path of the detail file `<slice id>.md` beside the plan, which holds the rest.
+7. Landing: the main agent cherry-picks the slices' commits onto one branch in the plan's order when a later slice needs them and at the end, and a subagent runs the oracle on the landed tip and, while the next slices run, on each landed commit in a separate worktree.
 
 Outside deep work, a change of more than 150 lines goes once to `delegator:diff-reviewer` before the main agent reports it done.
 
