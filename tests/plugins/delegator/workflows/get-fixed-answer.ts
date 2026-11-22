@@ -83,10 +83,11 @@ export const MIXED_PATHS = [
 ] as const;
 
 // What each workflow agent of the run on FIXED_ARGS returns, by its label.
-// The gather agent of the third question has no answer; the claims come out
-// as one verified, one refuted and one undecided for the repository, and for
-// the web one verified by its first vote and one by the third; the
-// completeness agent writes no follow-up question; the file is written.
+// The web question names one source twice; the gather agent of the third
+// question has no answer; the claims come out as one verified, one refuted
+// and one undecided for the repository, and for the web one verified by its
+// first vote and one by the third; the completeness agent writes no
+// follow-up question; the file is written.
 const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['scope', {
     questions: [
@@ -104,6 +105,7 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
       {
         lane: 'web',
         question: 'What does Claude Code do when a SubagentStop hook blocks twice?',
+        sources: ['github', 'hn', 'github'],
       },
     ],
   }],
@@ -191,9 +193,10 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
 
 // What the workflow agents of the run on FIXED_ARGS return when the
 // completeness agent writes a repository and a web follow-up question, by
-// label, where they differ from FIXED_ANSWERS. The claims of the repository
-// one come out as one verified, one refuted and one undecided, and the claim
-// of the web one is verified by its first vote.
+// label, where they differ from FIXED_ANSWERS. The web one names the sources
+// of the scope's web question. The claims of the repository one come out as
+// one verified, one refuted and one undecided, and the claim of the web one
+// is verified by its first vote.
 const FOLLOW_UP_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['completeness', {
     unreadAreas: ['tests/hooks/claude/gates/return'],
@@ -204,7 +207,11 @@ const FOLLOW_UP_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>
         question: 'Which tests hold the verdicts of the return gate?',
         startAt: ['tests/hooks/claude/gates/return'],
       },
-      { lane: 'web', question: 'Does the Claude Code changelog name a limit on stop blocks?' },
+      {
+        lane: 'web',
+        question: 'Does the Claude Code changelog name a limit on stop blocks?',
+        sources: ['github', 'hn', 'github'],
+      },
     ],
   }],
   ['follow-up-repo:F1', {
