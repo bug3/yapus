@@ -528,6 +528,9 @@ const SOURCES = [
 const SOURCE_IDS = SOURCES.map((source) => source.id);
 const SOURCE_LIMIT = 4;
 
+// The lane whose questions name sources of SOURCES.
+const WEB_LANE = 'web';
+
 // The verdicts of a verify agent. The first two are a vote; a source that
 // would not open is no vote against its claim.
 const SUPPORTED = 'supported';
@@ -566,6 +569,11 @@ const QUESTION_SCHEMA = {
     lane: { type: 'string', enum: LANES },
     question: { type: 'string' },
     startAt: { type: 'array', items: { type: 'string' } },
+    sources: {
+      type: 'array',
+      maxItems: SOURCE_LIMIT,
+      items: { type: 'string', enum: SOURCE_IDS },
+    },
   },
   required: ['lane', 'question'],
 };
@@ -902,15 +910,37 @@ function formatScopePrompt({ task, questions, paths, lanes }) {
     '## Lanes',
     lanes.join(', '),
     '',
+    ...formatSourceLines(lanes),
     '## Rules',
     `- Return ${ MIN_QUESTIONS } to ${ MAX_QUESTIONS } questions by the size of the task: ${ MIN_QUESTIONS } for a change inside one module, ${ MAX_QUESTIONS } for one that crosses the repository.`,
     "- Keep every question the person asked, in the person's words.",
     '- Give each question one lane: repository for what the files of this repository answer, web for external facts such as library behavior, vendor documentation or published reports. Use only the lanes listed above.',
+    ...selectWebLines(
+      lanes,
+      `- For each web question, name in sources up to ${ SOURCE_LIMIT } of the sources listed above that can answer it, the likeliest first, and none when none fits; a repository question names none.`,
+    ),
     '- Bound each question so one workflow agent answers it in one launch: name the module, the behavior or the external subject it covers, and let no two questions overlap.',
     '- For a repository question, name the paths to start from when you know them.',
     RETURN_RULE,
     "- Look at the repository's layout before you split; change no file.",
   ].join('\n');
+}
+
+// The section of a prompt that lists SOURCES, one line each in catalog order,
+// with the empty line after it, for a run whose lanes hold the web lane, and
+// no line for any other.
+function formatSourceLines(lanes) {
+  return selectWebLines(
+    lanes,
+    '## Sources',
+    ...SOURCES.map((source) => `${ source.id } (${ source.kind }): ${ source.use }`),
+    '',
+  );
+}
+
+// The lines a prompt holds only when the lanes hold the web lane.
+function selectWebLines(lanes, ...lines) {
+  return lanes.includes(WEB_LANE) ? lines : [];
 }
 
 // One entry on each line, so an entry that holds a line break is put on one;
@@ -949,7 +979,23 @@ function formatLaneCounts(laneCounts) {
 function selectQuestions(scopeQuestions, lanes, idPrefix) {
   return scopeQuestions
     .filter((question) => lanes.includes(question.lane))
-    .map((question, index) => ({ ...question, id: `${ idPrefix }${ index + 1 }` }));
+    .map((question, index) => ({
+      ...question,
+      id: `${ idPrefix }${ index + 1 }`,
+      sources: question.lane === WEB_LANE ? selectSourceIds(question.sources) : [],
+    }));
+}
+
+// The ids of SOURCES a web question named, once each in the order named, and
+// the first SOURCE_LIMIT of them. An id the catalog does not hold and a
+// `sources` that is not a list are dropped, as a lane the args left out is,
+// so no later step meets an id outside SOURCE_IDS.
+function selectSourceIds(namedIds) {
+  if (!Array.isArray(namedIds)) {
+    return [];
+  }
+
+  return [...new Set(namedIds.filter((id) => SOURCE_IDS.includes(id)))].slice(0, SOURCE_LIMIT);
 }
 
 // The questions in a lane the args left out. No agent researches them, so
@@ -989,6 +1035,7 @@ async function researchQuestion(task, question, gatherStageId) {
     id: question.id,
     lane: question.lane,
     text: toOneLine(question.question),
+    sources: question.sources,
     // The JSON text of its structured answer is all the script sees of what
     // a gather agent returned; a gather agent that returned nothing leaves no
     // length.
@@ -1261,6 +1308,7 @@ function formatCompletenessPrompt({ task, lanes }, researched) {
     '## Lanes',
     lanes.join(', '),
     '',
+    ...formatSourceLines(lanes),
     '## Questions and what came back',
     researched.map(formatQuestionReturn).join('\n'),
     '',
@@ -1271,6 +1319,10 @@ function formatCompletenessPrompt({ task, lanes }, researched) {
     "- In unreadAreas, name each part of the repository the task touches that no claim cites; look at the repository's layout to find them.",
     '- In unansweredQuestions, name each question above that came back with no verified claim, and each question the task raises that none of them covers.',
     `- In followUps, write at most ${ FOLLOW_UP_LIMIT } questions, each one a gather agent can answer in one launch to close a gap you named, the ones the plan needs most: give each one of the lanes listed above, name the paths to start from for a repository question when you know them, and let none overlap a question above; write none when no gap needs one.`,
+    ...selectWebLines(
+      lanes,
+      `- For each web question in followUps, name in sources up to ${ SOURCE_LIMIT } of the sources listed above that can answer it, the likeliest first, and none when none fits.`,
+    ),
     RETURN_RULE,
     '- Name what is missing; do not answer it, and change no file.',
   ].join('\n');

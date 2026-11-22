@@ -5,6 +5,8 @@ import {
   FIXED_ARGS,
   JSON_NULL,
   SCRIPT_PATH,
+  SOURCE_IDS,
+  SOURCE_LINES,
   getFixedAnswer,
   getFollowUpAnswer,
 } from './get-fixed-answer.ts';
@@ -19,6 +21,9 @@ const COMPLETENESS_PROMPT = [
   '',
   '## Lanes',
   'repository, web',
+  '',
+  '## Sources',
+  ...SOURCE_LINES,
   '',
   '## Questions and what came back',
   'Q1 (repository): Where does the return gate count a send-back?: 2 claims, 1 verified; not searched: hooks/claude/delegator/status',
@@ -35,6 +40,7 @@ const COMPLETENESS_PROMPT = [
   "- In unreadAreas, name each part of the repository the task touches that no claim cites; look at the repository's layout to find them.",
   '- In unansweredQuestions, name each question above that came back with no verified claim, and each question the task raises that none of them covers.',
   '- In followUps, write at most 4 questions, each one a gather agent can answer in one launch to close a gap you named, the ones the plan needs most: give each one of the lanes listed above, name the paths to start from for a repository question when you know them, and let none overlap a question above; write none when no gap needs one.',
+  '- For each web question in followUps, name in sources up to 4 of the sources listed above that can answer it, the likeliest first, and none when none fits.',
   '- Return through the structured output alone: it is the one form of return here, in place of any other your rules name.',
   '- Name what is missing; do not answer it, and change no file.',
 ].join('\n');
@@ -263,6 +269,7 @@ const QUESTION_SCHEMA = {
     lane: { type: 'string', enum: ['repository', 'web'] },
     question: { type: 'string' },
     startAt: { type: 'array', items: { type: 'string' } },
+    sources: { type: 'array', maxItems: 4, items: { type: 'string', enum: SOURCE_IDS } },
   },
   required: ['lane', 'question'],
 } as const;
@@ -346,6 +353,12 @@ test('names the lanes of the args to the completeness agent', async () => {
     findCall(run, 'completeness')?.prompt ?? '',
     /\n## Task\n[^\n]+\n\n## Lanes\nrepository\n\n## Questions and what came back\n/u,
   );
+});
+
+test('lists no source to the completeness agent with the repository lane alone', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, REPOSITORY_LANE_ARGS, getFixedAnswer);
+
+  assert.doesNotMatch(findCall(run, 'completeness')?.prompt ?? '', /## Sources|name in sources/u);
 });
 
 test('launches one completeness agent with the options of its stage', async () => {

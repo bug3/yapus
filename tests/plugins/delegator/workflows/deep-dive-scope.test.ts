@@ -5,6 +5,8 @@ import {
   JSON_NULL,
   MIXED_PATHS,
   SCRIPT_PATH,
+  SOURCE_IDS,
+  SOURCE_LINES,
   getFixedAnswer,
 } from './get-fixed-answer.ts';
 import { runWorkflow } from './run-workflow.ts';
@@ -33,10 +35,14 @@ const SCOPE_PROMPT = [
   '## Lanes',
   'repository, web',
   '',
+  '## Sources',
+  ...SOURCE_LINES,
+  '',
   '## Rules',
   '- Return 3 to 12 questions by the size of the task: 3 for a change inside one module, 12 for one that crosses the repository.',
   "- Keep every question the person asked, in the person's words.",
   '- Give each question one lane: repository for what the files of this repository answer, web for external facts such as library behavior, vendor documentation or published reports. Use only the lanes listed above.',
+  '- For each web question, name in sources up to 4 of the sources listed above that can answer it, the likeliest first, and none when none fits; a repository question names none.',
   '- Bound each question so one workflow agent answers it in one launch: name the module, the behavior or the external subject it covers, and let no two questions overlap.',
   '- For a repository question, name the paths to start from when you know them.',
   '- Return through the structured output alone: it is the one form of return here, in place of any other your rules name.',
@@ -45,6 +51,7 @@ const SCOPE_PROMPT = [
 
 // The web lane alone, and a scope answer that holds no question of it.
 const WEB_LANE_ARGS = { ...FIXED_ARGS, lanes: ['web'] } as const;
+const REPOSITORY_LANE_ARGS = { ...FIXED_ARGS, lanes: ['repository'] } as const;
 const REPOSITORY_SCOPE = {
   questions: [
     { lane: 'repository', question: 'Where is the gate?' },
@@ -57,6 +64,15 @@ test('gives the scope agent the approved prompt', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.equal(run.calls[0]?.prompt, SCOPE_PROMPT);
+});
+
+test('lists no source and asks for none with the repository lane alone', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, REPOSITORY_LANE_ARGS, getFixedAnswer);
+
+  const prompt = run.calls[0]?.prompt ?? '';
+
+  assert.match(prompt, /\n## Lanes\nrepository\n\n## Rules\n/u);
+  assert.doesNotMatch(prompt, /## Sources|name in sources/u);
 });
 
 test('writes none for the questions and the paths the args leave out', async () => {
@@ -132,6 +148,11 @@ test('launches one scope agent with the options of its stage', async () => {
                 lane: { type: 'string', enum: ['repository', 'web'] },
                 question: { type: 'string' },
                 startAt: { type: 'array', items: { type: 'string' } },
+                sources: {
+                  type: 'array',
+                  maxItems: 4,
+                  items: { type: 'string', enum: SOURCE_IDS },
+                },
               },
               required: ['lane', 'question'],
             },
