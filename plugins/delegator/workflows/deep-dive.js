@@ -549,8 +549,14 @@ async function checkClaim(research, claim, claimId) {
 
 // The source of a claim as the research file prints it, a file at a line in
 // backticks and a page in angle brackets.
-function citeRepositoryClaim({ path, line }) {
-  return { source: `\`${ toOneLine(path) }:${ line }\`` };
+function citeRepositoryClaim(claim) {
+  return { source: `\`${ formatLineSource(claim) }\`` };
+}
+
+// The file and the line of a repository claim as its verify prompt and the
+// research file give them.
+function formatLineSource({ path, line }) {
+  return `${ toOneLine(path) }:${ line }`;
 }
 
 function citeWebClaim({ url }) {
@@ -644,18 +650,18 @@ async function verifyWebClaim(claim, claimId) {
   return judgeClaim([...twoAnswers, thirdAnswer], WEB_QUORUM);
 }
 
-function formatRepositoryVerifyPrompt({ claim, path, line, excerpt }) {
+function formatRepositoryVerifyPrompt(claim) {
   return [
     'Check one claim about this repository against the lines it cites.',
     '',
     '## Claim',
-    toOneLine(claim),
+    toOneLine(claim.claim),
     '',
     '## Cited source',
-    `${ toOneLine(path) }:${ line }`,
+    formatLineSource(claim),
     '',
     '## Excerpt the claim rests on',
-    toOneLine(excerpt),
+    toOneLine(claim.excerpt),
     '',
     '## Rules',
     '- Open the cited file at the cited line and read enough around it to judge the claim.',
