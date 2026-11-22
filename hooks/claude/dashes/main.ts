@@ -1,4 +1,5 @@
 import { writeSync } from 'node:fs';
+import { getExclusion } from '../../shared/exclusion/get-exclusion.ts';
 import { getFirstLine } from '../../shared/get-first-line.ts';
 import { getMessagesWithinLimit } from './get-messages-within-limit.ts';
 import { formatMessage } from './output/format-message.ts';
@@ -6,9 +7,16 @@ import { getExitCode } from './output/get-exit-code.ts';
 
 const LIMIT_SECONDS = 5;
 
+// In a project on the ordo exclusion list the check is off, whatever the call.
 async function main(): Promise<void> {
   try {
-    stop(await getMessagesWithinLimit(process.stdin, LIMIT_SECONDS));
+    const projectDir = process.env.CLAUDE_PROJECT_DIR ?? '';
+    const home = process.env.HOME ?? '';
+    const exclusion = getExclusion(projectDir, home, process.env);
+
+    stop(exclusion.kind === 'excluded'
+      ? []
+      : await getMessagesWithinLimit(process.stdin, LIMIT_SECONDS));
   } catch (error) {
     stop([formatMessage(`crashed: ${ getFirstLine(error) }; the call is blocked, fix the hook`)]);
   }

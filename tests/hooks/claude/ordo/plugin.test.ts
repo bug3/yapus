@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync, realpathSync } from 'node:fs';
+import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test } from 'node:test';
+import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
+import { makeTempRepo } from '../../../helpers/make-temp-repo.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const PLUGIN = join(ROOT, 'plugins', 'ordo');
@@ -12,6 +13,8 @@ const CHECK_COMMAND =
   'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/ordo/check "${CLAUDE_PLUGIN_ROOT}"';
 const SCOPES_COMMAND = 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/ordo/scopes';
 const SUBPROCESS_TIMEOUT_MS = 10000;
+const OTHER_ROOT = '/nowhere/other';
+const DASH_FINDING = 'yapus dashes: /r/a.md:1: U+2014; use the ASCII hyphen\n';
 const EM_DASH = String.fromCodePoint(0x2014);
 const EM_DASH_WRITE = JSON.stringify({
   tool_name: 'Write',
@@ -47,20 +50,66 @@ test('links the plugin runtime to the repository hooks', () => {
 });
 
 test('exits 2 when the registered command runs on a Write that adds a dash', (t) => {
-  const tempDir = makeTempDir(t);
+  const commandRun = runRegisteredCommand(t, makeTempDir(t));
 
-  const commandRun = spawnSync('bash', ['-c', getRegisteredCommand()], {
+  assert.deepEqual([commandRun.status, commandRun.stderr], [2, DASH_FINDING]);
+});
+
+test('exits 0 on a Write that adds a dash in a project on the exclusion list', (t) => {
+  const project = makeTempRepo(t);
+  const home = makeHome(t, [realpathSync(project)]);
+  const commandRun = runRegisteredCommand(t, home, project);
+
+  assert.deepEqual([commandRun.status, commandRun.stderr], [0, '']);
+});
+
+test('exits 2 on a Write that adds a dash in a project off the exclusion list', (t) => {
+  const home = makeHome(t, [OTHER_ROOT]);
+  const commandRun = runRegisteredCommand(t, home, makeTempRepo(t));
+
+  assert.deepEqual([commandRun.status, commandRun.stderr], [2, DASH_FINDING]);
+});
+
+test('exits 2 with the finding when the project directory does not exist', (t) => {
+  const home = makeHome(t, [OTHER_ROOT]);
+  const commandRun = runRegisteredCommand(t, home, join(makeTempDir(t), 'missing'));
+
+  assert.deepEqual([commandRun.status, commandRun.stderr], [2, DASH_FINDING]);
+});
+
+test('exits 2 with the finding in a project when there is no exclusion list', (t) => {
+  const commandRun = runRegisteredCommand(t, makeTempDir(t), makeTempRepo(t));
+
+  assert.deepEqual([commandRun.status, commandRun.stderr], [2, DASH_FINDING]);
+});
+
+// Runs the registered command on a Write that adds a dash, with home as HOME
+// and project, when given, as the session's project directory.
+function runRegisteredCommand(t: TestContext, home: string, project?: string) {
+  const tempDir = makeTempDir(t);
+  const sessionEnv = Object.fromEntries(
+    Object.entries(process.env).filter(([name]) => name !== 'CLAUDE_PROJECT_DIR'),
+  );
+  const projectEnv = project === undefined ? {} : { CLAUDE_PROJECT_DIR: project };
+
+  return spawnSync('bash', ['-c', getRegisteredCommand()], {
     encoding: 'utf8',
-    env: { ...process.env, CLAUDE_PLUGIN_ROOT: PLUGIN, HOME: tempDir, TMPDIR: tempDir },
+    env: { ...sessionEnv, ...projectEnv, CLAUDE_PLUGIN_ROOT: PLUGIN, HOME: home, TMPDIR: tempDir },
     input: EM_DASH_WRITE,
     timeout: SUBPROCESS_TIMEOUT_MS,
   });
+}
 
-  assert.deepEqual(
-    [commandRun.status, commandRun.stderr],
-    [2, 'yapus dashes: /r/a.md:1: U+2014; use the ASCII hyphen\n'],
-  );
-});
+// A temporary home whose ordo exclusion list holds roots.
+function makeHome(t: TestContext, roots: readonly string[]): string {
+  const home = makeTempDir(t);
+  const directory = join(home, '.claude', 'yapus', 'ordo');
+
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(join(directory, 'excluded.json'), `${ JSON.stringify(roots) }\n`);
+
+  return home;
+}
 
 // The command string of the hooks.json entry, as the harness would run it.
 function getRegisteredCommand(): string {

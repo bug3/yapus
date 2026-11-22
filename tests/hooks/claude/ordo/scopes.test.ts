@@ -1,17 +1,18 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { isRecord } from '../../../../hooks/shared/is-record.ts';
 import { makeTempDir } from '../../../helpers/make-temp-dir.ts';
+import { runGit } from '../../../helpers/run-git.ts';
 
 const RUN = join(import.meta.dirname, '..', '..', '..', '..', 'hooks', 'run.sh');
 const SUBPROCESS_TIMEOUT_MS = 20000;
 
 test('shows the scopes of the project catalog as one line', (t) => {
   const project = makeProject(t, '["api", "cli", "docs"]');
-  const { status, stdout } = runScopes(project);
+  const { status, stdout } = runScopes(t, project);
 
   assert.equal(status, 0);
   assert.equal(
@@ -22,14 +23,14 @@ test('shows the scopes of the project catalog as one line', (t) => {
 });
 
 test('stays silent when the project has no scope catalog', (t) => {
-  const { status, stdout } = runScopes(makeTempDir(t));
+  const { status, stdout } = runScopes(t, makeTempDir(t));
 
   assert.deepEqual([status, stdout], [0, '']);
 });
 
 test('shows the violation when the catalog is not sorted', (t) => {
   const project = makeProject(t, '["docs", "api"]');
-  const { status, stdout } = runScopes(project);
+  const { status, stdout } = runScopes(t, project);
   const path = join(project, '.claude', 'yapus', 'ordo', 'scopes.json');
 
   assert.equal(status, 0);
@@ -41,7 +42,7 @@ test('shows the violation when the catalog is not sorted', (t) => {
 
 test('stays silent when CLAUDE_PROJECT_DIR is unset', (t) => {
   const project = makeProject(t, '["api"]');
-  const { status, stdout } = runScopes(undefined, project);
+  const { status, stdout } = runScopes(t, undefined, { cwd: project });
 
   assert.deepEqual([status, stdout], [0, '']);
 });
@@ -53,7 +54,34 @@ test('shows only the ordo catalog when the project also holds another', (t) => {
   mkdirSync(catalogs, { recursive: true });
   writeFileSync(join(catalogs, 'scopes.json'), '["agents", "bash"]');
 
-  const { status, stdout } = runScopes(project);
+  const { status, stdout } = runScopes(t, project);
+
+  assert.equal(status, 0);
+  assert.equal(
+    getContext(stdout),
+    'Commit scopes of this repository (.claude/yapus/ordo/scopes.json): api;'
+      + ' a new scope enters that file in the commit that first uses it.',
+  );
+});
+
+test('stays silent in a project on the exclusion list', (t) => {
+  const project = makeProject(t, '["api"]');
+
+  runGit(['init', '--quiet'], project);
+
+  const home = makeHome(t, [realpathSync(project)]);
+  const { status, stdout } = runScopes(t, project, { home });
+
+  assert.deepEqual([status, stdout], [0, '']);
+});
+
+test('shows the scopes in a project off the exclusion list', (t) => {
+  const project = makeProject(t, '["api"]');
+
+  runGit(['init', '--quiet'], project);
+
+  const home = makeHome(t, ['/nowhere/other']);
+  const { status, stdout } = runScopes(t, project, { home });
 
   assert.equal(status, 0);
   assert.equal(
@@ -74,15 +102,31 @@ function makeProject(t: TestContext, catalogText: string): string {
   return project;
 }
 
+// A temporary home whose ordo exclusion list holds roots.
+function makeHome(t: TestContext, roots: readonly string[]): string {
+  const home = makeTempDir(t);
+  const directory = join(home, '.claude', 'yapus', 'ordo');
+
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(join(directory, 'excluded.json'), `${ JSON.stringify(roots) }\n`);
+
+  return home;
+}
+
 // Runs the program through run.sh as the harness would, with the project
-// directory in the environment and the given working directory.
+// directory in the environment, the given working directory and a home of
+// the test's own.
 function runScopes(
+  t: TestContext,
   project: string | undefined,
-  cwd: string = process.cwd(),
+  { cwd = process.cwd(), home = makeTempDir(t) }: { cwd?: string; home?: string } = {},
 ): { status: number | null; stdout: string } {
-  const sessionEnv = Object.fromEntries(
-    Object.entries(process.env).filter(([name]) => name !== 'CLAUDE_PROJECT_DIR'),
-  );
+  const sessionEnv = {
+    ...Object.fromEntries(
+      Object.entries(process.env).filter(([name]) => name !== 'CLAUDE_PROJECT_DIR'),
+    ),
+    HOME: home,
+  };
   const commandRun = spawnSync('bash', [RUN, 'claude/ordo/scopes'], {
     cwd,
     encoding: 'utf8',
