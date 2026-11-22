@@ -37,6 +37,8 @@ claude plugin install delegator --marketplace bug3/yapus
 claude plugin install ordo --marketplace bug3/yapus
 ```
 
+In the default permission mode, Claude Code asks the person before the main agent runs a yapus skill that runs a program, such as `/delegator:status`; the same command typed by the person runs without the question, and an allow rule such as `Skill(delegator:status)` in the settings lifts it for that skill.
+
 ### 2. Set Up the Machine
 
 Run once in a Claude Code session: it puts the yapus standards and git hooks into `~/.claude` and points the global `core.hooksPath` at those hooks.
