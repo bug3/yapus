@@ -94,6 +94,16 @@ test('reads the totals of a return row', () => {
   ]);
 });
 
+test('reads the verdict of a return row without the marks around the word', () => {
+  const verdicts = ['REWORK:', '**REWORK:', 'APPROVE,', 'APPROVE.', '**APPROVE**', 'REVISE,'];
+  const { rows } = readRows(toText(...verdicts.map((verdict) => ({ ...RETURN, verdict }))));
+
+  assert.deepEqual(
+    rows.map((row) => (row.hook === 'return' ? row.verdict : row)),
+    ['REWORK', 'REWORK', 'APPROVE', 'APPROVE', 'APPROVE', 'REVISE'],
+  );
+});
+
 test('reads the output file of an end row', () => {
   const [row] = readRows(toText({ ...END, outputFile: '/tasks/a1.output' })).rows;
 

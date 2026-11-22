@@ -84,7 +84,7 @@ function readReturn(fields: Readonly<Record<string, unknown>>): ReturnRow | unde
       reason,
       agentId: getString(fields.agentId),
       status,
-      verdict: getString(fields.verdict),
+      verdict: getVerdict(fields.verdict),
       length,
       turns: getNumber(fields.turns),
       toolUses: getNumber(fields.toolUses),
@@ -133,6 +133,13 @@ function readResume(fields: Readonly<Record<string, unknown>>): ResumeRow | unde
 
 function getString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
+}
+
+// The return gate stores the first token of the verdict line as is, so a
+// judge's "**REWORK:" or "APPROVE," reads here without the marks around the
+// word.
+function getVerdict(value: unknown): string | undefined {
+  return typeof value === 'string' ? value.replace(/^\P{L}+|\P{L}+$/gu, '') : undefined;
 }
 
 function getNumber(value: unknown): number | undefined {
