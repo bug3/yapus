@@ -1,8 +1,6 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { type TestContext, test } from 'node:test';
-import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
+import { test } from 'node:test';
+import { type TempFile, makeTempFiles } from '../../helpers/make-temp-repo.ts';
 import {
   getAlwaysLoaded,
   getAlwaysLoadedRules,
@@ -10,15 +8,10 @@ import {
   getImportedPathsFiles,
 } from './get-always-loaded.ts';
 
-interface File {
-  readonly path: string;
-  readonly text: string;
-}
-
 const PATHS_HEAD = '---\npaths:\n  - "**/*.ts"\n---\n\n';
 
 test('lists the rules of CLAUDE.md and its imports in load order', (t) => {
-  const root = makeTree(t, [
+  const root = makeTempFiles(t, [
     { path: 'CLAUDE.md', text: '@standards/A.md\n' },
     { path: 'standards/A.md', text: '# A\n\n## A-1. x\n\n## A-2. y\n\n@B.md\n' },
     { path: 'standards/B.md', text: '# B\n\n## B-1. z\n' },
@@ -28,7 +21,7 @@ test('lists the rules of CLAUDE.md and its imports in load order', (t) => {
 });
 
 test('follows an import four hops and not five', (t) => {
-  const root = makeTree(t, [
+  const root = makeTempFiles(t, [
     { path: 'CLAUDE.md', text: '@h1.md\n' },
     makeHop('1', '2'),
     makeHop('2', '3'),
@@ -42,7 +35,7 @@ test('follows an import four hops and not five', (t) => {
 });
 
 test('follows no import inside a code span, a fenced block or an HTML comment', (t) => {
-  const root = makeTree(t, [
+  const root = makeTempFiles(t, [
     { path: 'CLAUDE.md', text: 'see `@a.md`\n\n```\n@b.md\n```\n\n<!-- @c.md -->\n' },
     { path: 'a.md', text: '## A-1. x\n' },
     { path: 'b.md', text: '## B-1. x\n' },
@@ -53,13 +46,13 @@ test('follows no import inside a code span, a fenced block or an HTML comment', 
 });
 
 test('names an import whose target is not on disk', (t) => {
-  const root = makeTree(t, [{ path: 'CLAUDE.md', text: '@standards/GONE.md\n' }]);
+  const root = makeTempFiles(t, [{ path: 'CLAUDE.md', text: '@standards/GONE.md\n' }]);
 
   assert.deepEqual(getAlwaysLoaded(root).missing, ['CLAUDE.md imports standards/GONE.md']);
 });
 
 test('counts a rule file with no paths head and not one with a head', (t) => {
-  const root = makeTree(t, [
+  const root = makeTempFiles(t, [
     { path: 'CLAUDE.md', text: '' },
     { path: '.claude/rules/always.md', text: '## X-1. x\n' },
     { path: '.claude/rules/scoped.md', text: `${ PATHS_HEAD }## Y-1. y\n` },
@@ -69,7 +62,7 @@ test('counts a rule file with no paths head and not one with a head', (t) => {
 });
 
 test('counts the injected policy after the loaded files', (t) => {
-  const root = makeTree(t, [
+  const root = makeTempFiles(t, [
     { path: 'CLAUDE.md', text: '## A-1. x\n' },
     { path: 'hooks/claude/delegator/policy/policy.md', text: '## ORCH-1. y\n' },
   ]);
@@ -78,7 +71,7 @@ test('counts the injected policy after the loaded files', (t) => {
 });
 
 test('names an imported file that carries a paths head', (t) => {
-  const root = makeTree(t, [
+  const root = makeTempFiles(t, [
     { path: 'CLAUDE.md', text: '@standards/A.md\n' },
     { path: 'standards/A.md', text: `${ PATHS_HEAD }## A-1. x\n` },
   ]);
@@ -87,7 +80,7 @@ test('names an imported file that carries a paths head', (t) => {
 });
 
 test('names a rule id that two files hold', (t) => {
-  const root = makeTree(t, [
+  const root = makeTempFiles(t, [
     { path: 'CLAUDE.md', text: '@standards/A.md\n' },
     { path: 'standards/A.md', text: '## A-1. x\n' },
     { path: 'standards/B.md', text: `${ PATHS_HEAD }## A-1. y\n\n## B-1. z\n` },
@@ -97,22 +90,11 @@ test('names a rule id that two files hold', (t) => {
 });
 
 test('finds nothing to load without a CLAUDE.md', (t) => {
-  const root = makeTree(t, []);
+  const root = makeTempFiles(t, []);
 
   assert.deepEqual(getAlwaysLoaded(root), { files: [], missing: [] });
 });
 
-function makeHop(from: string, to: string): File {
+function makeHop(from: string, to: string): TempFile {
   return { path: `h${ from }.md`, text: `## H-${ from }. x\n\n@h${ to }.md\n` };
-}
-
-function makeTree(t: TestContext, files: readonly File[]): string {
-  const root = makeTempRepo(t);
-
-  for (const { path, text } of files) {
-    mkdirSync(join(root, dirname(path)), { recursive: true });
-    writeFileSync(join(root, path), text);
-  }
-
-  return root;
 }

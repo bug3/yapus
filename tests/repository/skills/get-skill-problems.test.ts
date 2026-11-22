@@ -1,17 +1,10 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
+import { makeTempFiles } from '../../helpers/make-temp-repo.ts';
 import { getSkillProblems } from './get-skill-problems.ts';
 
 const SKILL = 'plugins/p/skills/write-plan/SKILL.md';
 const BODY = 'body\n';
-
-interface MarkdownFile {
-  readonly path: string;
-  readonly text: string;
-}
 
 test('finds nothing in a skill with its directory name and a description', (t) => {
   const root = makeSkill(t, makeHead('name: write-plan\ndescription: "d: x"'));
@@ -47,7 +40,7 @@ test('names a name that is not the directory name', (t) => {
 });
 
 test('ignores a markdown file outside plugins/*/skills/*/SKILL.md', (t) => {
-  const root = makeFiles(t, [
+  const root = makeTempFiles(t, [
     { path: 'plugins/p/skills/README.md', text: BODY },
     { path: 'plugins/p/docs/SKILL.md', text: BODY },
   ]);
@@ -56,20 +49,9 @@ test('ignores a markdown file outside plugins/*/skills/*/SKILL.md', (t) => {
 });
 
 function makeSkill(t: TestContext, text: string): string {
-  return makeFiles(t, [{ path: SKILL, text }]);
+  return makeTempFiles(t, [{ path: SKILL, text }]);
 }
 
 function makeHead(head: string): string {
   return `---\n${ head }\n---\n\n${ BODY }`;
-}
-
-function makeFiles(t: TestContext, files: readonly MarkdownFile[]): string {
-  const root = makeTempRepo(t);
-
-  for (const { path, text } of files) {
-    mkdirSync(join(root, dirname(path)), { recursive: true });
-    writeFileSync(join(root, path), text);
-  }
-
-  return root;
 }

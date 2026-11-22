@@ -1,8 +1,6 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
 import { type TestContext, test } from 'node:test';
-import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
+import { makeTempFiles } from '../../helpers/make-temp-repo.ts';
 import { getCommandFileProblems } from './get-command-file-problems.ts';
 
 test('names a file in the commands folder of a plugin with the skill file to write', (t) => {
@@ -34,10 +32,5 @@ test('finds nothing for a commands folder outside plugins', (t) => {
 });
 
 function makeFile(t: TestContext, path: string): string {
-  const root = makeTempRepo(t);
-
-  mkdirSync(join(root, dirname(path)), { recursive: true });
-  writeFileSync(join(root, path), '');
-
-  return root;
+  return makeTempFiles(t, [{ path, text: '' }]);
 }
