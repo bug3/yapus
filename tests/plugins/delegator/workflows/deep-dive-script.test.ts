@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { isRecord } from '../../../../hooks/shared/is-record.ts';
 import { findCall } from './find-call.ts';
 import {
   FIXED_ARGS,
@@ -13,8 +14,63 @@ import type { AgentCall, WorkflowRun } from './run-workflow.ts';
 
 const STAGE_TABLE_FIRST_LINE = '\nconst STAGES = {\n';
 const STAGE_TABLE_LAST_LINE = '\n};\n';
+const KINDS_FIRST_LINE = '\nconst KINDS = [\n';
+const SOURCES_FIRST_LINE = '\nconst SOURCES = [\n';
+const LIST_LAST_LINE = '\n];\n';
 // Every model and every effort the workflow runtime takes, as a quoted name.
 const MODEL_OR_EFFORT = /(['"`])(?:haiku|sonnet|opus|fable|low|medium|high|xhigh|max)\1/u;
+
+// The keys of a row of the source catalog, the form of its id, and the start
+// of each of its templates.
+const SOURCE_KEYS = ['id', 'kind', 'hosts', 'use', 'templates'] as const;
+const SOURCE_ID = /^[a-z0-9-]+$/u;
+const TEMPLATE_START = 'https://';
+
+// The host of a URL ends at the first of these characters.
+const HOST_END = /[/?#:]/u;
+
+// The kinds of the test catalogs below, and a catalog the check passes: the
+// host of its second row ends with the host of the first, but not after a
+// dot.
+const TEST_KINDS = ['code', 'discussions'] as const;
+const PASSING_CATALOG = [
+  {
+    id: 'code-host',
+    kind: 'code',
+    hosts: ['example.com'],
+    use: 'repositories and their files',
+    templates: ['https://api.example.com/repos/{name}'],
+  },
+  {
+    id: 'forum',
+    kind: 'discussions',
+    hosts: ['otherexample.com'],
+    use: 'posts of one forum',
+    templates: ['https://otherexample.com/search?q={terms}'],
+  },
+] as const;
+
+// Catalogs the check blocks, each on one defect.
+const DUPLICATE_ID_CATALOG = [
+  PASSING_CATALOG[0],
+  { ...PASSING_CATALOG[1], id: 'code-host' },
+] as const;
+const PLAIN_HTTP_CATALOG = [
+  PASSING_CATALOG[0],
+  { ...PASSING_CATALOG[1], templates: ['http://otherexample.com/search?q={terms}'] },
+] as const;
+const SHARED_HOST_CATALOG = [
+  { ...PASSING_CATALOG[0], hosts: ['github.com'], templates: ['https://api.github.com/x'] },
+  { ...PASSING_CATALOG[1], hosts: ['github.com'], templates: ['https://github.com/x'] },
+] as const;
+
+interface CatalogRow {
+  readonly id: string;
+  readonly kind: string;
+  readonly hosts: readonly string[];
+  readonly use: string;
+  readonly templates: readonly string[];
+}
 
 // How each workflow agent of the run on FIXED_ARGS runs, in the order of the
 // labels: its label, then the agent type, the model and the effort its
@@ -146,6 +202,36 @@ test('gives the synthesize agent no return rule', async () => {
   assert.equal(findCall(run, 'synthesize')?.prompt.includes('\n## Rules\n'), true);
 });
 
+test('holds a source catalog the catalog check passes', () => {
+  const kinds = readList(KINDS_FIRST_LINE);
+
+  assert.ok(isTexts(kinds));
+  assert.deepEqual(listCatalogProblems(readList(SOURCES_FIRST_LINE), kinds), []);
+});
+
+test('passes a catalog whose hosts end alike apart from a dot', () => {
+  assert.deepEqual(listCatalogProblems(PASSING_CATALOG, TEST_KINDS), []);
+});
+
+test('blocks a catalog that holds one id twice', () => {
+  assert.deepEqual(listCatalogProblems(DUPLICATE_ID_CATALOG, TEST_KINDS), [
+    'code-host: the id stands in an earlier row',
+  ]);
+});
+
+test('blocks a catalog with a template that does not start https://', () => {
+  assert.deepEqual(listCatalogProblems(PLAIN_HTTP_CATALOG, TEST_KINDS), [
+    'forum: the template http://otherexample.com/search?q={terms} does not start https://',
+  ]);
+});
+
+test('blocks a catalog whose rows share a host', () => {
+  assert.deepEqual(listCatalogProblems(SHARED_HOST_CATALOG, TEST_KINDS), [
+    'code-host: the host github.com meets the host github.com of forum',
+    'forum: the host github.com meets the host github.com of code-host',
+  ]);
+});
+
 // The label of a call, then the agent type, the model and the effort its
 // options name, with a dash for one they do not name.
 function describeAgent(call: AgentCall): string {
@@ -176,4 +262,141 @@ function readStageTable(): { readonly table: string; readonly afterTable: string
     table: scriptText.slice(tableStart, tableEnd),
     afterTable: scriptText.slice(tableEnd),
   };
+}
+
+// The JSON list of the script that opens on `firstLine`, through the first
+// line that is `];` alone after it.
+function readList(firstLine: string): unknown {
+  const scriptText = readFileSync(SCRIPT_PATH, 'utf8');
+  const listStart = scriptText.indexOf(firstLine);
+  const listEnd = scriptText.indexOf(LIST_LAST_LINE, listStart);
+
+  assert.notEqual(listStart, -1);
+  assert.notEqual(listEnd, -1);
+
+  return JSON.parse(`[\n${ scriptText.slice(listStart + firstLine.length, listEnd) }\n]`);
+}
+
+// What breaks the source catalog's rules, one line per problem: a list of
+// rows, each with the keys of SOURCE_KEYS alone, a unique id of SOURCE_ID, a
+// kind of `kinds`, a host, a use and a template; each kind held by a row;
+// each template on https and on a host of its row; no host of one row met by
+// a host of another.
+function listCatalogProblems(catalog: unknown, kinds: readonly string[]): string[] {
+  if (!Array.isArray(catalog)) {
+    return ['the catalog is not a list'];
+  }
+
+  const entries: readonly unknown[] = catalog;
+  const rows = entries.map(readRow);
+  const shapeProblems = rows.flatMap((row, index) =>
+    row === undefined
+      ? [`row ${ String(index + 1) }: not a row of ${ SOURCE_KEYS.join(', ') } alone`]
+      : [],
+  );
+  const shapedRows = rows.filter((row) => row !== undefined);
+
+  return [
+    ...shapeProblems,
+    ...listIdProblems(shapedRows),
+    ...listKindProblems(shapedRows, kinds),
+    ...shapedRows.flatMap(listTemplateProblems),
+    ...listHostProblems(shapedRows),
+  ];
+}
+
+// A row of the catalog, or undefined for an entry of another shape.
+function readRow(entry: unknown): CatalogRow | undefined {
+  if (!isRecord(entry) || Object.keys(entry).length !== SOURCE_KEYS.length) {
+    return undefined;
+  }
+
+  const { id, kind, hosts, use, templates } = entry;
+
+  if (
+    typeof id !== 'string' ||
+    typeof kind !== 'string' ||
+    !isTexts(hosts) ||
+    typeof use !== 'string' ||
+    use === '' ||
+    !isTexts(templates)
+  ) {
+    return undefined;
+  }
+
+  return { id, kind, hosts, use, templates };
+}
+
+// A list of at least one text, none of them empty.
+function isTexts(texts: unknown): texts is string[] {
+  return (
+    Array.isArray(texts) &&
+    texts.length > 0 &&
+    texts.every((text) => typeof text === 'string' && text !== '')
+  );
+}
+
+function listIdProblems(rows: readonly CatalogRow[]): string[] {
+  return rows.flatMap(({ id }, index) => [
+    ...(SOURCE_ID.test(id)
+      ? []
+      : [`${ id }: the id is not lowercase letters, digits and hyphens`]),
+    ...(rows.findIndex((row) => row.id === id) < index
+      ? [`${ id }: the id stands in an earlier row`]
+      : []),
+  ]);
+}
+
+function listKindProblems(rows: readonly CatalogRow[], kinds: readonly string[]): string[] {
+  return [
+    ...rows
+      .filter(({ kind }) => !kinds.includes(kind))
+      .map(({ id, kind }) => `${ id }: the kind ${ kind } is not a kind of the catalog`),
+    ...kinds
+      .filter((kind) => !rows.some((row) => row.kind === kind))
+      .map((kind) => `${ kind }: no row is of this kind`),
+  ];
+}
+
+function listTemplateProblems(row: CatalogRow): string[] {
+  return row.templates.flatMap((template) => [
+    ...(template.startsWith(TEMPLATE_START)
+      ? []
+      : [`${ row.id }: the template ${ template } does not start ${ TEMPLATE_START }`]),
+    ...(row.hosts.some((host) => meetsHost(readHost(template), host))
+      ? []
+      : [`${ row.id }: the template ${ template } is on none of its hosts`]),
+  ]);
+}
+
+// Each host of a row that a host of another row meets.
+function listHostProblems(rows: readonly CatalogRow[]): string[] {
+  return rows.flatMap((row) =>
+    rows
+      .filter((other) => other !== row)
+      .flatMap((other) =>
+        row.hosts.flatMap((host) =>
+          other.hosts
+            .filter((otherHost) => meetsHost(host, otherHost))
+            .map(
+              (otherHost) =>
+                `${ row.id }: the host ${ host } meets the host ${ otherHost } of ${ other.id }`,
+            ),
+        ),
+      ),
+  );
+}
+
+// The host of a URL: the text after `://` up to the first character of
+// HOST_END, lowercased.
+function readHost(url: string): string {
+  const afterScheme = url.slice(url.indexOf('://') + '://'.length);
+
+  return afterScheme.split(HOST_END, 1)[0]?.toLowerCase() ?? '';
+}
+
+// Whether `host` is `rowHost` or a subdomain of it; a host that holds `@`
+// meets none.
+function meetsHost(host: string, rowHost: string): boolean {
+  return !host.includes('@') && (host === rowHost || host.endsWith(`.${ rowHost }`));
 }
