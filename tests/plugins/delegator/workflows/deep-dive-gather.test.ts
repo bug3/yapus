@@ -64,7 +64,7 @@ const PUBMED_LINES = [
 // The prompt of the web question of the fixed run, which names github, hn
 // and github.
 const WEB_GATHER_PROMPT = [
-  'Answer one question about external facts for the plan of a task.',
+  'Answer one question from pages outside this repository for the plan of a task.',
   '',
   '## Task',
   'Add a retry limit to the return gate',
@@ -89,7 +89,7 @@ const WEB_GATHER_PROMPT = [
 ].join('\n');
 // The prompt of the same question when it names no source.
 const UNSOURCED_WEB_GATHER_PROMPT = [
-  'Answer one question about external facts for the plan of a task.',
+  'Answer one question from pages outside this repository for the plan of a task.',
   '',
   '## Task',
   'Add a retry limit to the return gate',

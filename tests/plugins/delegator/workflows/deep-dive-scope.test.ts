@@ -41,8 +41,9 @@ const SCOPE_PROMPT = [
   '## Rules',
   '- Return 3 to 12 questions by the size of the task: 3 for a change inside one module, 12 for one that crosses the repository.',
   "- Keep every question the person asked, in the person's words.",
-  '- Give each question one lane: repository for what the files of this repository answer, web for external facts such as library behavior, vendor documentation or published reports. Use only the lanes listed above.',
+  "- Give each question one lane: repository for what the files of this repository answer, web for what pages outside it answer, such as library behavior, vendor documentation, published reports and prior work on the task's subject. Use only the lanes listed above.",
   '- For each web question, name in sources up to 4 of the sources listed above that can answer it, the likeliest first, and none when none fits; a repository question names none.',
+  "- Give one web question to the prior work elsewhere on the task's subject: the projects, papers, posts and discussions that already did or tried what the task does, and what came of them.",
   '- Bound each question so one workflow agent answers it in one launch: name the module, the behavior or the external subject it covers, and let no two questions overlap.',
   '- For a repository question, name the paths to start from when you know them.',
   '- Return through the structured output alone: it is the one form of return here, in place of any other your rules name.',
@@ -73,6 +74,17 @@ test('lists no source and asks for none with the repository lane alone', async (
 
   assert.match(prompt, /\n## Lanes\nrepository\n\n## Rules\n/u);
   assert.doesNotMatch(prompt, /## Sources|name in sources/u);
+});
+
+test('keeps the lane rule and asks for no prior work with the repository lane alone', async () => {
+  const run = await runWorkflow(SCRIPT_PATH, REPOSITORY_LANE_ARGS, getFixedAnswer);
+
+  const prompt = run.calls[0]?.prompt ?? '';
+  const rules = prompt.split('\n').filter((line) => line.startsWith('- Give'));
+
+  assert.deepEqual(rules, [
+    "- Give each question one lane: repository for what the files of this repository answer, web for what pages outside it answer, such as library behavior, vendor documentation, published reports and prior work on the task's subject. Use only the lanes listed above.",
+  ]);
 });
 
 test('writes none for the questions and the paths the args leave out', async () => {

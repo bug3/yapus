@@ -914,10 +914,11 @@ function formatScopePrompt({ task, questions, paths, lanes }) {
     '## Rules',
     `- Return ${ MIN_QUESTIONS } to ${ MAX_QUESTIONS } questions by the size of the task: ${ MIN_QUESTIONS } for a change inside one module, ${ MAX_QUESTIONS } for one that crosses the repository.`,
     "- Keep every question the person asked, in the person's words.",
-    '- Give each question one lane: repository for what the files of this repository answer, web for external facts such as library behavior, vendor documentation or published reports. Use only the lanes listed above.',
+    "- Give each question one lane: repository for what the files of this repository answer, web for what pages outside it answer, such as library behavior, vendor documentation, published reports and prior work on the task's subject. Use only the lanes listed above.",
     ...selectWebLines(
       lanes,
       `- For each web question, name in sources up to ${ SOURCE_LIMIT } of the sources listed above that can answer it, the likeliest first, and none when none fits; a repository question names none.`,
+      "- Give one web question to the prior work elsewhere on the task's subject: the projects, papers, posts and discussions that already did or tried what the task does, and what came of them.",
     ),
     '- Bound each question so one workflow agent answers it in one launch: name the module, the behavior or the external subject it covers, and let no two questions overlap.',
     '- For a repository question, name the paths to start from when you know them.',
@@ -1099,7 +1100,7 @@ function formatRepositoryGatherPrompt(task, question) {
 
 function formatWebGatherPrompt(task, question) {
   return [
-    'Answer one question about external facts for the plan of a task.',
+    'Answer one question from pages outside this repository for the plan of a task.',
     '',
     '## Task',
     task,
