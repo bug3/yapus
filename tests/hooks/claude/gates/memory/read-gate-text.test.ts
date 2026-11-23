@@ -22,6 +22,20 @@ test('reads the approved line with the file name and the order with the memory p
   });
 });
 
+test('names by its number the line of the order for what every session needs', () => {
+  const gateText = readGateText('x.md', MEMORY_PATH);
+
+  assert.ok(gateText.kind === 'text');
+
+  const [firstLine = '', ...order] = gateText.text.split('\n');
+  const [, lineNumber = ''] = /unless line (\d+) fits\.$/u.exec(firstLine) ?? [];
+
+  assert.match(
+    order.find((line) => line.startsWith(`${ lineNumber }. `)) ?? '',
+    /^\d+\. Every session needs it: /u,
+  );
+});
+
 test('leaves no placeholder of the file or of the memory path in the text', () => {
   const gateText = readGateText('x.md', MEMORY_PATH);
 
