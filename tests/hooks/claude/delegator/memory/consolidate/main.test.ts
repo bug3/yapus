@@ -389,7 +389,7 @@ test('refuses a move of a file with no one-line description and makes no step', 
       2,
       '',
       `${ PROGRAM }: step 2 moves c.md, which has no one-line description in its frontmatter; `
-      + 'give it one, no step made\n',
+      + 'write it as a new file and give this one a remove step, no step made\n',
     ],
   );
   assert.deepEqual(readTrees(migration), before);

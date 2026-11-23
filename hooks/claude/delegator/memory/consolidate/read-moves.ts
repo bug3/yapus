@@ -304,7 +304,7 @@ function checkStep(written: WrittenStep, position: number, state: State): Checke
       getDetail(
         `step ${ getNumber(position) } moves ${ file }, which has no one-line description in `
         + 'its frontmatter',
-        'give it one',
+        'write it as a new file and give this one a remove step',
       ),
     ]
     : [];

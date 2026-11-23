@@ -346,8 +346,8 @@ test('fails on a move of a file that holds no one-line description in its frontm
     { move: 'crlf.md', to: 'rules/crlf.md' },
     { move: 'a.md', to: 'rules/a.md' },
   ]);
-  const failed = `which has no one-line description in its frontmatter; give it one, ${
-    NO_STEP_MADE }`;
+  const failed = 'which has no one-line description in its frontmatter; write it as a new file '
+    + `and give this one a remove step, ${ NO_STEP_MADE }`;
 
   writeFileSync(join(migration.autoDirectory, 'bare.md'), 'No frontmatter.\n');
   writeFileSync(
