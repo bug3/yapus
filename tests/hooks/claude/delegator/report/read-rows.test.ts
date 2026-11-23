@@ -104,6 +104,16 @@ test('reads the verdict of a return row without the marks around the word', () =
   );
 });
 
+test('reads the status of a return row without the marks around the word', () => {
+  const statuses = ['DONE', '**DONE**', 'DONE.'];
+  const { rows } = readRows(toText(...statuses.map((status) => ({ ...RETURN, status }))));
+
+  assert.deepEqual(
+    rows.map((row) => (row.hook === 'return' ? row.status : row)),
+    ['DONE', 'DONE', 'DONE'],
+  );
+});
+
 test('reads the output file of an end row', () => {
   const [row] = readRows(toText({ ...END, outputFile: '/tasks/a1.output' })).rows;
 
