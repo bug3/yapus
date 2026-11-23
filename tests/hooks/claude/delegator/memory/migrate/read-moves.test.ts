@@ -18,9 +18,9 @@ const AUTO_FILES: readonly TempFile[] = [
   { path: 'b.md', text: 'b\n' },
   { path: 'c.md', text: 'c\n' },
 ];
-const NOTHING_CHANGED = 'nothing changed';
+const NO_STEP_MADE = 'no step made';
 const NO_FORM = 'which is not <work|rules|reference>/<name>.md with a name of lowercase letters, '
-  + `digits and hyphens; write it in that form, ${ NOTHING_CHANGED }`;
+  + `digits and hyphens; write it in that form, ${ NO_STEP_MADE }`;
 
 interface Migration {
   readonly projectRoot: string;
@@ -120,7 +120,7 @@ test('fails on a moves file that is not JSON', (t) => {
 
   assert.match(
     getDetails(readMoves(projectRoot, configDirectory)).join('\n'),
-    /^.*\.yapus\/memory\/migration\.json is not JSON: [^\n]+; write it as JSON, nothing changed$/u,
+    /^.*\.yapus\/memory\/migration\.json is not JSON: [^\n]+; write it as JSON, no step made$/u,
   );
 });
 
@@ -130,7 +130,7 @@ test('fails on a moves file that is a list, has no memoryDirectory text or no st
   const noDirectory = makeProject(t, { memoryDirectory: 1, steps: [] });
   const noSteps = makeProject(t, { memoryDirectory, steps: {} });
   const failed = 'is not an object with a memoryDirectory text and a steps list; give it both, '
-    + 'nothing changed';
+    + 'no step made';
 
   assert.deepEqual(
     [
@@ -154,7 +154,7 @@ test('fails on a moves file that cannot be read as a file', (t) => {
 
   assert.match(
     getDetails(readMoves(projectRoot, configDirectory)).join('\n'),
-    /^cannot read .*migration\.json: EISDIR[^\n]*; make it a file, nothing changed$/u,
+    /^cannot read .*migration\.json: EISDIR[^\n]*; make it a file, no step made$/u,
   );
 });
 
@@ -168,7 +168,7 @@ test('names each step that is neither a move nor a removal, by its number', (t) 
   ]);
   const movesPath = getMovesPath(migration.projectRoot);
   const neither = `of ${ movesPath } is neither { "move": "<file>", "to": "<directory>/<name>.md" `
-    + `} nor { "remove": "<file>" }; write it as one of the two, ${ NOTHING_CHANGED }`;
+    + `} nor { "remove": "<file>" }; write it as one of the two, ${ NO_STEP_MADE }`;
 
   assert.deepEqual(getDetails(read(migration)), [
     `step 2 ${ neither }`,
@@ -183,7 +183,7 @@ test('fails on a memoryDirectory that is no auto memory directory of the configu
   const elsewhere = join(makeTempDir(t), 'projects', '-work-app', 'memory');
   const deeper = join(memoryDirectory, 'deeper');
   const failed = 'is no auto memory directory, <config>/projects/<slug>/memory; '
-    + `name the one of this project, ${ NOTHING_CHANGED }`;
+    + `name the one of this project, ${ NO_STEP_MADE }`;
 
   assert.deepEqual(
     [
@@ -207,7 +207,7 @@ test('fails on every memoryDirectory when no configuration directory is known', 
     kind: 'failure',
     details: [
       `memoryDirectory ${ memoryDirectory } is no auto memory directory, `
-      + `<config>/projects/<slug>/memory; name the one of this project, ${ NOTHING_CHANGED }`,
+      + `<config>/projects/<slug>/memory; name the one of this project, ${ NO_STEP_MADE }`,
     ],
   });
 });
@@ -220,7 +220,7 @@ test('fails on an auto memory directory that holds no index', (t) => {
     kind: 'failure',
     details: [
       `${ memoryDirectory } holds no MEMORY.md; name the auto memory directory that holds the `
-      + `index of this project, ${ NOTHING_CHANGED }`,
+      + `index of this project, ${ NO_STEP_MADE }`,
     ],
   });
 });
@@ -240,7 +240,7 @@ test('fails on an index that is a link', (t) => {
     kind: 'failure',
     details: [
       `${ memoryDirectory } holds no MEMORY.md; name the auto memory directory that holds the `
-      + `index of this project, ${ NOTHING_CHANGED }`,
+      + `index of this project, ${ NO_STEP_MADE }`,
     ],
   });
 });
@@ -253,7 +253,7 @@ test('fails on a file that two steps name', (t) => {
   ]);
 
   assert.deepEqual(getDetails(read(migration)), [
-    `step 3 names a.md, which step 1 names too; name each file in one step, ${ NOTHING_CHANGED }`,
+    `step 3 names a.md, which step 1 names too; name each file in one step, ${ NO_STEP_MADE }`,
   ]);
 });
 
@@ -265,7 +265,7 @@ test('fails on a file that is no topic file directly in the auto memory director
     { remove: 'notes.txt' },
   ]);
   const failed = `which is no topic file in ${ migration.autoDirectory }; `
-    + `name a file that is there, ${ NOTHING_CHANGED }`;
+    + `name a file that is there, ${ NO_STEP_MADE }`;
 
   writeFileSync(join(migration.autoDirectory, 'notes.txt'), 'a note\n');
 
@@ -329,7 +329,7 @@ test('fails on a target that is in the memory directory already', (t) => {
 
   assert.deepEqual(getDetails(read(migration)), [
     `step 1 moves a.md to rules/a.md, which exists in ${ memoryDirectory }; `
-    + `choose another name or remove that file, ${ NOTHING_CHANGED }`,
+    + `choose another name or remove that file, ${ NO_STEP_MADE }`,
   ]);
 });
 
@@ -342,7 +342,7 @@ test('fails on a target that is a link leading nowhere', (t) => {
 
   assert.deepEqual(getDetails(read(migration)), [
     `step 1 moves a.md to rules/a.md, which exists in ${ memoryDirectory }; `
-    + `choose another name or remove that file, ${ NOTHING_CHANGED }`,
+    + `choose another name or remove that file, ${ NO_STEP_MADE }`,
   ]);
 });
 
@@ -354,7 +354,7 @@ test('fails on a target that two steps name', (t) => {
 
   assert.deepEqual(getDetails(read(migration)), [
     'step 2 moves b.md to rules/x.md, the target of step 1 too; give each file its own target, '
-    + 'nothing changed',
+    + 'no step made',
   ]);
 });
 
@@ -367,9 +367,9 @@ test('gives one line for each failure of each step, in the order of the steps', 
 
   assert.deepEqual(getDetails(read(migration)), [
     `step 1 names gone.md, which is no topic file in ${ migration.autoDirectory }; `
-    + `name a file that is there, ${ NOTHING_CHANGED }`,
+    + `name a file that is there, ${ NO_STEP_MADE }`,
     `step 1 moves gone.md to lessons/gone.md, ${ NO_FORM }`,
-    `step 3 names a.md, which step 2 names too; name each file in one step, ${ NOTHING_CHANGED }`,
+    `step 3 names a.md, which step 2 names too; name each file in one step, ${ NO_STEP_MADE }`,
   ]);
 });
 

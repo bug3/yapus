@@ -318,8 +318,10 @@ function fail(failed: string, remedy: string): Failure {
   return { kind: 'failure', details: [getDetail(failed, remedy)] };
 }
 
+// Not "nothing changed": the run has by then created what the project's
+// memory directory lacked.
 function getDetail(failed: string, remedy: string): string {
-  return `${ failed }; ${ remedy }, nothing changed`;
+  return `${ failed }; ${ remedy }, no step made`;
 }
 
 // A step's number as the person counts it, from 1.

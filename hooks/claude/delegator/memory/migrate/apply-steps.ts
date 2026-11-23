@@ -53,7 +53,7 @@ export function findBackup(autoDirectory: string, time: Date): Backup {
   return existsSync(directory)
     ? {
       kind: 'failure',
-      detail: `the backup directory ${ directory } exists; run the command again, nothing changed`,
+      detail: `the backup directory ${ directory } exists; run the command again, no step made`,
     }
     : { kind: 'free', directory };
 }

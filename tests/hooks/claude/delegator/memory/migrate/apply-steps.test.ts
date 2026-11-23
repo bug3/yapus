@@ -69,7 +69,7 @@ test('fails on a backup directory that exists', (t) => {
   assert.deepEqual(findBackup(autoDirectory, TIME), {
     kind: 'failure',
     detail: `the backup directory ${ backupDirectory } exists; run the command again, `
-      + 'nothing changed',
+      + 'no step made',
   });
 });
 

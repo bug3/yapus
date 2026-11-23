@@ -228,7 +228,7 @@ test('refuses a moves file that is not JSON and changes nothing', (t) => {
   assert.deepEqual([run.status, run.stdout], [2, '']);
   assert.match(
     run.stderr,
-    /^yapus delegator migrate-memory: .*migration\.json is not JSON: [^\n]+; write it as JSON, nothing changed\n$/u,
+    /^yapus delegator migrate-memory: .*migration\.json is not JSON: [^\n]+; write it as JSON, no step made\n$/u,
   );
   assert.deepEqual(readTrees(migration), before);
 });
@@ -251,7 +251,7 @@ test('refuses a memoryDirectory outside the configuration directory', (t) => {
       2,
       '',
       `${ PROGRAM }: memoryDirectory ${ elsewhere } is no auto memory directory, `
-      + '<config>/projects/<slug>/memory; name the one of this project, nothing changed\n',
+      + '<config>/projects/<slug>/memory; name the one of this project, no step made\n',
     ],
   );
   assert.deepEqual(readTrees(migration), before);
@@ -271,7 +271,7 @@ test('refuses an auto memory directory that holds no index', (t) => {
       2,
       '',
       `${ PROGRAM }: ${ migration.autoDirectory } holds no MEMORY.md; name the auto memory `
-      + 'directory that holds the index of this project, nothing changed\n',
+      + 'directory that holds the index of this project, no step made\n',
     ],
   );
   assert.deepEqual(readTrees(migration), before);
@@ -292,9 +292,9 @@ test('refuses a file named twice and a file that is not there, one line each', (
       2,
       '',
       `${ PROGRAM }: step 2 names b.md, which step 1 names too; name each file in one step, `
-      + 'nothing changed\n'
+      + 'no step made\n'
       + `${ PROGRAM }: step 3 names gone.md, which is no topic file in `
-      + `${ migration.autoDirectory }; name a file that is there, nothing changed\n`,
+      + `${ migration.autoDirectory }; name a file that is there, no step made\n`,
     ],
   );
   assert.deepEqual(readTrees(migration), before);
@@ -308,7 +308,7 @@ test('refuses a target outside the three directories and one of another name for
   const before = readTrees(migration);
   const run = runMigrate(t, migration, [migration.projectRoot, 'apply']);
   const noForm = 'which is not <work|rules|reference>/<name>.md with a name of lowercase letters, '
-    + 'digits and hyphens; write it in that form, nothing changed\n';
+    + 'digits and hyphens; write it in that form, no step made\n';
 
   assert.deepEqual(
     [run.status, run.stdout, run.stderr],
@@ -338,7 +338,7 @@ test('refuses a target that exists and leaves it as it is', (t) => {
       2,
       '',
       `${ PROGRAM }: step 1 moves a.md to rules/a-rule.md, which exists in ${ memoryDirectory }; `
-      + 'choose another name or remove that file, nothing changed\n',
+      + 'choose another name or remove that file, no step made\n',
     ],
   );
   assert.deepEqual(readTrees(migration), before);
@@ -357,7 +357,7 @@ test('refuses a backup directory that exists and changes nothing', (t) => {
   assert.deepEqual([run.status, run.stdout], [2, '']);
   assert.match(
     run.stderr,
-    /^yapus delegator migrate-memory: the backup directory .*\/memory-backup\/[0-9TZ-]+ exists; run the command again, nothing changed\n$/u,
+    /^yapus delegator migrate-memory: the backup directory .*\/memory-backup\/[0-9TZ-]+ exists; run the command again, no step made\n$/u,
   );
   assert.deepEqual(readTrees(migration), before);
 });
@@ -372,7 +372,7 @@ test('refuses a moves file with a failure without apply too', (t) => {
       2,
       '',
       `${ PROGRAM }: step 1 names gone.md, which is no topic file in `
-      + `${ migration.autoDirectory }; name a file that is there, nothing changed\n`,
+      + `${ migration.autoDirectory }; name a file that is there, no step made\n`,
     ],
   );
 });
