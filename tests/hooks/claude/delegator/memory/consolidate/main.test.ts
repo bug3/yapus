@@ -45,8 +45,8 @@ const STORED_TEXT = [
 const B_TEXT = '---\ndescription: The b\n---\nb\n';
 const MOVED_TEXT = '---\ndescription: "The a rule, for a calls"\n---\n\nDo a.\n';
 const STEPS = [{ move: 'a.md', to: 'rules/a-rule.md' }, { remove: 'b.md' }] as const;
-const LISTED = 'no step is made; the person runs /delegator:migrate-memory apply to make these'
-  + ' steps';
+const LISTED = 'no step is made; show this list to the person and make the steps only after their'
+  + ' ok';
 const USAGE = `${ PROGRAM }: the arguments are not <project dir> [apply]; give the absolute path`
   + ' of the project and after it nothing or the word apply, nothing changed\n';
 
