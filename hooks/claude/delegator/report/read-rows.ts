@@ -83,8 +83,8 @@ function readReturn(fields: Readonly<Record<string, unknown>>): ReturnRow | unde
       allowed,
       reason,
       agentId: getString(fields.agentId),
-      status,
-      verdict: getVerdict(fields.verdict),
+      status: stripMarks(status),
+      verdict: typeof fields.verdict === 'string' ? stripMarks(fields.verdict) : undefined,
       length,
       turns: getNumber(fields.turns),
       toolUses: getNumber(fields.toolUses),
@@ -135,11 +135,11 @@ function getString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
-// The return gate stores the first token of the verdict line as is, so a
-// judge's "**REWORK:" or "APPROVE," reads here without the marks around the
-// word.
-function getVerdict(value: unknown): string | undefined {
-  return typeof value === 'string' ? value.replace(/^\P{L}+|\P{L}+$/gu, '') : undefined;
+// The return gate stores the first token of the status and the verdict line
+// as is, so a "**DONE**" or a judge's "**REWORK:" or "APPROVE," reads here
+// without the marks around the word.
+function stripMarks(word: string): string {
+  return word.replace(/^\P{L}+|\P{L}+$/gu, '');
 }
 
 function getNumber(value: unknown): number | undefined {
