@@ -87,8 +87,8 @@ test('copies every file of the auto memory directory to the backup byte for byte
     ['b.md', 'b\n'],
     ['bytes.bin', '\xff\x00\n'],
     ['c.md', 'c\n'],
+    ['consolidation.json', MOVES_TEXT],
     ['deeper/d.md', 'd\n'],
-    ['migration.json', MOVES_TEXT],
   ]);
 });
 
@@ -250,8 +250,8 @@ test('moves the moves file into the backup', (t) => {
 
   assert.deepEqual(
     [
-      existsSync(join(migration.memoryDirectory, 'migration.json')),
-      readFileSync(join(migration.backupDirectory, 'migration.json'), 'utf8'),
+      existsSync(join(migration.memoryDirectory, 'consolidation.json')),
+      readFileSync(join(migration.backupDirectory, 'consolidation.json'), 'utf8'),
     ],
     [false, MOVES_TEXT],
   );
@@ -286,7 +286,7 @@ test('stops at the first step that fails and keeps the steps made before it', (t
     [
       readdirSync(migration.autoDirectory).sort(),
       readFileSync(join(migration.autoDirectory, 'MEMORY.md'), 'utf8'),
-      existsSync(join(migration.memoryDirectory, 'migration.json')),
+      existsSync(join(migration.memoryDirectory, 'consolidation.json')),
     ],
     [['MEMORY.md', 'a.md', 'c.md'], '- [A](a.md): the a\n- [C](c.md): the c\n', true],
   );
@@ -317,15 +317,15 @@ test('fails with the line of the backup when its directory exists and makes no s
 test('fails with the line of the moves file when it cannot be moved into the backup', (t) => {
   const migration = makeMigration(t, AUTO_FILES);
 
-  writeFileSync(join(migration.autoDirectory, 'migration.json'), 'a file of that name\n');
+  writeFileSync(join(migration.autoDirectory, 'consolidation.json'), 'a file of that name\n');
 
   const applied = apply(migration, []);
-  const movesPath = join(migration.memoryDirectory, 'migration.json');
+  const movesPath = join(migration.memoryDirectory, 'consolidation.json');
 
   assert.ok(applied.kind === 'failure');
   assert.equal(
     applied.detail.startsWith(
-      `${ movesPath } -> ${ join(migration.backupDirectory, 'migration.json') } failed: EEXIST`,
+      `${ movesPath } -> ${ join(migration.backupDirectory, 'consolidation.json') } failed: EEXIST`,
     ),
     true,
   );
@@ -342,7 +342,7 @@ function makeMigration(
   const { memoryDirectory: autoDirectory } = makeAutoMemory(t, autoFiles);
   const projectRoot = makeMemoryProject(t, [
     ...memoryFiles,
-    { path: 'migration.json', text: MOVES_TEXT },
+    { path: 'consolidation.json', text: MOVES_TEXT },
   ]);
   const memoryDirectory = join(projectRoot, '.yapus', 'memory');
 

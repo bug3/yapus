@@ -7,7 +7,7 @@ import { DIRECTORIES, type Directory, getMemoryDirectory } from '../get-memory-d
 import { isFile } from '../is-file.ts';
 import { readStoredDescription } from './read-stored-description.ts';
 
-const MOVES_FILE = 'migration.json';
+const MOVES_FILE = 'consolidation.json';
 const MISSING = 'ENOENT';
 
 // <directory>/<name>.md, the name of lowercase letters, digits and hyphens.
@@ -101,7 +101,7 @@ export function getMovesPath(projectRoot: string): string {
   return join(getMemoryDirectory(projectRoot), MOVES_FILE);
 }
 
-// The moves file of the project, .yapus/memory/migration.json, with every
+// The moves file of the project, .yapus/memory/consolidation.json, with every
 // step checked against the disk: none when the file is not there, and one
 // line per failure when it is not the JSON of a moves file, its
 // memoryDirectory is no auto memory directory under configDirectory or holds

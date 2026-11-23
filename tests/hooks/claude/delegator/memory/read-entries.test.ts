@@ -296,7 +296,7 @@ test('reads an event and a successor under rules alone and a plan under work alo
 
 test('reads no moves file, no file of another ending and no dot name at any depth', (t) => {
   const projectRoot = makeMemoryProject(t, [
-    { path: 'migration.json', text: '{}\n' },
+    { path: 'consolidation.json', text: '{}\n' },
     { path: '.gitignore', text: '*\n' },
     { path: '.hidden.md', text: 'no frontmatter\n' },
     { path: 'rules/.draft.md', text: 'no frontmatter\n' },

@@ -28,8 +28,8 @@ interface Migration {
   readonly autoDirectory: string;
 }
 
-test('names the moves file migration.json in the memory directory of the project', () => {
-  assert.equal(getMovesPath('/p'), '/p/.yapus/memory/migration.json');
+test('names the moves file consolidation.json in the memory directory of the project', () => {
+  assert.equal(getMovesPath('/p'), '/p/.yapus/memory/consolidation.json');
 });
 
 test('gives none for a project with no moves file', (t) => {
@@ -122,11 +122,11 @@ test('gives the auto memory directory a path with a parent step leads to', (t) =
 
 test('fails on a moves file that is not JSON', (t) => {
   const { configDirectory } = makeAutoMemory(t, AUTO_FILES);
-  const projectRoot = makeMemoryProject(t, [{ path: 'migration.json', text: '{ "steps": [' }]);
+  const projectRoot = makeMemoryProject(t, [{ path: 'consolidation.json', text: '{ "steps": [' }]);
 
   assert.match(
     getDetails(readMoves(projectRoot, configDirectory)).join('\n'),
-    /^.*\.yapus\/memory\/migration\.json is not JSON: [^\n]+; write it as JSON, no step made$/u,
+    /^.*\.yapus\/memory\/consolidation\.json is not JSON: [^\n]+; write it as JSON, no step made$/u,
   );
 });
 
@@ -160,7 +160,7 @@ test('fails on a moves file that cannot be read as a file', (t) => {
 
   assert.match(
     getDetails(readMoves(projectRoot, configDirectory)).join('\n'),
-    /^cannot read .*migration\.json: EISDIR[^\n]*; make it a file, no step made$/u,
+    /^cannot read .*consolidation\.json: EISDIR[^\n]*; make it a file, no step made$/u,
   );
 });
 
@@ -480,7 +480,7 @@ function makeMigration(
   const { configDirectory, memoryDirectory } = makeAutoMemory(t, AUTO_FILES);
   const projectRoot = makeMemoryProject(t, [
     ...memoryFiles,
-    { path: 'migration.json', text: JSON.stringify({ memoryDirectory, steps }) },
+    { path: 'consolidation.json', text: JSON.stringify({ memoryDirectory, steps }) },
   ]);
 
   return { projectRoot, configDirectory, autoDirectory: memoryDirectory };
@@ -488,7 +488,7 @@ function makeMigration(
 
 // A project whose moves file holds the JSON of the given value.
 function makeProject(t: TestContext, moves: unknown): string {
-  return makeMemoryProject(t, [{ path: 'migration.json', text: JSON.stringify(moves) }]);
+  return makeMemoryProject(t, [{ path: 'consolidation.json', text: JSON.stringify(moves) }]);
 }
 
 function read({ projectRoot, configDirectory }: Migration): ReadMoves {

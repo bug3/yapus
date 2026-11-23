@@ -154,7 +154,7 @@ test('holds every file of the auto memory byte for byte and the moves file in th
     ['b.md', B_TEXT],
     ['bytes.bin', '\xff\x00\n'],
     ['c.md', 'c\n'],
-    ['migration.json', movesText],
+    ['consolidation.json', movesText],
   ]);
 });
 
@@ -246,7 +246,7 @@ test('lists the steps a failed apply made as already made and makes the rest', (
       [['.gitignore', '*\n'], ['rules/a-rule.md', 'moved by the run before\n']],
       ['MEMORY.md', 'bytes.bin', 'c.md'],
       [['a.md', STORED_TEXT]],
-      ['MEMORY.md', 'b.md', 'bytes.bin', 'c.md', 'migration.json'],
+      ['MEMORY.md', 'b.md', 'bytes.bin', 'c.md', 'consolidation.json'],
     ],
   );
 });
@@ -284,7 +284,7 @@ test('refuses a moves file that is not JSON and makes no step', (t) => {
   assert.deepEqual([run.status, run.stdout], [2, '']);
   assert.match(
     run.stderr,
-    /^yapus delegator consolidate-memory: .*migration\.json is not JSON: [^\n]+; write it as JSON, no step made\n$/u,
+    /^yapus delegator consolidate-memory: .*consolidation\.json is not JSON: [^\n]+; write it as JSON, no step made\n$/u,
   );
   assert.deepEqual(readTrees(migration), before);
 });
@@ -570,7 +570,10 @@ function makeMigration(t: TestContext, steps: readonly unknown[]): Migration {
   ]);
   const projectRoot = makeMemoryProject(t, [
     { path: '.gitignore', text: '*\n' },
-    { path: 'migration.json', text: JSON.stringify({ memoryDirectory: autoDirectory, steps }) },
+    {
+      path: 'consolidation.json',
+      text: JSON.stringify({ memoryDirectory: autoDirectory, steps }),
+    },
   ]);
 
   writeFileSync(join(autoDirectory, 'bytes.bin'), Buffer.from([0xff, 0x00, 0x0a]));
@@ -579,7 +582,7 @@ function makeMigration(t: TestContext, steps: readonly unknown[]): Migration {
 }
 
 function getMovesPath({ projectRoot }: Migration): string {
-  return join(projectRoot, '.yapus', 'memory', 'migration.json');
+  return join(projectRoot, '.yapus', 'memory', 'consolidation.json');
 }
 
 // The one backup directory beside the auto memory directory.
@@ -610,7 +613,7 @@ function readTrees({ projectRoot, configDirectory }: Migration): unknown[] {
 // What a run prints when the project has no moves file: the approved guide,
 // then the order a fact is sorted by.
 function getGuide(memoryDirectory: string): string {
-  const movesPath = join(memoryDirectory, 'migration.json');
+  const movesPath = join(memoryDirectory, 'consolidation.json');
   const sorting = readSorting(memoryDirectory);
 
   assert.ok(sorting.kind === 'text');
