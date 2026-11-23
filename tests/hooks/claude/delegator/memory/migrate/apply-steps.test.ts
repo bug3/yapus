@@ -174,6 +174,16 @@ test('deletes a removed file and writes nothing to the project memory', (t) => {
   );
 });
 
+test('makes no step that a run before this one made', (t) => {
+  const migration = makeMigration(t, AUTO_FILES);
+
+  assert.deepEqual(apply(migration, [REMOVE_B], [MOVE_A, REMOVE_C]), { kind: 'done' });
+  assert.deepEqual(
+    [readdirSync(migration.autoDirectory).sort(), readTree(migration.memoryDirectory)],
+    [['MEMORY.md', 'a.md', 'c.md'], []],
+  );
+});
+
 test('takes the lines that link a moved or removed file out of the index', (t) => {
   const migration = makeMigration(t, AUTO_FILES);
 
@@ -348,8 +358,8 @@ function makeMigration(
   };
 }
 
-function apply(migration: Migration, steps: readonly Step[]) {
+function apply(migration: Migration, steps: readonly Step[], made: readonly Step[] = []) {
   const { projectRoot, autoDirectory, backupDirectory } = migration;
 
-  return applySteps(projectRoot, { autoDirectory, steps, kept: [] }, backupDirectory);
+  return applySteps(projectRoot, { autoDirectory, steps, made, kept: [] }, backupDirectory);
 }

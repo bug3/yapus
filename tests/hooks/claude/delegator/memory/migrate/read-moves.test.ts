@@ -58,6 +58,7 @@ test('reads a move and a removal in their order and the files no step names as k
         { kind: 'move', file: 'b.md', directory: 'rules', name: 'b-rule-2' },
         { kind: 'remove', file: 'a.md' },
       ],
+      made: [],
       kept: ['c.md'],
     },
   });
@@ -68,7 +69,12 @@ test('reads a moves file with no step and keeps every topic file, by name', (t) 
 
   assert.deepEqual(read(migration), {
     kind: 'moves',
-    moves: { autoDirectory: migration.autoDirectory, steps: [], kept: ['a.md', 'b.md', 'c.md'] },
+    moves: {
+      autoDirectory: migration.autoDirectory,
+      steps: [],
+      made: [],
+      kept: ['a.md', 'b.md', 'c.md'],
+    },
   });
 });
 
@@ -259,7 +265,7 @@ test('fails on a file that two steps name', (t) => {
 
 test('fails on a file that is no topic file directly in the auto memory directory', (t) => {
   const migration = makeMigration(t, [
-    { remove: 'gone.md' },
+    { move: 'gone.md', to: 'rules/gone.md' },
     { remove: 'MEMORY.md' },
     { remove: '../memory/a.md' },
     { remove: 'notes.txt' },
@@ -274,6 +280,62 @@ test('fails on a file that is no topic file directly in the auto memory director
     `step 2 names MEMORY.md, ${ failed }`,
     `step 3 names ../memory/a.md, ${ failed }`,
     `step 4 names notes.txt, ${ failed }`,
+  ]);
+});
+
+test('fails on a removal of a file that is gone and is named as no topic file', (t) => {
+  const migration = makeMigration(t, [
+    { remove: 'gone.txt' },
+    { remove: '../memory/gone.md' },
+    { remove: 'deeper/gone.md' },
+  ]);
+  const failed = `which is no topic file in ${ migration.autoDirectory }; `
+    + `name a file that is there, ${ NO_STEP_MADE }`;
+
+  assert.deepEqual(getDetails(read(migration)), [
+    `step 1 names gone.txt, ${ failed }`,
+    `step 2 names ../memory/gone.md, ${ failed }`,
+    `step 3 names deeper/gone.md, ${ failed }`,
+  ]);
+});
+
+test('reads a move whose file is gone and whose target is there as made before', (t) => {
+  const migration = makeMigration(
+    t,
+    [{ move: 'gone.md', to: 'rules/gone-rule.md' }, { move: 'a.md', to: 'rules/a.md' }],
+    [{ path: 'rules/gone-rule.md', text: 'moved by the run before\n' }],
+  );
+
+  assert.deepEqual(read(migration), {
+    kind: 'moves',
+    moves: {
+      autoDirectory: migration.autoDirectory,
+      steps: [{ kind: 'move', file: 'a.md', directory: 'rules', name: 'a' }],
+      made: [{ kind: 'move', file: 'gone.md', directory: 'rules', name: 'gone-rule' }],
+      kept: ['b.md', 'c.md'],
+    },
+  });
+});
+
+test('reads a removal whose file is gone as made before', (t) => {
+  const migration = makeMigration(t, [{ remove: 'gone.md' }, { remove: 'b.md' }]);
+
+  assert.deepEqual(read(migration), {
+    kind: 'moves',
+    moves: {
+      autoDirectory: migration.autoDirectory,
+      steps: [{ kind: 'remove', file: 'b.md' }],
+      made: [{ kind: 'remove', file: 'gone.md' }],
+      kept: ['a.md', 'c.md'],
+    },
+  });
+});
+
+test('fails on a file that is gone when two steps name it', (t) => {
+  const migration = makeMigration(t, [{ remove: 'gone.md' }, { remove: 'gone.md' }]);
+
+  assert.deepEqual(getDetails(read(migration)), [
+    `step 2 names gone.md, which step 1 names too; name each file in one step, ${ NO_STEP_MADE }`,
   ]);
 });
 

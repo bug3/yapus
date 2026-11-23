@@ -196,6 +196,61 @@ test('prints the guide on a second apply and changes nothing', (t) => {
   assert.deepEqual(readTrees(migration), before);
 });
 
+// The state an apply leaves that made its first two steps and failed at the
+// third: the moved file at its target, both sources gone, the backup of that
+// run and the moves file still in place.
+test('lists the steps a failed apply made as already made and makes the rest', (t) => {
+  const migration = makeMigration(t, [
+    { move: 'a.md', to: 'rules/a-rule.md' },
+    { remove: 'gone.md' },
+    { remove: 'b.md' },
+  ]);
+  const memoryDirectory = join(migration.projectRoot, '.yapus', 'memory');
+  const firstBackup = join(dirname(migration.autoDirectory), 'memory-backup', 'first-run');
+  const listed = 'a.md -> rules/a-rule.md, already made\ngone.md removed, already made\n'
+    + 'b.md removed\nc.md kept\n';
+
+  rmSync(join(migration.autoDirectory, 'a.md'));
+  mkdirSync(join(memoryDirectory, 'rules'));
+  writeFileSync(join(memoryDirectory, 'rules', 'a-rule.md'), 'moved by the run before\n');
+  mkdirSync(firstBackup, { recursive: true });
+  writeFileSync(join(firstBackup, 'a.md'), STORED_TEXT);
+
+  const listRun = runMigrate(t, migration, [migration.projectRoot]);
+  const run = runMigrate(t, migration, [migration.projectRoot, 'apply']);
+  const [stamp = ''] = readdirSync(dirname(firstBackup)).filter((name) => name !== 'first-run');
+  const backupDirectory = join(dirname(firstBackup), stamp);
+
+  assert.deepEqual(
+    [listRun.status, listRun.stderr, listRun.stdout],
+    [0, '', `${ listed }${ LISTED }\n`],
+  );
+  assert.deepEqual(
+    [run.status, run.stderr, run.stdout],
+    [
+      0,
+      '',
+      `backup: ${ migration.autoDirectory } -> ${ backupDirectory }\n${ listed }`
+      + 'done; give each rule that belongs to a gh command or a launch its event line, and '
+      + `delete ${ backupDirectory } once nothing is missing\n`,
+    ],
+  );
+  assert.deepEqual(
+    [
+      readTree(memoryDirectory),
+      readTree(migration.autoDirectory).map(([path]) => path),
+      readTree(firstBackup),
+      readTree(backupDirectory).map(([path]) => path),
+    ],
+    [
+      [['.gitignore', '*\n'], ['rules/a-rule.md', 'moved by the run before\n']],
+      ['MEMORY.md', 'bytes.bin', 'c.md'],
+      [['a.md', STORED_TEXT]],
+      ['MEMORY.md', 'b.md', 'bytes.bin', 'c.md', 'migration.json'],
+    ],
+  );
+});
+
 // A standard output that refuses the write stops the program at the list.
 test('changes nothing when the list cannot be printed', (t) => {
   const migration = makeMigration(t, STEPS);
@@ -282,7 +337,7 @@ test('refuses a file named twice and a file that is not there, one line each', (
   const migration = makeMigration(t, [
     { remove: 'b.md' },
     { move: 'b.md', to: 'rules/b.md' },
-    { remove: 'gone.md' },
+    { move: 'gone.md', to: 'rules/gone.md' },
   ]);
   const before = readTrees(migration);
   const run = runMigrate(t, migration, [migration.projectRoot, 'apply']);
@@ -381,7 +436,7 @@ test('refuses a backup directory that exists and makes no step', (t) => {
 });
 
 test('refuses a moves file with a failure without apply too', (t) => {
-  const migration = makeMigration(t, [{ remove: 'gone.md' }]);
+  const migration = makeMigration(t, [{ move: 'gone.md', to: 'rules/gone.md' }]);
   const run = runMigrate(t, migration, [migration.projectRoot]);
 
   assert.deepEqual(

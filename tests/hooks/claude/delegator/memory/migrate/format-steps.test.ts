@@ -33,14 +33,39 @@ test('lists the steps in their order, then the kept files', () => {
       { kind: 'remove', file: 'b.md' },
       { kind: 'move', file: 'a.md', directory: 'work', name: 'a' },
     ],
+    made: [],
     kept: ['c.md', 'd.md'],
   });
 
   assert.deepEqual(lines, ['b.md removed', 'a.md -> work/a.md', 'c.md kept', 'd.md kept']);
 });
 
+test('lists the steps a run before made first, each as its line and already made', () => {
+  const lines = formatSteps({
+    autoDirectory: '/c/projects/s/memory',
+    steps: [{ kind: 'remove', file: 'b.md' }],
+    made: [
+      { kind: 'move', file: 'a.md', directory: 'rules', name: 'a-rule' },
+      { kind: 'remove', file: 'e.md' },
+    ],
+    kept: ['c.md'],
+  });
+
+  assert.deepEqual(lines, [
+    'a.md -> rules/a-rule.md, already made',
+    'e.md removed, already made',
+    'b.md removed',
+    'c.md kept',
+  ]);
+});
+
 test('lists nothing for no step and no kept file', () => {
-  const lines = formatSteps({ autoDirectory: '/c/projects/s/memory', steps: [], kept: [] });
+  const lines = formatSteps({
+    autoDirectory: '/c/projects/s/memory',
+    steps: [],
+    made: [],
+    kept: [],
+  });
 
   assert.deepEqual(lines, []);
 });

@@ -6,10 +6,15 @@ import {
 } from './read-migrate-texts.ts';
 import type { Moves, Step } from './read-moves.ts';
 
-// The list a run prints before it changes a file: one line per step in the
-// order the steps are made, then one per topic file no step names.
-export function formatSteps({ steps, kept }: Moves): string[] {
-  return [...steps.map((step) => formatStep(step)), ...kept.map((file) => `${ file } kept`)];
+// The list a run prints before it changes a file: one line per step a run
+// before it made, then one per step in the order the steps are made, then
+// one per topic file no step names.
+export function formatSteps({ steps, made, kept }: Moves): string[] {
+  return [
+    ...made.map((step) => `${ formatStep(step) }, already made`),
+    ...steps.map((step) => formatStep(step)),
+    ...kept.map((file) => `${ file } kept`),
+  ];
 }
 
 export function formatStep(step: Step): string {
