@@ -1481,30 +1481,25 @@ function formatClaimBlock(title, claimLines) {
 }
 
 // What the research left out: what the completeness agent named, or that it
-// returned nothing, what each gather agent named, or that it returned
-// nothing, and each question that was dropped.
+// returned nothing, each question whose gather agent returned nothing, and
+// each question that was dropped. What a gather agent named as not searched
+// goes to the completeness agent alone, in its summary of the questions.
 function listUnmeasuredLines(researched, droppedQuestions, gaps) {
-  const unsearchedLines = researched.flatMap(listUnsearchedLines);
+  const silentLines = researched
+    .filter(({ gatherLength }) => gatherLength === undefined)
+    .map(({ id }) => `- ${ id } returned nothing.`);
   const droppedLines = droppedQuestions.map(formatDroppedLine);
 
   if (gaps === undefined) {
-    return [...unsearchedLines, ...droppedLines, '- The completeness agent returned nothing.'];
+    return [...silentLines, ...droppedLines, '- The completeness agent returned nothing.'];
   }
 
   return [
     ...gaps.unreadAreas.map((area) => `- Unread: ${ toOneLine(area) }`),
     ...gaps.unansweredQuestions.map((question) => `- Unanswered: ${ toOneLine(question) }`),
-    ...unsearchedLines,
+    ...silentLines,
     ...droppedLines,
   ];
-}
-
-function listUnsearchedLines({ id, gatherLength, unsearched }) {
-  if (gatherLength === undefined) {
-    return [`- ${ id } returned nothing.`];
-  }
-
-  return unsearched.map((area) => `- ${ id } not searched: ${ area }`);
 }
 
 // The lane is a name the schema of the scope stage admits, so it is written

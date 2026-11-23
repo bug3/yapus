@@ -469,7 +469,7 @@ test('writes that a question returned nothing when its gather agent rejects', as
 
   assert.match(
     findCall(run, 'synthesize')?.prompt ?? '',
-    /\n## Unmeasured\n\n- Unread: [^\n]+\n- Unanswered: [^\n]+\n- Q1 returned nothing\.\n- Q3 returned nothing\.\n- Q4 not searched: /u,
+    /\n## Unmeasured\n\n- Unread: [^\n]+\n- Unanswered: [^\n]+\n- Q1 returned nothing\.\n- Q3 returned nothing\.\n\n## Run\n/u,
   );
 });
 
