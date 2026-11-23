@@ -1,5 +1,5 @@
 ---
-name: migrate-memory
+name: consolidate-memory
 description: Create .yapus/memory in this project and sort its auto memory into it; show the steps and make them after the person's ok
 allowed-tools: Bash(bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/delegator/memory/consolidate:*)
 disable-model-invocation: true

@@ -26,7 +26,7 @@ const RUN_SH = join(HOOKS, 'run.sh');
 const HOOK_NAME = 'claude/delegator/memory/consolidate';
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const MILLISECONDS = 1000;
-const PROGRAM = 'yapus delegator migrate-memory';
+const PROGRAM = 'yapus delegator consolidate-memory';
 const INDEX_TEXT = '# Memory\n- [A](a.md): the a\n- [B](b.md) - the b\n- [C](c.md): the c\n';
 
 // A topic file as Claude Code stores it.
@@ -269,7 +269,7 @@ test('changes nothing when the list cannot be printed', (t) => {
   });
 
   assert.equal(run.status, 2);
-  assert.match(run.stderr, /^yapus delegator migrate-memory: crashed: [^\n]*; fix the program\n$/u);
+  assert.match(run.stderr, /^yapus delegator consolidate-memory: crashed: [^\n]*; fix the program\n$/u);
   assert.deepEqual(readTrees(migration), before);
 });
 
@@ -284,7 +284,7 @@ test('refuses a moves file that is not JSON and makes no step', (t) => {
   assert.deepEqual([run.status, run.stdout], [2, '']);
   assert.match(
     run.stderr,
-    /^yapus delegator migrate-memory: .*migration\.json is not JSON: [^\n]+; write it as JSON, no step made\n$/u,
+    /^yapus delegator consolidate-memory: .*migration\.json is not JSON: [^\n]+; write it as JSON, no step made\n$/u,
   );
   assert.deepEqual(readTrees(migration), before);
 });
@@ -430,7 +430,7 @@ test('refuses a backup directory that exists and makes no step', (t) => {
   assert.deepEqual([run.status, run.stdout], [2, '']);
   assert.match(
     run.stderr,
-    /^yapus delegator migrate-memory: the backup directory .*\/memory-backup\/[0-9TZ-]+ exists; run the command again, no step made\n$/u,
+    /^yapus delegator consolidate-memory: the backup directory .*\/memory-backup\/[0-9TZ-]+ exists; run the command again, no step made\n$/u,
   );
   assert.deepEqual(readTrees(migration), before);
 });
@@ -522,7 +522,7 @@ test('names the step that failed, makes none after it and exits 2', (t) => {
   );
   assert.match(
     run.stderr,
-    /^yapus delegator migrate-memory: a\.md -> rules\/a-rule\.md failed: EACCES[^\n]*; no step after it is made; repair it and run the command again\n$/u,
+    /^yapus delegator consolidate-memory: a\.md -> rules\/a-rule\.md failed: EACCES[^\n]*; no step after it is made; repair it and run the command again\n$/u,
   );
   assert.deepEqual(
     [readTree(migration.autoDirectory).map(([path]) => path), existsSync(getMovesPath(migration))],

@@ -21,7 +21,7 @@ import {
 } from './read-consolidate-texts.ts';
 import { getMovesPath, type Moves, readMoves } from './read-moves.ts';
 
-const PROGRAM = 'delegator migrate-memory';
+const PROGRAM = 'delegator consolidate-memory';
 const APPLY = 'apply';
 const USAGE = 'the arguments are not <project dir> [apply]; give the absolute path of the project '
   + 'and after it nothing or the word apply, nothing changed';
