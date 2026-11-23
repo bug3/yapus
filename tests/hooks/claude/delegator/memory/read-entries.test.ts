@@ -110,6 +110,30 @@ test('reads the plan of a work entry that names a file under the project root', 
   );
 });
 
+test('reads the plan of a work entry that names a file by its absolute path', (t) => {
+  const planPath = join(makeTempDir(t), 'plan.md');
+  const projectRoot = makeMemoryProject(t, [
+    { path: 'work/site.md', text: `---\ndescription: "d"\nplan: "${ planPath }"\n---\n` },
+  ]);
+
+  writeFileSync(planPath, '# Plan\n');
+
+  const { entries, problems } = readEntries(projectRoot);
+
+  assert.deepEqual([entries.map(({ plan }) => plan), problems], [[planPath], []]);
+});
+
+test('names a plan whose absolute path leads to no file', (t) => {
+  const planPath = join(makeTempDir(t), 'plan.md');
+  const projectRoot = makeMemoryProject(t, [
+    { path: 'work/site.md', text: `---\ndescription: "d"\nplan: "${ planPath }"\n---\n` },
+  ]);
+
+  assert.deepEqual(readEntries(projectRoot).problems, [
+    { path: '.yapus/memory/work/site.md', reason: `plan ${ planPath } does not exist` },
+  ]);
+});
+
 test('names a file with no description and reads no entry from it', (t) => {
   const projectRoot = makeMemoryProject(t, [
     { path: 'rules/bare.md', text: 'A rule with no frontmatter.\n' },

@@ -1,5 +1,5 @@
 import { lstatSync, readdirSync, readFileSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 import { findMemoryDirectory } from './find-memory-directory.ts';
 import { DIRECTORIES, type Directory } from './get-memory-directory.ts';
 import { isFile } from './is-file.ts';
@@ -21,8 +21,8 @@ export interface Entry {
   readonly event: MemoryEvent | undefined;
   // Of a rule alone: the name of its successor, as it is written.
   readonly supersededBy: string | undefined;
-  // Of a work entry alone: the path of its plan from the project root, as it
-  // is written.
+  // Of a work entry alone: the path of its plan, from the project root or
+  // absolute, as it is written.
   readonly plan: string | undefined;
   readonly modifiedAt: Date;
   readonly body: string;
@@ -134,7 +134,7 @@ function readFile(
     supersededBy !== undefined && !ruleNames.has(supersededBy)
       ? `superseded-by names ${ supersededBy }, which is not in rules/`
       : undefined,
-    plan !== undefined && !isFile(join(projectRoot, plan))
+    plan !== undefined && !isFile(resolve(projectRoot, plan))
       ? `plan ${ plan } does not exist`
       : undefined,
   ];
