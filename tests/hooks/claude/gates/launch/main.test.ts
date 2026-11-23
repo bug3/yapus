@@ -62,10 +62,18 @@ function runHook(env: NodeJS.ProcessEnv, stdinText: string) {
   });
 }
 
-// The caller's environment with HOME, TMPDIR and the plugin data directory
-// in the test's own directory.
+// The caller's environment with HOME, TMPDIR, the config directory, the plugin
+// data directory and the project directory in the test's own directory, so
+// the hook reads nothing of the session that runs the test.
 function makeHookEnv(t: TestContext): NodeJS.ProcessEnv {
   const tempDir = makeTempDir(t);
 
-  return { ...process.env, HOME: tempDir, TMPDIR: tempDir, CLAUDE_PLUGIN_DATA: tempDir };
+  return {
+    ...process.env,
+    HOME: tempDir,
+    TMPDIR: tempDir,
+    CLAUDE_CONFIG_DIR: tempDir,
+    CLAUDE_PLUGIN_DATA: tempDir,
+    CLAUDE_PROJECT_DIR: tempDir,
+  };
 }
