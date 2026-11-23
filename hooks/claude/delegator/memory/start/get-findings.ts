@@ -35,8 +35,8 @@ export interface Checked {
 // index of the auto memory past its line limit, then each of its links to a
 // topic file that is not beside it, by line; each problem of the memory
 // directory, by path. The index is read in the memory directory beside the
-// transcript, and its lines are left out where it is not there. Throws when
-// the index is there and cannot be read.
+// transcript, and its lines are left out where it is not there or cannot be
+// read.
 export function getFindings(
   texts: StartTexts,
   { memory, transcriptPath, now }: Checked,
@@ -68,13 +68,12 @@ function getStaleLines(staleWork: string, entries: readonly Entry[], now: Date):
 }
 
 function getIndexLines(texts: StartTexts, memoryDirectory: string): string[] {
-  const indexPath = join(memoryDirectory, INDEX_FILE);
+  const indexText = readIndex(join(memoryDirectory, INDEX_FILE));
 
-  if (!isFile(indexPath)) {
+  if (indexText === undefined) {
     return [];
   }
 
-  const indexText = readFileSync(indexPath, 'utf8');
   const lineCount = countLines(indexText);
   const longIndex = texts.longIndex
     .replace(COUNT_PLACEHOLDER, () => String(lineCount))
@@ -87,6 +86,20 @@ function getIndexLines(texts: StartTexts, memoryDirectory: string): string[] {
         .replace(TARGET_PLACEHOLDER, () => target));
 
   return lineCount > INDEX_LIMIT_LINES ? [longIndex, ...missingLines] : missingLines;
+}
+
+// The text of the index, or undefined where no file is at the path or the
+// file cannot be read.
+function readIndex(indexPath: string): string | undefined {
+  if (!isFile(indexPath)) {
+    return undefined;
+  }
+
+  try {
+    return readFileSync(indexPath, 'utf8');
+  } catch {
+    return undefined;
+  }
 }
 
 // A text that ends in a line break has no line after it.

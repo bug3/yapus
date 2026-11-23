@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { chmodSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import type {
@@ -104,6 +105,18 @@ test('lists nothing of an index that is not beside the transcript', (t) => {
   const transcriptPath = makeTranscriptPath(t, []);
 
   assert.deepEqual(getFindings(TEXTS, { memory: NO_MEMORY, transcriptPath, now: NOW }), []);
+});
+
+test('lists the rest without the lines of an index that cannot be read', (t) => {
+  const transcriptPath = makeTranscriptPath(t, [{ path: 'MEMORY.md', text: '- [A](gone.md)\n' }]);
+  const memory = { entries: [], problems: [{ path: 'stray.md', reason: 'outside' }] };
+
+  chmodSync(join(dirname(transcriptPath), 'memory', 'MEMORY.md'), 0o000);
+
+  assert.deepEqual(
+    getFindings(TEXTS, { memory, transcriptPath, now: NOW }),
+    ['stray.md: outside'],
+  );
 });
 
 test('lists the work files, then the index, then each problem by its path and reason', (t) => {

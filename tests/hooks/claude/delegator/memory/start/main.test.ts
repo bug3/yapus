@@ -167,6 +167,24 @@ test('leaves out the index lines and keeps the rest with no index by the transcr
   );
 });
 
+test('leaves out the index lines and keeps the rest with an index it cannot read', (t) => {
+  const projectRoot = makeMemoryProject(t, [WORK_ITEM]);
+  const { env } = makeSession(t, projectRoot, []);
+  const { memoryDirectory } = makeAutoMemory(t, [{ path: 'MEMORY.md', text: '- a\n'.repeat(21) }]);
+  const stdinText = JSON.stringify({
+    session_id: 's1',
+    transcript_path: join(dirname(memoryDirectory), 's1.jsonl'),
+  });
+
+  chmodSync(join(memoryDirectory, 'MEMORY.md'), 0o000);
+  setDaysBack(projectRoot, 31);
+
+  assert.deepEqual(
+    getBlocks(runHook({ env, stdinText })),
+    [ONE_WORK_ITEM, UPKEEP, `work/site.md: not changed for 31 days\n${ TIDY }`],
+  );
+});
+
 // A rule's line takes 99 characters here, so a 26th would pass 3,000.
 test('keeps the context of 60 rules within 3,000 characters and counts the ones left out', (t) => {
   const rules = [...Array.from({ length: 60 }).keys()].map((index) => ({
