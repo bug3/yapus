@@ -138,7 +138,7 @@ It creates the sessions directory with a `.gitignore` that keeps it out of git; 
 
 In a project that holds `.yapus/memory`, delegator keeps Claude Code's auto memory, which loads in every session, for what every session needs, and every other fact in that directory: `work` for open items, `rules` for how to act in a named situation, `reference` for the rest. Each file starts with a `description` line, and those lines are a directory's index. A write of a new file to auto memory is refused with the order to sort the fact by; a file that says in its frontmatter why every session needs it passes, and so does a write the gate cannot judge. A rule that names a `gh` command or an agent launch as its `event` is given to the session when that call passes its gate. At the session's start delegator names the directories with their counts, lists every other rule by its description, and lists what needs tidying: a work item left unchanged past its limit, a `MEMORY.md` past its line limit, a line or a file it cannot use.
 
-`/delegator:migrate-memory` creates `.yapus/memory`, with a `.gitignore` that keeps it out of git, and sorts an existing auto memory: it prints the steps, and with `apply` makes them after a backup beside the auto memory directory. The person changes the `.gitignore` to commit the project's memory. Without the directory delegator leaves memory alone.
+`/delegator:consolidate-memory` creates `.yapus/memory`, with a `.gitignore` that keeps it out of git, and sorts an existing auto memory: it shows the steps and makes them after the person's ok and a backup beside the auto memory directory. The person changes the `.gitignore` to commit the project's memory. Without the directory delegator leaves memory alone.
 
 ### Commands
 
@@ -152,7 +152,7 @@ Off means no rules at the session's start, no check on its launches, no prompt w
 | `/delegator:agent-limit <n>` | the launch budget for the session, or with `--global` for every session |
 | `/delegator:agent-report` | the record's counts per agent type |
 | `/delegator:upgrade` | the `.yapus/` files of an older layout moved into the present one |
-| `/delegator:migrate-memory` | `.yapus/memory` created and the steps that sort the auto memory into it, made with `apply` |
+| `/delegator:consolidate-memory` | `.yapus/memory` created and the steps that sort the auto memory into it, made after the person's ok |
 | `/delegator:write-plan` | the deep work flow, from the plan to the slices |
 | `/delegator:deep-dive` | the research before a plan: questions, claims checked against their sources, `research_<digest>.md` beside the plan |
 | `/delegator:dive-report <run directory>` | the workflow agents, tokens, time, models and tools of one workflow run per stage, and its web fetches per host |
