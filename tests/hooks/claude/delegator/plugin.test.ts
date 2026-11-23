@@ -9,6 +9,8 @@ const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const PLUGIN = join(ROOT, 'plugins', 'delegator');
 const REMEMBER_COMMAND =
   'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/delegator/remember || exit 0';
+const MEMORY_GATE_COMMAND =
+  'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/gates/memory || exit 0';
 const SUBPROCESS_TIMEOUT_MS = 10000;
 
 test('registers every delegator hook', () => {
@@ -23,6 +25,11 @@ test('registers every delegator hook', () => {
             {
               type: 'command',
               command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/delegator/policy',
+              timeout: 10,
+            },
+            {
+              type: 'command',
+              command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/delegator/memory/start',
               timeout: 10,
             },
           ],
@@ -70,6 +77,25 @@ test('registers every delegator hook', () => {
               command: 'bash "${CLAUDE_PLUGIN_ROOT}/runtime/run.sh" claude/gates/gh',
               timeout: 10,
               onFailure: 'block',
+            },
+          ],
+        },
+        // A path rule names one tool, so each tool has its handler; with no
+        // onFailure a handler that times out lets the write through.
+        {
+          matcher: 'Write|Edit',
+          hooks: [
+            {
+              type: 'command',
+              if: 'Write(**/.claude/projects/*/memory/**)',
+              command: MEMORY_GATE_COMMAND,
+              timeout: 10,
+            },
+            {
+              type: 'command',
+              if: 'Edit(**/.claude/projects/*/memory/**)',
+              command: MEMORY_GATE_COMMAND,
+              timeout: 10,
             },
           ],
         },
@@ -159,6 +185,25 @@ test('exits 0 from the remember command when run.sh exits 2', (t) => {
   });
 
   assert.equal(commandRun.status, 0);
+});
+
+// Exit 2 at PreToolUse blocks the write, so the registered command (pinned
+// above) lets the write through when the gate or run.sh itself fails.
+test('exits 0 with no output from the memory gate command when run.sh exits 2', (t) => {
+  const pluginRoot = makeTempDir(t);
+
+  mkdirSync(join(pluginRoot, 'runtime'));
+  writeFileSync(join(pluginRoot, 'runtime', 'run.sh'), 'exit 2\n');
+
+  const commandRun = spawnSync('/bin/sh', ['-c', MEMORY_GATE_COMMAND], {
+    encoding: 'utf8',
+    env: { ...process.env, CLAUDE_PLUGIN_ROOT: pluginRoot },
+    input: '',
+    timeout: SUBPROCESS_TIMEOUT_MS,
+  });
+
+  assert.equal(commandRun.status, 0);
+  assert.equal(commandRun.stdout, '');
 });
 
 // An install copies only the plugin directory and copies a link to elsewhere
