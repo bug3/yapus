@@ -87,13 +87,13 @@ test('registers every delegator hook', () => {
           hooks: [
             {
               type: 'command',
-              if: 'Write(**/.claude/projects/*/memory/**)',
+              if: 'Write(**/projects/*/memory/**)',
               command: MEMORY_GATE_COMMAND,
               timeout: 10,
             },
             {
               type: 'command',
-              if: 'Edit(**/.claude/projects/*/memory/**)',
+              if: 'Edit(**/projects/*/memory/**)',
               command: MEMORY_GATE_COMMAND,
               timeout: 10,
             },
