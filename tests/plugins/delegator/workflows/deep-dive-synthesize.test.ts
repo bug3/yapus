@@ -47,7 +47,7 @@ const COMPLETENESS_PROMPT = [
 
 // The digest is FNV-1a of 32 bits over the UTF-16 units of CONTENT below,
 // worked out by a program apart from the script.
-const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_6e0def6a.md';
+const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_a9bdb65a.md';
 const BLOCKS = [
   '## Refuted',
   '',
@@ -61,9 +61,7 @@ const BLOCKS = [
   '',
   '- Unread: tests/hooks/claude/gates/return',
   '- Unanswered: Which tests hold the verdicts of the return gate?',
-  '- Q1 not searched: hooks/claude/delegator/status',
   '- Q3 returned nothing.',
-  '- Q4 not searched: The changelog: no entry on a repeated block was looked for',
   '',
   '## Run',
   '',
@@ -115,7 +113,6 @@ const REPOSITORY_LANE_BLOCKS = [
   '',
   '- Unread: tests/hooks/claude/gates/return',
   '- Unanswered: Which tests hold the verdicts of the return gate?',
-  '- Q1 not searched: hooks/claude/delegator/status',
   '- Q3 returned nothing.',
   '- Dropped: What does Claude Code do when a SubagentStop hook blocks twice? (its lane, web, is not among the lanes given)',
   '',
@@ -172,7 +169,7 @@ const SYNTHESIZE_PROMPT = [
   'Add a retry limit to the return gate',
   '',
   '## File',
-  ".yapus/plans/2026-11/return-retry/research_6e0def6a.md, under the project's root",
+  ".yapus/plans/2026-11/return-retry/research_a9bdb65a.md, under the project's root",
   '',
   CONTENT,
   '',
@@ -218,10 +215,7 @@ const FOLLOW_UP_BLOCKS = [
   '',
   '- Unread: tests/hooks/claude/gates/return',
   '- Unanswered: Which tests hold the verdicts of the return gate?',
-  '- Q1 not searched: hooks/claude/delegator/status',
   '- Q3 returned nothing.',
-  '- Q4 not searched: The changelog: no entry on a repeated block was looked for',
-  '- F1 not searched: tests/hooks/claude/gates/shared',
   '',
   '## Run',
   '',
@@ -863,7 +857,7 @@ test('writes that the completeness agent returned nothing, after the gather agen
 
   assert.match(
     findCall(run, 'synthesize')?.prompt ?? '',
-    /\n## Unmeasured\n\n- Q1 not searched: hooks\/claude\/delegator\/status\n- Q3 returned nothing\.\n- Q4 not searched: [^\n]+\n- The completeness agent returned nothing\.\n\n## Run\n/u,
+    /\n## Unmeasured\n\n- Q3 returned nothing\.\n- The completeness agent returned nothing\.\n\n## Run\n/u,
   );
 });
 
@@ -931,15 +925,13 @@ test('puts an unanswered question that holds a line break on one line', async ()
   );
 });
 
-test('puts what a gather agent named as not searched on one line', async () => {
-  const gathered = { claims: [], notSearched: ['docs,\n\n## Run\nand tests'] };
+test('leaves what a gather agent named as not searched to the completeness agent', async () => {
+  const gathered = { claims: [], notSearched: ['docs'] };
 
   const run = await runSmall(new Map([['gather-repo:Q1', gathered]]));
 
-  assert.match(
-    findCall(run, 'synthesize')?.prompt ?? '',
-    /\n## Unmeasured\n\n- Q1 not searched: docs, ## Run and tests\n\n## Run\n\n\| Stage/u,
-  );
+  assert.match(findCall(run, 'completeness')?.prompt ?? '', /; not searched: docs\n/u);
+  assert.match(findCall(run, 'synthesize')?.prompt ?? '', /\n## Unmeasured\n\n## Run\n\n\| Stage/u);
 });
 
 test('puts a dropped question that holds a line break on one line', async () => {
