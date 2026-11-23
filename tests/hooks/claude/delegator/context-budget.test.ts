@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import {
+  MAX_CHARACTERS as HANDOVER_MAX_CHARACTERS,
+} from '../../../../hooks/claude/delegator/memory/handover/get-handover.ts';
 import { CAP_CHARACTERS } from '../../../../hooks/claude/delegator/memory/start/get-context.ts';
 import {
   MAX_CHARACTERS,
@@ -23,4 +26,11 @@ test('keeps the cap of the memory list under the cap on one hook\'s context', ()
   const cap: number = CAP_CHARACTERS;
 
   assert.ok(cap < MAX_CHARACTERS);
+});
+
+// A hand-over is the context of one hook at a call.
+test('keeps the bound of a rule hand-over under the cap on one hook\'s context', () => {
+  const bound: number = HANDOVER_MAX_CHARACTERS;
+
+  assert.ok(bound < MAX_CHARACTERS);
 });

@@ -12,9 +12,9 @@ const DESCRIPTION_PLACEHOLDER = '<description>';
 
 const PLACEHOLDERS = new RegExp(`${ PATH_PLACEHOLDER }|${ DESCRIPTION_PLACEHOLDER }`, 'gu');
 
-// What one output holds at most, under the 10,000 characters past which
-// Claude Code shows the agent a preview of a hook's text.
-const MAX_CHARACTERS = 8000;
+// What one output holds at most, under the cap past which Claude Code shows
+// the agent a preview of a hook's text.
+export const MAX_CHARACTERS = 8000;
 
 // What stands between two rules of one output.
 const SEPARATOR = '\n\n';
