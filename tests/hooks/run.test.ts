@@ -221,7 +221,9 @@ function makeSandbox(t: TestContext, stubSource: string): string {
   return sandbox;
 }
 
-// HOME and TMPDIR stay in the sandbox, the test's own directory.
+// HOME and TMPDIR stay in the sandbox, the test's own directory. The hook runs
+// from the sandbox's copy, so it gets no compile cache: no later run would read
+// the entries it wrote.
 function run(sandbox: string, hookName: string, { input, env, cwd }: RunOptions) {
   return spawnSync(
     BASH,
