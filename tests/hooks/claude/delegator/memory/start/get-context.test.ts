@@ -94,7 +94,7 @@ test('leaves out every finding once a rule is left out, each group with its coun
       findings.split('\n').length,
       findings.split('\n')[0],
     ],
-    [2992, 'and 37 more', 2, 'and 2 more'],
+    [2902, 'and 39 more', 2, 'and 2 more'],
   );
 });
 
@@ -113,7 +113,7 @@ test('keeps every rule and leaves out the findings past the cap with their count
       findings.split('\n').length,
       findings.split('\n').at(-2),
     ],
-    [2983, 'rules/briefs.md: Keep a brief short', 46, 'and 36 more'],
+    [2989, 'rules/briefs.md: Keep a brief short', 44, 'and 38 more'],
   );
 });
 

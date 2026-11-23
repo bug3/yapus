@@ -1,4 +1,4 @@
-Project memory is in .yapus/memory: work <n> (open items), rules <n>, reference <n>. Read a directory's index with Grep "^description:" when the person asks what is open or a task meets one of them.
+Project memory is in .yapus/memory: work <n> (open items), rules <n>, reference <n>. Read a directory's index with Bash, grep "^description:" .yapus/memory/<directory>/*.md, when the person asks what is open or a task meets one of them; the Grep tool skips these files, which a .gitignore keeps out of git.
 Rules for a situation; read the file when its situation comes up:
 rules/<name>.md: <description>
 When a rule replaces another, keep the old file and give it superseded-by: "<new name>". When a work item is finished, write its lesson under rules/ or reference/ first and delete its entry after, since a deleted file cannot be restored.

@@ -17,9 +17,11 @@ const WORK_ITEM: TempFile = {
   path: 'work/site.md',
   text: '---\ndescription: "The site"\n---\n',
 };
+const READ_INDEX = 'Read a directory\'s index with Bash, grep "^description:"'
+  + ' .yapus/memory/<directory>/*.md, when the person asks what is open or a task meets one of'
+  + ' them; the Grep tool skips these files, which a .gitignore keeps out of git.';
 const ONE_WORK_ITEM = 'Project memory is in .yapus/memory: work 1 (open items), rules 0,'
-  + ' reference 0. Read a directory\'s index with Grep "^description:" when the person asks what'
-  + ' is open or a task meets one of them.';
+  + ` reference 0. ${ READ_INDEX }`;
 const UPKEEP = 'When a rule replaces another, keep the old file and give it superseded-by:'
   + ' "<new name>". When a work item is finished, write its lesson under rules/ or reference/'
   + ' first and delete its entry after, since a deleted file cannot be restored.';
@@ -58,9 +60,8 @@ test('writes the directories, the rules of no call and the upkeep rules as conte
     hookSpecificOutput: {
       hookEventName: 'SessionStart',
       additionalContext: [
-        'Project memory is in .yapus/memory: work 1 (open items), rules 4, reference 1. Read a'
-        + ' directory\'s index with Grep "^description:" when the person asks what is open or a'
-        + ' task meets one of them.',
+        `Project memory is in .yapus/memory: work 1 (open items), rules 4, reference 1. ${
+          READ_INDEX }`,
         'Rules for a situation; read the file when its situation comes up:\n'
         + 'rules/briefs.md: Keep a brief short\n'
         + 'rules/paid-runs.md: Ask before a paid run',
@@ -185,7 +186,7 @@ test('leaves out the index lines and keeps the rest with an index it cannot read
   );
 });
 
-// A rule's line takes 99 characters here, so a 26th would pass 3,000.
+// A rule's line takes 99 characters here, so a 25th would pass 3,000.
 test('keeps the context of 60 rules within 3,000 characters and counts the ones left out', (t) => {
   const rules = [...Array.from({ length: 60 }).keys()].map((index) => ({
     path: `rules/rule-${ String(index + 10) }.md`,
@@ -197,7 +198,7 @@ test('keeps the context of 60 rules within 3,000 characters and counts the ones 
 
   assert.deepEqual(
     [blocks.join('\n\n').length, signpostLines.length, signpostLines.at(-1)],
-    [2986, 27, 'and 35 more'],
+    [2995, 26, 'and 36 more'],
   );
 });
 
