@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
+import { getSessionMemoryDirectory, INDEX_FILE } from '../auto/get-auto-memory-file.ts';
 import { readIndexLinks } from '../auto/read-index-links.ts';
 import type { Entries, Entry } from '../read-entries.ts';
 import {
@@ -17,11 +18,6 @@ const WORK_LIMIT_DAYS = 30;
 const INDEX_LIMIT_LINES = 20;
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
-
-// Claude Code keeps a project's auto memory in this directory beside the
-// session's transcript, with this file as its index.
-const AUTO_MEMORY_DIRECTORY = 'memory';
-const INDEX_FILE = 'MEMORY.md';
 
 // A link target that names a topic file beside the index: no directory and
 // no URL.
@@ -46,7 +42,7 @@ export function getFindings(
 ): readonly string[] {
   const indexLines = transcriptPath === undefined
     ? []
-    : getIndexLines(texts, join(dirname(transcriptPath), AUTO_MEMORY_DIRECTORY));
+    : getIndexLines(texts, getSessionMemoryDirectory(transcriptPath));
 
   return [
     ...getStaleLines(texts.staleWork, memory.entries, now),

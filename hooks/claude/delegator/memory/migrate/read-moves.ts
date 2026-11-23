@@ -2,11 +2,8 @@ import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getFirstLine } from '../../../../shared/get-first-line.ts';
 import { isRecord } from '../../../../shared/is-record.ts';
-import { getAutoMemoryFile } from '../auto/get-auto-memory-file.ts';
+import { getAutoMemoryFile, INDEX_FILE } from '../auto/get-auto-memory-file.ts';
 import { DIRECTORIES, type Directory, getMemoryDirectory } from '../get-memory-directory.ts';
-
-// The index of an auto memory directory.
-export const INDEX_FILE = 'MEMORY.md';
 
 const MOVES_FILE = 'migration.json';
 const MISSING = 'ENOENT';

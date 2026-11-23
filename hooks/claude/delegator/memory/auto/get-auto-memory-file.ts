@@ -1,4 +1,4 @@
-import { isAbsolute, join, relative, sep } from 'node:path';
+import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 
 // A file of an auto memory directory: its index, or a topic file by its name
 // without the extension.
@@ -7,7 +7,10 @@ export type AutoMemoryFile =
   | { readonly kind: 'topic'; readonly memoryDirectory: string; readonly name: string };
 
 const MEMORY_DIRECTORY = 'memory';
-const INDEX_FILE = 'MEMORY.md';
+
+// The index of an auto memory directory.
+export const INDEX_FILE = 'MEMORY.md';
+
 const TOPIC_EXTENSION = '.md';
 
 // The auto memory file at the absolute path, or undefined for a path that is
@@ -47,4 +50,14 @@ export function getAutoMemoryFile(
   return fileName.endsWith(TOPIC_EXTENSION) && name !== ''
     ? { kind: 'topic', memoryDirectory, name }
     : undefined;
+}
+
+// The auto memory directory of the session whose transcript is at the path:
+// Claude Code keeps a project's transcripts beside its auto memory directory,
+// so the place needs no copy of the rule that names <slug>. The auto memory
+// follows the repository, so a session opened in a linked worktree or in a
+// subdirectory has its transcript under another <slug>, and the directory
+// given for it holds no auto memory: an accepted limit.
+export function getSessionMemoryDirectory(transcriptPath: string): string {
+  return join(dirname(transcriptPath), MEMORY_DIRECTORY);
 }

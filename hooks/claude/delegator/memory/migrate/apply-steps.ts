@@ -10,11 +10,12 @@ import {
 } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { getFirstLine } from '../../../../shared/get-first-line.ts';
+import { INDEX_FILE } from '../auto/get-auto-memory-file.ts';
 import { readIndexLinks } from '../auto/read-index-links.ts';
 import { getMemoryDirectory } from '../get-memory-directory.ts';
 import { readFrontmatter } from '../read-frontmatter.ts';
 import { formatBackup, formatStep } from './format-steps.ts';
-import { getMovesPath, INDEX_FILE, type Moves, type Step } from './read-moves.ts';
+import { getMovesPath, type Moves, type Step } from './read-moves.ts';
 
 const BACKUPS_DIRECTORY = 'memory-backup';
 
