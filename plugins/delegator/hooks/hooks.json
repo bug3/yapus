@@ -8,6 +8,11 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/delegator/policy",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/delegator/memory/start",
+            "timeout": 10
           }
         ]
       },
@@ -54,6 +59,23 @@
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/gates/gh",
             "timeout": 10,
             "onFailure": "block"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Write(**/projects/*/memory/**)",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/gates/memory || exit 0",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "if": "Edit(**/projects/*/memory/**)",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/runtime/run.sh\" claude/gates/memory || exit 0",
+            "timeout": 10
           }
         ]
       }
