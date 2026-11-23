@@ -1,7 +1,7 @@
 {
   "name": "delegator",
   "displayName": "Yapus Delegator",
-  "version": "0.20.4",
+  "version": "0.21.0",
   "description": "An orchestrator that divides work among a fixed roster of subagents, with launch limits and a cap on what returns to the session.",
   "author": {
     "name": "bug3"
