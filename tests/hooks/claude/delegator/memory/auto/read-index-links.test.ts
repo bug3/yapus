@@ -36,6 +36,20 @@ test('gives every link of a line that holds two', () => {
   ]);
 });
 
+test('gives the target of a link written with ./ before the file without it', () => {
+  assert.deepEqual(readIndexLinks('- [C](./c.md): hook\n- [N](./notes/n.md)\n'), [
+    { line: 1, target: 'c.md' },
+    { line: 2, target: 'notes/n.md' },
+  ]);
+});
+
+test('gives the target of a link that carries a title without the title', () => {
+  assert.deepEqual(readIndexLinks('- [D](d.md "t"): hook\n- [E](./e.md \'the (e)\') - hook\n'), [
+    { line: 1, target: 'd.md' },
+    { line: 2, target: 'e.md' },
+  ]);
+});
+
 test('gives nothing for brackets with no target after them', () => {
   assert.deepEqual(readIndexLinks('- [T] (x.md)\n- [T]()\n- [done] x.md\n'), []);
 });

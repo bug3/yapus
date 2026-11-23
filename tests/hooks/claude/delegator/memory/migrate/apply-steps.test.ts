@@ -185,6 +185,22 @@ test('takes the lines that link a moved or removed file out of the index', (t) =
   );
 });
 
+test('takes out the lines that link the file with ./ before it or with a title', (t) => {
+  const migration = makeMigration(t, [
+    { path: 'MEMORY.md', text: '- [A](./a.md): the a\n- [B](b.md "the b")\n- [C](c.md): the c\n' },
+    { path: 'a.md', text: STORED_TEXT },
+    { path: 'b.md', text: 'b\n' },
+    { path: 'c.md', text: 'c\n' },
+  ]);
+
+  apply(migration, [MOVE_A, REMOVE_B]);
+
+  assert.equal(
+    readFileSync(join(migration.autoDirectory, 'MEMORY.md'), 'utf8'),
+    '- [C](c.md): the c\n',
+  );
+});
+
 test('leaves every line that does not link the file byte for byte', (t) => {
   const indexText = [
     '# Memory\r',

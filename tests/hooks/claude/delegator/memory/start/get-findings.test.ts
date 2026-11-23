@@ -85,6 +85,18 @@ test('lists each link to a topic file that is not beside the index, by its line'
   );
 });
 
+test('lists a missing topic file linked with ./ before it or with a title, by its name', (t) => {
+  const transcriptPath = makeTranscriptPath(t, [
+    { path: 'MEMORY.md', text: '- [A](./kept.md "a")\n- [B](./gone.md): b\n- [C](lost.md "c")\n' },
+    { path: 'kept.md', text: 'a\n' },
+  ]);
+
+  assert.deepEqual(
+    getFindings(TEXTS, { memory: NO_MEMORY, transcriptPath, now: NOW }),
+    ['index line 2: no gone.md', 'index line 3: no lost.md'],
+  );
+});
+
 test('lists no link to a URL, to a file in a directory or to a file that is not Markdown', (t) => {
   const transcriptPath = makeTranscriptPath(t, [{
     path: 'MEMORY.md',
