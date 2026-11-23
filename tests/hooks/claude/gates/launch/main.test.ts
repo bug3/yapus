@@ -70,6 +70,19 @@ test('hands an allowed launch the rule that names its agent type', (t) => {
   );
 });
 
+test('hands a later launch of the session the rule as its line', (t) => {
+  const env = makeProjectEnv(t, [{ path: 'rules/a.md', text: `${ FINISHER_RULE }\nSay a.\n` }]);
+
+  runHook(env, JSON.stringify(FINISHER_CALL));
+
+  const hookRun = runHook(env, JSON.stringify(FINISHER_CALL));
+
+  assert.deepEqual(
+    [hookRun.status, hookRun.stdout, hookRun.stderr],
+    [0, makeOutput(`${ HEADING_A } About a. Read the file.`), ''],
+  );
+});
+
 test('hands nothing to a launch of an agent type the rule does not name', (t) => {
   const env = makeProjectEnv(t, [{ path: 'rules/a.md', text: `${ FINISHER_RULE }\nSay a.\n` }]);
   const hookRun = runHook(env, JSON.stringify(CALL));

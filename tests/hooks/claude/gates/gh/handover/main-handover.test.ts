@@ -78,6 +78,19 @@ test('hands a passed gh call the rules that name its command, in name order', (t
   });
 });
 
+test('hands a later gh call of the session the rule as its line', (t) => {
+  const dir = makeTempDir(t);
+  const env = makeHookEnv(t, [{ path: 'rules/a.md', text: `${ MERGE_RULE }\nSay a.\n` }]);
+
+  runHook(dir, makeCall('gh pr merge 5', dir), env);
+
+  assert.deepEqual(runHook(dir, makeCall('gh pr merge 6', dir), env), {
+    status: 0,
+    stdout: makeOutput(`${ HEADING_A } About merging. Read the file.`),
+    stderr: '',
+  });
+});
+
 test('hands a gh pr new whose form passes the rule of gh pr create', (t) => {
   const dir = makeTempDir(t);
   const env = makeHookEnv(t, [

@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { isSessionOff } from '../../policy/is-session-off.ts';
 import type { MemoryEvent } from '../parse-event.ts';
 import { type Entry, readEntries } from '../read-entries.ts';
+import { getRecordPath, readHanded, recordHanded } from './record-handed.ts';
 
 const TEXTS_PATH = join(import.meta.dirname, 'handover.md');
 
@@ -23,7 +24,8 @@ const SEPARATOR = '\n\n';
 export interface Call {
   // The PreToolUse payload.
   readonly stdinText: string;
-  // CLAUDE_PLUGIN_DATA, which holds the session's mode.
+  // CLAUDE_PLUGIN_DATA, which holds the session's mode and its record of the
+  // rules it was handed.
   readonly dataDir: string | undefined;
   // CLAUDE_PROJECT_DIR, the root of the project whose memory is read.
   readonly projectDir: string | undefined;
@@ -33,18 +35,28 @@ export interface Call {
 interface Texts {
   // The line over a rule's body.
   readonly heading: string;
-  // The line that stands for a rule whose body does not fit.
+  // The line that stands for a rule whose body does not fit or was handed to
+  // the session before.
   readonly pointer: string;
+}
+
+// The text of one output and the rules it holds whole, by their paths.
+interface Handover {
+  readonly text: string;
+  readonly wholePaths: readonly string[];
 }
 
 // The PreToolUse output that hands the main agent the rules of the project's
 // memory whose event the call is, in name order, or undefined when nothing is
 // handed: the project directory is not set or holds no memory, the session is
-// switched off, or no rule names the call. A replaced rule is not handed. As
-// many of the first rules as fit come with their bodies and the rest as one
+// switched off, or no rule names the call. A replaced rule is not handed. A
+// session gets the body of a rule once: a rule whose body it was handed comes
+// as one line, and the record of them is kept in the plugin's data directory;
+// with a record that cannot be read or written the body comes again. As many
+// of the first other rules as fit come with their bodies and the rest as one
 // line each, so the whole stays within MAX_CHARACTERS; when the lines alone
-// pass it, nothing is handed. The same call gives the same output. Throws when
-// the memory directory or the texts file cannot be read.
+// pass it, nothing is handed. Throws when the memory directory or the texts
+// file cannot be read.
 export function getHandover(
   call: Call,
   isCalled: (event: MemoryEvent) => boolean,
@@ -58,11 +70,23 @@ export function getHandover(
   const rules = readEntries(projectDir).entries.filter(({ event, supersededBy }) => (
     event !== undefined && supersededBy === undefined && isCalled(event)
   ));
-  const additionalContext = rules.length === 0 ? undefined : formatRules(rules, readTexts());
 
-  return additionalContext === undefined
-    ? undefined
-    : JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext } });
+  if (rules.length === 0) {
+    return undefined;
+  }
+
+  const recordPath = getRecordPath(stdinText, dataDir);
+  const handover = formatRules(rules, readTexts(), readHanded(recordPath));
+
+  if (handover === undefined) {
+    return undefined;
+  }
+
+  recordHanded(recordPath, handover.wholePaths);
+
+  return JSON.stringify({
+    hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: handover.text },
+  });
 }
 
 function readTexts(): Texts {
@@ -71,17 +95,27 @@ function readTexts(): Texts {
   return { heading, pointer };
 }
 
-// The rules with the most of the first handed whole that MAX_CHARACTERS
-// allows, counting the lines of the rest.
-function formatRules(rules: readonly Entry[], texts: Texts): string | undefined {
-  const wholes = rules.map((rule) => `${ fill(texts.heading, rule) }\n${ rule.body.trim() }`);
-  const pointers = rules.map((rule) => fill(texts.pointer, rule));
+// The rules in their order, with the most of the first not handed before
+// whole that MAX_CHARACTERS allows, counting the lines of the rest.
+function formatRules(
+  rules: readonly Entry[],
+  texts: Texts,
+  handed: ReadonlySet<string>,
+): Handover | undefined {
+  const fresh = rules.map(({ path }) => path).filter((path) => !handed.has(path));
   // Every count of whole rules, the largest first.
-  const wholeCounts = [...rules.keys(), rules.length].toReversed();
+  const wholeCounts = [...fresh.keys(), fresh.length].toReversed();
 
   return wholeCounts
-    .map((count) => [...wholes.slice(0, count), ...pointers.slice(count)].join(SEPARATOR))
-    .find((handover) => handover.length <= MAX_CHARACTERS);
+    .map((count) => {
+      const wholePaths = fresh.slice(0, count);
+      const parts = rules.map((rule) => (wholePaths.includes(rule.path)
+        ? `${ fill(texts.heading, rule) }\n${ rule.body.trim() }`
+        : fill(texts.pointer, rule)));
+
+      return { text: parts.join(SEPARATOR), wholePaths };
+    })
+    .find(({ text }) => text.length <= MAX_CHARACTERS);
 }
 
 // A function, since a replacement string would read a `$` of the path or the
