@@ -16,15 +16,12 @@ import { getMemoryDirectory } from '../get-memory-directory.ts';
 import { readFrontmatter } from '../read-frontmatter.ts';
 import { formatBackup, formatStep } from './format-steps.ts';
 import { getMovesPath, type Moves, type Step } from './read-moves.ts';
+import { readStoredDescription } from './read-stored-description.ts';
 
 const BACKUPS_DIRECTORY = 'memory-backup';
 
 // The length of an ISO time down to its seconds.
 const SECONDS_LENGTH = 19;
-
-// The description line of a topic file as Claude Code stores it, a YAML
-// line: the text after the key, in quotes or not.
-const DESCRIPTION = /^description:[ \t]*(.*?)[ \t]*$/mu;
 
 const AFTER_FAILURE = 'no step after it is made; repair it and run the command again';
 const DONE = { kind: 'done' } as const;
@@ -132,23 +129,8 @@ function applyStep(memoryDirectory: string, autoDirectory: string, step: Step): 
 // unescapes nothing, so the text is written as it is.
 function getMovedText(sourceText: string): string {
   const { body } = readFrontmatter(sourceText);
-  const frontmatter = sourceText.slice(0, sourceText.length - body.length);
-  const [, written = ''] = DESCRIPTION.exec(frontmatter) ?? [];
 
-  return `---\ndescription: "${ unquote(written) }"\n---\n${ body }`;
-}
-
-// A YAML text without the quotes around it and the escape of its own quote.
-function unquote(written: string): string {
-  const inner = written.slice(1, -1);
-
-  if (written.length > 1 && written.startsWith('"') && written.endsWith('"')) {
-    return inner.replaceAll(/\\(["\\])/gu, '$1');
-  }
-
-  return written.length > 1 && written.startsWith("'") && written.endsWith("'")
-    ? inner.replaceAll("''", "'")
-    : written;
+  return `---\ndescription: "${ readStoredDescription(sourceText) }"\n---\n${ body }`;
 }
 
 // Takes every line that links the file out of the index. The index is read
