@@ -83,8 +83,10 @@ interface Checked {
   readonly details: readonly string[];
 }
 
+// A target of the right form that no earlier step takes, with whether a file
+// or a link is at its place already, or the line against it.
 type CheckedTarget =
-  | { readonly kind: 'target'; readonly target: Target }
+  | { readonly kind: 'target'; readonly target: Target; readonly isThere: boolean }
   | { readonly kind: 'refused'; readonly detail: string };
 
 export function getMovesPath(projectRoot: string): string {
@@ -280,9 +282,23 @@ function checkStep(written: WrittenStep, position: number, state: State): Checke
     ]
     : [];
 
-  return checked.kind === 'refused'
-    ? { step: undefined, details: [...details, checked.detail, ...undescribed] }
-    : { step: { kind: 'move', file, ...checked.target }, details: [...details, ...undescribed] };
+  if (checked.kind === 'refused') {
+    return { step: undefined, details: [...details, checked.detail, ...undescribed] };
+  }
+
+  const taken = checked.isThere
+    ? [
+      getDetail(
+        `${ getMoved(written, position) }, which exists in ${ state.memoryDirectory }`,
+        'choose another name or remove that file',
+      ),
+    ]
+    : [];
+
+  return {
+    step: checked.isThere ? undefined : { kind: 'move', file, ...checked.target },
+    details: [...details, ...taken, ...undescribed],
+  };
 }
 
 // Whether the topic file holds the description a move writes to its target.
@@ -290,11 +306,11 @@ function holdsDescription(state: State, file: string): boolean {
   return readStoredDescription(readFileSync(join(state.autoDirectory, file), 'utf8')) !== '';
 }
 
-// The target of a move, or the line against it: a target of another form,
-// one an earlier step takes, or one on disk already, since a move never
-// replaces a file.
+// The target of a move, or the line against it: a target of another form or
+// one an earlier step takes. A move never replaces a file, so the target says
+// whether its place is taken.
 function checkTarget(move: WrittenMove, position: number, state: State): CheckedTarget {
-  const moved = `step ${ getNumber(position) } moves ${ move.file } to ${ move.to }`;
+  const moved = getMoved(move, position);
   const [, directoryName, name] = TARGET.exec(move.to) ?? [];
   const directory = DIRECTORIES.find((known) => known === directoryName);
   const first = state.steps.findIndex((step) => step.kind === 'move' && step.to === move.to);
@@ -316,12 +332,13 @@ function checkTarget(move: WrittenMove, position: number, state: State): Checked
 
   // Asked without following a link, as the write that replaces no file sees
   // it: a link that leads nowhere exists too.
-  return lstatSync(join(state.memoryDirectory, move.to), { throwIfNoEntry: false }) === undefined
-    ? { kind: 'target', target: { directory, name } }
-    : refuse(
-      `${ moved }, which exists in ${ state.memoryDirectory }`,
-      'choose another name or remove that file',
-    );
+  const stat = lstatSync(join(state.memoryDirectory, move.to), { throwIfNoEntry: false });
+
+  return { kind: 'target', target: { directory, name }, isThere: stat !== undefined };
+}
+
+function getMoved(move: WrittenMove, position: number): string {
+  return `step ${ getNumber(position) } moves ${ move.file } to ${ move.to }`;
 }
 
 function refuse(failed: string, remedy: string): CheckedTarget {
