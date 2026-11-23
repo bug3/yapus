@@ -46,18 +46,15 @@ test('is silent for a project root that is not absolute', (t) => {
   );
 });
 
-test('fails on a file in the place of the memory directory', (t) => {
+test('is silent where a file stands in the place of the memory directory', (t) => {
   const projectRoot = makeTempDir(t);
 
   mkdirSync(join(projectRoot, '.yapus'));
   writeFileSync(join(projectRoot, '.yapus', 'memory'), '');
 
-  const context = getContext({ stdinText: '{}', isOff: false, projectRoot, now: NOW });
-
-  assert.ok(context.kind === 'failure');
-  assert.match(
-    context.detail,
-    /^cannot read .*\.yapus\/memory: ENOTDIR.*; the memory list is not given$/u,
+  assert.deepEqual(
+    getContext({ stdinText: '{}', isOff: false, projectRoot, now: NOW }),
+    { kind: 'silence' },
   );
 });
 

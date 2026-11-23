@@ -1,6 +1,7 @@
-import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
+import { lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
-import { DIRECTORIES, type Directory, getMemoryDirectory } from './get-memory-directory.ts';
+import { findMemoryDirectory } from './find-memory-directory.ts';
+import { DIRECTORIES, type Directory } from './get-memory-directory.ts';
 import { isFile } from './is-file.ts';
 import { type MemoryEvent, parseEvent } from './parse-event.ts';
 import { readFrontmatter } from './read-frontmatter.ts';
@@ -53,7 +54,7 @@ interface FileRead {
 
 // The entries of the project's memory, by directory in the order of
 // DIRECTORIES and then by name, and its problems by path; two empty lists
-// when the project has no memory directory. A file with a description is an
+// when the project holds no memory directory. A file with a description is an
 // entry, also when another line of its frontmatter gives a problem: an event
 // of neither form is left out of the entry, and a successor or a plan that
 // names nothing stays as it is written. A rule's lines are read under rules/
@@ -61,9 +62,9 @@ interface FileRead {
 // depth, a file that is not Markdown and a link are not read. Throws when the
 // directory or a file in it cannot be read.
 export function readEntries(projectRoot: string): Entries {
-  const memoryDirectory = getMemoryDirectory(projectRoot);
+  const memoryDirectory = findMemoryDirectory(projectRoot);
 
-  if (!existsSync(memoryDirectory)) {
+  if (memoryDirectory === undefined) {
     return { entries: [], problems: [] };
   }
 

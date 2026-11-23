@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readdirSync, utimesSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, readdirSync, utimesSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { isRecord } from '../../../../../../hooks/shared/is-record.ts';
@@ -195,19 +195,17 @@ test('writes nothing in a session switched off', (t) => {
   assert.deepEqual([hookRun.status, hookRun.stdout, hookRun.stderr], [0, '', '']);
 });
 
-test('exits 2 with one line on stderr for a memory directory it cannot read', (t) => {
-  const projectRoot = makeTempDir(t);
-  const memoryPath = join(projectRoot, '.yapus', 'memory');
+test('exits 2 with one line on stderr for a memory file it cannot read', (t) => {
+  const projectRoot = makeMemoryProject(t, [WORK_ITEM]);
 
-  mkdirSync(dirname(memoryPath));
-  writeFileSync(memoryPath, '');
+  chmodSync(join(projectRoot, '.yapus', 'memory', WORK_ITEM.path), 0o000);
 
   const hookRun = runHook(makeSession(t, projectRoot, []));
 
   assert.deepEqual([hookRun.status, hookRun.stdout], [2, '']);
   assert.match(
     hookRun.stderr,
-    /^yapus delegator memory start: cannot read .*memory: ENOTDIR.*; the memory list is not given\n$/u,
+    /^yapus delegator memory start: cannot read .*memory: EACCES.*; the memory list is not given\n$/u,
   );
 });
 

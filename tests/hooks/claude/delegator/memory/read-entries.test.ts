@@ -302,6 +302,15 @@ test('reads no entry and no problem where a file stands in the place of rules', 
   assert.deepEqual(readEntries(projectRoot), { entries: [], problems: [] });
 });
 
+test('reads no entry and no problem where a file stands in the place of the directory', (t) => {
+  const projectRoot = makeTempDir(t);
+
+  mkdirSync(join(projectRoot, '.yapus'));
+  writeFileSync(join(projectRoot, '.yapus', 'memory'), 'a file\n');
+
+  assert.deepEqual(readEntries(projectRoot), { entries: [], problems: [] });
+});
+
 test('reads no entry and no problem in an empty memory directory or without one', (t) => {
   assert.deepEqual(
     [readEntries(makeMemoryProject(t, [])), readEntries(makeTempDir(t))],

@@ -1,7 +1,7 @@
-import { existsSync } from 'node:fs';
 import { isAbsolute } from 'node:path';
 import { getFirstLine } from '../../../../shared/get-first-line.ts';
 import { isRecord } from '../../../../shared/is-record.ts';
+import { findMemoryDirectory } from '../find-memory-directory.ts';
 import { DIRECTORIES, getMemoryDirectory } from '../get-memory-directory.ts';
 import { type Entries, type Entry, readEntries } from '../read-entries.ts';
 import { getFindings } from './get-findings.ts';
@@ -82,7 +82,7 @@ export function getContext(input: Input): Context {
 // An absolute root only, so a relative one never resolves against the hook's
 // working directory.
 function hasMemory(projectRoot: string): boolean {
-  return isAbsolute(projectRoot) && existsSync(getMemoryDirectory(projectRoot));
+  return isAbsolute(projectRoot) && findMemoryDirectory(projectRoot) !== undefined;
 }
 
 function readProjectMemory(projectRoot: string): ReadMemory {
