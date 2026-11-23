@@ -1,9 +1,10 @@
-import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
+import { lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getFirstLine } from '../../../../shared/get-first-line.ts';
 import { isRecord } from '../../../../shared/is-record.ts';
 import { getAutoMemoryFile, INDEX_FILE } from '../auto/get-auto-memory-file.ts';
 import { DIRECTORIES, type Directory, getMemoryDirectory } from '../get-memory-directory.ts';
+import { isFile } from '../is-file.ts';
 
 const MOVES_FILE = 'migration.json';
 const MISSING = 'ENOENT';
@@ -217,7 +218,7 @@ function findAuto(memoryDirectory: string, configDirectory: string | undefined):
 
   const autoDirectory = index.memoryDirectory;
 
-  if (!isFile(join(autoDirectory, INDEX_FILE))) {
+  if (!isUnlinkedFile(join(autoDirectory, INDEX_FILE))) {
     return fail(
       `${ autoDirectory } holds no ${ INDEX_FILE }`,
       'name the auto memory directory that holds the index of this project',
@@ -330,9 +331,8 @@ function isMissing(error: unknown): boolean {
   return error instanceof Error && 'code' in error && error.code === MISSING;
 }
 
-// A link is no file: the backup would hold the link, and a write to it would
-// change the file it leads to. Asked of existsSync first, which answers false
-// where a stat throws: a path that runs through a file.
-function isFile(path: string): boolean {
-  return existsSync(path) && lstatSync(path).isFile();
+// Whether a file is at the path and not a link to one: the backup would hold
+// the link, and a write to it would change the file it leads to.
+function isUnlinkedFile(path: string): boolean {
+  return isFile(path) && !lstatSync(path).isSymbolicLink();
 }

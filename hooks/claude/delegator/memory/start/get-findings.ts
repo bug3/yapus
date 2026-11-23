@@ -1,7 +1,8 @@
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getSessionMemoryDirectory, INDEX_FILE } from '../auto/get-auto-memory-file.ts';
 import { readIndexLinks } from '../auto/read-index-links.ts';
+import { isFile } from '../is-file.ts';
 import type { Entries, Entry } from '../read-entries.ts';
 import {
   COUNT_PLACEHOLDER,
@@ -93,10 +94,4 @@ function countLines(text: string): number {
   const lines = text.split('\n');
 
   return lines.at(-1) === '' ? lines.length - 1 : lines.length;
-}
-
-// Asked of existsSync first, which answers false where a stat throws: a path
-// that runs through a file.
-function isFile(path: string): boolean {
-  return existsSync(path) && statSync(path).isFile();
 }

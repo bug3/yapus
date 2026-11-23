@@ -1,6 +1,7 @@
-import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { DIRECTORIES, type Directory, getMemoryDirectory } from './get-memory-directory.ts';
+import { isFile } from './is-file.ts';
 import { type MemoryEvent, parseEvent } from './parse-event.ts';
 import { readFrontmatter } from './read-frontmatter.ts';
 
@@ -150,12 +151,6 @@ function readFile(
     entry: { ...file, description, event, supersededBy, plan, modifiedAt, body },
     problems,
   };
-}
-
-// Asked of existsSync first, which answers false where a stat throws: a path
-// that runs through a file.
-function isFile(path: string): boolean {
-  return existsSync(path) && statSync(path).isFile();
 }
 
 function compareFiles(a: MemoryFile, b: MemoryFile): number {
