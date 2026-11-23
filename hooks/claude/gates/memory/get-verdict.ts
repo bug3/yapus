@@ -1,7 +1,7 @@
-import { existsSync, statSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { basename } from 'node:path';
 import { getAutoMemoryFile } from '../../delegator/memory/auto/get-auto-memory-file.ts';
-import { getMemoryDirectory } from '../../delegator/memory/get-memory-directory.ts';
+import { findMemoryDirectory } from '../../delegator/memory/find-memory-directory.ts';
 import { readFrontmatter } from '../../delegator/memory/read-frontmatter.ts';
 import { parseWrite } from './parse-write.ts';
 import { readGateText } from './read-gate-text.ts';
@@ -33,7 +33,7 @@ const ALLOW: Verdict = { kind: 'allow' };
 // project with no memory directory, so a call that cannot be read is allowed
 // there and is a failure elsewhere. Writes no file.
 export function getVerdict(input: Input): Verdict {
-  const memoryDirectory = getProjectMemoryDirectory(input.projectRoot);
+  const memoryDirectory = findMemoryDirectory(input.projectRoot);
 
   if (input.isOff || memoryDirectory === undefined) {
     return ALLOW;
@@ -59,22 +59,6 @@ export function getVerdict(input: Input): Verdict {
   return gateText.kind === 'failure'
     ? { kind: 'failure', detail: `${ gateText.detail }; reinstall the plugin` }
     : { kind: 'deny', reason: gateText.text };
-}
-
-// The project's memory directory, or undefined where the project holds none:
-// no project root, no such path, or a file in its place.
-function getProjectMemoryDirectory(projectRoot: string | undefined): string | undefined {
-  if (projectRoot === undefined || projectRoot === '') {
-    return undefined;
-  }
-
-  const memoryDirectory = getMemoryDirectory(projectRoot);
-
-  // Asked of existsSync first, which answers false where a stat throws: a
-  // path that runs through a file.
-  return existsSync(memoryDirectory) && statSync(memoryDirectory).isDirectory()
-    ? memoryDirectory
-    : undefined;
 }
 
 // Whether the path is a topic file of an auto memory that is not on disk
