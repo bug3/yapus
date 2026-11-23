@@ -217,7 +217,7 @@ test('changes nothing when the list cannot be printed', (t) => {
   assert.deepEqual(readTrees(migration), before);
 });
 
-test('refuses a moves file that is not JSON and changes nothing', (t) => {
+test('refuses a moves file that is not JSON and makes no step', (t) => {
   const migration = makeMigration(t, STEPS);
 
   writeFileSync(getMovesPath(migration), '{ "steps": [');
@@ -346,7 +346,7 @@ test('refuses a target that exists and leaves it as it is', (t) => {
 
 // The run cannot be given its time, so every second it can start in has a
 // backup directory.
-test('refuses a backup directory that exists and changes nothing', (t) => {
+test('refuses a backup directory that exists and makes no step', (t) => {
   const migration = makeMigration(t, STEPS);
 
   makeBackupDirectories(migration);
