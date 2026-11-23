@@ -11,11 +11,15 @@ test('reads the path and the content of a Write call', () => {
 
   assert.deepEqual(parseWrite(JSON.stringify(call)), {
     kind: 'write',
-    write: { filePath: '/config/projects/-work-app/memory/x.md', content: 'text\n' },
+    write: {
+      filePath: '/config/projects/-work-app/memory/x.md',
+      content: 'text\n',
+      newString: undefined,
+    },
   });
 });
 
-test('reads the path of an Edit call, which carries no content', () => {
+test('reads the path and the new text of an Edit call, which carries no content', () => {
   const call = {
     session_id: 's1',
     tool_name: 'Edit',
@@ -24,7 +28,7 @@ test('reads the path of an Edit call, which carries no content', () => {
 
   assert.deepEqual(parseWrite(JSON.stringify(call)), {
     kind: 'write',
-    write: { filePath: '/work/app/x.md', content: undefined },
+    write: { filePath: '/work/app/x.md', content: undefined, newString: 'b' },
   });
 });
 
@@ -56,5 +60,14 @@ test('fails on a content that is not a string', () => {
   assert.deepEqual(parseWrite(JSON.stringify(call)), {
     kind: 'failure',
     reason: 'tool_input.content is not a string',
+  });
+});
+
+test('fails on a new text that is not a string', () => {
+  const call = { tool_input: { file_path: '/work/app/x.md', old_string: '', new_string: 5 } };
+
+  assert.deepEqual(parseWrite(JSON.stringify(call)), {
+    kind: 'failure',
+    reason: 'tool_input.new_string is not a string',
   });
 });

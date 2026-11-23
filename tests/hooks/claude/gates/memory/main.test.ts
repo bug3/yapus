@@ -85,6 +85,21 @@ test('passes an Edit of a topic file that is on disk', (t) => {
   assert.deepEqual([gateRun.status, gateRun.stdout, gateRun.stderr], SILENT_PASS);
 });
 
+test('passes an Edit that creates a topic file and says why every session needs it', (t) => {
+  const gate = makeGate(t, makeMemoryProject(t, []), []);
+  const filePath = join(gate.memoryDirectory, 'x.md');
+  const declared = makeCall('Edit', { file_path: filePath, old_string: '', new_string: DECLARED });
+  const undeclared = makeCall('Edit', {
+    file_path: filePath,
+    old_string: '',
+    new_string: UNDECLARED,
+  });
+  const gateRun = runGate(gate, declared);
+
+  assert.deepEqual([gateRun.status, gateRun.stdout, gateRun.stderr], SILENT_PASS);
+  assert.match(runGate(gate, undeclared).stdout, DENIAL);
+});
+
 test('passes a Write of the index', (t) => {
   const gate = makeGate(t, makeMemoryProject(t, []), [
     { path: 'MEMORY.md', text: INDEX },

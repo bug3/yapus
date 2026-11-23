@@ -7,6 +7,9 @@ export interface Write {
   // The file's whole text, which a Write call carries; undefined for an Edit
   // call, which carries a part of it.
   readonly content: string | undefined;
+  // The text an Edit call puts in, the whole text of a file it creates;
+  // undefined for a Write call.
+  readonly newString: string | undefined;
 }
 
 export type Parsed =
@@ -33,7 +36,7 @@ export function parseWrite(stdinText: string): Parsed {
     return makeFailure('tool_input is not a JSON object');
   }
 
-  const { file_path: filePath, content } = toolInput;
+  const { file_path: filePath, content, new_string: newString } = toolInput;
 
   if (typeof filePath !== 'string') {
     return makeFailure('tool_input.file_path is not a string');
@@ -43,7 +46,11 @@ export function parseWrite(stdinText: string): Parsed {
     return makeFailure('tool_input.content is not a string');
   }
 
-  return { kind: 'write', write: { filePath, content } };
+  if (newString !== undefined && typeof newString !== 'string') {
+    return makeFailure('tool_input.new_string is not a string');
+  }
+
+  return { kind: 'write', write: { filePath, content, newString } };
 }
 
 function makeFailure(reason: string): Parsed {

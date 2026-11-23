@@ -59,6 +59,23 @@ test('denies an Edit call that names a topic file that is not on disk', (t) => {
   assert.equal(verdict.kind, 'deny');
 });
 
+test('allows an Edit call that creates a topic file whose text says why it is needed', (t) => {
+  const { configDirectory, memoryDirectory } = makeAutoMemory(t, []);
+  const toolInput = {
+    file_path: join(memoryDirectory, 'x.md'),
+    old_string: '',
+    new_string: '---\nname: x\nevery-session: "the person asks for it"\n---\n\ntext\n',
+  };
+  const verdict = getVerdict({
+    stdinText: makeCall('Edit', toolInput),
+    isOff: false,
+    projectRoot: makeMemoryProject(t, []),
+    configDirectory,
+  });
+
+  assert.deepEqual(verdict, ALLOW);
+});
+
 test('allows a new file a level below the auto memory directory', (t) => {
   const { configDirectory, memoryDirectory } = makeAutoMemory(t, []);
   const toolInput = { file_path: join(memoryDirectory, 'notes', 'x.md'), content: UNDECLARED };

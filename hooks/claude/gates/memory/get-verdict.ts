@@ -48,9 +48,9 @@ export function getVerdict(input: Input): Verdict {
     };
   }
 
-  const { filePath, content } = parsed.write;
+  const { filePath, content, newString } = parsed.write;
 
-  if (!isNewTopicFile(filePath, input.configDirectory) || declaresNeed(content)) {
+  if (!isNewTopicFile(filePath, input.configDirectory) || declaresNeed(content ?? newString)) {
     return ALLOW;
   }
 
@@ -71,12 +71,13 @@ function isNewTopicFile(filePath: string, configDirectory: string | undefined): 
   return getAutoMemoryFile(filePath, configDirectory)?.kind === 'topic' && !existsSync(filePath);
 }
 
-// An Edit call carries no whole text, so the one that creates a file declares
-// nothing.
-function declaresNeed(content: string | undefined): boolean {
-  if (content === undefined) {
+// Asked of a file that is not on disk alone, whose whole text is the content
+// of a Write call or the new text of an Edit call; a call with neither
+// declares nothing.
+function declaresNeed(text: string | undefined): boolean {
+  if (text === undefined) {
     return false;
   }
 
-  return (readFrontmatter(content).fields.get(DECLARATION_KEY) ?? '') !== '';
+  return (readFrontmatter(text).fields.get(DECLARATION_KEY) ?? '') !== '';
 }
