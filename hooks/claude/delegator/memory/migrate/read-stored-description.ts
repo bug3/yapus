@@ -4,15 +4,20 @@ import { readFrontmatter } from '../read-frontmatter.ts';
 // line: the text after the key, in quotes or not.
 const DESCRIPTION = /^description:[ \t]*(.*?)[ \t]*$/mu;
 
-// The description in the frontmatter of a topic file of an auto memory,
-// without the quotes around it; empty for a text with no frontmatter or a
-// frontmatter with no such line.
+// The header of a YAML block scalar, > or | with its indicators: the text
+// stands on the lines under it.
+const BLOCK_SCALAR = /^[>|][0-9+-]{0,2}$/u;
+
+// The description the frontmatter of a topic file of an auto memory holds on
+// one line, without the quotes around it; empty for a text with no
+// frontmatter, which one with CRLF line ends is to the reader, for a
+// frontmatter with no such line and for a block scalar.
 export function readStoredDescription(sourceText: string): string {
   const { body } = readFrontmatter(sourceText);
   const frontmatter = sourceText.slice(0, sourceText.length - body.length);
   const [, written = ''] = DESCRIPTION.exec(frontmatter) ?? [];
 
-  return unquote(written);
+  return BLOCK_SCALAR.test(written) ? '' : unquote(written);
 }
 
 // A YAML text without the quotes around it and the escape of its own quote.

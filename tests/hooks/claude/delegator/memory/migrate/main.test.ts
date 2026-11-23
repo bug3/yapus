@@ -42,6 +42,7 @@ const STORED_TEXT = [
   'Do a.',
   '',
 ].join('\n');
+const B_TEXT = '---\ndescription: The b\n---\nb\n';
 const MOVED_TEXT = '---\ndescription: "The a rule, for a calls"\n---\n\nDo a.\n';
 const STEPS = [{ move: 'a.md', to: 'rules/a-rule.md' }, { remove: 'b.md' }] as const;
 const LISTED = 'no step is made; the person runs /delegator:migrate-memory apply to make these'
@@ -150,7 +151,7 @@ test('holds every file of the auto memory byte for byte and the moves file in th
   assert.deepEqual(readTree(findBackupDirectory(migration)), [
     ['MEMORY.md', INDEX_TEXT],
     ['a.md', STORED_TEXT],
-    ['b.md', 'b\n'],
+    ['b.md', B_TEXT],
     ['bytes.bin', '\xff\x00\n'],
     ['c.md', 'c\n'],
     ['migration.json', movesText],
@@ -317,6 +318,23 @@ test('refuses a target outside the three directories and one of another name for
       '',
       `${ PROGRAM }: step 1 moves a.md to lessons/a.md, ${ noForm }`
       + `${ PROGRAM }: step 2 moves b.md to rules/B Rule.md, ${ noForm }`,
+    ],
+  );
+  assert.deepEqual(readTrees(migration), before);
+});
+
+test('refuses a move of a file with no one-line description and makes no step', (t) => {
+  const migration = makeMigration(t, [{ remove: 'b.md' }, { move: 'c.md', to: 'reference/c.md' }]);
+  const before = readTrees(migration);
+  const run = runMigrate(t, migration, [migration.projectRoot, 'apply']);
+
+  assert.deepEqual(
+    [run.status, run.stdout, run.stderr],
+    [
+      2,
+      '',
+      `${ PROGRAM }: step 2 moves c.md, which has no one-line description in its frontmatter; `
+      + 'give it one, no step made\n',
     ],
   );
   assert.deepEqual(readTrees(migration), before);
@@ -492,7 +510,7 @@ function makeMigration(t: TestContext, steps: readonly unknown[]): Migration {
   const { configDirectory, memoryDirectory: autoDirectory } = makeAutoMemory(t, [
     { path: 'MEMORY.md', text: INDEX_TEXT },
     { path: 'a.md', text: STORED_TEXT },
-    { path: 'b.md', text: 'b\n' },
+    { path: 'b.md', text: B_TEXT },
     { path: 'c.md', text: 'c\n' },
   ]);
   const projectRoot = makeMemoryProject(t, [

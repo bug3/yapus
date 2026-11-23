@@ -14,9 +14,9 @@ import type { TempFile } from '../../../../../helpers/make-temp-repo.ts';
 
 const AUTO_FILES: readonly TempFile[] = [
   { path: 'MEMORY.md', text: '- [A](a.md): a\n' },
-  { path: 'a.md', text: 'a\n' },
-  { path: 'b.md', text: 'b\n' },
-  { path: 'c.md', text: 'c\n' },
+  { path: 'a.md', text: '---\ndescription: The a\n---\na\n' },
+  { path: 'b.md', text: '---\ndescription: The b\n---\nb\n' },
+  { path: 'c.md', text: '---\ndescription: The c\n---\nc\n' },
 ];
 const NO_STEP_MADE = 'no step made';
 const NO_FORM = 'which is not <work|rules|reference>/<name>.md with a name of lowercase letters, '
@@ -275,6 +275,41 @@ test('fails on a file that is no topic file directly in the auto memory director
     `step 3 names ../memory/a.md, ${ failed }`,
     `step 4 names notes.txt, ${ failed }`,
   ]);
+});
+
+test('fails on a move of a file that holds no one-line description in its frontmatter', (t) => {
+  const migration = makeMigration(t, [
+    { move: 'bare.md', to: 'rules/bare.md' },
+    { move: 'folded.md', to: 'rules/folded.md' },
+    { move: 'crlf.md', to: 'rules/crlf.md' },
+    { move: 'a.md', to: 'rules/a.md' },
+  ]);
+  const failed = `which has no one-line description in its frontmatter; give it one, ${
+    NO_STEP_MADE }`;
+
+  writeFileSync(join(migration.autoDirectory, 'bare.md'), 'No frontmatter.\n');
+  writeFileSync(
+    join(migration.autoDirectory, 'folded.md'),
+    '---\ndescription: >-\n  The folded rule,\n  on two lines\n---\nFolded.\n',
+  );
+  writeFileSync(
+    join(migration.autoDirectory, 'crlf.md'),
+    '---\r\ndescription: The rule\r\n---\r\nWith CRLF.\r\n',
+  );
+
+  assert.deepEqual(getDetails(read(migration)), [
+    `step 1 moves bare.md, ${ failed }`,
+    `step 2 moves folded.md, ${ failed }`,
+    `step 3 moves crlf.md, ${ failed }`,
+  ]);
+});
+
+test('reads a removal of a file that holds no description', (t) => {
+  const migration = makeMigration(t, [{ remove: 'bare.md' }]);
+
+  writeFileSync(join(migration.autoDirectory, 'bare.md'), 'No frontmatter.\n');
+
+  assert.deepEqual(getSteps(read(migration)), [{ kind: 'remove', file: 'bare.md' }]);
 });
 
 test('fails on a target outside the three directories', (t) => {

@@ -5,6 +5,7 @@ import { isRecord } from '../../../../shared/is-record.ts';
 import { getAutoMemoryFile, INDEX_FILE } from '../auto/get-auto-memory-file.ts';
 import { DIRECTORIES, type Directory, getMemoryDirectory } from '../get-memory-directory.ts';
 import { isFile } from '../is-file.ts';
+import { readStoredDescription } from './read-stored-description.ts';
 
 const MOVES_FILE = 'migration.json';
 const MISSING = 'ENOENT';
@@ -95,8 +96,9 @@ export function getMovesPath(projectRoot: string): string {
 // line per failure when it is not the JSON of a moves file, its
 // memoryDirectory is no auto memory directory under configDirectory or holds
 // no index that is a file and not a link, a step names a file twice or one
-// that is no topic file there, or a target is of another form, is named
-// twice or exists. A step may carry other keys. Changes nothing.
+// that is no topic file there, a target is of another form, is named twice
+// or exists, or a moved file holds no description on one line. A step may
+// carry other keys. Changes nothing.
 export function readMoves(projectRoot: string, configDirectory: string | undefined): ReadMoves {
   const movesPath = getMovesPath(projectRoot);
   let movesText: string;
@@ -268,10 +270,24 @@ function checkStep(written: WrittenStep, position: number, state: State): Checke
   }
 
   const checked = checkTarget(written, position, state);
+  const undescribed = state.topicFiles.includes(file) && !holdsDescription(state, file)
+    ? [
+      getDetail(
+        `step ${ getNumber(position) } moves ${ file }, which has no one-line description in `
+        + 'its frontmatter',
+        'give it one',
+      ),
+    ]
+    : [];
 
   return checked.kind === 'refused'
-    ? { step: undefined, details: [...details, checked.detail] }
-    : { step: { kind: 'move', file, ...checked.target }, details };
+    ? { step: undefined, details: [...details, checked.detail, ...undescribed] }
+    : { step: { kind: 'move', file, ...checked.target }, details: [...details, ...undescribed] };
+}
+
+// Whether the topic file holds the description a move writes to its target.
+function holdsDescription(state: State, file: string): boolean {
+  return readStoredDescription(readFileSync(join(state.autoDirectory, file), 'utf8')) !== '';
 }
 
 // The target of a move, or the line against it: a target of another form,
