@@ -9,6 +9,13 @@ import { readFrontmatter } from './read-frontmatter.ts';
 // The ending of a memory file; a file of another ending is not read.
 const ENDING = '.md';
 
+const DIRECTORY_NAMES = DIRECTORIES.map((name) => `${ name }/`);
+
+// The reason of a file that is in none of the directories, which it names in
+// their order: the last after "and", the ones before it after commas.
+const OUTSIDE = `outside ${ DIRECTORY_NAMES.slice(0, -1).join(', ') } and ${
+  DIRECTORY_NAMES.at(-1) ?? '' }`;
+
 // A memory file whose frontmatter holds a description.
 export interface Entry {
   readonly directory: Directory;
@@ -84,7 +91,7 @@ export function readEntries(projectRoot: string): Entries {
   const problems = [
     ...listed
       .filter(({ path }) => !placed.has(path))
-      .map(({ path }) => ({ path, reason: 'outside work/, rules/ and reference/' })),
+      .map(({ path }) => ({ path, reason: OUTSIDE })),
     ...reads.flatMap((read) => read.problems),
   ];
 
