@@ -620,8 +620,11 @@ function getGuide(memoryDirectory: string): string {
 
   return `${ PROGRAM }: no moves file at ${ movesPath }. With no auto memory to sort, nothing `
     + 'more is needed. Otherwise read MEMORY.md and every file of the auto memory directory whole '
-    + 'and sort each by the order below. Write the parts of a file that holds more than one fact '
-    + 'as new files and give that file a remove step. Show the person one line per file, where '
+    + 'and sort each by the order below. Change no file of the auto memory directory yourself: '
+    + 'the backup is taken when the steps are made, and they drop the MEMORY.md lines of the '
+    + 'files they move or remove. Write the parts of a file that holds more than one fact, or a '
+    + `file with no one-line description, as new files under ${ memoryDirectory } and give that `
+    + 'file a remove step. Show the person one line per file, where '
     + 'it goes and why, and the candidates for the repository on their own. Then write '
     + `${ movesPath } as { "memoryDirectory": "<absolute path>", "steps": [ { "move": "<file>", `
     + '"to": "<directory>/<name>.md" }, { "remove": "<file>" } ] }; a file no step names stays.\n'

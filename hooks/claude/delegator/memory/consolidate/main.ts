@@ -96,7 +96,11 @@ function consolidate(input: Input): readonly string[] {
     case 'none':
       print([
         ...(prepared.kind === 'created' ? [formatCreated(read.texts, memoryDirectory)] : []),
-        formatGuide(read.texts, getMovesPath(projectRoot), sorting.text),
+        formatGuide(
+          read.texts,
+          { memoryDirectory, movesPath: getMovesPath(projectRoot) },
+          sorting.text,
+        ),
       ]);
 
       return [];

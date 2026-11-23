@@ -11,7 +11,7 @@ import {
 
 const TEXTS = {
   created: 'created <mem path>.',
-  guide: 'no file at <moves path>; write <moves path>.',
+  guide: 'no file at <moves path>; write under <mem path>, then <moves path>.',
   listed: 'listed',
   done: 'done; delete <backup> later',
 } as const;
@@ -81,10 +81,10 @@ test('fills the memory path of the created line', () => {
   assert.equal(formatCreated(TEXTS, '/p/.yapus/memory'), 'created /p/.yapus/memory.');
 });
 
-test('fills both moves paths of the guide and puts the sorting under it', () => {
+test('fills the memory path and both moves paths of the guide, the sorting under it', () => {
   assert.equal(
-    formatGuide(TEXTS, '/p/m.json', 'the order\nline 1'),
-    'no file at /p/m.json; write /p/m.json.\nthe order\nline 1',
+    formatGuide(TEXTS, { memoryDirectory: '/p/m', movesPath: '/p/m.json' }, 'the order\nline 1'),
+    'no file at /p/m.json; write under /p/m, then /p/m.json.\nthe order\nline 1',
   );
 });
 
@@ -96,12 +96,12 @@ test('keeps a dollar sign of a path as it is', () => {
   assert.deepEqual(
     [
       formatCreated(TEXTS, '/p$&/memory'),
-      formatGuide(TEXTS, '/p$&/m.json', ''),
+      formatGuide(TEXTS, { memoryDirectory: '/p$&/m', movesPath: '/p$&/m.json' }, ''),
       formatDone(TEXTS, '/c$&/x'),
     ],
     [
       'created /p$&/memory.',
-      'no file at /p$&/m.json; write /p$&/m.json.\n',
+      'no file at /p$&/m.json; write under /p$&/m, then /p$&/m.json.\n',
       'done; delete /c$&/x later',
     ],
   );

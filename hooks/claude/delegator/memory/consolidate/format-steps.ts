@@ -34,14 +34,18 @@ export function formatCreated(texts: ConsolidateTexts, memoryDirectory: string):
   return texts.created.replaceAll(MEMORY_PATH_PLACEHOLDER, () => memoryDirectory);
 }
 
-// What a run that finds no moves file prints: the guide, with the order a
-// fact is sorted by under it.
+// What a run that finds no moves file prints: the guide with its paths
+// filled, and the order a fact is sorted by under it.
 export function formatGuide(
   texts: ConsolidateTexts,
-  movesPath: string,
+  paths: { readonly memoryDirectory: string; readonly movesPath: string },
   sortingText: string,
 ): string {
-  return `${ texts.guide.replaceAll(MOVES_PATH_PLACEHOLDER, () => movesPath) }\n${ sortingText }`;
+  const guide = texts.guide
+    .replaceAll(MEMORY_PATH_PLACEHOLDER, () => paths.memoryDirectory)
+    .replaceAll(MOVES_PATH_PLACEHOLDER, () => paths.movesPath);
+
+  return `${ guide }\n${ sortingText }`;
 }
 
 export function formatDone(texts: ConsolidateTexts, backupDirectory: string): string {
