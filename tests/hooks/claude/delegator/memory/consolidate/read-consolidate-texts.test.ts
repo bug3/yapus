@@ -3,9 +3,9 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import {
-  readMigrateTexts,
+  readConsolidateTexts,
   TEXTS_PATH,
-} from '../../../../../../hooks/claude/delegator/memory/migrate/read-migrate-texts.ts';
+} from '../../../../../../hooks/claude/delegator/memory/consolidate/read-consolidate-texts.ts';
 import { makeTempDir } from '../../../../../helpers/make-temp-dir.ts';
 
 // A created line and a guide of the right form.
@@ -16,7 +16,7 @@ const EXPECTED = 'does not hold four lines: a line with <mem path>, a line with 
 test('reads the created line, the guide, the listed line and the done line in that order', (t) => {
   const path = makeTexts(t, `${ START }L\nD <backup>\n`);
 
-  assert.deepEqual(readMigrateTexts(path), {
+  assert.deepEqual(readConsolidateTexts(path), {
     kind: 'texts',
     texts: {
       created: 'C <mem path>',
@@ -28,11 +28,11 @@ test('reads the created line, the guide, the listed line and the done line in th
 });
 
 test('reads four lines from the shipped file', () => {
-  assert.equal(readMigrateTexts(TEXTS_PATH).kind, 'texts');
+  assert.equal(readConsolidateTexts(TEXTS_PATH).kind, 'texts');
 });
 
 test('fails on a file that is not on disk', (t) => {
-  const read = readMigrateTexts(join(makeTempDir(t), 'gone.md'));
+  const read = readConsolidateTexts(join(makeTempDir(t), 'gone.md'));
 
   assert.ok(read.kind === 'failure');
   assert.match(read.detail, /^cannot read .*gone\.md: ENOENT/u);
@@ -44,7 +44,11 @@ test('fails on a file with no memory path, one moves path or two backups', (t) =
   const twoBackups = makeTexts(t, `${ START }L\nD <backup> <backup>\n`);
 
   assert.deepEqual(
-    [readMigrateTexts(noMemoryPath), readMigrateTexts(oneMovesPath), readMigrateTexts(twoBackups)],
+    [
+      readConsolidateTexts(noMemoryPath),
+      readConsolidateTexts(oneMovesPath),
+      readConsolidateTexts(twoBackups),
+    ],
     [
       { kind: 'failure', detail: `${ noMemoryPath } ${ EXPECTED }` },
       { kind: 'failure', detail: `${ oneMovesPath } ${ EXPECTED }` },
@@ -57,14 +61,14 @@ test('fails on a file with an empty listed line or with a fifth line', (t) => {
   const noListed = makeTexts(t, `${ START }\nD <backup>\n`);
   const fiveLines = makeTexts(t, `${ START }L\nD <backup>\nmore\n`);
 
-  assert.deepEqual([readMigrateTexts(noListed), readMigrateTexts(fiveLines)], [
+  assert.deepEqual([readConsolidateTexts(noListed), readConsolidateTexts(fiveLines)], [
     { kind: 'failure', detail: `${ noListed } ${ EXPECTED }` },
     { kind: 'failure', detail: `${ fiveLines } ${ EXPECTED }` },
   ]);
 });
 
 function makeTexts(t: TestContext, text: string): string {
-  const path = join(makeTempDir(t), 'migrate.md');
+  const path = join(makeTempDir(t), 'consolidate.md');
 
   writeFileSync(path, text);
 

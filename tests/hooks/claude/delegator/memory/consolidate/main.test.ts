@@ -23,7 +23,7 @@ import { readTree } from './read-tree.ts';
 
 const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', '..', '..', 'hooks');
 const RUN_SH = join(HOOKS, 'run.sh');
-const HOOK_NAME = 'claude/delegator/memory/migrate';
+const HOOK_NAME = 'claude/delegator/memory/consolidate';
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const MILLISECONDS = 1000;
 const PROGRAM = 'yapus delegator migrate-memory';

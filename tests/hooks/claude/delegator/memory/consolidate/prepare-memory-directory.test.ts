@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import {
   prepareMemoryDirectory,
-} from '../../../../../../hooks/claude/delegator/memory/migrate/prepare-memory-directory.ts';
+} from '../../../../../../hooks/claude/delegator/memory/consolidate/prepare-memory-directory.ts';
 import { makeMemoryProject } from '../../../../../helpers/memory/make-memory-project.ts';
 import { makeTempDir } from '../../../../../helpers/make-temp-dir.ts';
 import { readTree } from './read-tree.ts';

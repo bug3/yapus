@@ -1,9 +1,9 @@
 import {
   BACKUP_PLACEHOLDER,
   MEMORY_PATH_PLACEHOLDER,
-  type MigrateTexts,
+  type ConsolidateTexts,
   MOVES_PATH_PLACEHOLDER,
-} from './read-migrate-texts.ts';
+} from './read-consolidate-texts.ts';
 import type { Moves, Step } from './read-moves.ts';
 
 // The list a run prints before it changes a file: one line per step a run
@@ -30,16 +30,20 @@ export function formatBackup(autoDirectory: string, backupDirectory: string): st
 // The first line of the run that created the project's memory directory. A
 // path is filled through a function, since a replacement string would read
 // a `$` of it as a pattern.
-export function formatCreated(texts: MigrateTexts, memoryDirectory: string): string {
+export function formatCreated(texts: ConsolidateTexts, memoryDirectory: string): string {
   return texts.created.replaceAll(MEMORY_PATH_PLACEHOLDER, () => memoryDirectory);
 }
 
 // What a run that finds no moves file prints: the guide, with the order a
 // fact is sorted by under it.
-export function formatGuide(texts: MigrateTexts, movesPath: string, sortingText: string): string {
+export function formatGuide(
+  texts: ConsolidateTexts,
+  movesPath: string,
+  sortingText: string,
+): string {
   return `${ texts.guide.replaceAll(MOVES_PATH_PLACEHOLDER, () => movesPath) }\n${ sortingText }`;
 }
 
-export function formatDone(texts: MigrateTexts, backupDirectory: string): string {
+export function formatDone(texts: ConsolidateTexts, backupDirectory: string): string {
   return texts.done.replaceAll(BACKUP_PLACEHOLDER, () => backupDirectory);
 }

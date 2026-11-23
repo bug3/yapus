@@ -6,7 +6,7 @@ import {
   getMovesPath,
   type ReadMoves,
   readMoves,
-} from '../../../../../../hooks/claude/delegator/memory/migrate/read-moves.ts';
+} from '../../../../../../hooks/claude/delegator/memory/consolidate/read-moves.ts';
 import { makeAutoMemory } from '../../../../../helpers/memory/make-auto-memory.ts';
 import { makeMemoryProject } from '../../../../../helpers/memory/make-memory-project.ts';
 import { makeTempDir } from '../../../../../helpers/make-temp-dir.ts';

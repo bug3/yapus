@@ -5,10 +5,10 @@ import { type TestContext, test } from 'node:test';
 import {
   applySteps,
   findBackup,
-} from '../../../../../../hooks/claude/delegator/memory/migrate/apply-steps.ts';
+} from '../../../../../../hooks/claude/delegator/memory/consolidate/apply-steps.ts';
 import type {
   Step,
-} from '../../../../../../hooks/claude/delegator/memory/migrate/read-moves.ts';
+} from '../../../../../../hooks/claude/delegator/memory/consolidate/read-moves.ts';
 import { readEntries } from '../../../../../../hooks/claude/delegator/memory/read-entries.ts';
 import { makeAutoMemory } from '../../../../../helpers/memory/make-auto-memory.ts';
 import { makeMemoryProject } from '../../../../../helpers/memory/make-memory-project.ts';

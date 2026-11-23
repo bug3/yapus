@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   readStoredDescription,
-} from '../../../../../../hooks/claude/delegator/memory/migrate/read-stored-description.ts';
+} from '../../../../../../hooks/claude/delegator/memory/consolidate/read-stored-description.ts';
 
 test('reads the description of a stored topic file, with or without quotes around it', () => {
   assert.deepEqual(

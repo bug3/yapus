@@ -7,7 +7,7 @@ import {
   formatGuide,
   formatStep,
   formatSteps,
-} from '../../../../../../hooks/claude/delegator/memory/migrate/format-steps.ts';
+} from '../../../../../../hooks/claude/delegator/memory/consolidate/format-steps.ts';
 
 const TEXTS = {
   created: 'created <mem path>.',

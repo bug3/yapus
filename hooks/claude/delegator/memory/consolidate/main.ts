@@ -14,7 +14,11 @@ import {
   formatSteps,
 } from './format-steps.ts';
 import { prepareMemoryDirectory } from './prepare-memory-directory.ts';
-import { type MigrateTexts, readMigrateTexts, TEXTS_PATH } from './read-migrate-texts.ts';
+import {
+  type ConsolidateTexts,
+  readConsolidateTexts,
+  TEXTS_PATH,
+} from './read-consolidate-texts.ts';
 import { getMovesPath, type Moves, readMoves } from './read-moves.ts';
 
 const PROGRAM = 'delegator migrate-memory';
@@ -34,7 +38,7 @@ function main(): void {
   try {
     const input = readInput();
 
-    stop(input === undefined ? [USAGE] : migrate(input));
+    stop(input === undefined ? [USAGE] : consolidate(input));
   } catch (error) {
     stop([`crashed: ${ getFirstLine(error) }; fix the program`]);
   }
@@ -64,10 +68,10 @@ function readInput(): Input | undefined {
 // when the project has no moves file and its steps when it has one, and
 // makes them only in apply mode. Gives the failures. The program's own texts
 // are read before the first change, so a broken install changes nothing.
-function migrate(input: Input): readonly string[] {
+function consolidate(input: Input): readonly string[] {
   const { projectRoot, mode, configDirectory } = input;
   const memoryDirectory = getMemoryDirectory(projectRoot);
-  const read = readMigrateTexts(TEXTS_PATH);
+  const read = readConsolidateTexts(TEXTS_PATH);
   const sorting = readSorting(memoryDirectory);
 
   if (read.kind === 'failure') {
@@ -103,7 +107,7 @@ function migrate(input: Input): readonly string[] {
   }
 }
 
-function list(texts: MigrateTexts, moves: Moves): readonly string[] {
+function list(texts: ConsolidateTexts, moves: Moves): readonly string[] {
   print([...formatSteps(moves), texts.listed]);
 
   return [];
@@ -112,7 +116,7 @@ function list(texts: MigrateTexts, moves: Moves): readonly string[] {
 // Every change is printed before the first is made, the backup with them:
 // its directory is named by the time of this run, so a run that makes no
 // step names none.
-function apply(input: Input, texts: MigrateTexts, moves: Moves): readonly string[] {
+function apply(input: Input, texts: ConsolidateTexts, moves: Moves): readonly string[] {
   const { projectRoot, time } = input;
   const backup = findBackup(moves.autoDirectory, time);
 

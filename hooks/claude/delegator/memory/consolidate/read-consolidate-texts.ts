@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getFirstLine } from '../../../../shared/get-first-line.ts';
 
-export const TEXTS_PATH = join(import.meta.dirname, 'migrate.md');
+export const TEXTS_PATH = join(import.meta.dirname, 'consolidate.md');
 
 export const MEMORY_PATH_PLACEHOLDER = '<mem path>';
 
@@ -17,9 +17,9 @@ const EXPECTED = [
   `a line with ${ BACKUP_PLACEHOLDER }`,
 ].join(', ');
 
-// The migration's own words to the main agent, one line each in the texts
+// The consolidation's own words to the main agent, one line each in the texts
 // file.
-export interface MigrateTexts {
+export interface ConsolidateTexts {
   // The first line of the run that created the project's memory directory.
   readonly created: string;
   // What a run that finds no moves file asks for.
@@ -30,13 +30,13 @@ export interface MigrateTexts {
   readonly done: string;
 }
 
-export type ReadMigrateTexts =
-  | { readonly kind: 'texts'; readonly texts: MigrateTexts }
+export type ReadConsolidateTexts =
+  | { readonly kind: 'texts'; readonly texts: ConsolidateTexts }
   | { readonly kind: 'failure'; readonly detail: string };
 
 // The created line, the guide, the listed line and the done line in the file
 // at path, in that order, or why they cannot be used.
-export function readMigrateTexts(path: string): ReadMigrateTexts {
+export function readConsolidateTexts(path: string): ReadConsolidateTexts {
   let text: string;
 
   try {
