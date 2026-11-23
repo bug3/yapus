@@ -24,7 +24,7 @@ const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 // no URL.
 const BARE_TOPIC = /^[^/]+\.md$/u;
 
-export interface Checked {
+interface Checked {
   readonly memory: Entries;
   // The session's transcript, or undefined when the session names none.
   readonly transcriptPath: string | undefined;

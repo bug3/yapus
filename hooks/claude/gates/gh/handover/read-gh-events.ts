@@ -3,7 +3,7 @@ import { skipLeadWords } from '../calls/skip-lead-words.ts';
 import { ghCommands } from '../rules/gh-commands.ts';
 import { splitCommands, type Word } from '../shell/split-commands.ts';
 
-export type GhEvent = Extract<MemoryEvent, { readonly kind: 'gh' }>;
+type GhEvent = Extract<MemoryEvent, { readonly kind: 'gh' }>;
 
 const PROGRAM = 'gh';
 
