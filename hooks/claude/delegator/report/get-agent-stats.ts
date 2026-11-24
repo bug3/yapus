@@ -1,3 +1,4 @@
+import type { ReturnWords } from '../contract/read-return-words.ts';
 import type { EndRow, LaunchRow, ResumeRow, ReturnRow, Row } from '../record-row.ts';
 import { getCompletions, getSilentEnds } from './get-completions.ts';
 import { getMedian } from './get-median.ts';
@@ -27,15 +28,8 @@ export interface AgentStats {
   readonly toolUsesMedian: number | undefined;
 }
 
-// The words contract.md asks every return to open with.
-export const CONTRACT_WORDS: readonly string[] = ['DONE', 'PARTIAL', 'QUESTIONS', 'BLOCKED'];
-
-// The words the judges' definitions (plan-reviewer.md, diff-reviewer.md) put on the line
-// after the status.
-export const VERDICT_WORDS: readonly string[] = ['GO', 'REVISE', 'APPROVE', 'REWORK'];
-
 // One entry per agent type in the rows, sorted by name.
-export function getAgentStats(rows: readonly Row[]): AgentStats[] {
+export function getAgentStats(rows: readonly Row[], words: ReturnWords): AgentStats[] {
   const named = rows.filter(hasSubject);
   const agents = [...new Set(named.map((row) => row.subject))].sort();
   const subjects = getSubjects(named);
@@ -44,7 +38,7 @@ export function getAgentStats(rows: readonly Row[]): AgentStats[] {
   return agents.map((agent) => getStats(
     agent,
     rows.filter((row) => getSubject(row, subjects) === agent),
-    waitingStops,
+    { waitingStops, words },
   ));
 }
 
@@ -66,10 +60,17 @@ function hasSubject(row: Row): row is Exclude<Row, ResumeRow> {
   return row.hook !== 'resume';
 }
 
+// What the stats of every agent type read beside its own rows: the waiting
+// stops of the whole record and the return words.
+interface Reading {
+  readonly waitingStops: ReadonlySet<ReturnRow>;
+  readonly words: ReturnWords;
+}
+
 function getStats(
   agent: string,
   rows: readonly Row[],
-  waitingStops: ReadonlySet<ReturnRow>,
+  { waitingStops, words }: Reading,
 ): AgentStats {
   const launches = rows.filter((row): row is LaunchRow => row.hook === 'launch');
   const completions = getCompletions(rows);
@@ -85,8 +86,8 @@ function getStats(
     noReturn: getSilentEnds(rows).length,
     returns: returns.length,
     sentBack: returns.filter((row) => !row.allowed).length,
-    contractWords: returns.filter((row) => CONTRACT_WORDS.includes(row.status)).length,
-    verdicts: countWords(returns.map((row) => row.verdict)),
+    contractWords: returns.filter((row) => words.statuses.includes(row.status)).length,
+    verdicts: countVerdicts(returns.map((row) => row.verdict), words.verdicts),
     durationMedianMs: getMedian(completions.map((entry) => entry.durationMs).filter(isNumber)),
     tokensMedian: getMedian(completions.map((entry) => entry.tokens).filter(isNumber)),
     toolUsesMedian: getMedian(completions.map((entry) => entry.toolUses).filter(isNumber)),
@@ -128,15 +129,15 @@ function getNestedLaunch(rows: readonly Row[], launch: Row): NestedLaunch | unde
     : { callerId: launch.callerId, agentId: end.agentId, time: launch.time };
 }
 
-function countWords(words: readonly (string | undefined)[]): Record<string, number> {
-  return words.filter(isVerdictWord).reduce<Record<string, number>>(
-    (counts, word) => ({ ...counts, [word]: (counts[word] ?? 0) + 1 }),
-    {},
-  );
-}
-
-function isVerdictWord(word: string | undefined): word is string {
-  return word !== undefined && VERDICT_WORDS.includes(word);
+function countVerdicts(
+  words: readonly (string | undefined)[],
+  verdicts: readonly string[],
+): Record<string, number> {
+  return words.filter((word): word is string => word !== undefined && verdicts.includes(word))
+    .reduce<Record<string, number>>(
+      (counts, word) => ({ ...counts, [word]: (counts[word] ?? 0) + 1 }),
+      {},
+    );
 }
 
 function isNumber(value: number | undefined): value is number {

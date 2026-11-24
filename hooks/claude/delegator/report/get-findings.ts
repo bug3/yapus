@@ -36,6 +36,13 @@ export const MIN_SAMPLE = 20;
 export const MIN_SESSIONS = 30;
 
 const PLAN_REVIEWER = 'delegator:plan-reviewer';
+
+// The two plan-reviewer verdicts the GO rate weighs; return-words.json holds
+// every verdict word.
+export const GO = 'GO';
+
+export const REVISE = 'REVISE';
+
 const PERCENT = 100;
 const ROSTER_AGENTS: readonly string[] = ROSTER.map((name) => `delegator:${ name }`);
 
@@ -68,8 +75,8 @@ const RATE_RULES: readonly RateRule[] = [
 const PLAN_REVIEWER_RULE: RateRule = {
   rule: 'GO rate',
   getCounts: (stats) => [
-    stats.verdicts.GO ?? 0,
-    (stats.verdicts.GO ?? 0) + (stats.verdicts.REVISE ?? 0),
+    stats.verdicts[GO] ?? 0,
+    (stats.verdicts[GO] ?? 0) + (stats.verdicts[REVISE] ?? 0),
   ],
   isOver: (percent) => percent > 90 || percent < 20,
   threshold: `over 90 percent at n ${ String(MIN_SAMPLE) }: remove the plan-reviewer; `
@@ -86,6 +93,7 @@ export function getFindings(measured: Measured): Finding[] {
       .map((stats) => getRateFinding(PLAN_REVIEWER_RULE, stats)),
     getReworkFinding(measured.rework),
     getFinisherReworkFinding(measured.rework),
+    getPlanReworkFinding(measured.rework),
     ...getUnusedFindings(measured),
   ];
 }
@@ -114,6 +122,19 @@ function getFinisherReworkFinding(rework: Rework): Finding {
   };
 
   return makeRateFinding(rule, 'delegator:finisher', [rework.reworkedFinishers, rework.finishers]);
+}
+
+function getPlanReworkFinding(rework: Rework): Finding {
+  const rule: RateRule = {
+    rule: 'rework after plan',
+    getCounts: () => [rework.reworkedPlanReviews, rework.planReviews],
+    isOver: (percent) => percent > 50,
+    threshold: `over 50 percent at n ${ String(MIN_SAMPLE) }: check how the slices fit together `
+      + 'in the plan',
+  };
+
+  return makeRateFinding(rule, 'delegator:diff-reviewer',
+    [rework.reworkedPlanReviews, rework.planReviews]);
 }
 
 function makeRateFinding(

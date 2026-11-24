@@ -1,5 +1,6 @@
 import { closeSync, fstatSync, openSync, readFileSync, readSync } from 'node:fs';
 import { join } from 'node:path';
+import type { ReturnWords, ReturnWordsViolation } from '../contract/read-return-words.ts';
 import {
   type EndRow,
   type LaunchRow,
@@ -8,8 +9,8 @@ import {
   type ReturnRow,
   type Row,
 } from '../record-row.ts';
-import { CONTRACT_WORDS } from '../report/get-agent-stats.ts';
 import { readRows } from '../report/read-rows.ts';
+import type { Target } from '../settings/get-target.ts';
 import { getBlocks } from '../transcript/get-blocks.ts';
 import { readTranscriptLines, type TranscriptLine } from '../transcript/read-transcript-lines.ts';
 
@@ -30,13 +31,22 @@ interface Call {
 // One line for each background launch of the session that is still running:
 // the tool call its subagent waits on with the whole minutes it has waited,
 // or that its transcript cannot be read; no line for a subagent whose every
-// call has its result. Only reads; a missing record gives no line.
-export function getWaits(dataDir: string, sessionId: string, now: Date): string {
+// call has its result. Only reads; a missing record gives no line, and return
+// words that could not be read give the one line that says why.
+export function getWaits(
+  { dataDir, sessionId }: Target,
+  now: Date,
+  words: ReturnWords | ReturnWordsViolation,
+): string {
+  if ('violation' in words) {
+    return `${ words.violation }\n`;
+  }
+
   const rows = readRecord(dataDir).filter((row) => row.sessionId === sessionId);
 
   return rows
     .filter((row): row is EndRow => row.hook === 'end' && row.status === BACKGROUND)
-    .filter((end) => isRunning(end, rows))
+    .filter((end) => isRunning(end, rows, words))
     .map((end) => getLine(end.outputFile, getDescription(end, rows), now))
     .join('');
 }
@@ -57,11 +67,11 @@ function readRecord(dataDir: string): readonly Row[] {
 // return the gate let through that opens with a word of the contract: a stop
 // in the middle of the work opens with another word, and a resume starts the
 // subagent again.
-function isRunning(end: EndRow, rows: readonly Row[]): boolean {
+function isRunning(end: EndRow, rows: readonly Row[], words: ReturnWords): boolean {
   const newest = rows.findLast((row): row is ReturnRow | ResumeRow =>
     (row.hook === 'return' || row.hook === 'resume') && row.agentId === end.agentId);
 
-  return newest?.hook !== 'return' || !newest.allowed || !CONTRACT_WORDS.includes(newest.status);
+  return newest?.hook !== 'return' || !newest.allowed || !words.statuses.includes(newest.status);
 }
 
 // The launch row shares the call id of its end row; without one the

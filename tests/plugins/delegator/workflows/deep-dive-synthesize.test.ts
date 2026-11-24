@@ -41,6 +41,7 @@ const COMPLETENESS_PROMPT = [
   '- In unansweredQuestions, name each question above that came back with no verified claim, and each question the task raises that none of them covers.',
   '- In followUps, write at most 4 questions, each one a gather agent can answer in one launch to close a gap you named, the ones the plan needs most: give each one of the lanes listed above, name the paths to start from for a repository question when you know them, and let none overlap a question above; write none when no gap needs one.',
   '- For each web question in followUps, name in sources up to 4 of the sources listed above that can answer it, the likeliest first, and none when none fits.',
+  '- For each question in followUps, give in unanswered the number, from 1, of the entry of unansweredQuestions it closes, and leave unanswered out when it closes an unread area.',
   '- Return through the structured output alone: it is the one form of return here, in place of any other your rules name.',
   '- Name what is missing; do not answer it, and change no file.',
 ].join('\n');
@@ -185,7 +186,9 @@ const SYNTHESIZE_PROMPT = [
 ].join('\n');
 // The fixed run with a follow-up round, as the synthesize agent is handed it:
 // the verified claims under their questions, then the four blocks. Its
-// longest gather answer, of 672 characters, is that of F1.
+// longest gather answer, of 672 characters, is that of F1. With F1 linked to
+// the unanswered question it closes, as LINKED_FOLLOW_UP_GAPS links it, F1
+// verifies a claim and the question gets no Unanswered line.
 const FOLLOW_UP_VERIFIED_CLAIMS = [
   '## Verified claims',
   'Q1 (repository): Where does the return gate count a send-back?',
@@ -214,7 +217,6 @@ const FOLLOW_UP_BLOCKS = [
   '## Unmeasured',
   '',
   '- Unread: tests/hooks/claude/gates/return',
-  '- Unanswered: Which tests hold the verdicts of the return gate?',
   '- Q3 returned nothing.',
   '',
   '## Run',
@@ -249,6 +251,25 @@ const FOLLOW_UP_BLOCKS = [
   '| hn | 2 | 0 | 0 | 0 |',
   '| other | - | 3 | 3 | 0 |',
 ].join('\n');
+// The completeness answer of the follow-up run, with F1 linked to the one
+// unanswered question, which it closes.
+const LINKED_FOLLOW_UP_GAPS = {
+  unreadAreas: ['tests/hooks/claude/gates/return'],
+  unansweredQuestions: ['Which tests hold the verdicts of the return gate?'],
+  followUps: [
+    {
+      lane: 'repository',
+      question: 'Which tests hold the verdicts of the return gate?',
+      startAt: ['tests/hooks/claude/gates/return'],
+      unanswered: 1,
+    },
+    {
+      lane: 'web',
+      question: 'Does the Claude Code changelog name a limit on stop blocks?',
+      sources: ['github', 'hn', 'github'],
+    },
+  ],
+} as const;
 const SYNTHESIZE_ERROR = 'deep-dive: no research file was written; resume the run with its run id';
 const WRITE_ERROR =
   'deep-dive: the research file was not written; write the returned content to the returned researchPath';
@@ -279,7 +300,8 @@ const LANE_COUNTS = {
     other: { claims: 2, verified: 2, refuted: 0 },
   },
 } as const;
-// The scope question item, which a follow-up question takes too.
+// The scope question item, which a follow-up question takes with the number
+// of the unanswered question it closes.
 const QUESTION_SCHEMA = {
   type: 'object',
   properties: {
@@ -289,6 +311,13 @@ const QUESTION_SCHEMA = {
     sources: { type: 'array', maxItems: 4, items: { type: 'string', enum: SOURCE_IDS } },
   },
   required: ['lane', 'question'],
+} as const;
+const FOLLOW_UP_SCHEMA = {
+  ...QUESTION_SCHEMA,
+  properties: {
+    ...QUESTION_SCHEMA.properties,
+    unanswered: { type: 'integer', minimum: 1 },
+  },
 } as const;
 const STAGES_BEFORE_SYNTHESIZE = [
   ['scope', { launched: 1, returned: 1 }],
@@ -386,6 +415,28 @@ const SMALL_RUN_RUN_BLOCK = [
   '| --- | --- | --- | --- | --- |',
   '| other | - | 0 | 0 | 0 |',
 ].join('\n');
+// The answers of the small run whose completeness agent names three
+// unanswered questions: F1 closes the first and its claim is verified, F2
+// closes the second and its claim is refuted, and no follow-up question closes
+// the third.
+const LINKED_RUN_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
+  ['completeness', {
+    unreadAreas: [],
+    unansweredQuestions: [
+      'Who calls the gate?',
+      'Where is the limit set?',
+      'Which tests hold the gate?',
+    ],
+    followUps: [
+      { lane: 'repository', question: 'Who calls the gate?', unanswered: 1 },
+      { lane: 'repository', question: 'Where is the limit set?', unanswered: 2 },
+    ],
+  }],
+  ['follow-up-repo:F1', { claims: [SMALL_RUN_CLAIM], notSearched: [] }],
+  ['verify-repo:F1.C1', { verdict: 'supported', evidence: 'The line says so.' }],
+  ['follow-up-repo:F2', { claims: [SMALL_RUN_CLAIM], notSearched: [] }],
+  ['verify-repo:F2.C1', { verdict: 'unsupported', evidence: 'The line says otherwise.' }],
+]);
 const SOURCES_HEADER = '| Source | Assigned | Claims | Verified | Refuted |';
 
 // The answers, by label, of a run on both lanes whose web questions name
@@ -487,7 +538,7 @@ test('launches one completeness agent with the options of its stage', async () =
         properties: {
           unreadAreas: { type: 'array', items: { type: 'string' } },
           unansweredQuestions: { type: 'array', items: { type: 'string' } },
-          followUps: { type: 'array', maxItems: 4, items: QUESTION_SCHEMA },
+          followUps: { type: 'array', maxItems: 4, items: FOLLOW_UP_SCHEMA },
         },
         required: ['unreadAreas', 'unansweredQuestions', 'followUps'],
       },
@@ -754,7 +805,11 @@ test('hands the synthesize agent the verified claims of the follow-up questions'
 });
 
 test('hands the synthesize agent the four blocks of both rounds', async () => {
-  const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFollowUpAnswer);
+  const run = await runWorkflow(
+    SCRIPT_PATH,
+    FIXED_ARGS,
+    answerFollowUpBut('completeness', LINKED_FOLLOW_UP_GAPS),
+  );
 
   assert.equal(readBlocks(run), FOLLOW_UP_BLOCKS);
 });
@@ -922,6 +977,32 @@ test('puts an unanswered question that holds a line break on one line', async ()
   assert.match(
     findCall(run, 'synthesize')?.prompt ?? '',
     /\n## Unmeasured\n\n- Unanswered: Who calls the gate, and when\?\n\n## Run\n\n\| Stage/u,
+  );
+});
+
+test('writes no Unanswered line for a question whose follow-up verified a claim', async () => {
+  const run = await runSmall(LINKED_RUN_ANSWERS);
+
+  assert.equal(listUnansweredLines(run).some((line) => line.includes('Who calls')), false);
+});
+
+test('names the follow-up of an unanswered question that verified nothing', async () => {
+  const run = await runSmall(LINKED_RUN_ANSWERS);
+
+  assert.equal(
+    listUnansweredLines(run).includes(
+      '- Unanswered: Where is the limit set? (followed up as F2, nothing verified)',
+    ),
+    true,
+  );
+});
+
+test('writes an unanswered question no follow-up closes as it came', async () => {
+  const run = await runSmall(LINKED_RUN_ANSWERS);
+
+  assert.equal(
+    listUnansweredLines(run).includes('- Unanswered: Which tests hold the gate?'),
+    true,
   );
 });
 
@@ -1100,6 +1181,13 @@ function listDroppedLines(run: WorkflowRun): string[] {
     .filter((line) => line.startsWith('- Dropped: '));
 }
 
+// The lines of the unanswered questions in the prompt of the synthesize agent.
+function listUnansweredLines(run: WorkflowRun): string[] {
+  return (findCall(run, 'synthesize')?.prompt ?? '')
+    .split('\n')
+    .filter((line) => line.startsWith('- Unanswered: '));
+}
+
 // The counts per source among the stats the run returned.
 function readSourceCounts({ returned }: WorkflowRun): unknown {
   if (typeof returned !== 'object' || returned === null || !('stats' in returned)) {
@@ -1138,4 +1226,10 @@ async function runSmall(
 // which answers with `answer`.
 function answerFixedBut(label: string, answer: unknown): (call: AgentCall) => unknown {
   return (call) => (call.options.label === label ? answer : getFixedAnswer(call));
+}
+
+// The stand-in of the run with a follow-up round, but for the workflow agent
+// under `label`, which answers with `answer`.
+function answerFollowUpBut(label: string, answer: unknown): (call: AgentCall) => unknown {
+  return (call) => (call.options.label === label ? answer : getFollowUpAnswer(call));
 }

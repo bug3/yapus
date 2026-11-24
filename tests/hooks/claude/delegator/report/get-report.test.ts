@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { getReport } from '../../../../../hooks/claude/delegator/report/get-report.ts';
+import { readShippedWords } from '../read-shipped-words.ts';
+
+const WORDS = readShippedWords();
 
 const LINES = [
   '{"time":"2026-10-24T16:02:11Z","hook":"launch","sessionId":"s1","subject":"delegator:runner",'
@@ -16,7 +19,7 @@ const LINES = [
 ];
 
 test('reports the extent, the agent types, the rules and the refusals of a record text', () => {
-  const markdown = getReport('/d/decisions.jsonl', `${ LINES.join('\n') }\n`);
+  const markdown = getReport('/d/decisions.jsonl', `${ LINES.join('\n') }\n`, WORDS);
 
   assert.match(
     markdown,

@@ -1,14 +1,15 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { cpSync, realpathSync, writeFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
 import { test } from 'node:test';
+import {
+  RETURN_WORDS_PATH,
+} from '../../../../../hooks/claude/delegator/contract/read-return-words.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
 
-const MAIN = join(
-  import.meta.dirname, '..', '..', '..', '..', '..', 'hooks', 'claude', 'delegator', 'report',
-  'main.ts',
-);
+const HOOKS = join(import.meta.dirname, '..', '..', '..', '..', '..', 'hooks');
+const MAIN = join(HOOKS, 'claude', 'delegator', 'report', 'main.ts');
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const ROW = '{"time":"t","hook":"launch","sessionId":"s","subject":"delegator:reader",'
   + '"allowed":true,"reason":"","description":"[deep] x"}\n';
@@ -44,8 +45,21 @@ test('exits 2 and names the file it cannot read', (t) => {
   );
 });
 
-function runReport(args: readonly string[], env: NodeJS.ProcessEnv) {
-  return spawnSync(process.execPath, [MAIN, ...args], {
+test('exits 2 and names the return words file it cannot read', (t) => {
+  const hooks = join(realpathSync(makeTempDir(t)), 'hooks');
+  const wordsPath = join(hooks, relative(HOOKS, RETURN_WORDS_PATH));
+
+  cpSync(HOOKS, hooks, { recursive: true });
+  writeFileSync(wordsPath, '{');
+
+  const run = runReport([makeTempDir(t)], {}, join(hooks, relative(HOOKS, MAIN)));
+
+  assert.equal(run.status, 2);
+  assert.equal(run.stderr, `yapus delegator report: ${ wordsPath } is not JSON; fix the file\n`);
+});
+
+function runReport(args: readonly string[], env: NodeJS.ProcessEnv, main = MAIN) {
+  return spawnSync(process.execPath, [main, ...args], {
     encoding: 'utf8',
     env: { ...process.env, CLAUDE_PLUGIN_DATA: '', ...env },
     timeout: SUBPROCESS_TIMEOUT_MS,
