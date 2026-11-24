@@ -1,6 +1,6 @@
 ---
 name: reader
-description: "Read-only recon: finds files, symbols and usages, and distills long files, logs or diffs that would flood the session. Returns file:line pointers with the shortest excerpts and names what it did not search. Not for edits, running commands or judgments."
+description: "Read-only recon of one question a launch: finds files, symbols and usages, and distills long files, logs or diffs that would flood the session. Returns file:line pointers with the shortest excerpts and names what it did not search. Not for edits, running commands, judgments or several questions at once, which go to several readers launched in one message."
 tools: Read, Grep, Glob
 model: sonnet
 effort: medium
