@@ -19,6 +19,12 @@ const LAUNCHING_AGENTS: readonly string[] = ['finisher'];
 const COMMAND_TOOL = 'Bash';
 // The agent definitions of the roster that write files and must not hold COMMAND_TOOL.
 const COMMANDLESS_AGENTS: readonly string[] = ['plan-writer'];
+// The tools that read outside content, besides every tool named with MCP_PREFIX.
+const OUTSIDE_TOOLS: readonly string[] = ['WebFetch', 'WebSearch'];
+const MCP_PREFIX = 'mcp__';
+// The built-in tools that read local data, which an agent definition that
+// holds an outside tool must not hold.
+const LOCAL_TOOLS: readonly string[] = ['Bash', 'Glob', 'Grep', 'LSP', 'PowerShell', 'Read'];
 const BRACKETED = /^\[(.*)\]$/;
 const QUOTED = /^(["'])(.*)\1$/;
 const SCOPE = /\(.*$/;
@@ -27,11 +33,13 @@ const SCOPE = /\(.*$/;
 // limits: a missing field (one of tools or disallowedTools is enough), a name
 // that is not its file's, a tool that launches subagents outside
 // LAUNCHING_AGENTS, a tool that runs commands in an agent definition of
-// COMMANDLESS_AGENTS, or a tool that changes something in a read-only
-// agent definition. An agent definition with a tools line must not list
-// those tools, and a scoped entry such as Bash(git *) lists its tool; one
-// without it inherits every tool, so its disallowedTools line must name
-// them, and a scoped entry there names none. Either line is read so: one
+// COMMANDLESS_AGENTS, a tool that changes something in a read-only agent
+// definition, or a tool that reads local data in an agent definition that
+// holds a tool reading outside content. An agent definition with a tools
+// line holds what it lists and must not list those tools, and a scoped entry
+// such as Bash(git *) lists its tool; one without it inherits every tool,
+// MCP tools included, so its disallowedTools line must name them, and a
+// scoped entry there names none. Either line is read so: one
 // pair of surrounding brackets is removed, else one pair of surrounding
 // quotes; the value is split at commas; each entry is trimmed and loses one
 // pair of surrounding quotes; a value with no character is a missing field.
@@ -46,12 +54,17 @@ function getFileProblems(path: string, fields: ReadonlyMap<string, string>): str
   const name = basename(path, '.md');
   const launchingTools = LAUNCHING_AGENTS.includes(name) ? [] : [LAUNCHING_TOOL];
   const commandTools = COMMANDLESS_AGENTS.includes(name) ? [COMMAND_TOOL] : [];
-  const deniedTools = READ_ONLY_AGENTS.includes(name)
-    ? [...launchingTools, ...CHANGING_TOOLS]
-    : [...launchingTools, ...commandTools];
   const isNamedOtherwise = fields.has('name') && fields.get('name') !== name;
   const tools = getEntries(fields.get(TOOLS_FIELD));
   const disallowed = getEntries(fields.get(DISALLOWED_FIELD));
+  const hasOutsideTool = tools.length === 0
+    || tools.some((entry) => isOutsideTool(entry.replace(SCOPE, '')));
+  const deniedTools = [...new Set([
+    ...READ_ONLY_AGENTS.includes(name)
+      ? [...launchingTools, ...CHANGING_TOOLS]
+      : [...launchingTools, ...commandTools],
+    ...hasOutsideTool ? LOCAL_TOOLS : [],
+  ])];
   const hasOnlyDisallowedLine = tools.length === 0 && disallowed.length > 0;
   const hasNoToolsLine = tools.length === 0 && disallowed.length === 0;
   const missingFields = REQUIRED_FIELDS.filter(
@@ -68,6 +81,11 @@ function getFileProblems(path: string, fields: ReadonlyMap<string, string>): str
     ...listedDenied.map((entry) => `${ path }: lists ${ entry }`),
     ...unlistedDenied.map((tool) => `${ path }: does not disallow ${ tool }`),
   ];
+}
+
+// Whether the tool reads outside content.
+function isOutsideTool(tool: string): boolean {
+  return OUTSIDE_TOOLS.includes(tool) || tool.startsWith(MCP_PREFIX);
 }
 
 // The entries of a tools or disallowedTools value by the reading rule on
