@@ -50,3 +50,5 @@ paths:
 ## CODE-28. Read a file, a process or a request once per run and pass its result on.
 
 ## CODE-30. Wrap in `try` only code that can throw.
+
+## CODE-31. Keep data that more than one file uses, such as an object, a list, a query or a prompt, in a file of its own format, and have each user read it by path, or through a library built for that format when one exists; keep data that one file uses in that file, and when the runtime cannot read a file, keep the one copy in the code with a comment that says why.
