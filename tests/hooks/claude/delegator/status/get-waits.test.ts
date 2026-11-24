@@ -3,6 +3,9 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import {
+  readReturnWords,
+} from '../../../../../hooks/claude/delegator/contract/read-return-words.ts';
+import {
   type EndRow,
   type LaunchRow,
   RECORD_FILE,
@@ -12,8 +15,10 @@ import {
 } from '../../../../../hooks/claude/delegator/record-row.ts';
 import { getWaits } from '../../../../../hooks/claude/delegator/status/get-waits.ts';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
+import { readShippedWords } from '../read-shipped-words.ts';
 
 const NOW = new Date('2026-11-18T12:00:00Z');
+const WORDS = readShippedWords();
 const WAITING = 'waiting on Bash for 90 min: [deep] S2 x\n';
 const UNREADABLE = 'no transcript to read: [deep] S2 x\n';
 // More than the bytes the status reads from the end of a transcript.
@@ -83,7 +88,7 @@ test('prints the tool, the whole minutes and the description of a call with no r
   const outputFile = writeTranscript(t, [BASH_CALL]);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), WAITING);
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), WAITING);
 });
 
 test('prints the agent type when no launch row has the call id of the end row', (t) => {
@@ -93,7 +98,10 @@ test('prints the agent type when no launch row has the call id of the end row', 
     { ...END, toolUseId: undefined, outputFile },
   ]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), 'waiting on Bash for 90 min: delegator:finisher\n');
+  assert.equal(
+    getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS),
+    'waiting on Bash for 90 min: delegator:finisher\n',
+  );
 });
 
 test('prints the older of two calls with no result', (t) => {
@@ -103,7 +111,10 @@ test('prints the older of two calls with no result', (t) => {
   ]);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), 'waiting on Agent for 120 min: [deep] S2 x\n');
+  assert.equal(
+    getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS),
+    'waiting on Agent for 120 min: [deep] S2 x\n',
+  );
 });
 
 test('prints the call with no result after one that has its result', (t) => {
@@ -114,14 +125,14 @@ test('prints the call with no result after one that has its result', (t) => {
   ]);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), WAITING);
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), WAITING);
 });
 
 test('prints no line for a transcript whose every call has a result', (t) => {
   const outputFile = writeTranscript(t, [BASH_CALL, makeResult('call_1')]);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), '');
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), '');
 });
 
 test('prints one line for each launch, in the order of the record', (t) => {
@@ -133,7 +144,7 @@ test('prints one line for each launch, in the order of the record', (t) => {
   ]);
 
   assert.equal(
-    getWaits(dataDir, 's1', NOW),
+    getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS),
     `${ WAITING }no transcript to read: delegator:reader\n`,
   );
 });
@@ -142,14 +153,14 @@ test('prints no line for a launch that returned with a word of the contract', (t
   const outputFile = writeTranscript(t, [BASH_CALL]);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }, RETURN]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), '');
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), '');
 });
 
 test('prints the line of a launch resumed after its return', (t) => {
   const outputFile = writeTranscript(t, [BASH_CALL]);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }, RETURN, RESUME]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), WAITING);
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), WAITING);
 });
 
 test('prints the line of a launch whose newest return opens with another word', (t) => {
@@ -161,7 +172,7 @@ test('prints the line of a launch whose newest return opens with another word', 
     { ...RETURN, time: '2026-11-18T11:20:00Z', status: 'Waiting' },
   ]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), WAITING);
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), WAITING);
 });
 
 test('prints the line of a launch whose return was sent back', (t) => {
@@ -172,40 +183,40 @@ test('prints the line of a launch whose return was sent back', (t) => {
     { ...RETURN, allowed: false, reason: 'over the cap' },
   ]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), WAITING);
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), WAITING);
 });
 
 test('prints the line of a launch when only another subagent returned', (t) => {
   const outputFile = writeTranscript(t, [BASH_CALL]);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }, { ...RETURN, agentId: 'a9' }]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), WAITING);
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), WAITING);
 });
 
 test('names a launch whose output file does not exist', (t) => {
   const outputFile = join(makeTempDir(t), 'missing.output');
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), UNREADABLE);
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), UNREADABLE);
 });
 
 test('names a launch whose output file is a directory', (t) => {
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile: makeTempDir(t) }]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), UNREADABLE);
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), UNREADABLE);
 });
 
 test('names a launch whose end row has no output file', (t) => {
   const dataDir = writeRecord(t, [LAUNCH, END]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), UNREADABLE);
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), UNREADABLE);
 });
 
 test('names a launch whose output file holds no line that parses', (t) => {
   const outputFile = writeTranscript(t, ['{"type":"assistant"', '3']);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), UNREADABLE);
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), UNREADABLE);
 });
 
 test('reads only the end of a transcript longer than the tail', (t) => {
@@ -216,14 +227,14 @@ test('reads only the end of a transcript longer than the tail', (t) => {
   ]);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), WAITING);
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), WAITING);
 });
 
 test('reads a transcript whose last line is cut as the lines before it', (t) => {
   const outputFile = writeTranscript(t, [BASH_CALL, makeResult('call_1').slice(0, 40)]);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), WAITING);
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), WAITING);
 });
 
 test('takes no call from a line without a time', (t) => {
@@ -236,25 +247,38 @@ test('takes no call from a line without a time', (t) => {
   ]);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), WAITING);
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), WAITING);
 });
 
 test('prints no line for an end row of another session', (t) => {
   const outputFile = writeTranscript(t, [BASH_CALL]);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }]);
 
-  assert.equal(getWaits(dataDir, 's2', NOW), '');
+  assert.equal(getWaits({ dataDir, sessionId: 's2' }, NOW, WORDS), '');
 });
 
 test('prints no line for a completed end row', (t) => {
   const outputFile = writeTranscript(t, [BASH_CALL]);
   const dataDir = writeRecord(t, [LAUNCH, { ...END, status: 'completed', outputFile }]);
 
-  assert.equal(getWaits(dataDir, 's1', NOW), '');
+  assert.equal(getWaits({ dataDir, sessionId: 's1' }, NOW, WORDS), '');
 });
 
 test('prints no line without a record file', (t) => {
-  assert.equal(getWaits(makeTempDir(t), 's1', NOW), '');
+  assert.equal(getWaits({ dataDir: makeTempDir(t), sessionId: 's1' }, NOW, WORDS), '');
+});
+
+test('prints the one line that names return words that cannot be read', (t) => {
+  const outputFile = writeTranscript(t, [BASH_CALL]);
+  const dataDir = writeRecord(t, [LAUNCH, { ...END, outputFile }]);
+  const path = join(makeTempDir(t), 'return-words.json');
+
+  writeFileSync(path, '{');
+
+  assert.equal(
+    getWaits({ dataDir, sessionId: 's1' }, NOW, readReturnWords(path)),
+    `${ path } is not JSON; fix the file\n`,
+  );
 });
 
 // A data dir whose record holds the rows, one JSON line each.

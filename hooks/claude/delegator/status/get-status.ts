@@ -1,4 +1,5 @@
 import { countLaunches } from '../../gates/launch/admit-launch.ts';
+import { RETURN_WORDS_PATH, readReturnWords } from '../contract/read-return-words.ts';
 import { readLimit } from '../settings/read-limit.ts';
 import { readMode } from '../settings/read-mode.ts';
 import type { ResolvedSetting } from '../settings/resolve-setting.ts';
@@ -11,7 +12,7 @@ import { getWaits } from './get-waits.ts';
 export function getStatus(dataDir: string, sessionId: string, now: Date): string {
   const mode = describe(readMode(dataDir, sessionId), 'mode');
   const limit = describe(readLimit(dataDir, sessionId), 'whole number');
-  const waits = getWaits(dataDir, sessionId, now);
+  const waits = getWaits({ dataDir, sessionId }, now, readReturnWords(RETURN_WORDS_PATH));
 
   return `mode: ${ mode }\nlaunch limit: ${ limit }\n`
     + `launches this session: ${ String(countLaunches(dataDir, sessionId)) }\n${ waits }`;

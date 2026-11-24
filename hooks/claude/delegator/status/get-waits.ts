@@ -1,10 +1,6 @@
 import { closeSync, fstatSync, openSync, readFileSync, readSync } from 'node:fs';
 import { join } from 'node:path';
-import {
-  RETURN_WORDS_PATH,
-  readReturnWords,
-  type ReturnWords,
-} from '../contract/read-return-words.ts';
+import type { ReturnWords, ReturnWordsViolation } from '../contract/read-return-words.ts';
 import {
   type EndRow,
   type LaunchRow,
@@ -14,6 +10,7 @@ import {
   type Row,
 } from '../record-row.ts';
 import { readRows } from '../report/read-rows.ts';
+import type { Target } from '../settings/get-target.ts';
 import { getBlocks } from '../transcript/get-blocks.ts';
 import { readTranscriptLines, type TranscriptLine } from '../transcript/read-transcript-lines.ts';
 
@@ -35,10 +32,12 @@ interface Call {
 // the tool call its subagent waits on with the whole minutes it has waited,
 // or that its transcript cannot be read; no line for a subagent whose every
 // call has its result. Only reads; a missing record gives no line, and return
-// words that cannot be read give the one line that says why.
-export function getWaits(dataDir: string, sessionId: string, now: Date): string {
-  const words = readReturnWords(RETURN_WORDS_PATH);
-
+// words that could not be read give the one line that says why.
+export function getWaits(
+  { dataDir, sessionId }: Target,
+  now: Date,
+  words: ReturnWords | ReturnWordsViolation,
+): string {
   if ('violation' in words) {
     return `${ words.violation }\n`;
   }
