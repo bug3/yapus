@@ -8,31 +8,42 @@ import { getCompletions, type Completion } from './get-completions.ts';
 // whose launch names a launcher lands on that launcher when it is a finisher,
 // and on nothing else. A return whose launcher is no completed finisher (one
 // still running, or cut off in the background and never resumed) lands on
-// nothing. A return of a launch by the main agent lands on the most recent
-// builder completion before it in the same session, and on none when there
-// is no such completion.
+// nothing. A return of a launch by the main agent at deep depth judges a whole
+// plan and lands on nothing; one at another depth, or one whose launch row
+// cannot be reached, lands on the most recent builder completion before it in
+// the same session, and on none when there is no such completion. A plan
+// review is a diff-reviewer completion of a deep launch by the main agent.
 export interface Rework {
   readonly builders: number;
   readonly reworked: number;
   readonly finishers: number;
   readonly reworkedFinishers: number;
+  readonly planReviews: number;
+  readonly reworkedPlanReviews: number;
 }
 
 const BUILDER = 'delegator:builder';
 const FINISHER = 'delegator:finisher';
+const DIFF_REVIEWER = 'delegator:diff-reviewer';
+const DEEP = '[deep]';
 
 export function getRework(rows: readonly Row[], words: ReturnWords): Rework {
   const completions = getCompletions(rows);
   const builders = completions.filter((completion) => completion.subject === BUILDER);
   const finishers = completions.filter((completion) => completion.subject === FINISHER);
-  const landedOn = new Set(rows.filter((row) => isReworkReturn(row, words))
-    .flatMap((judge) => getLandedOn(rows, completions, judge) ?? []));
+  const judges = rows.filter((row) => isReworkReturn(row, words));
+  const landedOn = new Set(judges.flatMap((judge) => getLandedOn(rows, completions, judge) ?? []));
+  const planReviews = completions.filter((completion) => completion.subject === DIFF_REVIEWER
+    && isPlanLaunch(getLaunch(rows, completion.agentId)));
+  const sentBack = new Set(judges.map((judge) => judge.agentId));
 
   return {
     builders: builders.length,
     reworked: builders.filter((builder) => landedOn.has(builder)).length,
     finishers: finishers.length,
     reworkedFinishers: finishers.filter((finisher) => landedOn.has(finisher)).length,
+    planReviews: planReviews.length,
+    reworkedPlanReviews: planReviews.filter((review) => sentBack.has(review.agentId)).length,
   };
 }
 
@@ -41,7 +52,12 @@ function getLandedOn(
   completions: readonly Completion[],
   judge: ReturnRow,
 ): Completion | undefined {
-  const callerId = getCallerId(rows, judge);
+  const launch = getLaunch(rows, judge.agentId);
+  const callerId = launch?.callerId;
+
+  if (isPlanLaunch(launch)) {
+    return undefined;
+  }
 
   return callerId === undefined
     ? getLatestBefore(completions.filter((completion) => completion.subject === BUILDER), judge)
@@ -49,17 +65,23 @@ function getLandedOn(
       completion.subject === FINISHER && completion.agentId === callerId);
 }
 
-// The launch row of a return is reached through its end row: the end row
+// The launch row of an agent is reached through its end row: the end row
 // shares the agent id with the return and the call id with the launch.
-function getCallerId(rows: readonly Row[], judge: ReturnRow): string | undefined {
+function getLaunch(rows: readonly Row[], agentId: string | undefined): LaunchRow | undefined {
   const end = rows.find((row): row is EndRow =>
-    row.hook === 'end' && row.agentId === judge.agentId && row.toolUseId !== undefined);
-  const launch = end === undefined
+    row.hook === 'end' && row.agentId === agentId && row.toolUseId !== undefined);
+
+  return end === undefined
     ? undefined
     : rows.find((row): row is LaunchRow =>
       row.hook === 'launch' && row.toolUseId === end.toolUseId);
+}
 
-  return launch?.callerId;
+// A deep launch by the main agent: the judge of a whole plan, which the
+// write-plan skill launches after the last slice or in the plan stage.
+function isPlanLaunch(launch: LaunchRow | undefined): boolean {
+  return launch !== undefined && launch.callerId === undefined
+    && launch.description.startsWith(DEEP);
 }
 
 function getLatestBefore(

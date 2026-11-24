@@ -93,6 +93,7 @@ export function getFindings(measured: Measured): Finding[] {
       .map((stats) => getRateFinding(PLAN_REVIEWER_RULE, stats)),
     getReworkFinding(measured.rework),
     getFinisherReworkFinding(measured.rework),
+    getPlanReworkFinding(measured.rework),
     ...getUnusedFindings(measured),
   ];
 }
@@ -121,6 +122,19 @@ function getFinisherReworkFinding(rework: Rework): Finding {
   };
 
   return makeRateFinding(rule, 'delegator:finisher', [rework.reworkedFinishers, rework.finishers]);
+}
+
+function getPlanReworkFinding(rework: Rework): Finding {
+  const rule: RateRule = {
+    rule: 'rework after plan',
+    getCounts: () => [rework.reworkedPlanReviews, rework.planReviews],
+    isOver: (percent) => percent > 50,
+    threshold: `over 50 percent at n ${ String(MIN_SAMPLE) }: check how the slices fit together `
+      + 'in the plan',
+  };
+
+  return makeRateFinding(rule, 'delegator:diff-reviewer',
+    [rework.reworkedPlanReviews, rework.planReviews]);
 }
 
 function makeRateFinding(

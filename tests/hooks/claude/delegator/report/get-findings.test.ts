@@ -65,7 +65,10 @@ const PLAN_REVIEWER: AgentStats = {
 };
 const MEASURED = {
   stats: [BUILDER, PLAN_REVIEWER],
-  rework: { builders: 40, reworked: 10, finishers: 0, reworkedFinishers: 0 },
+  rework: {
+    builders: 40, reworked: 10, finishers: 0, reworkedFinishers: 0,
+    planReviews: 0, reworkedPlanReviews: 0,
+  },
   sessions: 31,
 };
 
@@ -149,7 +152,7 @@ test('reads a resumed launch without a return as 1 of 1 in the cap-stop rate', (
 test('reads rework after finisher right after rework after builder', () => {
   const findings = getFindings({
     ...MEASURED,
-    rework: { builders: 40, reworked: 10, finishers: 30, reworkedFinishers: 18 },
+    rework: { ...MEASURED.rework, finishers: 30, reworkedFinishers: 18 },
   });
   const index = findings.findIndex((finding) => finding.rule === 'rework after builder');
 
@@ -165,4 +168,21 @@ test('reads rework after finisher right after rework after builder', () => {
 
 test('weighs only verdict words return-words.json holds', () => {
   assert.deepEqual([GO, REVISE].filter((word) => !WORDS.verdicts.includes(word)), []);
+});
+
+test('reads rework after plan right after rework after finisher', () => {
+  const findings = getFindings({
+    ...MEASURED,
+    rework: { ...MEASURED.rework, planReviews: 4, reworkedPlanReviews: 1 },
+  });
+  const index = findings.findIndex((finding) => finding.rule === 'rework after finisher');
+
+  assert.deepEqual(findings[index + 1], {
+    rule: 'rework after plan',
+    agent: 'delegator:diff-reviewer',
+    value: '1 of 4, 25 percent',
+    n: 4,
+    threshold: 'over 50 percent at n 20: check how the slices fit together in the plan',
+    state: 'wait',
+  });
 });
