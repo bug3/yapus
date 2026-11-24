@@ -89,8 +89,9 @@ test('names an agent definition with neither tools nor disallowedTools', (t) => 
 });
 
 test('names an agent definition without tools whose disallowedTools lacks Agent', (t) => {
+  const disallowed = 'Bash, Glob, Grep, LSP, PowerShell, Read';
   const root = makeAgents(t, [
-    { name: 'builder', text: makeHeadWith('builder', ['disallowedTools: Read, Grep']) },
+    { name: 'builder', text: makeHeadWith('builder', [`disallowedTools: ${ disallowed }`]) },
   ]);
 
   assert.deepEqual(getAgentProblems(root), [
@@ -102,7 +103,9 @@ test('names changing tools a read-only agent definition without tools does not d
   const root = makeAgents(t, [
     {
       name: 'reader',
-      text: makeHeadWith('reader', ['disallowedTools: Agent, Bash, Edit, Write']),
+      text: makeHeadWith('reader', [
+        'disallowedTools: Agent, Bash, Edit, Glob, Grep, LSP, Read, Write',
+      ]),
     },
   ]);
 
@@ -112,8 +115,8 @@ test('names changing tools a read-only agent definition without tools does not d
   ]);
 });
 
-test('finds nothing in a read-only agent definition without tools that disallows all six', (t) => {
-  const disallowed = 'Agent, Bash, Edit, NotebookEdit, PowerShell, Write';
+test('finds nothing in a read-only agent definition without tools that disallows all ten', (t) => {
+  const disallowed = 'Agent, Bash, Edit, Glob, Grep, LSP, NotebookEdit, PowerShell, Read, Write';
   const root = makeAgents(t, [
     { name: 'reader', text: makeHeadWith('reader', [`disallowedTools: ${ disallowed }`]) },
   ]);
@@ -158,7 +161,8 @@ test('finds nothing in a writing agent definition that lists a scoped entry', (t
 });
 
 test('names the tool a read-only agent definition without tools disallows only scoped', (t) => {
-  const disallowed = 'Agent, Bash(git *), Edit, NotebookEdit, PowerShell, Write';
+  const disallowed =
+    'Agent, Bash(git *), Edit, Glob, Grep, LSP, NotebookEdit, PowerShell, Read, Write';
   const root = makeAgents(t, [
     { name: 'reader', text: makeHeadWith('reader', [`disallowedTools: ${ disallowed }`]) },
   ]);
@@ -188,8 +192,8 @@ test('names an agent definition whose tools line holds no value', (t) => {
   assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/reader.md: no tools']);
 });
 
-test('finds nothing in a read-only agent definition without tools that quotes all six', (t) => {
-  const disallowed = '"Agent, Bash, Edit, NotebookEdit, PowerShell, Write"';
+test('finds nothing in a read-only agent definition without tools that quotes all ten', (t) => {
+  const disallowed = '"Agent, Bash, Edit, Glob, Grep, LSP, NotebookEdit, PowerShell, Read, Write"';
   const root = makeAgents(t, [
     { name: 'reader', text: makeHeadWith('reader', [`disallowedTools: ${ disallowed }`]) },
   ]);
@@ -205,6 +209,63 @@ test('names PowerShell in a read-only agent definition', (t) => {
   assert.deepEqual(getAgentProblems(root), [
     'plugins/p/agents/diff-reviewer.md: lists PowerShell',
   ]);
+});
+
+test('names the local tools an agent definition lists with a web tool', (t) => {
+  const root = makeAgents(t, [
+    { name: 'scout', text: makeHead('scout', '"WebSearch, Read, Grep"') },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), [
+    'plugins/p/agents/scout.md: lists Read',
+    'plugins/p/agents/scout.md: lists Grep',
+  ]);
+});
+
+test('names a scoped local tool an agent definition lists with an MCP tool', (t) => {
+  const root = makeAgents(t, [
+    { name: 'scout', text: makeHead('scout', '["mcp__github__get_issue", "Bash(git *)"]') },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/scout.md: lists Bash(git *)']);
+});
+
+test('names a local tool an agent definition lists with a scoped web tool', (t) => {
+  const root = makeAgents(t, [
+    { name: 'scout', text: makeHead('scout', 'WebFetch(domain:example.com), LSP') },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), ['plugins/p/agents/scout.md: lists LSP']);
+});
+
+test('finds nothing in an agent definition that lists only outside tools', (t) => {
+  const root = makeAgents(t, [
+    { name: 'scout', text: makeHead('scout', 'WebSearch, WebFetch, mcp__github__get_issue') },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), []);
+});
+
+test('names the local tools an agent definition without tools does not disallow', (t) => {
+  const root = makeAgents(t, [
+    { name: 'scout', text: makeHeadWith('scout', ['disallowedTools: Agent, Bash, Read']) },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), [
+    'plugins/p/agents/scout.md: does not disallow Glob',
+    'plugins/p/agents/scout.md: does not disallow Grep',
+    'plugins/p/agents/scout.md: does not disallow LSP',
+    'plugins/p/agents/scout.md: does not disallow PowerShell',
+  ]);
+});
+
+test('finds nothing in an agent definition without tools that disallows every local tool', (t) => {
+  const disallowed = 'Agent, Bash, Glob, Grep, LSP, PowerShell, Read';
+  const root = makeAgents(t, [
+    { name: 'scout', text: makeHeadWith('scout', [`disallowedTools: ${ disallowed }`]) },
+  ]);
+
+  assert.deepEqual(getAgentProblems(root), []);
 });
 
 function makeHead(name: string, tools: string): string {
