@@ -2,7 +2,7 @@
 name: plan-writer
 description: "Writes the plan of deep work to `.yapus/plans/<YYYY-MM>/<topic>/plan.md` before the first edit, from the sources and the questions the brief names, in a form plan-reviewer can judge and a finisher can take slice by slice. Returns the plan's path with the decisions left open for the person. Not for edits outside the plan file, for running commands or for taking the person's decisions."
 tools: Read, Grep, Glob, Write, Edit
-model: inherit
+model: opus
 effort: high
 maxTurns: 50
 ---

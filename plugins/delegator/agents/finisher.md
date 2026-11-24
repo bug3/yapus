@@ -2,7 +2,7 @@
 name: finisher
 description: "Finishes one slice of a written plan of deep work: edits, runs the oracle until it passes, has the diff reviewed, commits the slice and returns one result, when the brief names the plan file and the slice. Not for quick or standard work, for undecided design or for a slice without a pass-or-fail command."
 tools: Read, Edit, Write, Grep, Glob, Bash, Agent
-model: inherit
+model: opus
 effort: high
 maxTurns: 100
 ---
