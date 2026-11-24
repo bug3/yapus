@@ -582,6 +582,16 @@ const QUESTION_SCHEMA = {
   required: ['lane', 'question'],
 };
 
+// One follow-up question: a question and the number, from 1, of the entry of
+// unansweredQuestions it closes, absent when it closes an unread area.
+const FOLLOW_UP_SCHEMA = {
+  ...QUESTION_SCHEMA,
+  properties: {
+    ...QUESTION_SCHEMA.properties,
+    unanswered: { type: 'integer', minimum: 1 },
+  },
+};
+
 // What a gather agent of each lane returns. No list of claims has a longest
 // length: the claims of a question are not capped.
 const REPOSITORY_GATHER_SCHEMA = {
@@ -650,7 +660,7 @@ const SCHEMAS = {
     properties: {
       unreadAreas: { type: 'array', items: { type: 'string' } },
       unansweredQuestions: { type: 'array', items: { type: 'string' } },
-      followUps: { type: 'array', maxItems: FOLLOW_UP_LIMIT, items: QUESTION_SCHEMA },
+      followUps: { type: 'array', maxItems: FOLLOW_UP_LIMIT, items: FOLLOW_UP_SCHEMA },
     },
     required: ['unreadAreas', 'unansweredQuestions', 'followUps'],
   },
@@ -793,7 +803,12 @@ const bothRoundsDropped = [
 // `stats.stages` is the table launchAgent counts in, so the stats the run
 // returns hold its last workflow agent too.
 const stats = getStats(questionCounts, bothRoundsDropped, bothRounds, followedUp);
-const unmeasuredLines = listUnmeasuredLines(bothRounds, bothRoundsDropped, gaps);
+const unmeasuredLines = listUnmeasuredLines(
+  bothRounds,
+  bothRoundsDropped,
+  gaps,
+  followUpQuestions,
+);
 const content = formatContent(bothRounds, unmeasuredLines, stats);
 
 // The file is named from what it holds: a run of other content writes
@@ -1402,6 +1417,7 @@ function formatCompletenessPrompt({ task, lanes }, researched) {
       lanes,
       `- For each web question in followUps, name in sources up to ${ SOURCE_LIMIT } of the sources listed above that can answer it, the likeliest first, and none when none fits.`,
     ),
+    '- For each question in followUps, give in unanswered the number, from 1, of the entry of unansweredQuestions it closes, and leave unanswered out when it closes an unread area.',
     RETURN_RULE,
     '- Name what is missing; do not answer it, and change no file.',
   ].join('\n');
@@ -1484,7 +1500,7 @@ function formatClaimBlock(title, claimLines) {
 // returned nothing, each question whose gather agent returned nothing, and
 // each question that was dropped. What a gather agent named as not searched
 // goes to the completeness agent alone, in its summary of the questions.
-function listUnmeasuredLines(researched, droppedQuestions, gaps) {
+function listUnmeasuredLines(researched, droppedQuestions, gaps, followUpQuestions) {
   const silentLines = researched
     .filter(({ gatherLength }) => gatherLength === undefined)
     .map(({ id }) => `- ${ id } returned nothing.`);
@@ -1496,10 +1512,33 @@ function listUnmeasuredLines(researched, droppedQuestions, gaps) {
 
   return [
     ...gaps.unreadAreas.map((area) => `- Unread: ${ toOneLine(area) }`),
-    ...gaps.unansweredQuestions.map((question) => `- Unanswered: ${ toOneLine(question) }`),
+    ...listUnansweredLines(gaps.unansweredQuestions, researched, followUpQuestions),
     ...silentLines,
     ...droppedLines,
   ];
+}
+
+// An unanswered question that no researched follow-up question names stands
+// as the completeness agent wrote it. One whose follow-up questions
+// verified a claim gives no line: the claims stand under those questions. One
+// whose follow-up questions verified nothing names them.
+function listUnansweredLines(unansweredQuestions, researched, followUpQuestions) {
+  return unansweredQuestions.flatMap((question, index) => {
+    const line = `- Unanswered: ${ toOneLine(question) }`;
+    const followUpIds = followUpQuestions
+      .filter(({ unanswered }) => unanswered === index + 1)
+      .map(({ id }) => id);
+
+    if (followUpIds.length === 0) {
+      return [line];
+    }
+
+    const isAnswered = researched.some(
+      ({ id, claims }) => followUpIds.includes(id) && countOutcome(claims, VERIFIED) > 0,
+    );
+
+    return isAnswered ? [] : [`${ line } (followed up as ${ followUpIds.join(', ') }, nothing verified)`];
+  });
 }
 
 // The lane is a name the schema of the scope stage admits, so it is written
