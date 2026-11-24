@@ -84,13 +84,13 @@ test('returns the plans line alone when no prompt is logged', () => {
   assert.equal(formatRecall(TEXTS, [], { ...NO_PLANS, planPaths: ['/r/a.md'] }), 'L /r/a.md.');
 });
 
-// Three prompts of 1,980 characters fit with the path line alone and not with
+// Three prompts of 1,930 characters fit with the path line alone and not with
 // a plans line of 44 characters beside it.
 test('counts the plans line inside the budget and leaves out one more prompt', () => {
   const prompts = [
-    { time: 'old', prompt: 'x'.repeat(1980) },
-    { time: 'mid', prompt: 'y'.repeat(1980) },
-    { time: 'new', prompt: 'z'.repeat(1980) },
+    { time: 'old', prompt: 'x'.repeat(1930) },
+    { time: 'mid', prompt: 'y'.repeat(1930) },
+    { time: 'new', prompt: 'z'.repeat(1930) },
   ];
   const planPaths = [`/${ 'q'.repeat(40) }`];
   const recall = formatRecall(TEXTS, prompts, { ...NO_PLANS, planPaths });
@@ -98,7 +98,7 @@ test('counts the plans line inside the budget and leaves out one more prompt', (
 
   assert.deepEqual(
     [withoutPlans.startsWith('H 0\n\nold'), recall?.startsWith('H 1\n\nmid'), recall?.length],
-    [true, true, 4027],
+    [true, true, 3927],
   );
 });
 
@@ -116,20 +116,20 @@ test('returns the notice alone when no prompt is logged and there is no plan pat
   assert.equal(formatRecall(TEXTS, [], { ...NO_PLANS, hasOlderLayout: true }), 'N');
 });
 
-// Three prompts of 1,980 characters fit with the path line alone and not with
+// Three prompts of 1,930 characters fit with the path line alone and not with
 // a notice of 44 characters beside it.
 test('counts the notice inside the budget and leaves out one more prompt', () => {
   const texts = { ...TEXTS, notice: 'N'.repeat(44) };
   const prompts = [
-    { time: 'old', prompt: 'x'.repeat(1980) },
-    { time: 'mid', prompt: 'y'.repeat(1980) },
-    { time: 'new', prompt: 'z'.repeat(1980) },
+    { time: 'old', prompt: 'x'.repeat(1930) },
+    { time: 'mid', prompt: 'y'.repeat(1930) },
+    { time: 'new', prompt: 'z'.repeat(1930) },
   ];
   const recall = formatRecall(texts, prompts, { ...NO_PLANS, hasOlderLayout: true });
   const withoutNotice = formatRecall(texts, prompts, NO_PLANS) ?? '';
 
   assert.deepEqual(
     [withoutNotice.startsWith('H 0\n\nold'), recall?.startsWith('H 1\n\nmid'), recall?.length],
-    [true, true, 4027],
+    [true, true, 3927],
   );
 });

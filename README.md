@@ -131,7 +131,7 @@ delegator records every launch and return verdict in a file that never leaves th
 
 ### Prompt Log
 
-The prompt log keeps what the person typed, so a compaction does not lose it. delegator writes each prompt, with its time, as one JSON line to the session's file, `.yapus/sessions/<YYYY-MM>/<DD>T<HH-MM-SS>Z_<session id>.jsonl` under the directory the session opened in, named for the UTC time of the session's first prompt. A write to a file in a plan's directory adds a line that names the plan and the file. Right after a compaction it gives the session those prompts back, the newest that fit in 6,000 characters, with the paths of the five newest plans in `.yapus/plans/`.
+The prompt log keeps what the person typed, so a compaction does not lose it. delegator writes each prompt, with its time, as one JSON line to the session's file, `.yapus/sessions/<YYYY-MM>/<DD>T<HH-MM-SS>Z_<session id>.jsonl` under the directory the session opened in, named for the UTC time of the session's first prompt. A write to a file in a plan's directory adds a line that names the plan and the file. Right after a compaction it gives the session those prompts back, the newest that fit in 5,850 characters, with the paths of the five newest plans in `.yapus/plans/`.
 
 It creates the sessions directory with a `.gitignore` that keeps it out of git; the person changes that file to keep their prompts in git. `/delegator:upgrade` moves the files of an older layout, `.yapus/prompts/` and the plans directly in `.yapus/plans/`, into this one and prints each move.
 
