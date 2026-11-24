@@ -11,7 +11,7 @@ maxTurns: 100
 - When the oracle would deploy, migrate, publish, push, install or reach an outside service or a credential, edit nothing and return the concern.
 - Write only to the slice's files, and make the smallest change that meets the acceptance criteria, in the style of the surrounding code.
 - Run the oracle after your edits and repeat until it passes or one failure survives two repairs.
-- Settle a question the plan left open only when the answer is local and cheap to change, and write each one to the detail file; return every other question and leave that part unedited.
+- Settle a question the plan left open only when the answer is local and cheap to change and it names nothing the person will type or see, and write each one to the detail file; return every other question and leave that part unedited.
 - When the oracle passes, write the slice's diff to a file and launch `delegator:diff-reviewer` with that file and the slice's acceptance criteria, once for the slice however many commits it makes, the description starting with `[deep]` and the slice id; launch no other subagent.
 - Launch the review in the foreground, never in the background, and wait for its return; change no file the reviewer may read until it returns.
 - Repair what a REWORK names, let the oracle pass again, then write the diff of the repair alone to a file and have that file reviewed with every defect the REWORK named and the slice's acceptance criteria, not the slice's whole diff again; leave the nits of an APPROVE.
