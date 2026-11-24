@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { formatMessage } from '../../../shared/format-message.ts';
 import { getFirstLine } from '../../../shared/get-first-line.ts';
+import { RETURN_WORDS_PATH, readReturnWords } from '../contract/read-return-words.ts';
 import { RECORD_FILE } from '../record-row.ts';
 import { getReport } from './get-report.ts';
 
@@ -32,6 +33,12 @@ function readInput(): string {
 }
 
 function getOutcome(path: string): Outcome {
+  const words = readReturnWords(RETURN_WORDS_PATH);
+
+  if ('violation' in words) {
+    return { kind: 'failure', detail: words.violation };
+  }
+
   let text: string;
 
   try {
@@ -40,7 +47,7 @@ function getOutcome(path: string): Outcome {
     return { kind: 'failure', detail: `cannot read ${ path }: ${ getFirstLine(error) }` };
   }
 
-  return { kind: 'report', markdown: getReport(path, text) };
+  return { kind: 'report', markdown: getReport(path, text, words) };
 }
 
 function stop(outcome: Outcome): never {

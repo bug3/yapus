@@ -1,12 +1,8 @@
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { test } from 'node:test';
 import {
   type AgentStats,
-  CONTRACT_WORDS,
   getAgentStats,
-  VERDICT_WORDS,
 } from '../../../../../hooks/claude/delegator/report/get-agent-stats.ts';
 import type {
   EndRow,
@@ -14,10 +10,9 @@ import type {
   ResumeRow,
   ReturnRow,
 } from '../../../../../hooks/claude/delegator/record-row.ts';
+import { readShippedWords } from '../read-shipped-words.ts';
 
-const ROOT = join(import.meta.dirname, '..', '..', '..', '..', '..');
-const CONTRACT = join(ROOT, 'hooks', 'claude', 'delegator', 'contract', 'contract.md');
-const AGENTS = join(ROOT, 'plugins', 'delegator', 'agents');
+const WORDS = readShippedWords();
 const BUILDER = 'delegator:builder';
 const LAUNCH: LaunchRow = {
   time: 't',
@@ -87,7 +82,7 @@ test('counts launches, ends and returns of one agent type and takes the medians'
     { ...RETURN, verdict: 'Command:' },
     { ...RETURN, allowed: false, status: 'Here', verdict: 'REWORK' },
     { ...RETURN, status: 'PARTIAL', verdict: 'REWORK' },
-  ]);
+  ], WORDS);
 
   assert.deepEqual(stats, [{
     agent: BUILDER,
@@ -109,20 +104,23 @@ test('counts launches, ends and returns of one agent type and takes the medians'
 test('leaves the stats of a completed foreground launch unchanged by a resume row', () => {
   const rows = [LAUNCH, END, RETURN];
 
-  assert.deepEqual(getAgentStats([...rows, RESUME]), getAgentStats(rows));
+  assert.deepEqual(getAgentStats([...rows, RESUME], WORDS), getAgentStats(rows, WORDS));
 });
 
 test('ignores a resume of an agent id with no end or return row', () => {
   const rows = [LAUNCH, END, RETURN];
 
-  assert.deepEqual(getAgentStats([...rows, { ...RESUME, agentId: 'zzz' }]), getAgentStats(rows));
+  assert.deepEqual(
+    getAgentStats([...rows, { ...RESUME, agentId: 'zzz' }], WORDS),
+    getAgentStats(rows, WORDS),
+  );
 });
 
 test('counts a background launch with a return as completed with the return medians', () => {
   const [stats] = getAgentStats([
     { ...END, status: 'async_launched' },
     { ...RETURN, tokens: 70, toolUses: 7, durationMs: 700 },
-  ]);
+  ], WORDS);
 
   assert.deepEqual(
     [stats?.completed, stats?.capped, stats?.noReturn],
@@ -144,7 +142,7 @@ test('counts a resume as a cap stop under the agent type of its launch only', ()
     RETURN,
     diffReviewer,
     { ...RETURN, subject: 'delegator:diff-reviewer', agentId: 'b' },
-  ]);
+  ], WORDS);
 
   assert.deepEqual(
     [builder?.agent, builder?.capped, other?.agent, other?.capped],
@@ -153,39 +151,24 @@ test('counts a resume as a cap stop under the agent type of its launch only', ()
 });
 
 test('counts a resume of a launch without a return as no return and not capped', () => {
-  const [stats] = getAgentStats([{ ...END, status: 'async_launched' }, RESUME]);
+  const [stats] = getAgentStats([{ ...END, status: 'async_launched' }, RESUME], WORDS);
 
   assert.deepEqual([stats?.completed, stats?.capped, stats?.noReturn], [0, 0, 1]);
 });
 
 test('counts a background launch without a return as no return and not completed', () => {
-  const [stats] = getAgentStats([{ ...END, status: 'async_launched' }]);
+  const [stats] = getAgentStats([{ ...END, status: 'async_launched' }], WORDS);
 
   assert.deepEqual([stats?.completed, stats?.noReturn], [0, 1]);
 });
 
 test('gives one entry per agent type, sorted by name, with undefined medians without ends', () => {
-  const stats = getAgentStats([{ ...LAUNCH, subject: 'delegator:diff-reviewer' }, LAUNCH]);
+  const stats = getAgentStats([{ ...LAUNCH, subject: 'delegator:diff-reviewer' }, LAUNCH], WORDS);
 
   assert.deepEqual(stats.map((entry) => entry.agent), [BUILDER, 'delegator:diff-reviewer']);
   assert.deepEqual(
     [stats[0]?.durationMedianMs, stats[0]?.tokensMedian, stats[0]?.toolUsesMedian],
     [undefined, undefined, undefined],
-  );
-});
-
-test('names only words the return contract asks for', () => {
-  const contract = readFileSync(CONTRACT, 'utf8');
-
-  assert.deepEqual(CONTRACT_WORDS.filter((word) => !contract.includes(word)), []);
-});
-
-test('names only verdict words an agent definition asks for', () => {
-  const definitions = readdirSync(AGENTS).map((file) => readFileSync(join(AGENTS, file), 'utf8'));
-
-  assert.deepEqual(
-    VERDICT_WORDS.filter((word) => !definitions.some((text) => text.includes(word))),
-    [],
   );
 });
 
@@ -222,7 +205,7 @@ function getReturnCounts(stats: AgentStats | undefined): unknown[] {
 }
 
 test('leaves a return while a nested launch runs out of the return counts', () => {
-  const [, finisher] = getAgentStats([NESTED_LAUNCH, REVIEWER_END, FINISHER_STOP]);
+  const [, finisher] = getAgentStats([NESTED_LAUNCH, REVIEWER_END, FINISHER_STOP], WORDS);
 
   assert.deepEqual(getReturnCounts(finisher), [0, 0, 0, {}]);
 });
@@ -233,7 +216,7 @@ test('counts a return after the nested subagent returned', () => {
     REVIEWER_END,
     REVIEWER_RETURN,
     { ...FINISHER_STOP, time: 't5' },
-  ]);
+  ], WORDS);
 
   assert.deepEqual(getReturnCounts(finisher), [1, 1, 1, { REWORK: 1 }]);
 });
@@ -243,13 +226,13 @@ test('counts every return of a subagent without a nested launch', () => {
     NESTED_LAUNCH,
     REVIEWER_END,
     { ...FINISHER_STOP, agentId: 'g' },
-  ]);
+  ], WORDS);
 
   assert.deepEqual(getReturnCounts(finisher), [1, 1, 1, { REWORK: 1 }]);
 });
 
 test('counts a return while a nested launch without an end row runs', () => {
-  const [, finisher] = getAgentStats([NESTED_LAUNCH, FINISHER_STOP]);
+  const [, finisher] = getAgentStats([NESTED_LAUNCH, FINISHER_STOP], WORDS);
 
   assert.deepEqual(getReturnCounts(finisher), [1, 1, 1, { REWORK: 1 }]);
 });
@@ -265,7 +248,7 @@ test('leaves both waits of two nested launches out and counts the last return', 
     { ...FINISHER_STOP, time: 't6' },
     { ...REVIEWER_RETURN, time: 't7', agentId: 's' },
     { ...RETURN, time: 't8', subject: FINISHER, agentId: 'f' },
-  ]);
+  ], WORDS);
 
   assert.deepEqual(getReturnCounts(finisher), [1, 0, 1, {}]);
 });

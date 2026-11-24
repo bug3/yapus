@@ -5,7 +5,14 @@ import {
   getAgentStats,
 } from '../../../../../hooks/claude/delegator/report/get-agent-stats.ts';
 import type { EndRow, ResumeRow } from '../../../../../hooks/claude/delegator/record-row.ts';
-import { getFindings } from '../../../../../hooks/claude/delegator/report/get-findings.ts';
+import {
+  getFindings,
+  GO,
+  REVISE,
+} from '../../../../../hooks/claude/delegator/report/get-findings.ts';
+import { readShippedWords } from '../read-shipped-words.ts';
+
+const WORDS = readShippedWords();
 
 const SILENT_END: EndRow = {
   time: 't',
@@ -132,7 +139,7 @@ test('applies the rate rules to agent types of the roster only, not to a refused
 });
 
 test('reads a resumed launch without a return as 1 of 1 in the cap-stop rate', () => {
-  const stats = getAgentStats([SILENT_END, RESUME]);
+  const stats = getAgentStats([SILENT_END, RESUME], WORDS);
   const finding = getFindings({ ...MEASURED, stats })
     .find((entry) => entry.rule === 'cap-stop rate');
 
@@ -154,4 +161,8 @@ test('reads rework after finisher right after rework after builder', () => {
     threshold: 'over 50 percent at n 20: narrow the slices of the plan',
     state: 'act',
   });
+});
+
+test('weighs only verdict words return-words.json holds', () => {
+  assert.deepEqual([GO, REVISE].filter((word) => !WORDS.verdicts.includes(word)), []);
 });

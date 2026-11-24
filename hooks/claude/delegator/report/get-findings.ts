@@ -36,6 +36,13 @@ export const MIN_SAMPLE = 20;
 export const MIN_SESSIONS = 30;
 
 const PLAN_REVIEWER = 'delegator:plan-reviewer';
+
+// The two plan-reviewer verdicts the GO rate weighs; return-words.json holds
+// every verdict word.
+export const GO = 'GO';
+
+export const REVISE = 'REVISE';
+
 const PERCENT = 100;
 const ROSTER_AGENTS: readonly string[] = ROSTER.map((name) => `delegator:${ name }`);
 
@@ -68,8 +75,8 @@ const RATE_RULES: readonly RateRule[] = [
 const PLAN_REVIEWER_RULE: RateRule = {
   rule: 'GO rate',
   getCounts: (stats) => [
-    stats.verdicts.GO ?? 0,
-    (stats.verdicts.GO ?? 0) + (stats.verdicts.REVISE ?? 0),
+    stats.verdicts[GO] ?? 0,
+    (stats.verdicts[GO] ?? 0) + (stats.verdicts[REVISE] ?? 0),
   ],
   isOver: (percent) => percent > 90 || percent < 20,
   threshold: `over 90 percent at n ${ String(MIN_SAMPLE) }: remove the plan-reviewer; `

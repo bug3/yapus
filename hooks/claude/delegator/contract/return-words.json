@@ -1,0 +1,26 @@
+{
+  "statuses": [
+    "DONE",
+    "PARTIAL",
+    "QUESTIONS",
+    "BLOCKED"
+  ],
+  "verdicts": [
+    {
+      "word": "GO",
+      "rework": false
+    },
+    {
+      "word": "REVISE",
+      "rework": true
+    },
+    {
+      "word": "APPROVE",
+      "rework": false
+    },
+    {
+      "word": "REWORK",
+      "rework": true
+    }
+  ]
+}
