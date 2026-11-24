@@ -7,7 +7,7 @@ import {
 
 // The most characters the recall adds, so the policy beside it at the same
 // compaction stays under Claude Code's cap on added context.
-export const BUDGET_CHARACTERS = 6000;
+export const BUDGET_CHARACTERS = 5850;
 
 // A prompt longer than this is cut to its start, so one long paste does not
 // push out every prompt before it.
