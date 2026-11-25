@@ -96,6 +96,95 @@ test('skips every path below a vendor folder but checks the folders above it', (
   assert.deepEqual(checkNames(root), [2, '', refusal('Lib/vendor/x.md', 'Lib')]);
 });
 
+test('accepts the files and folders Jekyll fixes', (t) => {
+  const root = makeTree(t, [
+    'site/_config.yml',
+    'site/_data/authors.yml',
+    'site/_drafts/a-draft.md',
+    'site/_includes/head.html',
+    'site/_layouts/post.html',
+    'site/_posts/2026-11-25-a-post.md',
+    'site/_sass/_base.scss',
+  ]);
+
+  assert.deepEqual(checkNames(root), [0, '', '']);
+});
+
+test('refuses a look-alike of a Jekyll name', (t) => {
+  assert.deepEqual(
+    checkNames(makeTree(t, ['_assets/x.css', '_config.json', '_data.md'])),
+    [2, '', [
+      refusal('_assets/x.css', '_assets'),
+      refusal('_config.json', '_config.json'),
+      refusal('_data.md', '_data.md'),
+    ].join('')],
+  );
+});
+
+test('accepts an underscore folder below a Hugo layouts folder', (t) => {
+  const root = makeTree(t, [
+    'layouts/_default/baseof.html',
+    'layouts/_partials/head.html',
+    'themes/plain/layouts/blog/_markup/render-link.html',
+  ]);
+
+  assert.deepEqual(checkNames(root), [0, '', '']);
+});
+
+test('refuses an underscore folder outside a Hugo layouts folder', (t) => {
+  assert.deepEqual(
+    checkNames(makeTree(t, ['content/_default/x.md', 'layouts/_Default/x.html'])),
+    [2, '', [
+      refusal('content/_default/x.md', '_default'),
+      refusal('layouts/_Default/x.html', '_Default'),
+    ].join('')],
+  );
+});
+
+test('accepts the Next.js error page and the folders Next.js fixes below app', (t) => {
+  const root = makeTree(t, [
+    'pages/_error.tsx',
+    'src/app/(shop)/cart/page.tsx',
+    'src/app/@modal/default.tsx',
+    'src/app/_components/nav.tsx',
+    'app/[id]/page.tsx',
+  ]);
+
+  assert.deepEqual(checkNames(root), [0, '', '']);
+});
+
+test('refuses a Next.js folder outside app and a look-alike of a Next.js page', (t) => {
+  const root = makeTree(t, [
+    'pages/_errors.tsx',
+    'src/(shop)/page.tsx',
+    'src/@modal/x.tsx',
+    'src/_lib/x.ts',
+  ]);
+
+  assert.deepEqual(
+    checkNames(root),
+    [2, '', [
+      refusal('pages/_errors.tsx', '_errors.tsx'),
+      refusal('src/(shop)/page.tsx', '(shop)'),
+      refusal('src/@modal/x.tsx', '@modal'),
+      refusal('src/_lib/x.ts', '_lib'),
+    ].join('')],
+  );
+});
+
+test('accepts an underscore folder in a Go module', (t) => {
+  const root = makeTree(t, ['go.mod', '_examples/basic/main.go', '_tools/notes.md']);
+
+  assert.deepEqual(checkNames(root), [0, '', '']);
+});
+
+test('refuses an underscore folder outside a Go module', (t) => {
+  assert.deepEqual(
+    checkNames(makeTree(t, ['_examples/main.go'])),
+    [2, '', refusal('_examples/main.go', '_examples')],
+  );
+});
+
 test('refuses a capital inside a word', (t) => {
   assert.deepEqual(
     checkNames(makeTree(t, ['getDashLines.ts'])),

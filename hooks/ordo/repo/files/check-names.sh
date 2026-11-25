@@ -18,7 +18,9 @@ readonly WORD="$UNIT(-$UNIT)*"
 readonly NAME="$WORD(_$WORD)*"
 readonly CHOSEN="^\\.?$NAME(\\.$NAME)*$"
 readonly UPPERCASE='^[A-Z][A-Z0-9]*([_-][A-Z0-9]+)*(\.[a-z0-9]+(-[A-Za-z0-9]+)*)*$'
-readonly NEXT_PAGE='^_(app|document)(\.[a-z0-9]+)+$'
+readonly NEXT_PAGE='^_(app|document|error)(\.[a-z0-9]+)+$'
+readonly NEXT_APP_FOLDER="^(_$NAME|\\($NAME\\)|@$NAME)/$"
+readonly UNDERSCORE_FOLDER="^_$NAME/$"
 readonly BRACKET_ROUTE='^\[[][A-Za-z0-9._-]+\](\.[a-z0-9]+)*$'
 readonly SASS_PARTIAL="^_$NAME\\.(scss|sass)$"
 # No segment holds a slash.
@@ -30,21 +32,46 @@ fail() {
   exit 2
 }
 
-# A name a tool fixes; a folder is given with a trailing slash.
+# A name a tool fixes. A folder is given with a trailing slash, and parent is
+# the folders above the segment, each with a trailing slash.
 is_tool_owned() {
-  case $1 in
+  local segment=$1 parent=/$2
+
+  case $segment in
     Makefile | Dockerfile | _index.md | .DS_Store) return 0 ;;
-    __tests__/ | __mocks__/ | __snapshots__/ | _posts/ | _drafts/ | __pycache__/) return 0 ;;
+    __tests__/ | __mocks__/ | __snapshots__/ | __pycache__/) return 0 ;;
+    # Jekyll's site files: https://jekyllrb.com/docs/structure/
+    _config.yml | _data/ | _drafts/ | _includes/ | _layouts/ | _posts/ | _sass/) return 0 ;;
     Cargo.lock | Cargo.toml | Chart.lock | Chart.yaml) return 0 ;;
     CMakeLists.txt | CMakePresets.json | CMakeUserPresets.json) return 0 ;;
     Project.toml | JuliaProject.toml | Manifest.toml | JuliaManifest.toml) return 0 ;;
   esac
 
-  [[ ${1%/} =~ $NEXT_PAGE ]] || [[ ${1%/} =~ $BRACKET_ROUTE ]] || [[ ${1%/} =~ $SASS_PARTIAL ]]
+  # Hugo's template folders, such as _default and _partials:
+  # https://gohugo.io/templates/new-templatesystem-overview/
+  case $parent in
+    */layouts/*) [[ $segment =~ $UNDERSCORE_FOLDER ]] && return 0 ;;
+  esac
+
+  # Next.js's private folders, route groups and parallel routes:
+  # https://nextjs.org/docs/app/getting-started/project-structure
+  case $parent in
+    */app/*) [[ $segment =~ $NEXT_APP_FOLDER ]] && return 0 ;;
+  esac
+
+  # The go tool ignores a folder whose name starts with an underscore:
+  # https://pkg.go.dev/cmd/go
+  if [ "$IN_GO_MODULE" = 1 ] && [[ $segment =~ $UNDERSCORE_FOLDER ]]; then
+    return 0
+  fi
+
+  # Next.js's _app, _document and _error pages:
+  # https://nextjs.org/docs/pages/getting-started/project-structure
+  [[ ${segment%/} =~ $NEXT_PAGE ]] || [[ ${segment%/} =~ $BRACKET_ROUTE ]] || [[ ${segment%/} =~ $SASS_PARTIAL ]]
 }
 
 is_passing() {
-  [[ ${1%/} =~ $CHOSEN ]] || [[ ${1%/} =~ $UPPERCASE ]] || is_tool_owned "$1"
+  [[ ${1%/} =~ $CHOSEN ]] || [[ ${1%/} =~ $UPPERCASE ]] || is_tool_owned "$1" "$2"
 }
 
 # The folder at each depth of the last path that reached it, with its verdict:
@@ -57,12 +84,13 @@ verdicts=()
 # Sets failing to the first segment of path that fails, or to nothing when
 # every segment passes; a global, not stdout, spares a subshell per path.
 find_failing_segment() {
-  local rest=$1 folder='' segment depth=0
+  local rest=$1 folder='' parent segment depth=0
   failing=''
 
   while [ "${rest#*/}" != "$rest" ]; do
     segment=${rest%%/*}/
     rest=${rest#*/}
+    parent=$folder
     folder=$folder$segment
 
     if [ "${folders[depth]-}" != "$folder" ]; then
@@ -73,7 +101,7 @@ find_failing_segment() {
       # writes the ones below vendor, whatever their names.
       case $segment in
         testdata/ | vendor/) verdicts[depth]=$SKIP_BELOW ;;
-        *) is_passing "$segment" || verdicts[depth]=${segment%/} ;;
+        *) is_passing "$segment" "$parent" || verdicts[depth]=${segment%/} ;;
       esac
     fi
 
@@ -90,7 +118,7 @@ find_failing_segment() {
     *.go | *.py | *.pyi) return 0 ;;
   esac
 
-  is_passing "$rest" || failing=$rest
+  is_passing "$rest" "$folder" || failing=$rest
 }
 
 # Reads the untracked paths, an empty record, then the tracked paths, each list
@@ -142,6 +170,13 @@ fi
 
 if ! cd -- "$top" 2>/dev/null; then
   fail "cannot enter $top; check its permissions"
+fi
+
+# A go.mod at the top level marks a Go module.
+if [ -e go.mod ]; then
+  readonly IN_GO_MODULE=1
+else
+  readonly IN_GO_MODULE=0
 fi
 
 # No limit of its own on git: the CI job's timeout bounds the run. An empty
