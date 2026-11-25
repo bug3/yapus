@@ -5,12 +5,14 @@ import { listAllFiles } from '../../helpers/list-files.ts';
 // its license.
 const KEPT_EXTENSIONS: readonly string[] = ['.ts', '.md', '.json'];
 const KEPT_NAMES: readonly string[] = ['.gitignore', 'LICENSE'];
-// Bash only where a hook needs an entry that finds Node.
+// Bash only where a hook needs an entry that finds Node, and for the name
+// check, which runs in repositories without Node.
 const SHELL_ENTRIES: readonly string[] = [
   'hooks/run.sh',
   'hooks/git/commit-msg',
   'hooks/git/forward',
   'hooks/git/reference-transaction',
+  'hooks/ordo/repo/files/check-names.sh',
 ];
 // YAML only where GitHub reads it (DATA-1).
 const YAML_DIRECTORY = '.github/';

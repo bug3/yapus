@@ -21,6 +21,15 @@ test('finds nothing among kept formats, shell entries and YAML under .github', (
   assert.deepEqual(getForeignFiles(root), []);
 });
 
+test('finds nothing for the name check script', (t) => {
+  const root = makeTempRepo(t);
+
+  mkdirSync(join(root, 'hooks', 'ordo', 'repo', 'files'), { recursive: true });
+  writeFileSync(join(root, 'hooks', 'ordo', 'repo', 'files', 'check-names.sh'), '');
+
+  assert.deepEqual(getForeignFiles(root), []);
+});
+
 test('names another language, a stray shell script and YAML outside .github', (t) => {
   const root = makeTempRepo(t);
 
