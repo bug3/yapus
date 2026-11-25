@@ -1,10 +1,20 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type TestContext, test } from 'node:test';
+import { pathToFileURL } from 'node:url';
 import { listAllFiles, listFiles, listModules } from './list-files.ts';
+import { makeTempDir } from './make-temp-dir.ts';
 import { makeTempRepo } from './make-temp-repo.ts';
 import { runGit } from './run-git.ts';
+
+const LIST_FILES_URL = pathToFileURL(join(import.meta.dirname, 'list-files.ts')).href;
+const SUBPROCESS_TIMEOUT_MS = 10000;
+const LIST_ALL = `
+  const { listAllFiles } = await import(process.argv[1]);
+  process.stdout.write(listAllFiles(process.argv[2]).join('\\n'));
+`;
 
 test('lists untracked files by extension, relative to the root', (t) => {
   const root = makeTree(t);
@@ -51,6 +61,39 @@ test('skips a link to a directory', (t) => {
   symlinkSync('hooks', join(root, 'runtime'));
 
   assert.equal(listAllFiles(root).includes('runtime'), false);
+});
+
+test('skips a file the caller\'s global excludes hide, whatever git variables it has', (t) => {
+  const root = makeTempDir(t);
+  const outerRepo = makeTempRepo(t);
+  const home = makeTempDir(t);
+  const excludes = join(home, 'excludes');
+  const globalConfig = join(home, '.gitconfig');
+
+  // Not makeTempRepo, whose own empty excludes file hides the caller's.
+  runGit(['init', '--quiet'], root);
+  writeFileSync(join(root, 'hidden.md'), '');
+  writeFileSync(join(root, 'kept.md'), '');
+  writeFileSync(join(outerRepo, '.git', 'info', 'exclude'), 'kept.md\n');
+  writeFileSync(excludes, 'hidden.md\n');
+  writeFileSync(globalConfig, `[core]\n\texcludesFile = ${ excludes }\n`);
+
+  const listing = execFileSync(
+    process.execPath,
+    ['--input-type=module', '-e', LIST_ALL, LIST_FILES_URL, root],
+    {
+      encoding: 'utf8',
+      timeout: SUBPROCESS_TIMEOUT_MS,
+      env: {
+        ...process.env,
+        HOME: home,
+        GIT_DIR: join(outerRepo, '.git'),
+        GIT_CONFIG_GLOBAL: globalConfig,
+      },
+    },
+  );
+
+  assert.equal(listing, 'kept.md');
 });
 
 test('lists modules without tests, entries and tool-named files', (t) => {

@@ -6,15 +6,18 @@ import { runGit } from './run-git.ts';
 
 const IDENTITY_NAME = 'yapus test';
 const IDENTITY_EMAIL = 'test@example.invalid';
+const EMPTY_EXCLUDES = '/dev/null';
 
 // A fresh temporary directory holding an empty git repository with a local
-// identity, removed when the test ends.
+// identity, removed when the test ends. Its own core.excludesFile is empty, so
+// the caller's global excludes, which getCallerGitEnv keeps, hide nothing in it.
 export function makeTempRepo(t: TestContext): string {
   const tempRepo = makeTempDir(t);
 
   runGit(['init', '--quiet'], tempRepo);
   runGit(['config', 'user.name', IDENTITY_NAME], tempRepo);
   runGit(['config', 'user.email', IDENTITY_EMAIL], tempRepo);
+  runGit(['config', 'core.excludesFile', EMPTY_EXCLUDES], tempRepo);
 
   return tempRepo;
 }

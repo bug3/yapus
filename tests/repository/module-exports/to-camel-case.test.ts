@@ -13,3 +13,7 @@ test('keeps a one-word name', () => {
 test('keeps a digit after a hyphen', () => {
   assert.equal(toCamelCase('parse-2-files'), 'parse2Files');
 });
+
+test('turns an underscore between parts like a hyphen', () => {
+  assert.equal(toCamelCase('get_dash-lines'), 'getDashLines');
+});

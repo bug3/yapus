@@ -1,3 +1,3 @@
-export function toCamelCase(kebabName: string): string {
-  return kebabName.replace(/-[a-z0-9]/g, (match) => match.charAt(1).toUpperCase());
+export function toCamelCase(fileName: string): string {
+  return fileName.replace(/[-_][a-z0-9]/g, (match) => match.charAt(1).toUpperCase());
 }

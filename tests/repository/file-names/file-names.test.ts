@@ -1,13 +1,20 @@
 import assert from 'node:assert/strict';
-import { basename, join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { join } from 'node:path';
 import { test } from 'node:test';
-import { listFiles } from '../../helpers/list-files.ts';
-import { isKebabCase } from './is-kebab-case.ts';
+import { getCallerGitEnv } from '../../helpers/run-git.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
+const CHECK_NAMES = join(ROOT, 'hooks', 'ordo', 'repo', 'files', 'check-names.sh');
+const SUBPROCESS_TIMEOUT_MS = 10000;
 
-test('names every TypeScript file in kebab-case', () => {
-  const fileNames = listFiles(ROOT, '.ts').map((path) => basename(path, '.ts'));
+test('names every kept path as the name check requires', () => {
+  const checkRun = spawnSync('bash', [CHECK_NAMES], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    env: getCallerGitEnv(process.env),
+    timeout: SUBPROCESS_TIMEOUT_MS,
+  });
 
-  assert.deepEqual(fileNames.filter((fileName) => !isKebabCase(fileName)), []);
+  assert.deepEqual([checkRun.status, checkRun.stderr], [0, '']);
 });

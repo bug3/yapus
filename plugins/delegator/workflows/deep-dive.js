@@ -681,7 +681,7 @@ const SCHEMAS = {
 // hooks/claude/delegator/plans/ stand here a second time.
 const PLANS_PREFIX = '.yapus/plans/';
 const MONTH_NAME = /^\d{4}-(0[1-9]|1[0-2])$/u;
-const TOPIC_NAME = /^[\p{L}\p{N}][\p{L}\p{M}\p{N}._-]*$/u;
+const TOPIC_NAME = /^[a-z0-9]+([-_][a-z0-9]+)*$/u;
 const MAX_TOPIC_LENGTH = 64;
 
 const ARGS_ERROR =
@@ -857,7 +857,7 @@ function readInput(runArgs) {
     return {
       kind: 'failure',
       detail:
-        `deep-dive: directory "${ runArgs.directory }" is not .yapus/plans/<YYYY-MM>/<topic>; pass the plan's directory`,
+        `deep-dive: directory "${ runArgs.directory }" is not .yapus/plans/<YYYY-MM>/<topic> with <topic> in lowercase words joined by hyphens, parts by underscores, at most ${ MAX_TOPIC_LENGTH } characters; pass the plan's directory`,
     };
   }
 

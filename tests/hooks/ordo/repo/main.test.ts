@@ -23,10 +23,12 @@ const OWNED_TSCONFIG = '.claude/yapus/ordo/tsconfig.json';
 const WRAPPER_TSCONFIG = 'tsconfig.json';
 const SCOPES = '.claude/yapus/ordo/scopes.json';
 const LANGUAGE_RECORD = '.claude/yapus/ordo/language';
-const BASE_DIR = join(
+const CHECK_NAMES = '.claude/yapus/ordo/check-names.sh';
+const FILES_DIR = join(
   import.meta.dirname,
-  ...['..', '..', '..', '..', 'hooks', 'ordo', 'repo', 'files', 'typescript'],
+  ...['..', '..', '..', '..', 'hooks', 'ordo', 'repo', 'files'],
 );
+const BASE_DIR = join(FILES_DIR, 'typescript');
 
 function readVersion(): unknown {
   const manifest: unknown = JSON.parse(
@@ -40,6 +42,10 @@ function readVersion(): unknown {
 
 function readBase(name: string): string {
   return readFileSync(join(BASE_DIR, name), 'utf8');
+}
+
+function readCheckNames(): string {
+  return readFileSync(join(FILES_DIR, 'check-names.sh'), 'utf8');
 }
 
 function readRepoFile(repo: string, path: string): string {
@@ -63,6 +69,7 @@ test('installs into a fresh repository and prints the approved lines', (t) => {
     'yapus ordo repo install: wrote',
     '  .claude/yapus/ordo/eslint.config.ts',
     '  .claude/yapus/ordo/tsconfig.json',
+    '  .claude/yapus/ordo/check-names.sh',
     '  .github/workflows/yapus.yml',
     '  eslint.config.ts',
     '  tsconfig.json',
@@ -80,13 +87,15 @@ test('installs into a fresh repository and prints the approved lines', (t) => {
     '  npm test',
     '  commit the changes',
     'To undo:',
-    '  remove .claude/yapus/ordo/eslint.config.ts .claude/yapus/ordo/tsconfig.json .github/workflows/yapus.yml '
+    '  remove .claude/yapus/ordo/eslint.config.ts .claude/yapus/ordo/tsconfig.json '
+    + '.claude/yapus/ordo/check-names.sh .github/workflows/yapus.yml '
     + 'eslint.config.ts tsconfig.json .claude/yapus/ordo/scopes.json .gitignore '
     + '.claude/yapus/ordo/language package.json .claude/yapus/ordo/version',
     '',
   ].join('\n'));
   assert.equal(readRepoFile(repo, OWNED), readBase('eslint.config.ts'));
   assert.equal(readRepoFile(repo, OWNED_TSCONFIG), readBase('tsconfig.json'));
+  assert.equal(readRepoFile(repo, CHECK_NAMES), readCheckNames());
   assert.match(readRepoFile(repo, WRAPPER), /from '\.\/\.claude\/yapus\/ordo\/eslint\.config\.ts'/);
   assert.match(readRepoFile(repo, WRAPPER_TSCONFIG), /"extends": "\.\/\.claude\/yapus\/ordo\/tsconfig\.json"/);
   assert.equal(readRepoFile(repo, '.claude/yapus/ordo/version'), readVersion());
@@ -110,6 +119,7 @@ test('upgrade rewrites owned files and the stamp and keeps wrapper files', (t) =
   writeFileSync(join(repo, 'package.json'), customPackage);
   writeFileSync(join(repo, OWNED), 'changed owned\n');
   writeFileSync(join(repo, OWNED_TSCONFIG), '{}\n');
+  writeFileSync(join(repo, CHECK_NAMES), 'changed check\n');
   writeFileSync(join(repo, '.claude', 'yapus', 'ordo', 'version'), '0.0.1');
   writeFileSync(join(repo, WRAPPER), customWrapper);
   writeFileSync(join(repo, WRAPPER_TSCONFIG), customTsconfig);
@@ -122,6 +132,7 @@ test('upgrade rewrites owned files and the stamp and keeps wrapper files', (t) =
   assert.match(run.stdout, /^yapus ordo repo upgrade: wrote\n/);
   assert.equal(readRepoFile(repo, OWNED), readBase('eslint.config.ts'));
   assert.equal(readRepoFile(repo, OWNED_TSCONFIG), readBase('tsconfig.json'));
+  assert.equal(readRepoFile(repo, CHECK_NAMES), readCheckNames());
   assert.equal(readRepoFile(repo, '.claude/yapus/ordo/version'), readVersion());
   assert.doesNotMatch(run.stdout, /remove /);
   assert.doesNotMatch(run.stdout, /package\.json/);
@@ -219,6 +230,7 @@ test('go installs into a Go repository and prints the approved lines', (t) => {
   assert.equal(run.stdout, [
     'yapus ordo repo install: wrote',
     '  .golangci.yml',
+    '  .claude/yapus/ordo/check-names.sh',
     '  .github/workflows/yapus.yml',
     '  .claude/yapus/ordo/scopes.json',
     '  .claude/yapus/ordo/language',
@@ -233,12 +245,14 @@ test('go installs into a Go repository and prints the approved lines', (t) => {
     '  commit the changes',
     'To undo:',
     '  git restore --staged --worktree -- .golangci.yml .golangci.yaml',
-    '  remove .github/workflows/yapus.yml .claude/yapus/ordo/scopes.json '
+    '  remove .claude/yapus/ordo/check-names.sh .github/workflows/yapus.yml '
+    + '.claude/yapus/ordo/scopes.json '
     + '.claude/yapus/ordo/language .claude/yapus/ordo/version',
     '',
   ].join('\n'));
   assert.equal(readRepoFile(repo, '.golangci.yml'), readGoTemplate('.golangci.yml'));
   assert.equal(readRepoFile(repo, GO_WORKFLOW), readGoTemplate(GO_WORKFLOW));
+  assert.equal(readRepoFile(repo, CHECK_NAMES), readCheckNames());
   assert.equal(readRepoFile(repo, LANGUAGE_RECORD), 'go\n');
   assert.ok(!existsSync(join(repo, 'package.json')));
   assert.ok(!existsSync(join(repo, '.gitignore')));
@@ -257,6 +271,7 @@ test('upgrade follows the recorded Go language and keeps the record and scopes',
 
   writeFileSync(join(repo, '.golangci.yml'), 'changed\n');
   writeFileSync(join(repo, GO_WORKFLOW), 'changed\n');
+  writeFileSync(join(repo, CHECK_NAMES), 'changed\n');
   writeFileSync(join(repo, '.claude', 'yapus', 'ordo', 'version'), '0.0.1');
   commitAll(repo);
 
@@ -266,6 +281,7 @@ test('upgrade follows the recorded Go language and keeps the record and scopes',
   assert.match(run.stdout, /^yapus ordo repo upgrade: wrote\n/);
   assert.equal(readRepoFile(repo, '.golangci.yml'), readGoTemplate('.golangci.yml'));
   assert.equal(readRepoFile(repo, GO_WORKFLOW), readGoTemplate(GO_WORKFLOW));
+  assert.equal(readRepoFile(repo, CHECK_NAMES), readCheckNames());
   assert.equal(readRepoFile(repo, '.claude/yapus/ordo/version'), readVersion());
   assert.equal(readRepoFile(repo, SCOPES), scopes);
   assert.equal(readRepoFile(repo, LANGUAGE_RECORD), 'go\n');

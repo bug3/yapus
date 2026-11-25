@@ -5,6 +5,6 @@ import { getForeignFiles } from './get-foreign-files.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 
-test('writes everything in one language but the shell entries that find Node', () => {
+test('writes everything in one language but its shell entries', () => {
   assert.deepEqual(getForeignFiles(ROOT), []);
 });

@@ -38,13 +38,18 @@ const MONTH_SAMPLES = [
 ] as const;
 
 // Topic names on both sides of each point of the hooks' form: the first
-// character, the characters after it, the letters of another script with a
-// combining mark, and the length limit, which counts UTF-16 units, so 32
-// letters of two units each fit and 33 do not.
+// character, the characters after it, the separators, uppercase letters, the
+// letters of another script with a combining mark, and the length limit.
 const TOPIC_SAMPLES = [
   'yapus-layout',
-  'plan_v2.1-final',
+  'plan_v2-final',
   '2026',
+  'plan.v2',
+  'a--b',
+  'a_-b',
+  'topic-',
+  'API-redesign',
+  'dosya-adland\u0131rma',
   '\u00e7al\u0131\u015fma',
   's\u0327irket',
   '.',
@@ -63,8 +68,6 @@ const TOPIC_SAMPLES = [
   '',
   LONGEST_TOPIC,
   `${ LONGEST_TOPIC }a`,
-  '\u{1d49c}'.repeat(32),
-  '\u{1d49c}'.repeat(33),
 ] as const;
 
 const NAME_SAMPLES = [
@@ -134,7 +137,7 @@ test('returns the directory error and launches no agent for a month of 13', asyn
 
   assert.deepEqual(run.returned, {
     error:
-      'deep-dive: directory ".yapus/plans/2026-13/x" is not .yapus/plans/<YYYY-MM>/<topic>; pass the plan\'s directory',
+      'deep-dive: directory ".yapus/plans/2026-13/x" is not .yapus/plans/<YYYY-MM>/<topic> with <topic> in lowercase words joined by hyphens, parts by underscores, at most 64 characters; pass the plan\'s directory',
   });
   assert.deepEqual(run.calls, []);
 });
@@ -146,7 +149,7 @@ test('returns the directory error and launches no agent for a path that climbs',
 
   assert.deepEqual(run.returned, {
     error:
-      'deep-dive: directory ".yapus/plans/2026-11/../x" is not .yapus/plans/<YYYY-MM>/<topic>; pass the plan\'s directory',
+      'deep-dive: directory ".yapus/plans/2026-11/../x" is not .yapus/plans/<YYYY-MM>/<topic> with <topic> in lowercase words joined by hyphens, parts by underscores, at most 64 characters; pass the plan\'s directory',
   });
   assert.deepEqual(run.calls, []);
 });
@@ -158,7 +161,7 @@ test('returns the directory error and launches no agent for a path outside .yapu
 
   assert.deepEqual(run.returned, {
     error:
-      'deep-dive: directory "plans/2026-11/x" is not .yapus/plans/<YYYY-MM>/<topic>; pass the plan\'s directory',
+      'deep-dive: directory "plans/2026-11/x" is not .yapus/plans/<YYYY-MM>/<topic> with <topic> in lowercase words joined by hyphens, parts by underscores, at most 64 characters; pass the plan\'s directory',
   });
   assert.deepEqual(run.calls, []);
 });
@@ -170,7 +173,7 @@ test('returns the directory error and launches no agent for another root', async
 
   assert.deepEqual(run.returned, {
     error:
-      'deep-dive: directory ".other/plans/2026-11/x" is not .yapus/plans/<YYYY-MM>/<topic>; pass the plan\'s directory',
+      'deep-dive: directory ".other/plans/2026-11/x" is not .yapus/plans/<YYYY-MM>/<topic> with <topic> in lowercase words joined by hyphens, parts by underscores, at most 64 characters; pass the plan\'s directory',
   });
   assert.deepEqual(run.calls, []);
 });
@@ -182,7 +185,7 @@ test('returns the directory error and launches no agent for a path below a topic
 
   assert.deepEqual(run.returned, {
     error:
-      'deep-dive: directory ".yapus/plans/2026-11/x/notes" is not .yapus/plans/<YYYY-MM>/<topic>; pass the plan\'s directory',
+      'deep-dive: directory ".yapus/plans/2026-11/x/notes" is not .yapus/plans/<YYYY-MM>/<topic> with <topic> in lowercase words joined by hyphens, parts by underscores, at most 64 characters; pass the plan\'s directory',
   });
   assert.deepEqual(run.calls, []);
 });
@@ -194,7 +197,7 @@ test('returns the directory error and launches no agent for a month with no topi
 
   assert.deepEqual(run.returned, {
     error:
-      'deep-dive: directory ".yapus/plans/2026-11" is not .yapus/plans/<YYYY-MM>/<topic>; pass the plan\'s directory',
+      'deep-dive: directory ".yapus/plans/2026-11" is not .yapus/plans/<YYYY-MM>/<topic> with <topic> in lowercase words joined by hyphens, parts by underscores, at most 64 characters; pass the plan\'s directory',
   });
   assert.deepEqual(run.calls, []);
 });
@@ -206,9 +209,26 @@ test('returns the directory error and launches no agent for a topic of 65 units'
 
   assert.deepEqual(run.returned, {
     error:
-      `deep-dive: directory ".yapus/plans/2026-11/${ LONGEST_TOPIC }a" is not .yapus/plans/<YYYY-MM>/<topic>; pass the plan's directory`,
+      `deep-dive: directory ".yapus/plans/2026-11/${ LONGEST_TOPIC }a" is not .yapus/plans/<YYYY-MM>/<topic> with <topic> in lowercase words joined by hyphens, parts by underscores, at most 64 characters; pass the plan's directory`,
   });
   assert.deepEqual(run.calls, []);
+});
+
+test('returns the directory error and launches no agent for a topic not in NAME-1', async () => {
+  const topics = ['API-redesign', 'dosya-adland\u0131rma'];
+
+  const runs = await Promise.all(topics.map((topic) => runOnTopic(topic)));
+
+  assert.deepEqual(
+    runs.map((run) => [run.returned, run.calls]),
+    topics.map((topic) => [
+      {
+        error:
+          `deep-dive: directory ".yapus/plans/2026-11/${ topic }" is not .yapus/plans/<YYYY-MM>/<topic> with <topic> in lowercase words joined by hyphens, parts by underscores, at most 64 characters; pass the plan's directory`,
+      },
+      [],
+    ]),
+  );
 });
 
 test('launches the scope agent for a topic of 64 units', async () => {
@@ -310,6 +330,13 @@ test('names each lane once, the repository first, whatever the order in the args
 
   assert.match(run.calls[0]?.prompt ?? '', BOTH_LANES);
 });
+
+// A run on the plan directory of `topic` in November 2026.
+function runOnTopic(topic: string): ReturnType<typeof runWorkflow> {
+  const args = { task: TASK, directory: `.yapus/plans/2026-11/${ topic }` };
+
+  return runWorkflow(SCRIPT_PATH, args, getFixedAnswer);
+}
 
 // Whether the script takes `month` and `topic` as the names of a plan's
 // directory: a run on a directory it refuses launches no agent.

@@ -31,6 +31,7 @@ export function readTemplates(language: Language = DEFAULT_LANGUAGE): readonly T
 function readGoTemplates(): readonly Template[] {
   return [
     { target: '.golangci.yml', kind: 'owned', text: getGolangciConfig() },
+    readCheckNames(),
     { target: '.github/workflows/yapus.yml', kind: 'owned', text: getGoWorkflow() },
   ];
 }
@@ -48,6 +49,7 @@ function readTypescriptTemplates(): readonly Template[] {
       kind: 'owned',
       text: readBase('tsconfig.json'),
     },
+    readCheckNames(),
     { target: '.github/workflows/yapus.yml', kind: 'owned', text: getWorkflow() },
     { target: 'eslint.config.ts', kind: 'wrapper', text: getWrapperEslintConfig() },
     { target: 'tsconfig.json', kind: 'wrapper', text: getWrapperTsconfig() },
@@ -56,4 +58,13 @@ function readTypescriptTemplates(): readonly Template[] {
 
 function readBase(name: string): string {
   return readFileSync(join(import.meta.dirname, 'typescript', name), 'utf8');
+}
+
+// The name check, read from beside this code; every language's CI runs it.
+function readCheckNames(): Template {
+  return {
+    target: `${ getProjectDirectory() }/check-names.sh`,
+    kind: 'owned',
+    text: readFileSync(join(import.meta.dirname, 'check-names.sh'), 'utf8'),
+  };
 }

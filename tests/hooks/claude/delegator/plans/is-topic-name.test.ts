@@ -2,17 +2,19 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { isTopicName } from '../../../../../hooks/claude/delegator/plans/is-topic-name.ts';
 
-test('accepts letters and digits with a dot, a hyphen or an underscore after the first', () => {
+test('accepts lowercase words and digits with a hyphen or an underscore between them', () => {
   assert.deepEqual(
-    ['yapus-layout', 'plan_v2.1-final', '2026', 'a'].map((name) => isTopicName(name)),
+    ['yapus-layout', 'plan_v2-final', '2026', 'a'].map((name) => isTopicName(name)),
     [true, true, true, true],
   );
 });
 
-test('accepts Turkish letters, composed or decomposed', () => {
+test('rejects a name outside the NAME-1 form', () => {
+  const names = ['API-redesign', 'dosya-adlandırma', 's\u0327irket', 'plan.v2', 'a--b', 'a_-b'];
+
   assert.deepEqual(
-    ['çalışma-ğüşöı', 's\u0327irket'].map((name) => isTopicName(name)),
-    [true, true],
+    names.map((name) => isTopicName(name)),
+    [false, false, false, false, false, false],
   );
 });
 
