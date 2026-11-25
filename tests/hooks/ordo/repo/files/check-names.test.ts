@@ -76,10 +76,13 @@ test('skips the names of Go and Python files but checks their folders', (t) => {
   assert.deepEqual(checkNames(root), [2, '', refusal('Foo/x.go', 'Foo')]);
 });
 
-test('skips the name of a PHP file but checks its folder', (t) => {
-  const root = makeTree(t, ['src/AgeCalculationService.php', 'Bar/x.php']);
+test('checks the name of a PHP file like a chosen name', (t) => {
+  const root = makeTree(t, ['src/AgeCalculationService.php', 'src/age-calculation.php']);
 
-  assert.deepEqual(checkNames(root), [2, '', refusal('Bar/x.php', 'Bar')]);
+  assert.deepEqual(
+    checkNames(root),
+    [2, '', refusal('src/AgeCalculationService.php', 'AgeCalculationService.php')],
+  );
 });
 
 test('skips every path below a vendor folder but checks the folders above it', (t) => {
