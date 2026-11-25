@@ -230,6 +230,7 @@ test('go installs into a Go repository and prints the approved lines', (t) => {
   assert.equal(run.stdout, [
     'yapus ordo repo install: wrote',
     '  .golangci.yml',
+    '  .claude/yapus/ordo/check-names.sh',
     '  .github/workflows/yapus.yml',
     '  .claude/yapus/ordo/scopes.json',
     '  .claude/yapus/ordo/language',
@@ -244,12 +245,14 @@ test('go installs into a Go repository and prints the approved lines', (t) => {
     '  commit the changes',
     'To undo:',
     '  git restore --staged --worktree -- .golangci.yml .golangci.yaml',
-    '  remove .github/workflows/yapus.yml .claude/yapus/ordo/scopes.json '
+    '  remove .claude/yapus/ordo/check-names.sh .github/workflows/yapus.yml '
+    + '.claude/yapus/ordo/scopes.json '
     + '.claude/yapus/ordo/language .claude/yapus/ordo/version',
     '',
   ].join('\n'));
   assert.equal(readRepoFile(repo, '.golangci.yml'), readGoTemplate('.golangci.yml'));
   assert.equal(readRepoFile(repo, GO_WORKFLOW), readGoTemplate(GO_WORKFLOW));
+  assert.equal(readRepoFile(repo, CHECK_NAMES), readCheckNames());
   assert.equal(readRepoFile(repo, LANGUAGE_RECORD), 'go\n');
   assert.ok(!existsSync(join(repo, 'package.json')));
   assert.ok(!existsSync(join(repo, '.gitignore')));
@@ -268,6 +271,7 @@ test('upgrade follows the recorded Go language and keeps the record and scopes',
 
   writeFileSync(join(repo, '.golangci.yml'), 'changed\n');
   writeFileSync(join(repo, GO_WORKFLOW), 'changed\n');
+  writeFileSync(join(repo, CHECK_NAMES), 'changed\n');
   writeFileSync(join(repo, '.claude', 'yapus', 'ordo', 'version'), '0.0.1');
   commitAll(repo);
 
@@ -277,6 +281,7 @@ test('upgrade follows the recorded Go language and keeps the record and scopes',
   assert.match(run.stdout, /^yapus ordo repo upgrade: wrote\n/);
   assert.equal(readRepoFile(repo, '.golangci.yml'), readGoTemplate('.golangci.yml'));
   assert.equal(readRepoFile(repo, GO_WORKFLOW), readGoTemplate(GO_WORKFLOW));
+  assert.equal(readRepoFile(repo, CHECK_NAMES), readCheckNames());
   assert.equal(readRepoFile(repo, '.claude/yapus/ordo/version'), readVersion());
   assert.equal(readRepoFile(repo, SCOPES), scopes);
   assert.equal(readRepoFile(repo, LANGUAGE_RECORD), 'go\n');

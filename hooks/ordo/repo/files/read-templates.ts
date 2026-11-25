@@ -31,6 +31,7 @@ export function readTemplates(language: Language = DEFAULT_LANGUAGE): readonly T
 function readGoTemplates(): readonly Template[] {
   return [
     { target: '.golangci.yml', kind: 'owned', text: getGolangciConfig() },
+    readCheckNames(),
     { target: '.github/workflows/yapus.yml', kind: 'owned', text: getGoWorkflow() },
   ];
 }

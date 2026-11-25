@@ -93,13 +93,28 @@ function findGoText(target: string): string {
   return readTemplates('go').find((template) => template.target === target)?.text ?? '';
 }
 
-test('lists exactly the two Go targets with their kinds', () => {
+test('lists exactly the three Go targets with their kinds', () => {
   assert.deepEqual(
     readTemplates('go').map(({ target, kind }) => ({ target, kind })),
     [
       { target: '.golangci.yml', kind: 'owned' },
+      { target: '.claude/yapus/ordo/check-names.sh', kind: 'owned' },
       { target: '.github/workflows/yapus.yml', kind: 'owned' },
     ],
+  );
+});
+
+test('carries the bytes of the name check for go', () => {
+  assert.equal(
+    findGoText('.claude/yapus/ordo/check-names.sh'),
+    readFileSync(join(ROOT, 'hooks', 'ordo', 'repo', 'files', 'check-names.sh'), 'utf8'),
+  );
+});
+
+test('runs the name check in the Go workflow just before the Go tests', () => {
+  assert.match(
+    findGoText('.github/workflows/yapus.yml'),
+    /\n {6}- run: "bash \.claude\/yapus\/ordo\/check-names\.sh"\n {6}- run: "go test \.\/\.\.\."\n$/,
   );
 });
 

@@ -1,3 +1,4 @@
+import { getProjectDirectory } from '../../../../shared/hooks-path/get-project-directory.ts';
 import { getGolangciLintVersion } from './get-golangci-lint-version.ts';
 
 // The text of the Go .github/workflows/yapus.yml template. It is a list of
@@ -26,6 +27,7 @@ export function getGoWorkflow(): string {
     '      - uses: "golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a" # v9.3.0',
     '        with:',
     `          version: "${ getGolangciLintVersion() }"`,
+    `      - run: "bash ${ getProjectDirectory() }/check-names.sh"`,
     '      - run: "go test ./..."',
   ].join('\n') }\n`;
 }
