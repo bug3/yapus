@@ -187,6 +187,7 @@ During a session, ordo refuses a Write or Edit that puts a Unicode dash other th
 | [IDENTIFIERS.md](standards/IDENTIFIERS.md) | machine identifiers and text for humans |
 | [INSTRUCTIONS.md](standards/INSTRUCTIONS.md) | instruction files for agents |
 | [MARKDOWN.md](standards/MARKDOWN.md) | Markdown prose |
+| [NAMES.md](standards/NAMES.md) | file and folder names |
 | [PRINCIPLES.md](standards/PRINCIPLES.md) | principles for every change |
 | [PYTHON.md](standards/PYTHON.md) | Python code |
 | [REPOSITORY.md](standards/REPOSITORY.md) | technology choice and repository layout |
@@ -217,12 +218,12 @@ When an agent runs git (`CLAUDECODE=1`), a commit subject that passes gets the t
 
 ### Repository Setup
 
-`/ordo:repo` writes the yapus repository setup into the repository at the root of the session. Every install writes the workflow `.github/workflows/yapus.yml`, the scope catalog `.claude/yapus/ordo/scopes.json` and the chosen language in `.claude/yapus/ordo/language`.
+`/ordo:repo` writes the yapus repository setup into the repository at the root of the session. Every install writes the workflow `.github/workflows/yapus.yml`, the scope catalog `.claude/yapus/ordo/scopes.json`, the name check `.claude/yapus/ordo/check-names.sh` and the chosen language in `.claude/yapus/ordo/language`.
 
 | Argument | Writes | Next steps it prints |
 | --- | --- | --- |
-| `typescript`, the default | the ESLint and TypeScript base under `.claude/yapus/ordo/`, the root `eslint.config.ts` and `tsconfig.json` that build on it, the `check` and `test` scripts, the pinned devDependencies and `"type": "module"` in `package.json` | `npm install`, `npm test` |
-| `go`, with `go.mod` at the root | the golangci-lint config `.golangci.yml` | the pinned golangci-lint install, the Go checks |
+| `typescript`, the default | the ESLint and TypeScript base under `.claude/yapus/ordo/`, the root `eslint.config.ts` and `tsconfig.json` that build on it, the `check` script with the name check, the `test` script, the pinned devDependencies and `"type": "module"` in `package.json` | `npm install`, `npm test` |
+| `go`, with `go.mod` at the root | the golangci-lint config `.golangci.yml` and the name check step in the workflow | the pinned golangci-lint install, the Go checks |
 
 For TypeScript it removes the old ESLint config files and packages. It never runs `npm` or golangci-lint.
 
