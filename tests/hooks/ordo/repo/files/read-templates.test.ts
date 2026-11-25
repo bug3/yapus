@@ -17,12 +17,13 @@ function findText(target: string): string | undefined {
   return readTemplates().find((template) => template.target === target)?.text;
 }
 
-test('lists exactly the five targets with their kinds', () => {
+test('lists exactly the six targets with their kinds', () => {
   assert.deepEqual(
     readTemplates().map(({ target, kind }) => ({ target, kind })),
     [
       { target: '.claude/yapus/ordo/eslint.config.ts', kind: 'owned' },
       { target: '.claude/yapus/ordo/tsconfig.json', kind: 'owned' },
+      { target: '.claude/yapus/ordo/check-names.sh', kind: 'owned' },
       { target: '.github/workflows/yapus.yml', kind: 'owned' },
       { target: 'eslint.config.ts', kind: 'wrapper' },
       { target: 'tsconfig.json', kind: 'wrapper' },
@@ -41,6 +42,13 @@ test('carries the bytes of the base tsconfig', () => {
   assert.equal(
     findText('.claude/yapus/ordo/tsconfig.json'),
     readFileSync(join(BASE, 'tsconfig.json'), 'utf8'),
+  );
+});
+
+test('carries the bytes of the name check', () => {
+  assert.equal(
+    findText('.claude/yapus/ordo/check-names.sh'),
+    readFileSync(join(ROOT, 'hooks', 'ordo', 'repo', 'files', 'check-names.sh'), 'utf8'),
   );
 });
 

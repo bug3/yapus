@@ -1,8 +1,10 @@
+import { getProjectDirectory } from '../../../shared/hooks-path/get-project-directory.ts';
 import { getSection, type Section } from './get-section.ts';
 import { setValue } from './set-value.ts';
 
 const CHECK_SCRIPT =
-  'tsc -p . && eslint --max-warnings 0 --flag unstable_native_nodejs_ts_config .';
+  'tsc -p . && eslint --max-warnings 0 --flag unstable_native_nodejs_ts_config . '
+  + `&& bash ${ getProjectDirectory() }/check-names.sh`;
 
 // The keys both modes own: scripts.check, the devDependency pins,
 // engines.node and type.

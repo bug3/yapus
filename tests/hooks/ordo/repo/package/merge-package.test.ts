@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { mergePackage } from '../../../../../hooks/ordo/repo/package/merge-package.ts';
 
-const CHECK = 'tsc -p . && eslint --max-warnings 0 --flag unstable_native_nodejs_ts_config .';
+const CHECK = 'tsc -p . && eslint --max-warnings 0 --flag unstable_native_nodejs_ts_config . '
+  + '&& bash .claude/yapus/ordo/check-names.sh';
 const YAPUS_TEST =
   'npm run check && NODE_COMPILE_CACHE="${TMPDIR:+$TMPDIR/yapus/ordo/node}" '
   + 'node --test \'tests/**/*.test.ts\'';
@@ -172,6 +173,17 @@ test('sets the owned keys at upgrade', () => {
   const merge = mergePackage('{"type": "commonjs", "engines": {"node": ">=18"}}', 'upgrade');
 
   assert.deepEqual(merge.set, OWNED_KEYS);
+});
+
+test('rewrites the check without the name check at upgrade', () => {
+  const merge = mergePackage(JSON.stringify({
+    scripts: {
+      check: 'tsc -p . && eslint --max-warnings 0 --flag unstable_native_nodejs_ts_config .',
+    },
+  }), 'upgrade');
+
+  assert.ok(merge.set.includes('scripts.check'));
+  assert.partialDeepStrictEqual(JSON.parse(merge.text), { scripts: { check: CHECK } });
 });
 
 test('lists no key whose value is already right', () => {
