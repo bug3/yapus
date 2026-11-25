@@ -3,15 +3,18 @@ set -u
 
 # Checks every segment of every path git keeps in the work tree, tracked or
 # untracked but not ignored, from its top level. A segment passes when it is
-# lowercase words joined by hyphens, parts by underscores, when it is in the
-# uppercase class of names such as README.md, or when a tool owns it. Go and
-# Python files are skipped, their folders are not. It exits 0 when every path
-# passes and 2 otherwise, with one stderr line per failing path.
+# lowercase words joined by hyphens, parts by underscores, with a UTC time
+# such as 2026-04-11T22-06-47Z as one word, when it is in the uppercase class
+# of names such as README.md, or when a tool owns it. Go and Python files are
+# skipped, their folders are not. It exits 0 when every path passes and 2
+# otherwise, with one stderr line per failing path.
 
 # The ranges below mean ASCII letters only in the C locale.
 export LC_ALL=C
 
-readonly WORD='[a-z0-9]+(-[a-z0-9]+)*'
+readonly UTC_TIME='[0-9]+(-[0-9]+)*T[0-9]+(-[0-9]+)*Z'
+readonly UNIT="([a-z0-9]+|$UTC_TIME)"
+readonly WORD="$UNIT(-$UNIT)*"
 readonly NAME="$WORD(_$WORD)*"
 readonly CHOSEN="^\\.?$NAME(\\.$NAME)*$"
 readonly UPPERCASE='^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*(\.[a-z0-9]+)*$'

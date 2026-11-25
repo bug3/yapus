@@ -129,6 +129,29 @@ test('refuses a Sass partial whose name after the underscore is not chosen', (t)
   );
 });
 
+test('accepts a UTC time as one word', (t) => {
+  const root = makeTree(t, [
+    '2026-04-11T22-06-47Z.md',
+    'v001-2026-04-11T22-06-47Z.md',
+    '25T09-20-46Z_02028185-086e.jsonl',
+    'runs/2026-11-25T09Z/log.md',
+  ]);
+
+  assert.deepEqual(checkNames(root), [0, '', '']);
+});
+
+test('refuses a T or Z outside a UTC time', (t) => {
+  assert.deepEqual(
+    checkNames(makeTree(t, ['09-20-46Z.md', '25T09-20-46.md', 'aT09Z.md', '25T09-Z.md'])),
+    [2, '', [
+      refusal('09-20-46Z.md', '09-20-46Z.md'),
+      refusal('25T09-20-46.md', '25T09-20-46.md'),
+      refusal('25T09-Z.md', '25T09-Z.md'),
+      refusal('aT09Z.md', 'aT09Z.md'),
+    ].join('')],
+  );
+});
+
 test('refuses a capitalized word outside the uppercase class', (t) => {
   assert.deepEqual(
     checkNames(makeTree(t, ['Notes.md'])),
