@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { makeTempDir } from './make-temp-dir.ts';
 import { makeTempRepo } from './make-temp-repo.ts';
-import { getCallerGitEnv, getGitEnv } from './run-git.ts';
+import { getCallerGitEnv, getGitEnv, runGit } from './run-git.ts';
 
 const RUN_GIT_URL = pathToFileURL(join(import.meta.dirname, 'run-git.ts')).href;
 const SUBPROCESS_TIMEOUT_MS = 10000;
@@ -58,13 +58,15 @@ test('keeps the caller\'s git config and drops the other git variables', () => {
 });
 
 test('lists the repository in cwd whatever git variables and config the caller has', (t) => {
-  const repoA = makeTempRepo(t);
+  const repoA = makeTempDir(t);
   const repoB = makeTempRepo(t);
   const home = makeTempDir(t);
   const xdgConfigHome = makeTempDir(t);
   const excludes = join(home, 'excludes');
   const globalConfig = join(home, '.gitconfig');
 
+  // Not makeTempRepo, whose own core.excludesFile would hide the caller's.
+  runGit(['init', '--quiet'], repoA);
   writeFileSync(join(repoA, 'ignored.md'), '');
   writeFileSync(join(repoA, 'kept.md'), '');
   writeFileSync(join(repoB, '.git', 'info', 'exclude'), 'kept.md\n');

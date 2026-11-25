@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { listAllFiles, listFiles, listModules } from './list-files.ts';
 import { makeTempDir } from './make-temp-dir.ts';
 import { makeTempRepo } from './make-temp-repo.ts';
-import { getGitEnv, runGit } from './run-git.ts';
+import { runGit } from './run-git.ts';
 
 const LIST_FILES_URL = pathToFileURL(join(import.meta.dirname, 'list-files.ts')).href;
 const SUBPROCESS_TIMEOUT_MS = 10000;
@@ -15,10 +15,6 @@ const LIST_ALL = `
   const { listAllFiles } = await import(process.argv[1]);
   process.stdout.write(listAllFiles(process.argv[2]).join('\\n'));
 `;
-
-// listAllFiles reads the caller's git config, so the cases on a temporary tree
-// pin it to none: a developer's global excludes then hide none of their files.
-Object.assign(process.env, getGitEnv({}));
 
 test('lists untracked files by extension, relative to the root', (t) => {
   const root = makeTree(t);
@@ -68,12 +64,14 @@ test('skips a link to a directory', (t) => {
 });
 
 test('skips a file the caller\'s global excludes hide, whatever git variables it has', (t) => {
-  const root = makeTempRepo(t);
+  const root = makeTempDir(t);
   const outerRepo = makeTempRepo(t);
   const home = makeTempDir(t);
   const excludes = join(home, 'excludes');
   const globalConfig = join(home, '.gitconfig');
 
+  // Not makeTempRepo, whose own empty excludes file hides the caller's.
+  runGit(['init', '--quiet'], root);
   writeFileSync(join(root, 'hidden.md'), '');
   writeFileSync(join(root, 'kept.md'), '');
   writeFileSync(join(outerRepo, '.git', 'info', 'exclude'), 'kept.md\n');
