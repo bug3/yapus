@@ -267,6 +267,18 @@ test('skips a tracked path that is gone from disk', (t) => {
   assert.deepEqual(checkNames(root), [0, '', '']);
 });
 
+test('writes the failing tracked and untracked paths in one sorted order', (t) => {
+  const root = makeTree(t, ['Foo/a.md', 'Foo/b.md', 'Foo/c.md']);
+
+  runGit(['add', 'Foo/a.md', 'Foo/c.md'], root);
+
+  assert.deepEqual(checkNames(root), [2, '', [
+    refusal('Foo/a.md', 'Foo'),
+    refusal('Foo/b.md', 'Foo'),
+    refusal('Foo/c.md', 'Foo'),
+  ].join('')]);
+});
+
 test('writes one line for a failing path that a merge leaves in conflict', (t) => {
   const root = makeTempFiles(t, [{ path: 'Notes.md', text: 'base\n' }]);
   const commitNotes = (text: string) => {
