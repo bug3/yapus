@@ -44,15 +44,17 @@ test('gives none for a file directly in the plans directory or in a month', () =
   );
 });
 
-test('gives none for a month that is none and a topic that is no plain name', () => {
+test('gives none for a month that is none and a topic outside the NAME-1 form', () => {
   assert.deepEqual(
     [
       getPlanFile(ROOT, `${ PLANS }/topic/2026-11/S1.md`),
       getPlanFile(ROOT, `${ PLANS }/2026-00/topic/S1.md`),
       getPlanFile(ROOT, `${ PLANS }/2026-11/.git/S1.md`),
       getPlanFile(ROOT, `${ PLANS }/2026-11/a,b/S1.md`),
+      getPlanFile(ROOT, `${ PLANS }/2026-11/API-redesign/S1.md`),
+      getPlanFile(ROOT, `${ PLANS }/2026-11/dosya-adlandırma/S1.md`),
     ],
-    [undefined, undefined, undefined, undefined],
+    [undefined, undefined, undefined, undefined, undefined, undefined],
   );
 });
 

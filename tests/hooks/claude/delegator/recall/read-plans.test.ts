@@ -84,12 +84,14 @@ test('lists no plan under a hidden name or one with a space, a newline or punctu
   assert.deepEqual(readPlans(plansDir), { kind: 'plans', paths: [plan] });
 });
 
-test('lists a topic with Turkish letters, composed or decomposed', (t) => {
+test('lists no plan under a topic outside the NAME-1 form', (t) => {
   const plansDir = makeTempDir(t);
-  const composed = writePlan(plansDir, '2026-11/çalışma-ğüşöı', 2000);
-  const decomposed = writePlan(plansDir, '2026-11/s\u0327irket', 1000);
+  const plan = writePlan(plansDir, '2026-11/topic', 1000);
 
-  assert.deepEqual(readPlans(plansDir), { kind: 'plans', paths: [composed, decomposed] });
+  writePlan(plansDir, '2026-11/API-redesign', 9000);
+  writePlan(plansDir, '2026-11/dosya-adlandırma', 9000);
+
+  assert.deepEqual(readPlans(plansDir), { kind: 'plans', paths: [plan] });
 });
 
 test('lists a topic of 64 characters and skips one of 65', (t) => {

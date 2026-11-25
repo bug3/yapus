@@ -268,6 +268,8 @@ test('leaves a plan with a detail entry named plan.md, a file or a directory', (
 test('leaves a plan file whose name is no topic and moves the plan beside it', (t) => {
   const projectRoot = makeProject(t, [
     ['plans/.hidden.md', 'a plan\n'],
+    ['plans/API-redesign.md', 'a plan\n'],
+    ['plans/dosya-adlandırma.md', 'a plan\n'],
     ['plans/two words.md', 'a plan\n'],
     ['plans/topic.md', 'the plan\n'],
   ]);
@@ -276,6 +278,8 @@ test('leaves a plan file whose name is no topic and moves the plan beside it', (
     moves: [{ kind: 'plan', from: 'plans/topic.md', to: 'plans/2026-11/topic/plan.md' }],
     left: [
       { path: 'plans/.hidden.md', reason: 'its name is no topic; rename it' },
+      { path: 'plans/API-redesign.md', reason: 'its name is no topic; rename it' },
+      { path: 'plans/dosya-adlandırma.md', reason: 'its name is no topic; rename it' },
       { path: 'plans/two words.md', reason: 'its name is no topic; rename it' },
     ],
   });
