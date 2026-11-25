@@ -14,10 +14,16 @@ const TIMEOUT_MS = 10000;
 // (excludes, default branch, identity) changes results too. The returned
 // environment has neither, and no CLAUDECODE, which marks an agent's push.
 export function getGitEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  const kept = Object.entries(env)
-    .filter(([name]) => !name.startsWith(GIT_VARIABLE_PREFIX) && name !== AGENT_VARIABLE);
+  return { ...dropHookVariables(env), ...ISOLATION };
+}
 
-  return { ...Object.fromEntries(kept), ...ISOLATION };
+// The environment for a git call that reads the caller's own tree as the
+// caller sees it: the caller's git config stays, so its global excludes hold,
+// and the hook's variables and CLAUDECODE go as in getGitEnv.
+export function getCallerGitEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const callerConfig = Object.entries(env).filter(([name]) => Object.hasOwn(ISOLATION, name));
+
+  return { ...dropHookVariables(env), ...Object.fromEntries(callerConfig) };
 }
 
 // The stdout of git run with args in cwd, isolated from the caller's
@@ -29,4 +35,11 @@ export function runGit(args: readonly string[], cwd: string): string {
     env: getGitEnv(process.env),
     timeout: TIMEOUT_MS,
   });
+}
+
+function dropHookVariables(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const kept = Object.entries(env)
+    .filter(([name]) => !name.startsWith(GIT_VARIABLE_PREFIX) && name !== AGENT_VARIABLE);
+
+  return Object.fromEntries(kept);
 }

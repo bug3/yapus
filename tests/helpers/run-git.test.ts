@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { makeTempDir } from './make-temp-dir.ts';
 import { makeTempRepo } from './make-temp-repo.ts';
-import { getGitEnv } from './run-git.ts';
+import { getCallerGitEnv, getGitEnv } from './run-git.ts';
 
 const RUN_GIT_URL = pathToFileURL(join(import.meta.dirname, 'run-git.ts')).href;
 const SUBPROCESS_TIMEOUT_MS = 10000;
@@ -36,6 +36,25 @@ test('drops CLAUDECODE', () => {
   const env = getGitEnv({ CLAUDECODE: '1', PATH: '/usr/bin' });
 
   assert.equal('CLAUDECODE' in env, false);
+});
+
+test('keeps the caller\'s git config and drops the other git variables', () => {
+  const env = getCallerGitEnv({
+    CLAUDECODE: '1',
+    GIT_DIR: '/outer/.git',
+    GIT_CONFIG_COUNT: '1',
+    GIT_CONFIG_GLOBAL: '/home/.gitconfig',
+    GIT_CONFIG_NOSYSTEM: '1',
+    PATH: '/usr/bin',
+    XDG_CONFIG_HOME: '/home/.config',
+  });
+
+  assert.deepEqual(env, {
+    PATH: '/usr/bin',
+    XDG_CONFIG_HOME: '/home/.config',
+    GIT_CONFIG_GLOBAL: '/home/.gitconfig',
+    GIT_CONFIG_NOSYSTEM: '1',
+  });
 });
 
 test('lists the repository in cwd whatever git variables and config the caller has', (t) => {
