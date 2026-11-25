@@ -42,7 +42,6 @@ test('keeps the caller\'s git config and drops the other git variables', () => {
   const env = getCallerGitEnv({
     CLAUDECODE: '1',
     GIT_DIR: '/outer/.git',
-    GIT_CONFIG_COUNT: '1',
     GIT_CONFIG_GLOBAL: '/home/.gitconfig',
     GIT_CONFIG_NOSYSTEM: '1',
     PATH: '/usr/bin',
@@ -54,6 +53,31 @@ test('keeps the caller\'s git config and drops the other git variables', () => {
     XDG_CONFIG_HOME: '/home/.config',
     GIT_CONFIG_GLOBAL: '/home/.gitconfig',
     GIT_CONFIG_NOSYSTEM: '1',
+  });
+});
+
+test('keeps the git config the caller passes through the environment', () => {
+  const env = getCallerGitEnv({
+    GIT_CONFIG_COUNT: '2',
+    GIT_CONFIG_KEY_0: 'core.excludesFile',
+    GIT_CONFIG_VALUE_0: '/home/excludes',
+    GIT_CONFIG_KEY_1: 'core.quotePath',
+    GIT_CONFIG_VALUE_1: 'false',
+    GIT_CONFIG_PARAMETERS: '\'core.ignoreCase\'=\'true\'',
+    GIT_CONFIG_SYSTEM: '/etc/gitconfig',
+    GIT_INDEX_FILE: '/outer/.git/index',
+    PATH: '/usr/bin',
+  });
+
+  assert.deepEqual(env, {
+    PATH: '/usr/bin',
+    GIT_CONFIG_COUNT: '2',
+    GIT_CONFIG_KEY_0: 'core.excludesFile',
+    GIT_CONFIG_VALUE_0: '/home/excludes',
+    GIT_CONFIG_KEY_1: 'core.quotePath',
+    GIT_CONFIG_VALUE_1: 'false',
+    GIT_CONFIG_PARAMETERS: '\'core.ignoreCase\'=\'true\'',
+    GIT_CONFIG_SYSTEM: '/etc/gitconfig',
   });
 });
 
