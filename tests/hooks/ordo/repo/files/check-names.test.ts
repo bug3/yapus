@@ -76,6 +76,12 @@ test('skips the names of Go and Python files but checks their folders', (t) => {
   assert.deepEqual(checkNames(root), [2, '', refusal('Foo/x.go', 'Foo')]);
 });
 
+test('skips the name of a PHP file but checks its folder', (t) => {
+  const root = makeTree(t, ['src/AgeCalculationService.php', 'Bar/x.php']);
+
+  assert.deepEqual(checkNames(root), [2, '', refusal('Bar/x.php', 'Bar')]);
+});
+
 test('refuses a capital inside a word', (t) => {
   assert.deepEqual(
     checkNames(makeTree(t, ['getDashLines.ts'])),

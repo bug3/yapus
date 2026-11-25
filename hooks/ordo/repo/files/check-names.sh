@@ -5,8 +5,8 @@ set -u
 # untracked but not ignored, from its top level. A segment passes when it is
 # lowercase words joined by hyphens, parts by underscores, with a UTC time
 # such as 2026-04-11T22-06-47Z as one word, when it is in the uppercase class
-# of names such as README.md, or when a tool owns it. Go and Python files are
-# skipped, their folders are not. It exits 0 when every path passes and 2
+# of names such as README.md, or when a tool owns it. Go, Python and PHP files
+# are skipped, their folders are not. It exits 0 when every path passes and 2
 # otherwise, with one stderr line per failing path.
 
 # The ranges below mean ASCII letters only in the C locale.
@@ -61,7 +61,7 @@ find_failing_segment() {
   done
 
   case $rest in
-    *.go | *.py | *.pyi) return 0 ;;
+    *.go | *.py | *.pyi | *.php) return 0 ;;
   esac
 
   is_passing "$rest" || failing=$rest
