@@ -67,11 +67,14 @@ find_failing_segment() {
   is_passing "$rest" || failing=$rest
 }
 
-# Reads NUL-separated paths on stdin; returns 1 when any path fails.
+# Reads NUL-separated paths on stdin; returns 1 when any path fails. During a
+# merge, git lists a conflicted path once per stage, one after another.
 check_paths() {
-  local path status=0
+  local path previous='' status=0
 
   while IFS= read -r -d '' path; do
+    [ "$path" != "$previous" ] || continue
+    previous=$path
     [ -e "$path" ] || [ -L "$path" ] || continue
     find_failing_segment "$path"
     [ -n "$failing" ] || continue

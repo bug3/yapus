@@ -227,6 +227,24 @@ test('skips a tracked path that is gone from disk', (t) => {
   assert.deepEqual(checkNames(root), [0, '', '']);
 });
 
+test('writes one line for a failing path that a merge leaves in conflict', (t) => {
+  const root = makeTempFiles(t, [{ path: 'Notes.md', text: 'base\n' }]);
+  const commitNotes = (text: string) => {
+    writeFileSync(join(root, 'Notes.md'), text);
+    runGit(['commit', '--quiet', '--all', '--message', text], root);
+  };
+
+  runGit(['add', 'Notes.md'], root);
+  runGit(['commit', '--quiet', '--message', 'base'], root);
+  runGit(['checkout', '--quiet', '-b', 'other'], root);
+  commitNotes('other\n');
+  runGit(['checkout', '--quiet', '-'], root);
+  commitNotes('this\n');
+  assert.throws(() => runGit(['merge', '--quiet', 'other'], root));
+
+  assert.deepEqual(checkNames(root), [2, '', refusal('Notes.md', 'Notes.md')]);
+});
+
 test('exits 2 with one line naming the folder and git\'s error outside a git work tree', (t) => {
   const outside = realpathSync(makeTempDir(t));
   const env = { ...getGitEnv(process.env), GIT_CEILING_DIRECTORIES: dirname(outside) };
