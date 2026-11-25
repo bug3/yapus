@@ -86,8 +86,11 @@ if ! command -v git >/dev/null 2>&1; then
   fail 'git not found; install git'
 fi
 
+# git's own first error line tells a directory outside any work tree from a
+# repository git refuses, such as one owned by another user.
 if ! top=$(git rev-parse --show-toplevel 2>/dev/null); then
-  fail "$(pwd) is not in a git work tree; run it from inside one"
+  error=$(git rev-parse --show-toplevel 2>&1 >/dev/null)
+  fail "$(pwd): ${error%%$'\n'*}"
 fi
 
 if ! cd -- "$top" 2>/dev/null; then

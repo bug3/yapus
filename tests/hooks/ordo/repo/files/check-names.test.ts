@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { realpathSync, rmSync } from 'node:fs';
+import { realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { type TestContext, test } from 'node:test';
 import { makeTempDir } from '../../../../helpers/make-temp-dir.ts';
@@ -227,14 +227,48 @@ test('skips a tracked path that is gone from disk', (t) => {
   assert.deepEqual(checkNames(root), [0, '', '']);
 });
 
-test('exits 2 with one line outside a git work tree', (t) => {
+test('exits 2 with one line naming the folder and git\'s error outside a git work tree', (t) => {
   const outside = realpathSync(makeTempDir(t));
   const env = { ...getGitEnv(process.env), GIT_CEILING_DIRECTORIES: dirname(outside) };
 
-  const [status, stdout, stderr] = checkNames(outside, env);
+  assert.deepEqual(checkNames(outside, env), [
+    2,
+    '',
+    `yapus names: ${ outside }: fatal: not a git repository (or any of the parent directories): .git\n`,
+  ]);
+});
 
-  assert.deepEqual([status, stdout], [2, '']);
-  assert.match(String(stderr), /^yapus names: [^\n]+ is not in a git work tree; run it from inside one\n$/);
+test('exits 2 with git\'s own error when git refuses the repository', (t) => {
+  const root = realpathSync(makeTree(t, ['a.md']));
+  const gitDir = join(root, 'missing');
+  const env = { ...getGitEnv(process.env), GIT_DIR: gitDir };
+
+  assert.deepEqual(checkNames(root, env), [
+    2,
+    '',
+    `yapus names: ${ root }: fatal: not a git repository: '${ gitDir }'\n`,
+  ]);
+});
+
+// A git owned by another user fails rev-parse with several lines, of which
+// the first names the cause; a stand-in on PATH gives that output here.
+test('keeps only the first line of a git error of several lines', (t) => {
+  const root = realpathSync(makeTree(t, ['a.md']));
+  const bin = makeTempDir(t);
+  const env = { ...getGitEnv(process.env), PATH: bin };
+
+  writeFileSync(join(bin, 'git'), [
+    '#!/bin/sh',
+    'printf "%s\\n" "fatal: detected dubious ownership in repository at $PWD" "To add an exception, call:" >&2',
+    'exit 128',
+    '',
+  ].join('\n'), { mode: 0o755 });
+
+  assert.deepEqual(checkNames(root, env), [
+    2,
+    '',
+    `yapus names: ${ root }: fatal: detected dubious ownership in repository at ${ root }\n`,
+  ]);
 });
 
 test('exits 2 with one line when git is not found', (t) => {
