@@ -23,10 +23,11 @@ const OWNED_TSCONFIG = '.claude/yapus/ordo/tsconfig.json';
 const WRAPPER_TSCONFIG = 'tsconfig.json';
 const SCOPES = '.claude/yapus/ordo/scopes.json';
 const LANGUAGE_RECORD = '.claude/yapus/ordo/language';
-const BASE_DIR = join(
+const FILES_DIR = join(
   import.meta.dirname,
-  ...['..', '..', '..', '..', 'hooks', 'ordo', 'repo', 'files', 'typescript'],
+  ...['..', '..', '..', '..', 'hooks', 'ordo', 'repo', 'files'],
 );
+const BASE_DIR = join(FILES_DIR, 'typescript');
 
 function readVersion(): unknown {
   const manifest: unknown = JSON.parse(
