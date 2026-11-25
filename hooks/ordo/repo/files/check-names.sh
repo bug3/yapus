@@ -55,8 +55,12 @@ find_failing_segment() {
     segment=${rest%%/*}/
     rest=${rest#*/}
 
-    # Go reads the files below testdata as test input, whatever their names.
-    [ "$segment" != testdata/ ] || return 0
+    # Go reads the files below testdata as test input and go mod vendor
+    # writes the ones below vendor, whatever their names.
+    case $segment in
+      testdata/ | vendor/) return 0 ;;
+    esac
+
     is_passing "$segment" || { failing=${segment%/}; return 0; }
   done
 

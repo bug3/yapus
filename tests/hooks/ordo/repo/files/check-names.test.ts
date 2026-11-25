@@ -82,6 +82,16 @@ test('skips the name of a PHP file but checks its folder', (t) => {
   assert.deepEqual(checkNames(root), [2, '', refusal('Bar/x.php', 'Bar')]);
 });
 
+test('skips every path below a vendor folder but checks the folders above it', (t) => {
+  const root = makeTree(t, [
+    'vendor/github.com/BurntSushi/toml/decode.go',
+    'vendor/github.com/BurntSushi/toml/Odd Name.txt',
+    'Lib/vendor/x.md',
+  ]);
+
+  assert.deepEqual(checkNames(root), [2, '', refusal('Lib/vendor/x.md', 'Lib')]);
+});
+
 test('refuses a capital inside a word', (t) => {
   assert.deepEqual(
     checkNames(makeTree(t, ['getDashLines.ts'])),
