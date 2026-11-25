@@ -97,7 +97,7 @@ fi
 # repository git refuses, such as one owned by another user.
 if ! top=$(git rev-parse --show-toplevel 2>/dev/null); then
   error=$(git rev-parse --show-toplevel 2>&1 >/dev/null)
-  fail "$(pwd): ${error%%$'\n'*}"
+  fail "$(pwd): ${error%%$'\n'*}; run it inside a git work tree, or run git status there to see why"
 fi
 
 if ! cd -- "$top" 2>/dev/null; then

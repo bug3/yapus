@@ -10,6 +10,7 @@ import { getGitEnv, runGit } from '../../../../helpers/run-git.ts';
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..', '..');
 const CHECK_NAMES = join(ROOT, 'hooks', 'ordo', 'repo', 'files', 'check-names.sh');
 const RULE = 'is not lowercase words joined by hyphens, parts by underscores; rename it';
+const NO_WORK_TREE_STEP = 'run it inside a git work tree, or run git status there to see why';
 const SUBPROCESS_TIMEOUT_MS = 10000;
 const BASH = getCommandPath('bash');
 
@@ -291,7 +292,7 @@ test('exits 2 with one line naming the folder and git\'s error outside a git wor
   assert.deepEqual(checkNames(outside, env), [
     2,
     '',
-    `yapus names: ${ outside }: fatal: not a git repository (or any of the parent directories): .git\n`,
+    `yapus names: ${ outside }: fatal: not a git repository (or any of the parent directories): .git; ${ NO_WORK_TREE_STEP }\n`,
   ]);
 });
 
@@ -303,7 +304,7 @@ test('exits 2 with git\'s own error when git refuses the repository', (t) => {
   assert.deepEqual(checkNames(root, env), [
     2,
     '',
-    `yapus names: ${ root }: fatal: not a git repository: '${ gitDir }'\n`,
+    `yapus names: ${ root }: fatal: not a git repository: '${ gitDir }'; ${ NO_WORK_TREE_STEP }\n`,
   ]);
 });
 
@@ -324,7 +325,7 @@ test('keeps only the first line of a git error of several lines', (t) => {
   assert.deepEqual(checkNames(root, env), [
     2,
     '',
-    `yapus names: ${ root }: fatal: detected dubious ownership in repository at ${ root }\n`,
+    `yapus names: ${ root }: fatal: detected dubious ownership in repository at ${ root }; ${ NO_WORK_TREE_STEP }\n`,
   ]);
 });
 
