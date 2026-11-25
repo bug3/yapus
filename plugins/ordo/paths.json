@@ -11,6 +11,7 @@
     "tests/repository/**": null
   },
   "keep": [
+    "**",
     ".claude/**/*.md",
     ".claude/yapus/ordo/scopes.json",
     ".github/workflows/**",
