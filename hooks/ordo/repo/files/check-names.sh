@@ -17,6 +17,7 @@ readonly CHOSEN="^\\.?$NAME(\\.$NAME)*$"
 readonly UPPERCASE='^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*(\.[a-z0-9]+)*$'
 readonly NEXT_PAGE='^_(app|document)(\.[a-z0-9]+)+$'
 readonly BRACKET_ROUTE='^\[[][A-Za-z0-9._-]+\](\.[a-z0-9]+)*$'
+readonly SASS_PARTIAL="^_$NAME\\.(scss|sass)$"
 readonly RULE='is not lowercase words joined by hyphens, parts by underscores; rename it'
 
 fail() {
@@ -34,7 +35,7 @@ is_tool_owned() {
     Project.toml | JuliaProject.toml | Manifest.toml | JuliaManifest.toml) return 0 ;;
   esac
 
-  [[ ${1%/} =~ $NEXT_PAGE ]] || [[ ${1%/} =~ $BRACKET_ROUTE ]]
+  [[ ${1%/} =~ $NEXT_PAGE ]] || [[ ${1%/} =~ $BRACKET_ROUTE ]] || [[ ${1%/} =~ $SASS_PARTIAL ]]
 }
 
 is_passing() {

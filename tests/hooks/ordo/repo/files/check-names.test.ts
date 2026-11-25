@@ -61,6 +61,7 @@ test('exits 0 silently on chosen, uppercase, Go, Python and tool-owned names', (
     'content/_index.md',
     'pages/[id].tsx',
     'pages/_app.tsx',
+    'styles/_main-layout.scss',
     'pkg/testdata/Odd Name.txt',
     '.DS_Store',
     'Cargo.toml',
@@ -114,6 +115,17 @@ test('refuses a leading underscore on a name no tool owns', (t) => {
   assert.deepEqual(
     checkNames(makeTree(t, ['_draft.md'])),
     [2, '', refusal('_draft.md', '_draft.md')],
+  );
+});
+
+test('refuses a Sass partial whose name after the underscore is not chosen', (t) => {
+  assert.deepEqual(
+    checkNames(makeTree(t, ['_Main.scss', '__x.scss', '_y.css'])),
+    [2, '', [
+      refusal('_Main.scss', '_Main.scss'),
+      refusal('__x.scss', '__x.scss'),
+      refusal('_y.css', '_y.css'),
+    ].join('')],
   );
 });
 
