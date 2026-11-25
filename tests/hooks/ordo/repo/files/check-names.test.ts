@@ -178,6 +178,32 @@ test('refuses a capitalized word outside the uppercase class', (t) => {
   );
 });
 
+test('accepts an all-caps name with hyphens and a mixed-case extension part', (t) => {
+  const root = makeTree(t, ['LICENSE-MIT', 'LICENSE-APACHE', 'README.zh-CN.md']);
+
+  assert.deepEqual(checkNames(root), [0, '', '']);
+});
+
+test('refuses a lowercase word beside a capital word', (t) => {
+  assert.deepEqual(
+    checkNames(makeTree(t, ['Readme-x.md', 'LICENSE_mit'])),
+    [2, '', [
+      refusal('LICENSE_mit', 'LICENSE_mit'),
+      refusal('Readme-x.md', 'Readme-x.md'),
+    ].join('')],
+  );
+});
+
+test('refuses a capital in an extension part of an all-caps name', (t) => {
+  assert.deepEqual(
+    checkNames(makeTree(t, ['API.UserController.php', 'README.MD'])),
+    [2, '', [
+      refusal('API.UserController.php', 'API.UserController.php'),
+      refusal('README.MD', 'README.MD'),
+    ].join('')],
+  );
+});
+
 test('refuses a capitalized folder and names the folder', (t) => {
   assert.deepEqual(
     checkNames(makeTree(t, ['Foo/x.md'])),
