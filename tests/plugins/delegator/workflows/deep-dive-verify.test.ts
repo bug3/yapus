@@ -64,88 +64,97 @@ const VERDICT_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-const SUPPORTED = { evidence: 'The source says so.\nVerdict: supported' } as const;
-const UNSUPPORTED = { evidence: 'The source says otherwise.\nVerdict: unsupported' } as const;
-const UNSUPPORTED_FIRST = { evidence: 'The page\nnames no stop.\nVerdict: unsupported' } as const;
-const UNOPENED = { evidence: 'The source is not there.\nVerdict: unopened' } as const;
+const SUPPORTED = {
+  evidence: 'Shown: the line.\nThe source says so.\nVerdict: supported',
+} as const;
+const UNSUPPORTED = {
+  evidence: 'Not shown: the fact.\nThe source says otherwise.\nVerdict: unsupported',
+} as const;
+const UNSUPPORTED_FIRST = {
+  evidence: 'Not shown: the stop.\nThe page\nnames no stop.\nVerdict: unsupported',
+} as const;
+const UNOPENED = {
+  evidence: 'Not shown: the source.\nThe source is not there.\nVerdict: unopened',
+} as const;
 const UNSUPPORTED_BLANK = { evidence: ' \t\n  \nVerdict: unsupported' } as const;
 const NO_VERDICT = { evidence: 'The source says so.' } as const;
 
-// Evidence texts of a repository verify answer, the mark each gives its claim
-// and the verdict read from it: the verdict is the last line that is not
-// blank, trimmed, and only when it is exactly `Verdict: ` and a verdict; the
-// evidence printed is the evidence before that line. An unopened verdict
-// casts no vote, so its mark is the mark of no verdict.
+// Evidence texts of a repository verify answer, each opening with a fact
+// line, the mark each gives its claim and the verdict read from it: the
+// verdict is the last line that is not blank, trimmed, and only when it is
+// exactly `Verdict: ` and a verdict; the evidence printed is the evidence
+// before that line. An unopened verdict casts no vote, so its mark is the
+// mark of no verdict.
 const VERDICT_LINE_CASES = [
   [
     'with a supported line',
-    'The line shows it.\nVerdict: supported',
+    'Shown: the line.\nThe line shows it.\nVerdict: supported',
     'verified 1 of 1',
     'supported',
   ],
   [
     'with an unsupported line and a line break',
-    'The line leaves it out.\nVerdict: unsupported\n',
-    'not supported 0 of 1: The line leaves it out.',
+    'Shown: the line.\nThe line leaves it out.\nVerdict: unsupported\n',
+    'not supported 0 of 1: Shown: the line. The line leaves it out.',
     'unsupported',
   ],
   [
     'with an unopened line after a carriage return and before spaces',
-    'No such file.\r\nVerdict: unopened  ',
+    'Shown: the line.\nNo such file.\r\nVerdict: unopened  ',
     'undecided 0 of 0',
     'unopened',
   ],
   [
     'with an indented supported line',
-    'Shown.\n  Verdict: supported',
+    'Shown: the line.\nShown.\n  Verdict: supported',
     'verified 1 of 1',
     'supported',
   ],
   [
     'with an unsupported line, then a supported one',
-    'Verdict: unsupported\nVerdict: supported',
+    'Shown: the line.\nVerdict: unsupported\nVerdict: supported',
     'verified 1 of 1',
     'supported',
   ],
   [
     'with a line after its verdict line',
-    'Verdict: supported\nThe line shows it.',
+    'Shown: the line.\nVerdict: supported\nThe line shows it.',
     'undecided 0 of 0',
     undefined,
   ],
   [
     'with a capital verdict word',
-    'Shown.\nVerdict: Supported',
+    'Shown: the line.\nShown.\nVerdict: Supported',
     'undecided 0 of 0',
     undefined,
   ],
   [
     'with a bold verdict line',
-    'Shown.\n**Verdict: supported**',
+    'Shown: the line.\nShown.\n**Verdict: supported**',
     'undecided 0 of 0',
     undefined,
   ],
   [
     'with a period after its verdict word',
-    'Shown.\nVerdict: supported.',
+    'Shown: the line.\nShown.\nVerdict: supported.',
     'undecided 0 of 0',
     undefined,
   ],
   [
     'with no verdict line',
-    'Shown.',
+    'Shown: the line.\nShown.',
     'undecided 0 of 0',
     undefined,
   ],
   [
-    'that is empty',
-    '',
+    'at its fact line',
+    'Shown: the line.\n',
     'undecided 0 of 0',
     undefined,
   ],
   [
     'with an empty line before its supported line',
-    'Shown.\n\nVerdict: supported',
+    'Shown: the line.\nShown.\n\nVerdict: supported',
     'verified 1 of 1',
     'supported',
   ],
@@ -303,7 +312,7 @@ test('cites a range of lines of a repository claim in its verify prompt and bloc
     /\n## Cited source\nx\.js:557-577\n\n/u,
   );
   assert.deepEqual(listClaimLines(run), [
-    '- The gate runs. | `x.js:557-577` | not supported 0 of 1: The source says otherwise.',
+    '- The gate runs. | `x.js:557-577` | not supported 0 of 1: Not shown: the fact. The source says otherwise.',
   ]);
 });
 
@@ -312,7 +321,7 @@ test('cites a repository claim whose last line is its first at that line alone',
 
   assert.match(findCall(run, 'verify-repo:Q1.C1')?.prompt ?? '', /\n## Cited source\nx\.js:557\n\n/u);
   assert.deepEqual(listClaimLines(run), [
-    '- The gate runs. | `x.js:557` | not supported 0 of 1: The source says otherwise.',
+    '- The gate runs. | `x.js:557` | not supported 0 of 1: Not shown: the fact. The source says otherwise.',
   ]);
 });
 
@@ -321,7 +330,7 @@ test('cites a repository claim whose last line comes before its first at its fir
 
   assert.match(findCall(run, 'verify-repo:Q1.C1')?.prompt ?? '', /\n## Cited source\nx\.js:557\n\n/u);
   assert.deepEqual(listClaimLines(run), [
-    '- The gate runs. | `x.js:557` | not supported 0 of 1: The source says otherwise.',
+    '- The gate runs. | `x.js:557` | not supported 0 of 1: Not shown: the fact. The source says otherwise.',
   ]);
 });
 
@@ -508,7 +517,7 @@ test('marks a repository claim with an unsupported verdict as not supported 0 of
   const run = await runClaim('repository', [UNSUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [
-    `${ REPOSITORY_CLAIM_LINE } | not supported 0 of 1: The source says otherwise.`,
+    `${ REPOSITORY_CLAIM_LINE } | not supported 0 of 1: Not shown: the fact. The source says otherwise.`,
   ]);
 });
 
@@ -569,7 +578,7 @@ test('marks a web claim with two unsupported votes as not supported 0 of 2', asy
   const run = await runClaim('web', [UNSUPPORTED, UNSUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [
-    `${ WEB_CLAIM_LINE } | not supported 0 of 2: The source says otherwise.`,
+    `${ WEB_CLAIM_LINE } | not supported 0 of 2: Not shown: the fact. The source says otherwise.`,
   ]);
 });
 
@@ -583,7 +592,7 @@ test('marks a web claim with an unsupported third vote as not supported 1 of 3',
   const run = await runClaim('web', [UNSUPPORTED, SUPPORTED, UNSUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [
-    `${ WEB_CLAIM_LINE } | not supported 1 of 3: The source says otherwise.`,
+    `${ WEB_CLAIM_LINE } | not supported 1 of 3: Not shown: the fact. The source says otherwise.`,
   ]);
 });
 
@@ -622,7 +631,7 @@ test('prints the first evidence against a claim not supported on one line', asyn
   const run = await runClaim('web', [UNSUPPORTED_FIRST, SUPPORTED, UNSUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [
-    `${ WEB_CLAIM_LINE } | not supported 1 of 3: The page names no stop.`,
+    `${ WEB_CLAIM_LINE } | not supported 1 of 3: Not shown: the stop. The page names no stop.`,
   ]);
 });
 
@@ -630,7 +639,7 @@ test('prints the first evidence against a claim that is not blank', async () => 
   const run = await runClaim('web', [UNSUPPORTED_BLANK, UNSUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [
-    `${ WEB_CLAIM_LINE } | not supported 0 of 2: The source says otherwise.`,
+    `${ WEB_CLAIM_LINE } | not supported 0 of 2: Not shown: the fact. The source says otherwise.`,
   ]);
 });
 
