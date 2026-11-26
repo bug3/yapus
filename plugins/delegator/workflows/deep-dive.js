@@ -555,50 +555,41 @@ const NOT_SHOWN_LABEL = 'Not shown:';
 // of SHOWN_LABEL.
 const [NOT_WORD, SHOWN_WORD] = NOT_SHOWN_LABEL.slice(0, -1).split(' ');
 
-// The characters that end a line of evidence or of a text put on one line,
-// as the body of a pattern's class, and what breaks such a text into lines:
-// one of them, or \r\n.
-const LINE_ENDS = '\\n\\r\\u2028\\u2029';
-const LINE_BREAK = new RegExp(`\\r\\n|[${ LINE_ENDS }]`, 'u');
+// What a label in another form than SHOWN_LABEL or NOT_SHOWN_LABEL may take:
+// the list, quote, heading and emphasis marks a line may open with, the ends
+// of a list number, what may stand between the label words besides spaces
+// and tabs, the marks that may close the words and the separators after them.
+const LABEL_OPENING_MARKS = '-*+>#_~`';
+const LIST_NUMBER_ENDS = '.)';
+const LABEL_WORD_JOINERS = '_-';
+const LABEL_CLOSING_MARKS = '*_~`';
+const LABEL_SEPARATORS = ':-';
 
-// A line start in a pattern, and the whitespace a line may open with: no
-// line end, so that a pattern matched from each line start stays linear in
-// the evidence length.
-const LINE_START = `(^|[${ LINE_ENDS }])`;
-const LINE_SPACE = `[^\\S${ LINE_ENDS }]*`;
-
-// The rule on refused evidence: a verify agent's evidence gives no verdict,
-// and its answer is no vote, when the last of its lines that is not blank,
-// trimmed, is not exactly VERDICT_LINE_START and a verdict, when no line
-// before that one, trimmed, starts with SHOWN_LABEL or NOT_SHOWN_LABEL
-// followed by text that is not blank, or when its verdict is SUPPORTED and a
-// line states a gap: after any characters that are not ASCII letters, it
-// starts with NOT_WORD, any characters that are not ASCII letters and
-// SHOWN_WORD, in any case, then its end or a character that is not an ASCII
-// letter, a digit or an underscore. VERDICT_SCHEMA holds the rule so that the
-// runtime refuses such an answer, and readVerdict holds it so that the script
-// reads no verdict from one.
-//
-// The evidence the schema admits matches the first two patterns and not both
-// of the last two. VERDICT_PATTERN: the verdict line. FACT_LINE_PATTERN: a
-// fact line. GAP_LINE_PATTERN: a line that states a gap.
-// SUPPORTED_LINE_PATTERN: the verdict line with SUPPORTED. The schema only
-// validates; readVerdict reads and cuts the verdict line.
-const VERDICT_PATTERN = [
-  `${ LINE_START }${ LINE_SPACE }${ escapePattern(VERDICT_LINE_START) }`,
-  `(${ VERDICTS.map(escapePattern).join('|') })\\s*$`,
+// The evidence the verify schema admits matches the first two patterns, not
+// both of the next two and not the last, so the runtime refuses an answer that
+// readVerdict would read as no vote. VERDICT_PATTERN: the last line that is
+// not blank is VERDICT_LINE_START and a verdict. FACT_LINE_PATTERN: a line
+// starts with SHOWN_LABEL or NOT_SHOWN_LABEL. NOT_SHOWN_LINE_PATTERN: a line
+// starts with NOT_SHOWN_LABEL. SUPPORTED_LINE_PATTERN: the last line that is
+// not blank is VERDICT_LINE_START and SUPPORTED. VARIANT_LABEL_PATTERN: a line
+// starts, after whitespace, with no exact label but with any
+// LABEL_OPENING_MARKS, spaces and tabs, an optional list number that ends in
+// LIST_NUMBER_ENDS and may take more of those marks, the label words in any
+// case, NOT_WORD optional and joined to SHOWN_WORD by spaces, tabs or
+// LABEL_WORD_JOINERS, then any LABEL_CLOSING_MARKS, spaces and tabs and a
+// LABEL_SEPARATORS character. The schema only validates; readVerdict reads and
+// cuts the verdict line, and reads none from evidence VARIANT_LABEL matches.
+const VERDICT_PATTERN = `(^|\\n)\\s*${ VERDICT_LINE_START }(${ VERDICTS.join('|') })\\s*$`;
+const FACT_LINE_PATTERN = `(^|\\n)\\s*(${ SHOWN_LABEL }|${ NOT_SHOWN_LABEL })`;
+const NOT_SHOWN_LINE_PATTERN = `(^|\\n)\\s*${ NOT_SHOWN_LABEL }`;
+const SUPPORTED_LINE_PATTERN = `(^|\\n)\\s*${ VERDICT_LINE_START }${ SUPPORTED }\\s*$`;
+const VARIANT_LABEL_PATTERN = [
+  `(^|\\n)\\s*(?!\\s|${ SHOWN_LABEL }|${ NOT_SHOWN_LABEL })[${ LABEL_OPENING_MARKS } \\t]*`,
+  `(?:[0-9]+[${ LIST_NUMBER_ENDS }][${ LABEL_OPENING_MARKS } \\t]*)?`,
+  `(${ matchAnyCase(NOT_WORD) }[ \\t${ LABEL_WORD_JOINERS }]*)?${ matchAnyCase(SHOWN_WORD) }`,
+  `[${ LABEL_CLOSING_MARKS }]*[ \\t]*[${ LABEL_SEPARATORS }]`,
 ].join('');
-const FACT_LINE_PATTERN = [
-  `${ LINE_START }${ LINE_SPACE }(${ escapePattern(SHOWN_LABEL) }|${ escapePattern(NOT_SHOWN_LABEL) })`,
-  `${ LINE_SPACE }\\S`,
-].join('');
-const GAP_LINE_PATTERN = [
-  `${ LINE_START }[^A-Za-z${ LINE_ENDS }]*${ matchAnyCase(NOT_WORD) }`,
-  `[^A-Za-z${ LINE_ENDS }]*${ matchAnyCase(SHOWN_WORD) }([^A-Za-z0-9_]|$)`,
-].join('');
-const GAP_LINE = new RegExp(GAP_LINE_PATTERN, 'u');
-const SUPPORTED_LINE_PATTERN =
-  `${ LINE_START }${ LINE_SPACE }${ escapePattern(VERDICT_LINE_START) }${ escapePattern(SUPPORTED) }\\s*$`;
+const VARIANT_LABEL = new RegExp(VARIANT_LABEL_PATTERN, 'u');
 
 // The votes of a kind that decide a claim of each lane: a web claim is
 // verified on its first vote when that supports it, and otherwise decided
@@ -624,7 +615,8 @@ const VERDICT_SCHEMA = {
       allOf: [
         { pattern: VERDICT_PATTERN },
         { pattern: FACT_LINE_PATTERN },
-        { not: { allOf: [{ pattern: GAP_LINE_PATTERN }, { pattern: SUPPORTED_LINE_PATTERN }] } },
+        { not: { allOf: [{ pattern: NOT_SHOWN_LINE_PATTERN }, { pattern: SUPPORTED_LINE_PATTERN }] } },
+        { not: { pattern: VARIANT_LABEL_PATTERN } },
       ],
     },
   },
@@ -778,6 +770,10 @@ const RETURN_RULE =
 // reads the text of a path and opens nothing: `~/x` passes, and so does a
 // link that points out of the repository.
 const OUTSIDE_PATH = /^[/\\]|^[A-Za-z]:|(?:^|[/\\])\.\.(?:[/\\]|$)/u;
+
+// A character that ends a line of a text toOneLine puts on one line; \r\n
+// holds one.
+const LINE_BREAK = /[\n\r\u2028\u2029]/u;
 
 // The runtime ends a run at RUN_AGENT_LIMIT workflow agents. Gathering and
 // verifying, in the scope's round and in the follow-up round, stop short of it
@@ -1367,9 +1363,10 @@ function getOutcome(answers, quorum) {
 }
 
 // A vote is the answer of a verify agent whose verdict line supports its claim
-// or does not. A verify agent that opened no source, returned evidence the
-// rule on refused evidence refuses (beside VERDICT_PATTERN), returned nothing
-// or was not launched casts none.
+// or does not. A verify agent that opened no source, ended its evidence with
+// no verdict line, wrote no fact line before it, gave SUPPORTED with a
+// NOT_SHOWN_LABEL line, wrote a label in another form, returned nothing or
+// was not launched casts none.
 function isVote(answer) {
   const verdict = readVerdict(answer)?.verdict;
 
@@ -1381,14 +1378,19 @@ function countVerdict(answers, verdict) {
 }
 
 // The verdict a verify agent's answer gives and its evidence before the line
-// that gives it, the last of the evidence that is not blank; evidence the rule
-// on refused evidence refuses (beside VERDICT_PATTERN) gives none.
+// that gives it. The line is the last of the evidence that is not blank,
+// trimmed; an answer whose line is not exactly VERDICT_LINE_START and a
+// verdict gives none, and is no vote. So does an answer with no line before
+// it that, trimmed, starts with SHOWN_LABEL or NOT_SHOWN_LABEL, a SUPPORTED
+// one with such a line that starts with NOT_SHOWN_LABEL, and one whose
+// evidence VARIANT_LABEL matches, whatever its verdict: the evidence
+// VERDICT_SCHEMA refuses.
 function readVerdict(answer) {
-  if (typeof answer?.evidence !== 'string') {
+  if (typeof answer?.evidence !== 'string' || VARIANT_LABEL.test(answer.evidence)) {
     return undefined;
   }
 
-  const lines = answer.evidence.split(LINE_BREAK);
+  const lines = answer.evidence.split('\n');
 
   while (lines.length > 0 && lines.at(-1).trim() === '') {
     lines.pop();
@@ -1396,15 +1398,14 @@ function readVerdict(answer) {
 
   const verdictLine = lines.at(-1)?.trim();
   const verdict = VERDICTS.find((known) => verdictLine === `${ VERDICT_LINE_START }${ known }`);
-  const hasFactLine = lines
+  const factLines = lines
     .slice(0, -1)
     .map((line) => line.trim())
-    .some((line) => [SHOWN_LABEL, NOT_SHOWN_LABEL].some(
-      (label) => line.startsWith(label) && line.slice(label.length).trim() !== '',
-    ));
-  const isGapSupported = verdict === SUPPORTED && GAP_LINE.test(answer.evidence);
+    .filter((line) => line.startsWith(SHOWN_LABEL) || line.startsWith(NOT_SHOWN_LABEL));
+  const isNotShownSupported =
+    verdict === SUPPORTED && factLines.some((line) => line.startsWith(NOT_SHOWN_LABEL));
 
-  if (verdict === undefined || !hasFactLine || isGapSupported) {
+  if (verdict === undefined || factLines.length === 0 || isNotShownSupported) {
     return undefined;
   }
 
@@ -1414,15 +1415,7 @@ function readVerdict(answer) {
 // A pattern that matches `word` in any case: each letter as a class of its
 // capital and its small form.
 function matchAnyCase(word) {
-  return [...word]
-    .map((letter) => `[${ escapePattern(letter.toUpperCase()) }${ escapePattern(letter.toLowerCase()) }]`)
-    .join('');
-}
-
-// A pattern that matches `text` as it is written: each character a pattern
-// reads as syntax, behind a backslash.
-function escapePattern(text) {
-  return text.replace(/[\\^$.*+?()[\]{}|/]/gu, '\\$&');
+  return [...word].map((letter) => `[${ letter.toUpperCase() }${ letter.toLowerCase() }]`).join('');
 }
 
 function countOutcome(claims, counted) {

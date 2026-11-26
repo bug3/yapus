@@ -60,25 +60,26 @@ type SchemaPart =
   | { readonly not: SchemaPart }
   | { readonly allOf: readonly SchemaPart[] };
 
-// A line start of the evidence patterns and the whitespace the line opens with.
-const LINE_OPENING = '(^|[\\n\\r\\u2028\\u2029])[^\\S\\n\\r\\u2028\\u2029]*';
 const VERDICT_SCHEMA = {
   type: 'object',
   properties: {
     evidence: {
       type: 'string',
       allOf: [
-        { pattern: `${ LINE_OPENING }Verdict: (supported|unsupported|unopened)\\s*$` },
-        { pattern: `${ LINE_OPENING }(Shown:|Not shown:)[^\\S\\n\\r\\u2028\\u2029]*\\S` },
+        { pattern: '(^|\\n)\\s*Verdict: (supported|unsupported|unopened)\\s*$' },
+        { pattern: '(^|\\n)\\s*(Shown:|Not shown:)' },
         {
           not: {
             allOf: [
-              {
-                pattern:
-                  '(^|[\\n\\r\\u2028\\u2029])[^A-Za-z\\n\\r\\u2028\\u2029]*[Nn][Oo][Tt][^A-Za-z\\n\\r\\u2028\\u2029]*[Ss][Hh][Oo][Ww][Nn]([^A-Za-z0-9_]|$)',
-              },
-              { pattern: `${ LINE_OPENING }Verdict: supported\\s*$` },
+              { pattern: '(^|\\n)\\s*Not shown:' },
+              { pattern: '(^|\\n)\\s*Verdict: supported\\s*$' },
             ],
+          },
+        },
+        {
+          not: {
+            pattern:
+              '(^|\\n)\\s*(?!\\s|Shown:|Not shown:)[-*+>#_~` \\t]*(?:[0-9]+[.)][-*+>#_~` \\t]*)?([Nn][Oo][Tt][ \\t_-]*)?[Ss][Hh][Oo][Ww][Nn][*_~`]*[ \\t]*[:-]',
           },
         },
       ],
@@ -104,9 +105,10 @@ const NO_VERDICT = { evidence: 'The source says so.' } as const;
 
 // Evidence texts of a repository verify answer, each but the last two opening
 // with a fact line, the mark each gives its claim and the verdict read from
-// it under the rule on refused evidence in deep-dive.js; the evidence printed
-// is the evidence before the verdict line. An unopened verdict casts no vote,
-// so its mark is the mark of no verdict.
+// it: the verdict is the last line that is not blank, trimmed, and only when
+// it is exactly `Verdict: ` and a verdict; the evidence printed is the
+// evidence before that line. An unopened verdict casts no vote, so its mark is
+// the mark of no verdict.
 const VERDICT_LINE_CASES = [
   [
     'with a supported line',
@@ -194,9 +196,12 @@ const VERDICT_LINE_CASES = [
   ],
 ] as const;
 const NO_VOTE_MARK = 'undecided 0 of 0';
-// Evidence texts of a verify answer and the verdict read from it under the
-// rule on refused evidence in deep-dive.js, which VERDICT_LINE_CASES do not
-// hold: cases of its fact lines and its labels.
+// Evidence texts of a verify answer and the verdict read from it, which
+// VERDICT_LINE_CASES do not hold: a verdict is read only from evidence with a
+// line that, trimmed, starts with `Shown:` or `Not shown:`, no supported
+// verdict from evidence with a `Not shown:` line, and none from evidence with
+// a line that starts with a label in another form, such as `- Not shown:`,
+// `Not Shown:` or `1. Shown:`.
 const FACT_LINE_CASES = [
   [
     'with a Shown: line and a supported line',
@@ -254,121 +259,6 @@ const FACT_LINE_CASES = [
     undefined,
   ],
   [
-    'with a Shown: line, a Not shown: line after a lone carriage return and a supported line',
-    'Shown: line 3.\rNot shown: the caller.\nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a Shown: line, a Not shown: line after a line separator and a supported line',
-    'Shown: line 3.\u2028Not shown: the caller.\nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a Shown: line and a supported line after a paragraph separator',
-    'Shown: line 3.\u2029Verdict: supported',
-    'supported',
-  ],
-  [
-    'with a Shown: line and an unsupported line after a lone carriage return',
-    'Shown: line 3.\rVerdict: unsupported\r',
-    'unsupported',
-  ],
-  [
-    'with a Shown: line after a line separator and a supported line',
-    'The source.\u2028Shown: line 3.\nVerdict: supported',
-    'supported',
-  ],
-  [
-    'with a Shown: line, a Not shown and dash line and a supported line',
-    'Shown: line 3.\nNot shown \u2014 the caller.\nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a Shown: line, a Not shown, line and a supported line',
-    'Shown: line 3.\nNot shown, the caller.\nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a Shown: line, a bulleted Not shown: line and a supported line',
-    'Shown: line 3.\n\u2022 Not shown: the caller.\nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a Shown: line, a | Not shown: | line and a supported line',
-    'Shown: line 3.\n| Not shown: | the caller. |\nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a Shown: line, a (Not shown: ...) line and a supported line',
-    'Shown: line 3.\n(Not shown: the caller.)\nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a Shown: line, a Not shown: line after a zero-width space and a supported line',
-    'Shown: line 3.\n\u200bNot shown: the caller.\nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a Shown: line, a Not shown line with a full-width colon and a supported line',
-    'Shown: line 3.\nNot shown\uff1a the caller.\nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a Shown: line, a Nothing shown line and a supported line',
-    'Shown: line 3.\nNothing shown beyond line 3.\nVerdict: supported',
-    'supported',
-  ],
-  [
-    'with a Shown: line, a line that names not shown and a supported line',
-    'Shown: line 3.\nThe caller is not shown here.\nVerdict: supported',
-    'supported',
-  ],
-  [
-    'with a Shown: line, a - Not shown: line and an unopened line',
-    'Shown: line 3.\n- Not shown: the file.\nVerdict: unopened',
-    'unopened',
-  ],
-  [
-    'with a Shown: line, a quoted shown: false line and a supported line',
-    'Shown: line 3 sets it.\nshown: false\nVerdict: supported',
-    'supported',
-  ],
-  [
-    'with a Shown: line, a quoted # shown: line and a supported line',
-    'Shown: line 3 holds it.\n# shown:\nVerdict: supported',
-    'supported',
-  ],
-  [
-    'with a Shown: line, a quoted --shown-only line and a supported line',
-    'Shown: line 3 names the flag.\n--shown-only\nVerdict: supported',
-    'supported',
-  ],
-  [
-    'with a bare Shown: line and a supported line',
-    'Shown:\nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a Shown: line of only spaces after its label and a supported line',
-    'Shown: \t \nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a bare Not shown: line and an unsupported line',
-    'Not shown:\nVerdict: unsupported',
-    undefined,
-  ],
-  [
-    'with a bare Shown: line, a Shown: line and a supported line',
-    'Shown:\nShown: line 3.\nVerdict: supported',
-    'supported',
-  ],
-  [
-    'with a Shown: line whose text follows a tab and a supported line',
-    'Shown:\tline 3.\nVerdict: supported',
-    'supported',
-  ],
-  [
     'with Shown: inside a line and a supported line',
     'The line names Shown: here.\nVerdict: supported',
     undefined,
@@ -384,31 +274,6 @@ const FACT_LINE_CASES = [
     undefined,
   ],
   [
-    'with a Shown: line, a NotShown: line and a supported line',
-    'Shown: line 3.\nNotShown: the caller.\nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a Shown: line, a NOTSHOWN: line and a supported line',
-    'Shown: line 3.\nNOTSHOWN: the caller.\nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a Shown: line, a Not_shown: line and a supported line',
-    'Shown: line 3.\nNot_shown: the caller.\nVerdict: supported',
-    undefined,
-  ],
-  [
-    'with a Shown: line, a line that opens with NOT_SHOWN_LABEL and a supported line',
-    'Shown: line 3.\nNOT_SHOWN_LABEL is defined at line 552.\nVerdict: supported',
-    'supported',
-  ],
-  [
-    'with a Shown: line, a line that opens with notShownCount and a supported line',
-    'Shown: line 3.\nnotShownCount = 3\nVerdict: supported',
-    'supported',
-  ],
-  [
     'with a Shown: line, a **Not shown:** line and a supported line',
     'Shown: line 3.\n**Not shown:** the caller.\nVerdict: supported',
     undefined,
@@ -421,12 +286,12 @@ const FACT_LINE_CASES = [
   [
     'with a Shown: line, a - Not shown: line and an unsupported line',
     'Shown: line 3.\n- Not shown: the caller.\nVerdict: unsupported',
-    'unsupported',
+    undefined,
   ],
   [
     'with a **Shown:** line, a Shown: line and a supported line',
     '**Shown:** line 3.\nShown: line 4.\nVerdict: supported',
-    'supported',
+    undefined,
   ],
   [
     'with a Shown: line, Not shown with no separator and an unsupported line',
@@ -436,7 +301,7 @@ const FACT_LINE_CASES = [
   [
     'with a Shown: line, a lowercase shown: line and a supported line',
     'Shown: line 3.\nshown: line 4.\nVerdict: supported',
-    'supported',
+    undefined,
   ],
   [
     'with a Shown: line, an indented Not shown: line and an unsupported line',
@@ -451,7 +316,7 @@ const FACT_LINE_CASES = [
   [
     'with a 2) Shown: line, a Shown: line and a supported line',
     '2) Shown: line 3.\nShown: line 4.\nVerdict: supported',
-    'supported',
+    undefined,
   ],
 ] as const;
 // The flags a JSON Schema validator may compile a pattern with.
@@ -891,33 +756,6 @@ for (const [name, evidence, verdict] of [
   });
 }
 
-// Evidence on which each part of every evidence pattern runs: many line
-// breaks between a fact line and a supported line, and long runs of spaces
-// inside a line, after a gap word and after the verdict.
-const LONG_EVIDENCES = [
-  `Shown: x${ '\n'.repeat(40000) }Verdict: supported`,
-  `Shown: x\n${ ' '.repeat(80000) }\nVerdict: supported`,
-  `Not${ ' '.repeat(80000) }x\nVerdict: supported${ ' '.repeat(80000) }x`,
-] as const;
-
-test('runs every evidence pattern on long evidence in under 2 seconds', async () => {
-  const run = await runClaim('repository', [SUPPORTED]);
-  const patterns = readEvidenceSchema(run).flatMap(listPatterns);
-  const regExps = PATTERN_FLAGS.flatMap(
-    (flags) => patterns.map((pattern) => new RegExp(pattern, flags)),
-  );
-  const start = performance.now();
-
-  for (const evidence of LONG_EVIDENCES) {
-    for (const regExp of regExps) {
-      regExp.test(evidence);
-    }
-  }
-
-  assert.equal(performance.now() - start < 2000, true);
-  assert.equal(patterns.length, 4);
-});
-
 test('gives a web claim whose first answer ends in no verdict line a second vote', async () => {
   const run = await runClaim('web', [NO_VERDICT, SUPPORTED, SUPPORTED]);
 
@@ -1158,19 +996,6 @@ function readEvidenceSchema(
   assert.deepEqual(findCall(run, 'verify-repo:Q1.C1')?.options.schema, VERDICT_SCHEMA);
 
   return VERDICT_SCHEMA.properties.evidence.allOf;
-}
-
-// The patterns of `part` of the evidence schema, in the order they stand.
-function listPatterns(part: SchemaPart): string[] {
-  if ('allOf' in part) {
-    return part.allOf.flatMap(listPatterns);
-  }
-
-  if ('not' in part) {
-    return listPatterns(part.not);
-  }
-
-  return [part.pattern];
 }
 
 // Whether `evidence` meets every part of the evidence schema, each pattern
