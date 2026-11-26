@@ -612,10 +612,12 @@ for (const [name, evidence, mark] of VERDICT_LINE_CASES) {
   });
 }
 
-// The verify schema admits exactly the evidence the script reads a verdict
-// from, with its patterns compiled under each of PATTERN_FLAGS: a supported
-// or unsupported verdict shows as a vote in the mark, and an unopened one,
-// which casts no vote, is held by the patterns alone.
+// The verify schema, with its patterns compiled under each of PATTERN_FLAGS,
+// admits exactly the evidence the script reads a verdict from, and a
+// supported or unsupported verdict shows as a vote in the mark. No output of
+// a run tells an unopened verdict from no verdict, and a test cannot call the
+// script's functions, so an unopened case asserts only that the schema admits
+// it and that its mark shows no vote.
 for (const [name, evidence, verdict] of [
   ...FACT_LINE_CASES,
   ...VERDICT_LINE_CASES.map(([caseName, caseEvidence, , caseVerdict]) => [
@@ -625,10 +627,11 @@ for (const [name, evidence, verdict] of [
   ] as const),
 ]) {
   const verb = verdict === undefined ? 'refuses' : 'admits';
+  const isVote = verdict === 'supported' || verdict === 'unsupported';
+  const voteOutcome = isVote ? 'counts it as a vote' : 'counts it as no vote';
 
-  test(`${ verb } in the verify schema and the script evidence ${ name }`, async () => {
+  test(`${ verb } evidence ${ name } in the verify schema and ${ voteOutcome }`, async () => {
     const run = await runClaim('repository', [{ evidence }]);
-    const isVote = verdict === 'supported' || verdict === 'unsupported';
 
     for (const flags of PATTERN_FLAGS) {
       const isAdmitted = admitsEvidence(readEvidenceSchema(run), evidence, flags);
