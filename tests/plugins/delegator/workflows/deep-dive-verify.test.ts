@@ -469,11 +469,13 @@ test('puts a path that holds a line or paragraph separator on one line', async (
   const run = await runPaths([
     'hooks/\u2028run.sh\u2029',
     'hooks/a \r\n\u2028 b.ts',
+    'hooks/a\u2029b.ts',
     'hooks/a \t b.ts',
   ]);
 
   assert.deepEqual(listClaimLines(run), [
     '- The gate runs. | `hooks/ run.sh:35` | verified 1 of 1',
+    '- The gate runs. | `hooks/a b.ts:35` | verified 1 of 1',
     '- The gate runs. | `hooks/a b.ts:35` | verified 1 of 1',
     '- The gate runs. | `hooks/a \t b.ts:35` | verified 1 of 1',
   ]);
