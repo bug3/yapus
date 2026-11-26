@@ -79,7 +79,7 @@ const VERDICT_LINE_CASES = [
   [
     'with an unsupported line and a line break',
     'The line leaves it out.\nVerdict: unsupported\n',
-    'refuted 0 of 1: The line leaves it out.',
+    'not supported 0 of 1: The line leaves it out.',
   ],
   [
     'with an unopened line after a carriage return and before spaces',
@@ -158,7 +158,7 @@ const THIRTY_CLAIMS_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unkn
 // first has answered: 1 + 12 + 540 + 540 = 1093 launches with none held
 // back. The scope, the 12 gathers and the 540 first votes come to 553; the
 // second votes run in the order of the claims, so the first 9 questions and
-// 40 claims of the tenth get both, 445 claims refuted 0 of 2, which brings
+// 40 claims of the tenth get both, 445 claims not supported 0 of 2, which brings
 // the run to 998. Each of the 95 claims left keeps its first vote, and its
 // second and its third are held back: 190 launches. The two workflow agents
 // that end the run are launched past the 998.
@@ -212,13 +212,13 @@ const WIDE_RUN_RUN_BLOCK = [
   '- Follow-up verified: 0 (0 repository, 0 web)',
   '- Claims: 540 (0 repository, 540 web)',
   '- Verified: 0 (0 repository, 0 web)',
-  '- Refuted: 445 (0 repository, 445 web)',
+  '- Not supported: 445 (0 repository, 445 web)',
   '- Undecided: 95 (0 repository, 95 web)',
   '- Not launched at the limit of 1000 workflow agents: 190',
   '- Claims not sent to a verify agent for their path: 0',
   '- Gather returns: 12, the longest 6823 characters',
   '',
-  '| Source | Assigned | Claims | Verified | Refuted |',
+  '| Source | Assigned | Claims | Verified | Not supported |',
   '| --- | --- | --- | --- | --- |',
   '| other | - | 540 | 0 | 445 |',
 ].join('\n');
@@ -279,7 +279,7 @@ test('cites a range of lines of a repository claim in its verify prompt and bloc
     /\n## Cited source\nx\.js:557-577\n\n/u,
   );
   assert.deepEqual(listClaimLines(run), [
-    '- The gate runs. | `x.js:557-577` | refuted 0 of 1: The source says otherwise.',
+    '- The gate runs. | `x.js:557-577` | not supported 0 of 1: The source says otherwise.',
   ]);
 });
 
@@ -288,7 +288,7 @@ test('cites a repository claim whose last line is its first at that line alone',
 
   assert.match(findCall(run, 'verify-repo:Q1.C1')?.prompt ?? '', /\n## Cited source\nx\.js:557\n\n/u);
   assert.deepEqual(listClaimLines(run), [
-    '- The gate runs. | `x.js:557` | refuted 0 of 1: The source says otherwise.',
+    '- The gate runs. | `x.js:557` | not supported 0 of 1: The source says otherwise.',
   ]);
 });
 
@@ -297,7 +297,7 @@ test('cites a repository claim whose last line comes before its first at its fir
 
   assert.match(findCall(run, 'verify-repo:Q1.C1')?.prompt ?? '', /\n## Cited source\nx\.js:557\n\n/u);
   assert.deepEqual(listClaimLines(run), [
-    '- The gate runs. | `x.js:557` | refuted 0 of 1: The source says otherwise.',
+    '- The gate runs. | `x.js:557` | not supported 0 of 1: The source says otherwise.',
   ]);
 });
 
@@ -372,7 +372,7 @@ test('launches a verify agent for each of 30 claims of one repository question',
 
   assert.equal(listLabels(run, 'verify').length, 30);
   assert.equal(findCall(run, 'verify-repo:Q1.C30')?.options.phase, 'Verify');
-  assert.equal(run.logs[1], 'Q1: 30 claims, 30 verified, 0 refuted, 0 undecided');
+  assert.equal(run.logs[1], 'Q1: 30 claims, 30 verified, 0 not supported, 0 undecided');
 });
 
 test('hands all 30 claims of one repository question to the synthesize agent', async () => {
@@ -387,45 +387,45 @@ test('hands all 30 claims of one repository question to the synthesize agent', a
 test('verifies a repository claim on a supported verdict', async () => {
   const run = await runClaim('repository', [SUPPORTED]);
 
-  assert.equal(run.logs[1], 'Q1: 1 claims, 1 verified, 0 refuted, 0 undecided');
+  assert.equal(run.logs[1], 'Q1: 1 claims, 1 verified, 0 not supported, 0 undecided');
 });
 
-test('refutes a repository claim on an unsupported verdict', async () => {
+test('does not support a repository claim on an unsupported verdict', async () => {
   const run = await runClaim('repository', [UNSUPPORTED]);
 
-  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 1 refuted, 0 undecided');
+  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 1 not supported, 0 undecided');
 });
 
 test('leaves a repository claim undecided on an unopened verdict', async () => {
   const run = await runClaim('repository', [UNOPENED]);
 
-  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 refuted, 1 undecided');
+  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 not supported, 1 undecided');
 });
 
 test('leaves a repository claim undecided when its verify agent returns nothing', async () => {
   const run = await runClaim('repository', [JSON_NULL]);
 
-  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 refuted, 1 undecided');
+  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 not supported, 1 undecided');
 });
 
 test('verifies a web claim on a supported first vote, with no second', async () => {
   const run = await runClaim('web', [SUPPORTED, UNSUPPORTED, UNSUPPORTED]);
 
-  assert.equal(run.logs[1], 'Q1: 1 claims, 1 verified, 0 refuted, 0 undecided');
+  assert.equal(run.logs[1], 'Q1: 1 claims, 1 verified, 0 not supported, 0 undecided');
   assert.deepEqual(listLabels(run, 'verify'), ['verify-web:Q1.C1.v1']);
 });
 
-test('refutes a web claim on two unsupported votes, with no third', async () => {
+test('does not support a web claim on two unsupported votes, with no third', async () => {
   const run = await runClaim('web', [UNSUPPORTED, UNSUPPORTED, SUPPORTED]);
 
-  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 1 refuted, 0 undecided');
+  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 1 not supported, 0 undecided');
   assert.deepEqual(listLabels(run, 'verify'), ['verify-web:Q1.C1.v1', 'verify-web:Q1.C1.v2']);
 });
 
 test('verifies a web claim whose votes differ on a supported third', async () => {
   const run = await runClaim('web', [UNSUPPORTED, SUPPORTED, SUPPORTED]);
 
-  assert.equal(run.logs[1], 'Q1: 1 claims, 1 verified, 0 refuted, 0 undecided');
+  assert.equal(run.logs[1], 'Q1: 1 claims, 1 verified, 0 not supported, 0 undecided');
   assert.deepEqual(listLabels(run, 'verify'), [
     'verify-web-third:Q1.C1.v3',
     'verify-web:Q1.C1.v1',
@@ -433,35 +433,35 @@ test('verifies a web claim whose votes differ on a supported third', async () =>
   ]);
 });
 
-test('refutes a web claim whose votes differ on an unsupported third', async () => {
+test('does not support a web claim whose votes differ on an unsupported third', async () => {
   const run = await runClaim('web', [UNSUPPORTED, SUPPORTED, UNSUPPORTED]);
 
-  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 1 refuted, 0 undecided');
+  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 1 not supported, 0 undecided');
 });
 
 test('leaves a web claim undecided when its votes differ and the third is nothing', async () => {
   const run = await runClaim('web', [UNSUPPORTED, SUPPORTED, JSON_NULL]);
 
-  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 refuted, 1 undecided');
+  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 not supported, 1 undecided');
 });
 
 test('verifies a web claim on one supported vote and a supported third', async () => {
   const run = await runClaim('web', [JSON_NULL, SUPPORTED, SUPPORTED]);
 
-  assert.equal(run.logs[1], 'Q1: 1 claims, 1 verified, 0 refuted, 0 undecided');
+  assert.equal(run.logs[1], 'Q1: 1 claims, 1 verified, 0 not supported, 0 undecided');
 });
 
 test('leaves a web claim undecided on one vote of each kind and an unopened page', async () => {
   const run = await runClaim('web', [UNOPENED, SUPPORTED, UNSUPPORTED]);
 
-  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 refuted, 1 undecided');
+  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 not supported, 1 undecided');
   assert.equal(listLabels(run, 'verify').length, 3);
 });
 
 test('leaves a web claim undecided with no third when no vote was cast', async () => {
   const run = await runClaim('web', [JSON_NULL, UNOPENED, SUPPORTED]);
 
-  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 refuted, 1 undecided');
+  assert.equal(run.logs[1], 'Q1: 1 claims, 0 verified, 0 not supported, 1 undecided');
   assert.deepEqual(listLabels(run, 'verify'), ['verify-web:Q1.C1.v1', 'verify-web:Q1.C1.v2']);
 });
 
@@ -480,11 +480,11 @@ test('marks a repository claim with a supported verdict as verified 1 of 1', asy
   assert.deepEqual(listClaimLines(run), [`${ REPOSITORY_CLAIM_LINE } | verified 1 of 1`]);
 });
 
-test('marks a repository claim with an unsupported verdict as refuted 0 of 1', async () => {
+test('marks a repository claim with an unsupported verdict as not supported 0 of 1', async () => {
   const run = await runClaim('repository', [UNSUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [
-    `${ REPOSITORY_CLAIM_LINE } | refuted 0 of 1: The source says otherwise.`,
+    `${ REPOSITORY_CLAIM_LINE } | not supported 0 of 1: The source says otherwise.`,
   ]);
 });
 
@@ -525,11 +525,11 @@ test('marks a web claim with a supported first vote as verified 1 of 1', async (
   assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | verified 1 of 1`]);
 });
 
-test('marks a web claim with two unsupported votes as refuted 0 of 2', async () => {
+test('marks a web claim with two unsupported votes as not supported 0 of 2', async () => {
   const run = await runClaim('web', [UNSUPPORTED, UNSUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [
-    `${ WEB_CLAIM_LINE } | refuted 0 of 2: The source says otherwise.`,
+    `${ WEB_CLAIM_LINE } | not supported 0 of 2: The source says otherwise.`,
   ]);
 });
 
@@ -539,11 +539,11 @@ test('marks a web claim with a supported third vote as verified 2 of 3', async (
   assert.deepEqual(listClaimLines(run), [`${ WEB_CLAIM_LINE } | verified 2 of 3`]);
 });
 
-test('marks a web claim with an unsupported third vote as refuted 1 of 3', async () => {
+test('marks a web claim with an unsupported third vote as not supported 1 of 3', async () => {
   const run = await runClaim('web', [UNSUPPORTED, SUPPORTED, UNSUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [
-    `${ WEB_CLAIM_LINE } | refuted 1 of 3: The source says otherwise.`,
+    `${ WEB_CLAIM_LINE } | not supported 1 of 3: The source says otherwise.`,
   ]);
 });
 
@@ -578,11 +578,11 @@ test('marks a web claim with no vote cast as undecided 0 of 0, with no third', a
   assert.deepEqual(listLabels(run, 'verify'), ['verify-web:Q1.C1.v1', 'verify-web:Q1.C1.v2']);
 });
 
-test('gives a refuted claim the evidence of its first vote against it, on one line', async () => {
+test('prints the first evidence against a claim not supported on one line', async () => {
   const run = await runClaim('web', [UNSUPPORTED_FIRST, SUPPORTED, UNSUPPORTED]);
 
   assert.deepEqual(listClaimLines(run), [
-    `${ WEB_CLAIM_LINE } | refuted 1 of 3: The page names no stop.`,
+    `${ WEB_CLAIM_LINE } | not supported 1 of 3: The page names no stop.`,
   ]);
 });
 
@@ -793,7 +793,7 @@ async function runPaths(paths: readonly string[]): Promise<WorkflowRun> {
 
 // The run of one repository question whose gather agent returns one claim
 // that cites x.js from `line` through `endLine`, and whose verify agent
-// refutes it.
+// does not support it.
 async function runLines(line: number, endLine: number): Promise<WorkflowRun> {
   const claim = { claim: 'The gate runs.', path: 'x.js', line, endLine, excerpt: 'run();' };
   const answers = new Map<string, unknown>([

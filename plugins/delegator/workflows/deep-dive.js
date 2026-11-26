@@ -554,7 +554,7 @@ const WEB_QUORUM = 2;
 
 // What the votes make of a claim.
 const VERIFIED = 'verified';
-const NOT_SUPPORTED = 'refuted';
+const NOT_SUPPORTED = 'not supported';
 const UNDECIDED = 'undecided';
 
 // What the synthesize agent answers.
@@ -1051,7 +1051,7 @@ async function researchQuestion(task, question, gatherStageId) {
   const undecided = countOutcome(claims, UNDECIDED);
 
   log(
-    `${ question.id }: ${ claims.length } claims, ${ verified } verified, ${ notSupported } refuted, ${ undecided } undecided`,
+    `${ question.id }: ${ claims.length } claims, ${ verified } verified, ${ notSupported } not supported, ${ undecided } undecided`,
   );
 
   return {
@@ -1370,7 +1370,7 @@ function getStats(questionCounts, droppedQuestions, researched, followedUp) {
 }
 
 // Per row of SOURCES, the web questions that named it and the web claims
-// whose URL meets it, with their verified and refuted ones; a row with
+// whose URL meets it, with their verified and not supported ones; a row with
 // neither is left out. `other` counts the web claims whose URL meets no row.
 function countSources(researched) {
   const webQuestions = researched.filter(({ lane }) => lane === WEB_LANE);
@@ -1487,7 +1487,7 @@ function formatContent(researched, unmeasuredLines, stats) {
     ...researched.flatMap(listVerifiedLines),
     '',
     '## Blocks to copy',
-    formatClaimBlock('Refuted', selectClaims(claims, NOT_SUPPORTED).map(formatNotSupportedLine)),
+    formatClaimBlock('Not supported', selectClaims(claims, NOT_SUPPORTED).map(formatNotSupportedLine)),
     '',
     formatClaimBlock('Unverified', selectClaims(claims, UNDECIDED).map(formatClaimLine)),
     '',
@@ -1594,13 +1594,13 @@ function formatRunBlock(stats) {
     formatCountLine('Follow-up verified', stats.followUps.verified),
     formatCountLine('Claims', stats.claims),
     formatCountLine('Verified', stats.verified),
-    formatCountLine('Refuted', stats.refuted),
+    formatCountLine('Not supported', stats.refuted),
     formatCountLine('Undecided', stats.undecided),
     `- Not launched at the limit of ${ RUN_AGENT_LIMIT } workflow agents: ${ stats.notLaunched }`,
     `- Claims not sent to a verify agent for their path: ${ stats.pathsRefused }`,
     `- Gather returns: ${ count }, the longest ${ longest } characters`,
     '',
-    '| Source | Assigned | Claims | Verified | Refuted |',
+    '| Source | Assigned | Claims | Verified | Not supported |',
     '| --- | --- | --- | --- | --- |',
     ...catalog.map(({ id, assigned, claims, verified, refuted: notSupported }) => (
       `| ${ id } | ${ assigned } | ${ claims } | ${ verified } | ${ notSupported } |`

@@ -48,11 +48,11 @@ const COMPLETENESS_PROMPT = [
 
 // The digest is FNV-1a of 32 bits over the UTF-16 units of CONTENT below,
 // worked out by a program apart from the script.
-const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_a9bdb65a.md';
+const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_10a522e6.md';
 const BLOCKS = [
-  '## Refuted',
+  '## Not supported',
   '',
-  '- The return gate keeps a count of send-backs for each session. | `hooks/claude/gates/return/main.ts:12` | refuted 0 of 1: main.ts:12 reads the payload; the file holds no count of send-backs.',
+  '- The return gate keeps a count of send-backs for each session. | `hooks/claude/gates/return/main.ts:12` | not supported 0 of 1: main.ts:12 reads the payload; the file holds no count of send-backs.',
   '',
   '## Unverified',
   '',
@@ -84,13 +84,13 @@ const BLOCKS = [
   '- Follow-up verified: 0 (0 repository, 0 web)',
   '- Claims: 5 (3 repository, 2 web)',
   '- Verified: 3 (1 repository, 2 web)',
-  '- Refuted: 1 (1 repository, 0 web)',
+  '- Not supported: 1 (1 repository, 0 web)',
   '- Undecided: 1 (1 repository, 0 web)',
   '- Not launched at the limit of 1000 workflow agents: 0',
   '- Claims not sent to a verify agent for their path: 0',
   '- Gather returns: 3, the longest 475 characters',
   '',
-  '| Source | Assigned | Claims | Verified | Refuted |',
+  '| Source | Assigned | Claims | Verified | Not supported |',
   '| --- | --- | --- | --- | --- |',
   '| github | 1 | 0 | 0 | 0 |',
   '| hn | 1 | 0 | 0 | 0 |',
@@ -102,9 +102,9 @@ const BLOCKS = [
 // longer of 463 characters.
 const REPOSITORY_LANE_ARGS = { ...FIXED_ARGS, lanes: ['repository'] } as const;
 const REPOSITORY_LANE_BLOCKS = [
-  '## Refuted',
+  '## Not supported',
   '',
-  '- The return gate keeps a count of send-backs for each session. | `hooks/claude/gates/return/main.ts:12` | refuted 0 of 1: main.ts:12 reads the payload; the file holds no count of send-backs.',
+  '- The return gate keeps a count of send-backs for each session. | `hooks/claude/gates/return/main.ts:12` | not supported 0 of 1: main.ts:12 reads the payload; the file holds no count of send-backs.',
   '',
   '## Unverified',
   '',
@@ -137,13 +137,13 @@ const REPOSITORY_LANE_BLOCKS = [
   '- Follow-up verified: 0 (0 repository, 0 web)',
   '- Claims: 3 (3 repository, 0 web)',
   '- Verified: 1 (1 repository, 0 web)',
-  '- Refuted: 1 (1 repository, 0 web)',
+  '- Not supported: 1 (1 repository, 0 web)',
   '- Undecided: 1 (1 repository, 0 web)',
   '- Not launched at the limit of 1000 workflow agents: 0',
   '- Claims not sent to a verify agent for their path: 0',
   '- Gather returns: 2, the longest 463 characters',
   '',
-  '| Source | Assigned | Claims | Verified | Refuted |',
+  '| Source | Assigned | Claims | Verified | Not supported |',
   '| --- | --- | --- | --- | --- |',
   '| other | - | 0 | 0 | 0 |',
 ].join('\n');
@@ -170,7 +170,7 @@ const SYNTHESIZE_PROMPT = [
   'Add a retry limit to the return gate',
   '',
   '## File',
-  ".yapus/plans/2026-11/return-retry/research_a9bdb65a.md, under the project's root",
+  ".yapus/plans/2026-11/return-retry/research_10a522e6.md, under the project's root",
   '',
   CONTENT,
   '',
@@ -204,10 +204,10 @@ const FOLLOW_UP_VERIFIED_CLAIMS = [
   '- The changelog names no limit on the blocks of a stop. | <https://code.claude.com/docs/en/changelog> | verified 1 of 1',
 ].join('\n');
 const FOLLOW_UP_BLOCKS = [
-  '## Refuted',
+  '## Not supported',
   '',
-  '- The return gate keeps a count of send-backs for each session. | `hooks/claude/gates/return/main.ts:12` | refuted 0 of 1: main.ts:12 reads the payload; the file holds no count of send-backs.',
-  '- The verdict tests count the send-backs of a session. | `tests/hooks/claude/gates/return/get-return-verdict.test.ts:40` | refuted 0 of 1: get-return-verdict.test.ts:40 tests a return under the limit.',
+  '- The return gate keeps a count of send-backs for each session. | `hooks/claude/gates/return/main.ts:12` | not supported 0 of 1: main.ts:12 reads the payload; the file holds no count of send-backs.',
+  '- The verdict tests count the send-backs of a session. | `tests/hooks/claude/gates/return/get-return-verdict.test.ts:40` | not supported 0 of 1: get-return-verdict.test.ts:40 tests a return under the limit.',
   '',
   '## Unverified',
   '',
@@ -239,13 +239,13 @@ const FOLLOW_UP_BLOCKS = [
   '- Follow-up verified: 2 (1 repository, 1 web)',
   '- Claims: 9 (6 repository, 3 web)',
   '- Verified: 5 (2 repository, 3 web)',
-  '- Refuted: 2 (2 repository, 0 web)',
+  '- Not supported: 2 (2 repository, 0 web)',
   '- Undecided: 2 (2 repository, 0 web)',
   '- Not launched at the limit of 1000 workflow agents: 0',
   '- Claims not sent to a verify agent for their path: 0',
   '- Gather returns: 5, the longest 672 characters',
   '',
-  '| Source | Assigned | Claims | Verified | Refuted |',
+  '| Source | Assigned | Claims | Verified | Not supported |',
   '| --- | --- | --- | --- | --- |',
   '| github | 2 | 0 | 0 | 0 |',
   '| hn | 2 | 0 | 0 | 0 |',
@@ -405,20 +405,20 @@ const SMALL_RUN_RUN_BLOCK = [
   '- Follow-up verified: 0 (0 repository, 0 web)',
   '- Claims: 1 (1 repository, 0 web)',
   '- Verified: 1 (1 repository, 0 web)',
-  '- Refuted: 0 (0 repository, 0 web)',
+  '- Not supported: 0 (0 repository, 0 web)',
   '- Undecided: 0 (0 repository, 0 web)',
   '- Not launched at the limit of 1000 workflow agents: 0',
   '- Claims not sent to a verify agent for their path: 0',
   '- Gather returns: 1, the longest 170 characters',
   '',
-  '| Source | Assigned | Claims | Verified | Refuted |',
+  '| Source | Assigned | Claims | Verified | Not supported |',
   '| --- | --- | --- | --- | --- |',
   '| other | - | 0 | 0 | 0 |',
 ].join('\n');
 // The answers of the small run whose completeness agent names three
 // unanswered questions: F1 closes the first and its claim is verified, F2
-// closes the second and its claim is refuted, and no follow-up question closes
-// the third.
+// closes the second and its claim is not supported, and no follow-up question
+// closes the third.
 const LINKED_RUN_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['completeness', {
     unreadAreas: [],
@@ -437,18 +437,18 @@ const LINKED_RUN_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown
   ['follow-up-repo:F2', { claims: [SMALL_RUN_CLAIM], notSearched: [] }],
   ['verify-repo:F2.C1', { evidence: 'The line says otherwise.\nVerdict: unsupported' }],
 ]);
-const SOURCES_HEADER = '| Source | Assigned | Claims | Verified | Refuted |';
+const SOURCES_HEADER = '| Source | Assigned | Claims | Verified | Not supported |';
 
 // The answers, by label, of a run on both lanes whose web questions name
 // sources and whose web claims cite catalog hosts and lookalikes of them, in
 // both rounds. Q1 names an unknown id and six ids in all, of which the first
 // four the catalog holds are kept; Q2 is a repository question that names a
-// source. Q1.C1 meets github in capitals and is verified; Q1.C2 is refuted
-// and Q1.C3 verified, both on hosts that only look like github; Q1.C4 holds
-// github before an `@` and Q1.C5 a github host after one, Q1.C6 holds github
-// and a `:` before an `@`, and Q1.C7 meets github with a port, and none of the
-// four gets a vote. F1 names github and crossref, and its one claim meets
-// rfc-editor, which no question named, and is refuted.
+// source. Q1.C1 meets github in capitals and is verified; Q1.C2 is not
+// supported and Q1.C3 verified, both on hosts that only look like github;
+// Q1.C4 holds github before an `@` and Q1.C5 a github host after one, Q1.C6
+// holds github and a `:` before an `@`, and Q1.C7 meets github with a port,
+// and none of the four gets a vote. F1 names github and crossref, and its one
+// claim meets rfc-editor, which no question named, and is not supported.
 const COUNTED_SOURCES_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['scope', {
     questions: [
@@ -860,8 +860,8 @@ test('logs the follow-up questions by lane and the claims of each', async () => 
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFollowUpAnswer);
 
   assert.deepEqual(run.logs.filter((line) => /^(?:follow-up|F\d)/u.test(line)).toSorted(), [
-    'F1: 3 claims, 1 verified, 1 refuted, 1 undecided',
-    'F2: 1 claims, 1 verified, 0 refuted, 0 undecided',
+    'F1: 3 claims, 1 verified, 1 not supported, 1 undecided',
+    'F2: 1 claims, 1 verified, 0 not supported, 0 undecided',
     'follow-up: 2 questions (1 repository, 1 web)',
   ]);
 });
@@ -929,10 +929,10 @@ test('writes a dropped question before the line of an absent completeness agent'
   );
 });
 
-test('writes None under Refuted for a run with no refuted claim', async () => {
+test('writes None under Not supported for a run with no claim not supported', async () => {
   const run = await runSmall();
 
-  assert.match(findCall(run, 'synthesize')?.prompt ?? '', /\n## Refuted\n\n- None\.\n\n## Unverified\n/u);
+  assert.match(findCall(run, 'synthesize')?.prompt ?? '', /\n## Not supported\n\n- None\.\n\n## Unverified\n/u);
 });
 
 test('writes None under Unverified for a run with no undecided claim', async () => {
@@ -1154,15 +1154,15 @@ test('names another file with no gather answer when the Unmeasured block differs
   assert.match(readFileLine(changedRun), FILE_LINE_FORM);
 });
 
-// The digest of the content with the unread area `area 21` is 0x0e0cfd79,
+// The digest of the content with the unread area `area 48` is 0x0a6a93d4,
 // worked out by a program apart from the script.
 test('writes a digest that begins with a zero in 8 characters', async () => {
-  const gaps = { unreadAreas: ['area 21'], unansweredQuestions: [], followUps: [] };
+  const gaps = { unreadAreas: ['area 48'], unansweredQuestions: [], followUps: [] };
 
   const run = await runSmall(new Map([['completeness', gaps]]));
 
   assert.partialDeepStrictEqual(run.returned, {
-    researchPath: '.yapus/plans/2026-11/return-retry/research_0e0cfd79.md',
+    researchPath: '.yapus/plans/2026-11/return-retry/research_0a6a93d4.md',
   });
 });
 
@@ -1171,7 +1171,10 @@ test('writes a digest that begins with a zero in 8 characters', async () => {
 function readBlocks(run: WorkflowRun): string {
   const prompt = findCall(run, 'synthesize')?.prompt ?? '';
 
-  return prompt.slice(prompt.indexOf('\n## Refuted\n') + 1, prompt.indexOf('\n\n## Rules\n'));
+  return prompt.slice(
+    prompt.indexOf('\n## Not supported\n') + 1,
+    prompt.indexOf('\n\n## Rules\n'),
+  );
 }
 
 // The lines of the dropped questions in the prompt of the synthesize agent.

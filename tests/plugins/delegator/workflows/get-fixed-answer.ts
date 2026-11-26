@@ -84,7 +84,7 @@ export const MIXED_PATHS = [
 
 // What each workflow agent of the run on FIXED_ARGS returns, by its label.
 // The web question names one source twice; the gather agent of the third
-// question has no answer; the claims come out as one verified, one refuted
+// question has no answer; the claims come out as one verified, one not supported
 // and one undecided for the repository, and for the web one verified by its
 // first vote and one by the third; the completeness agent writes no
 // follow-up question; the file is written.
@@ -191,7 +191,7 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
 // completeness agent writes a repository and a web follow-up question, by
 // label, where they differ from FIXED_ANSWERS. The web one names the sources
 // of the scope's web question. The claims of the repository one come out as
-// one verified, one refuted and one undecided, and the claim of the web one
+// one verified, one not supported and one undecided, and the claim of the web one
 // is verified by its first vote.
 const FOLLOW_UP_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['completeness', {
