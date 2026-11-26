@@ -378,7 +378,7 @@ const SMALL_RUN_CLAIM = {
 const SMALL_RUN_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['scope', { questions: [{ lane: 'repository', question: 'What blocks a return?' }] }],
   ['gather-repo:Q1', { claims: [SMALL_RUN_CLAIM], notSearched: [] }],
-  ['verify-repo:Q1.C1', { verdict: 'supported', evidence: 'The line says so.' }],
+  ['verify-repo:Q1.C1', { evidence: 'The line says so.\nVerdict: supported' }],
   ['completeness', { unreadAreas: [], unansweredQuestions: [], followUps: [] }],
   ['synthesize', { outcome: 'written', detail: '' }],
 ]);
@@ -433,9 +433,9 @@ const LINKED_RUN_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown
     ],
   }],
   ['follow-up-repo:F1', { claims: [SMALL_RUN_CLAIM], notSearched: [] }],
-  ['verify-repo:F1.C1', { verdict: 'supported', evidence: 'The line says so.' }],
+  ['verify-repo:F1.C1', { evidence: 'The line says so.\nVerdict: supported' }],
   ['follow-up-repo:F2', { claims: [SMALL_RUN_CLAIM], notSearched: [] }],
-  ['verify-repo:F2.C1', { verdict: 'unsupported', evidence: 'The line says otherwise.' }],
+  ['verify-repo:F2.C1', { evidence: 'The line says otherwise.\nVerdict: unsupported' }],
 ]);
 const SOURCES_HEADER = '| Source | Assigned | Claims | Verified | Refuted |';
 
@@ -473,11 +473,11 @@ const COUNTED_SOURCES_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, un
     notChecked: [],
   }],
   ['gather-repo:Q2', { claims: [SMALL_RUN_CLAIM], notSearched: [] }],
-  ['verify-web:Q1.C1.v1', { verdict: 'supported', evidence: 'The page says limit.' }],
-  ['verify-web:Q1.C2.v1', { verdict: 'unsupported', evidence: 'The page says none.' }],
-  ['verify-web:Q1.C2.v2', { verdict: 'unsupported', evidence: 'The page says none.' }],
-  ['verify-web:Q1.C3.v1', { verdict: 'supported', evidence: 'The page says one.' }],
-  ['verify-repo:Q2.C1', { verdict: 'supported', evidence: 'The line says so.' }],
+  ['verify-web:Q1.C1.v1', { evidence: 'The page says limit.\nVerdict: supported' }],
+  ['verify-web:Q1.C2.v1', { evidence: 'The page says none.\nVerdict: unsupported' }],
+  ['verify-web:Q1.C2.v2', { evidence: 'The page says none.\nVerdict: unsupported' }],
+  ['verify-web:Q1.C3.v1', { evidence: 'The page says one.\nVerdict: supported' }],
+  ['verify-repo:Q2.C1', { evidence: 'The line says so.\nVerdict: supported' }],
   ['completeness', {
     unreadAreas: [],
     unansweredQuestions: [],
@@ -495,8 +495,8 @@ const COUNTED_SOURCES_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, un
     ],
     notChecked: [],
   }],
-  ['verify-web:F1.C1.v1', { verdict: 'unsupported', evidence: 'The page names none.' }],
-  ['verify-web:F1.C1.v2', { verdict: 'unsupported', evidence: 'The page names none.' }],
+  ['verify-web:F1.C1.v1', { evidence: 'The page names none.\nVerdict: unsupported' }],
+  ['verify-web:F1.C1.v2', { evidence: 'The page names none.\nVerdict: unsupported' }],
   ['synthesize', { outcome: 'written', detail: '' }],
 ]);
 const FILE_LINE = /\n## File\n(?<fileLine>[^\n]+)\n/u;
@@ -1115,7 +1115,7 @@ test('names another file when the source of one claim differs', async () => {
 });
 
 test('names another file when the verdict on one claim differs', async () => {
-  const verdict = { verdict: 'unopened', evidence: 'The line says so.' };
+  const verdict = { evidence: 'The line says so.\nVerdict: unopened' };
 
   const run = await runSmall();
   const changedRun = await runSmall(new Map([['verify-repo:Q1.C1', verdict]]));
