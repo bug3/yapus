@@ -1308,9 +1308,9 @@ function getOutcome(answers, quorum) {
   return countVerdict(answers, UNSUPPORTED) >= quorum ? NOT_SUPPORTED : UNDECIDED;
 }
 
-// A vote is the answer of a verify agent that supports its claim or does not.
-// A verify agent that opened no source, returned nothing or was not launched
-// casts none.
+// A vote is the answer of a verify agent whose verdict line supports its claim
+// or does not. A verify agent that opened no source, ended its evidence with
+// no verdict line, returned nothing or was not launched casts none.
 function isVote(answer) {
   const verdict = readVerdict(answer)?.verdict;
 
