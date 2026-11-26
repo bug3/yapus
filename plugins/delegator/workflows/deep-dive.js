@@ -552,15 +552,17 @@ const SHOWN_LABEL = 'Shown:';
 const NOT_SHOWN_LABEL = 'Not shown:';
 
 // The evidence the verify schema admits matches the first two patterns and
-// not the third, so the runtime refuses an answer that readVerdict would read
-// as no vote. VERDICT_PATTERN: the last line that is not blank is
+// not both of the last two, so the runtime refuses an answer that readVerdict
+// would read as no vote. VERDICT_PATTERN: the last line that is not blank is
 // VERDICT_LINE_START and a verdict. FACT_LINE_PATTERN: a line starts with
-// SHOWN_LABEL or NOT_SHOWN_LABEL. NOT_SHOWN_SUPPORTED_PATTERN: a line starts
-// with NOT_SHOWN_LABEL and the verdict is SUPPORTED. They only validate;
-// readVerdict reads and cuts the verdict line.
+// SHOWN_LABEL or NOT_SHOWN_LABEL. NOT_SHOWN_LINE_PATTERN: a line starts with
+// NOT_SHOWN_LABEL. SUPPORTED_LINE_PATTERN: the last line that is not blank is
+// VERDICT_LINE_START and SUPPORTED. They only validate; readVerdict reads and
+// cuts the verdict line.
 const VERDICT_PATTERN = `(^|\\n)\\s*${ VERDICT_LINE_START }(${ VERDICTS.join('|') })\\s*$`;
 const FACT_LINE_PATTERN = `(^|\\n)\\s*(${ SHOWN_LABEL }|${ NOT_SHOWN_LABEL })`;
-const NOT_SHOWN_SUPPORTED_PATTERN = `(^|\\n)\\s*${ NOT_SHOWN_LABEL }[\\s\\S]*(^|\\n)\\s*${ VERDICT_LINE_START }${ SUPPORTED }\\s*$`;
+const NOT_SHOWN_LINE_PATTERN = `(^|\\n)\\s*${ NOT_SHOWN_LABEL }`;
+const SUPPORTED_LINE_PATTERN = `(^|\\n)\\s*${ VERDICT_LINE_START }${ SUPPORTED }\\s*$`;
 
 // The votes of a kind that decide a claim of each lane: a web claim is
 // verified on its first vote when that supports it, and otherwise decided
@@ -586,7 +588,7 @@ const VERDICT_SCHEMA = {
       allOf: [
         { pattern: VERDICT_PATTERN },
         { pattern: FACT_LINE_PATTERN },
-        { not: { pattern: NOT_SHOWN_SUPPORTED_PATTERN } },
+        { not: { allOf: [{ pattern: NOT_SHOWN_LINE_PATTERN }, { pattern: SUPPORTED_LINE_PATTERN }] } },
       ],
     },
   },

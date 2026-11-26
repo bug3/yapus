@@ -52,6 +52,14 @@ const WEB_VERIFY_PROMPT = [
   '- Return through the structured output alone: it is the one form of return here, in place of any other your rules name.',
   '- Judge this claim only; change no file.',
 ].join('\n');
+
+// A part of the evidence schema: a pattern, a `not` of a part or an `allOf`
+// of parts.
+type SchemaPart =
+  | { readonly pattern: string }
+  | { readonly not: SchemaPart }
+  | { readonly allOf: readonly SchemaPart[] };
+
 const VERDICT_SCHEMA = {
   type: 'object',
   properties: {
@@ -60,7 +68,14 @@ const VERDICT_SCHEMA = {
       allOf: [
         { pattern: '(^|\\n)\\s*Verdict: (supported|unsupported|unopened)\\s*$' },
         { pattern: '(^|\\n)\\s*(Shown:|Not shown:)' },
-        { not: { pattern: '(^|\\n)\\s*Not shown:[\\s\\S]*(^|\\n)\\s*Verdict: supported\\s*$' } },
+        {
+          not: {
+            allOf: [
+              { pattern: '(^|\\n)\\s*Not shown:' },
+              { pattern: '(^|\\n)\\s*Verdict: supported\\s*$' },
+            ],
+          },
+        },
       ],
     },
   },
@@ -898,16 +913,28 @@ function readEvidenceSchema(
 }
 
 // Whether `evidence` meets every part of the evidence schema, each pattern
-// compiled with `flags`: it matches a pattern and does not match a `not` one.
+// compiled with `flags`.
 function admitsEvidence(
   parts: typeof VERDICT_SCHEMA.properties.evidence.allOf,
   evidence: string,
   flags: string,
 ): boolean {
-  return parts.every((part) =>
-    'not' in part
-      ? !new RegExp(part.not.pattern, flags).test(evidence)
-      : new RegExp(part.pattern, flags).test(evidence));
+  return parts.every((part) => meetsPart(part, evidence, flags));
+}
+
+// Whether `evidence` meets `part` of the evidence schema, each pattern
+// compiled with `flags`: it matches a pattern, does not meet a `not` part and
+// meets every part of an `allOf`.
+function meetsPart(part: SchemaPart, evidence: string, flags: string): boolean {
+  if ('allOf' in part) {
+    return part.allOf.every((each) => meetsPart(each, evidence, flags));
+  }
+
+  if ('not' in part) {
+    return !meetsPart(part.not, evidence, flags);
+  }
+
+  return new RegExp(part.pattern, flags).test(evidence);
 }
 
 // The block of the research file under the heading `title`, as the prompt
