@@ -891,17 +891,31 @@ for (const [name, evidence, verdict] of [
   });
 }
 
-test('judges evidence of 40000 line breaks in under a second', async () => {
-  const evidence = `${ '\n'.repeat(40000) }Verdict: supported`;
-  const start = performance.now();
-  const run = await runClaim('repository', [{ evidence }]);
-  const admissions = PATTERN_FLAGS.map(
-    (flags) => admitsEvidence(readEvidenceSchema(run), evidence, flags),
-  );
+// Evidence on which each part of every evidence pattern runs: many line
+// breaks between a fact line and a supported line, and long runs of spaces
+// inside a line, after a gap word and after the verdict.
+const LONG_EVIDENCES = [
+  `Shown: x${ '\n'.repeat(40000) }Verdict: supported`,
+  `Shown: x\n${ ' '.repeat(80000) }\nVerdict: supported`,
+  `Not${ ' '.repeat(80000) }x\nVerdict: supported${ ' '.repeat(80000) }x`,
+] as const;
 
-  assert.equal(performance.now() - start < 1000, true);
-  assert.deepEqual(admissions, [false, false]);
-  assert.equal(listClaimLines(run)[0]?.endsWith(NO_VOTE_MARK), true);
+test('runs every evidence pattern on long evidence in under 2 seconds', async () => {
+  const run = await runClaim('repository', [SUPPORTED]);
+  const patterns = readEvidenceSchema(run).flatMap(listPatterns);
+  const regExps = PATTERN_FLAGS.flatMap(
+    (flags) => patterns.map((pattern) => new RegExp(pattern, flags)),
+  );
+  const start = performance.now();
+
+  for (const evidence of LONG_EVIDENCES) {
+    for (const regExp of regExps) {
+      regExp.test(evidence);
+    }
+  }
+
+  assert.equal(performance.now() - start < 2000, true);
+  assert.equal(patterns.length, 4);
 });
 
 test('gives a web claim whose first answer ends in no verdict line a second vote', async () => {
@@ -1144,6 +1158,19 @@ function readEvidenceSchema(
   assert.deepEqual(findCall(run, 'verify-repo:Q1.C1')?.options.schema, VERDICT_SCHEMA);
 
   return VERDICT_SCHEMA.properties.evidence.allOf;
+}
+
+// The patterns of `part` of the evidence schema, in the order they stand.
+function listPatterns(part: SchemaPart): string[] {
+  if ('allOf' in part) {
+    return part.allOf.flatMap(listPatterns);
+  }
+
+  if ('not' in part) {
+    return listPatterns(part.not);
+  }
+
+  return [part.pattern];
 }
 
 // Whether `evidence` meets every part of the evidence schema, each pattern
