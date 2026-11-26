@@ -420,10 +420,10 @@ test('logs the claims of each question with their outcomes', async () => {
   const run = await runWorkflow(SCRIPT_PATH, FIXED_ARGS, getFixedAnswer);
 
   assert.deepEqual(run.logs.filter((line) => line.startsWith('Q')).toSorted(), [
-    'Q1: 2 claims, 1 verified, 1 refuted, 0 undecided',
-    'Q2: 1 claims, 0 verified, 0 refuted, 1 undecided',
-    'Q3: 0 claims, 0 verified, 0 refuted, 0 undecided',
-    'Q4: 2 claims, 2 verified, 0 refuted, 0 undecided',
+    'Q1: 2 claims, 1 verified, 1 not supported, 0 undecided',
+    'Q2: 1 claims, 0 verified, 0 not supported, 1 undecided',
+    'Q3: 0 claims, 0 verified, 0 not supported, 0 undecided',
+    'Q4: 2 claims, 2 verified, 0 not supported, 0 undecided',
   ]);
 });
 

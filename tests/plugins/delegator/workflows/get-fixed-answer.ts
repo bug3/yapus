@@ -84,7 +84,7 @@ export const MIXED_PATHS = [
 
 // What each workflow agent of the run on FIXED_ARGS returns, by its label.
 // The web question names one source twice; the gather agent of the third
-// question has no answer; the claims come out as one verified, one refuted
+// question has no answer; the claims come out as one verified, one not supported
 // and one undecided for the repository, and for the web one verified by its
 // first vote and one by the third; the completeness agent writes no
 // follow-up question; the file is written.
@@ -156,32 +156,28 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
     notChecked: ['The changelog: no entry on a repeated block was looked for'],
   }],
   ['verify-repo:Q1.C1', {
-    verdict: 'supported',
-    evidence: 'get-return-verdict.ts:31 holds the excerpt, and :50 sends back once.',
+    evidence:
+      'get-return-verdict.ts:31 holds the excerpt, and :50 sends back once.\nVerdict: supported',
   }],
   ['verify-repo:Q1.C2', {
-    verdict: 'unsupported',
-    evidence: 'main.ts:12 reads the payload; the file holds no count of send-backs.',
+    evidence:
+      'main.ts:12 reads the payload; the file holds no count of send-backs.\nVerdict: unsupported',
   }],
   ['verify-repo:Q2.C1', {
-    verdict: 'unopened',
-    evidence: 'hooks.json has 126 lines.',
+    evidence: 'hooks.json has 126 lines.\nVerdict: unopened',
   }],
   ['verify-web:Q4.C1.v1', {
-    verdict: 'supported',
-    evidence: 'The page says: Exit code 2 blocks the stop and shows stderr to the subagent',
+    evidence:
+      'The page says: Exit code 2 blocks the stop and shows stderr to the subagent\nVerdict: supported',
   }],
   ['verify-web:Q4.C2.v1', {
-    verdict: 'unsupported',
-    evidence: 'The page names no second block.',
+    evidence: 'The page names no second block.\nVerdict: unsupported',
   }],
   ['verify-web:Q4.C2.v2', {
-    verdict: 'supported',
-    evidence: 'The page holds the quote under Hooks.',
+    evidence: 'The page holds the quote under Hooks.\nVerdict: supported',
   }],
   ['verify-web-third:Q4.C2.v3', {
-    verdict: 'supported',
-    evidence: 'The quote stands in the last paragraph of the page.',
+    evidence: 'The quote stands in the last paragraph of the page.\nVerdict: supported',
   }],
   ['completeness', {
     unreadAreas: ['tests/hooks/claude/gates/return'],
@@ -195,7 +191,7 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
 // completeness agent writes a repository and a web follow-up question, by
 // label, where they differ from FIXED_ANSWERS. The web one names the sources
 // of the scope's web question. The claims of the repository one come out as
-// one verified, one refuted and one undecided, and the claim of the web one
+// one verified, one not supported and one undecided, and the claim of the web one
 // is verified by its first vote.
 const FOLLOW_UP_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['completeness', {
@@ -251,16 +247,14 @@ const FOLLOW_UP_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>
     notChecked: [],
   }],
   ['verify-repo:F1.C1', {
-    verdict: 'supported',
-    evidence: 'get-return-verdict.test.ts:20 names the test.',
+    evidence: 'get-return-verdict.test.ts:20 names the test.\nVerdict: supported',
   }],
   ['verify-repo:F1.C2', {
-    verdict: 'unsupported',
-    evidence: 'get-return-verdict.test.ts:40 tests a return under the limit.',
+    evidence:
+      'get-return-verdict.test.ts:40 tests a return under the limit.\nVerdict: unsupported',
   }],
   ['verify-web:F2.C1.v1', {
-    verdict: 'supported',
-    evidence: 'The page says: SubagentStop hooks can block a stop',
+    evidence: 'The page says: SubagentStop hooks can block a stop\nVerdict: supported',
   }],
 ]);
 
