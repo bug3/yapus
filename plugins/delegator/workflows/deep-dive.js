@@ -1285,12 +1285,15 @@ function formatWebVerifyPrompt({ claim, url, quote }) {
 
 // What the answers of its verify agents make of a claim: the outcome, the
 // mark that prints the outcome with the votes for the claim among the votes
-// cast, and the evidence of the first vote against it.
+// cast, and the evidence of the first vote against it whose evidence is not
+// blank.
 function judgeClaim(answers, quorum) {
   const outcome = getOutcome(answers, quorum);
   const supportedCount = countVerdict(answers, SUPPORTED);
   const voteCount = answers.filter(isVote).length;
-  const against = answers.map(readVerdict).find((read) => read?.verdict === UNSUPPORTED);
+  const against = answers
+    .map(readVerdict)
+    .find((read) => read?.verdict === UNSUPPORTED && read.evidence.trim() !== '');
 
   return {
     outcome,
@@ -1516,7 +1519,9 @@ function formatClaimLine({ text, source, mark }) {
 }
 
 function formatNotSupportedLine(claim) {
-  return `${ formatClaimLine(claim) }: ${ claim.evidence }`;
+  const claimLine = formatClaimLine(claim);
+
+  return claim.evidence === undefined ? claimLine : `${ claimLine }: ${ claim.evidence }`;
 }
 
 // A block of the research file: its heading, then its lines under an empty

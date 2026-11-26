@@ -68,6 +68,7 @@ const SUPPORTED = { evidence: 'The source says so.\nVerdict: supported' } as con
 const UNSUPPORTED = { evidence: 'The source says otherwise.\nVerdict: unsupported' } as const;
 const UNSUPPORTED_FIRST = { evidence: 'The page\nnames no stop.\nVerdict: unsupported' } as const;
 const UNOPENED = { evidence: 'The source is not there.\nVerdict: unopened' } as const;
+const UNSUPPORTED_BLANK = { evidence: ' \t\n  \nVerdict: unsupported' } as const;
 const NO_VERDICT = { evidence: 'The source says so.' } as const;
 
 // Evidence texts of a repository verify answer, the mark each gives its claim
@@ -623,6 +624,20 @@ test('prints the first evidence against a claim not supported on one line', asyn
   assert.deepEqual(listClaimLines(run), [
     `${ WEB_CLAIM_LINE } | not supported 1 of 3: The page names no stop.`,
   ]);
+});
+
+test('prints the first evidence against a claim that is not blank', async () => {
+  const run = await runClaim('web', [UNSUPPORTED_BLANK, UNSUPPORTED]);
+
+  assert.deepEqual(listClaimLines(run), [
+    `${ WEB_CLAIM_LINE } | not supported 0 of 2: The source says otherwise.`,
+  ]);
+});
+
+test('prints the mark alone of a claim whose evidence against is all blank', async () => {
+  const run = await runClaim('repository', [UNSUPPORTED_BLANK]);
+
+  assert.deepEqual(listClaimLines(run), [`${ REPOSITORY_CLAIM_LINE } | not supported 0 of 1`]);
 });
 
 test('makes 1000 calls when the claims ask for more verify agents', async () => {
