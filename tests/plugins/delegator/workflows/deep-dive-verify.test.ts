@@ -69,7 +69,7 @@ const VERDICT_SCHEMA = {
       type: 'string',
       allOf: [
         { pattern: `${ LINE_OPENING }Verdict: (supported|unsupported|unopened)\\s*$` },
-        { pattern: `${ LINE_OPENING }(Shown:|Not shown:)` },
+        { pattern: `${ LINE_OPENING }(Shown:|Not shown:)[^\\S\\n\\r\\u2028\\u2029]*\\S` },
         {
           not: {
             allOf: [
@@ -341,6 +341,31 @@ const FACT_LINE_CASES = [
   [
     'with a Shown: line, a quoted --shown-only line and a supported line',
     'Shown: line 3 names the flag.\n--shown-only\nVerdict: supported',
+    'supported',
+  ],
+  [
+    'with a bare Shown: line and a supported line',
+    'Shown:\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line of only spaces after its label and a supported line',
+    'Shown: \t \nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a bare Not shown: line and an unsupported line',
+    'Not shown:\nVerdict: unsupported',
+    undefined,
+  ],
+  [
+    'with a bare Shown: line, a Shown: line and a supported line',
+    'Shown:\nShown: line 3.\nVerdict: supported',
+    'supported',
+  ],
+  [
+    'with a Shown: line whose text follows a tab and a supported line',
+    'Shown:\tline 3.\nVerdict: supported',
     'supported',
   ],
   [

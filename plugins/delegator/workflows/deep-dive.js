@@ -569,7 +569,8 @@ const LINE_SPACE = `[^\\S${ LINE_ENDS }]*`;
 // The rule on refused evidence: a verify agent's evidence gives no verdict,
 // and its answer is no vote, when the last of its lines that is not blank,
 // trimmed, is not exactly VERDICT_LINE_START and a verdict, when no line
-// before that one, trimmed, starts with SHOWN_LABEL or NOT_SHOWN_LABEL, when
+// before that one, trimmed, starts with SHOWN_LABEL or NOT_SHOWN_LABEL
+// followed by text that is not blank, when
 // its verdict is SUPPORTED and a line states a gap. VERDICT_SCHEMA holds the
 // rule so that the runtime refuses such an answer, and readVerdict holds it
 // so that the script reads no verdict from one.
@@ -577,7 +578,7 @@ const LINE_SPACE = `[^\\S${ LINE_ENDS }]*`;
 // The evidence the schema admits matches the first two patterns and not both
 // of the last two. VERDICT_PATTERN: the last line that is not blank is
 // VERDICT_LINE_START and a verdict. FACT_LINE_PATTERN: a line starts with
-// SHOWN_LABEL or NOT_SHOWN_LABEL. GAP_LINE_PATTERN: a line states a gap, that
+// SHOWN_LABEL or NOT_SHOWN_LABEL followed by text that is not blank. GAP_LINE_PATTERN: a line states a gap, that
 // is, after any characters that are not ASCII letters it starts with NOT_WORD,
 // one or more characters that are not ASCII letters and SHOWN_WORD, in any
 // case. SUPPORTED_LINE_PATTERN: the last line that is not blank is
@@ -587,8 +588,10 @@ const VERDICT_PATTERN = [
   `${ LINE_START }${ LINE_SPACE }${ escapePattern(VERDICT_LINE_START) }`,
   `(${ VERDICTS.map(escapePattern).join('|') })\\s*$`,
 ].join('');
-const FACT_LINE_PATTERN =
-  `${ LINE_START }${ LINE_SPACE }(${ escapePattern(SHOWN_LABEL) }|${ escapePattern(NOT_SHOWN_LABEL) })`;
+const FACT_LINE_PATTERN = [
+  `${ LINE_START }${ LINE_SPACE }(${ escapePattern(SHOWN_LABEL) }|${ escapePattern(NOT_SHOWN_LABEL) })`,
+  `${ LINE_SPACE }\\S`,
+].join('');
 const GAP_LINE_PATTERN = [
   `${ LINE_START }[^A-Za-z${ LINE_ENDS }]*${ matchAnyCase(NOT_WORD) }`,
   `[^A-Za-z${ LINE_ENDS }]+${ matchAnyCase(SHOWN_WORD) }`,
@@ -1391,13 +1394,15 @@ function readVerdict(answer) {
 
   const verdictLine = lines.at(-1)?.trim();
   const verdict = VERDICTS.find((known) => verdictLine === `${ VERDICT_LINE_START }${ known }`);
-  const factLines = lines
+  const hasFactLine = lines
     .slice(0, -1)
     .map((line) => line.trim())
-    .filter((line) => line.startsWith(SHOWN_LABEL) || line.startsWith(NOT_SHOWN_LABEL));
+    .some((line) => [SHOWN_LABEL, NOT_SHOWN_LABEL].some(
+      (label) => line.startsWith(label) && line.slice(label.length).trim() !== '',
+    ));
   const isGapSupported = verdict === SUPPORTED && GAP_LINE.test(answer.evidence);
 
-  if (verdict === undefined || factLines.length === 0 || isGapSupported) {
+  if (verdict === undefined || !hasFactLine || isGapSupported) {
     return undefined;
   }
 
