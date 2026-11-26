@@ -609,7 +609,7 @@ test('counts the launches held back and leaves their claims undecided', async ()
       questions: { repository: 0, web: 12 },
       claims: { repository: 0, web: 540 },
       verified: { repository: 0, web: 0 },
-      refuted: { repository: 0, web: 445 },
+      notSupported: { repository: 0, web: 445 },
       undecided: { repository: 0, web: 95 },
       notLaunched: 190,
       gatherReturns: { count: 12, longest: 6823 },

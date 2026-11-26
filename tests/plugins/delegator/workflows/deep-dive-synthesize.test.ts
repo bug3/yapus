@@ -287,17 +287,17 @@ const LANE_COUNTS = {
   dropped: 0,
   claims: { repository: 3, web: 2 },
   verified: { repository: 1, web: 2 },
-  refuted: { repository: 1, web: 0 },
+  notSupported: { repository: 1, web: 0 },
   undecided: { repository: 1, web: 0 },
   notLaunched: 0,
   pathsRefused: 0,
   gatherReturns: { count: 3, longest: 475 },
   sources: {
     catalog: [
-      { id: 'github', assigned: 1, claims: 0, verified: 0, refuted: 0 },
-      { id: 'hn', assigned: 1, claims: 0, verified: 0, refuted: 0 },
+      { id: 'github', assigned: 1, claims: 0, verified: 0, notSupported: 0 },
+      { id: 'hn', assigned: 1, claims: 0, verified: 0, notSupported: 0 },
     ],
-    other: { claims: 2, verified: 2, refuted: 0 },
+    other: { claims: 2, verified: 2, notSupported: 0 },
   },
 } as const;
 // The scope question item, which a follow-up question takes with the number
@@ -828,17 +828,17 @@ test('returns the counts of both rounds and those of the follow-up round alone',
       dropped: 0,
       claims: { repository: 6, web: 3 },
       verified: { repository: 2, web: 3 },
-      refuted: { repository: 2, web: 0 },
+      notSupported: { repository: 2, web: 0 },
       undecided: { repository: 2, web: 0 },
       notLaunched: 0,
       pathsRefused: 0,
       gatherReturns: { count: 5, longest: 672 },
       sources: {
         catalog: [
-          { id: 'github', assigned: 2, claims: 0, verified: 0, refuted: 0 },
-          { id: 'hn', assigned: 2, claims: 0, verified: 0, refuted: 0 },
+          { id: 'github', assigned: 2, claims: 0, verified: 0, notSupported: 0 },
+          { id: 'hn', assigned: 2, claims: 0, verified: 0, notSupported: 0 },
         ],
-        other: { claims: 3, verified: 3, refuted: 0 },
+        other: { claims: 3, verified: 3, notSupported: 0 },
       },
       stages: Object.fromEntries([
         ['scope', { launched: 1, returned: 1 }],
@@ -1053,14 +1053,14 @@ test('counts the web questions and claims of each catalog source in both rounds'
 
   assert.deepEqual(readSourceCounts(run), {
     catalog: [
-      { id: 'arxiv', assigned: 1, claims: 0, verified: 0, refuted: 0 },
-      { id: 'crossref', assigned: 1, claims: 0, verified: 0, refuted: 0 },
-      { id: 'pubmed', assigned: 1, claims: 0, verified: 0, refuted: 0 },
-      { id: 'github', assigned: 2, claims: 2, verified: 1, refuted: 0 },
-      { id: 'hn', assigned: 1, claims: 0, verified: 0, refuted: 0 },
-      { id: 'rfc-editor', assigned: 0, claims: 1, verified: 0, refuted: 1 },
+      { id: 'arxiv', assigned: 1, claims: 0, verified: 0, notSupported: 0 },
+      { id: 'crossref', assigned: 1, claims: 0, verified: 0, notSupported: 0 },
+      { id: 'pubmed', assigned: 1, claims: 0, verified: 0, notSupported: 0 },
+      { id: 'github', assigned: 2, claims: 2, verified: 1, notSupported: 0 },
+      { id: 'hn', assigned: 1, claims: 0, verified: 0, notSupported: 0 },
+      { id: 'rfc-editor', assigned: 0, claims: 1, verified: 0, notSupported: 1 },
     ],
-    other: { claims: 5, verified: 1, refuted: 1 },
+    other: { claims: 5, verified: 1, notSupported: 1 },
   });
 });
 
@@ -1069,7 +1069,7 @@ test('counts no source for a dropped question that names sources', async () => {
 
   assert.deepEqual(readSourceCounts(run), {
     catalog: [],
-    other: { claims: 0, verified: 0, refuted: 0 },
+    other: { claims: 0, verified: 0, notSupported: 0 },
   });
 });
 

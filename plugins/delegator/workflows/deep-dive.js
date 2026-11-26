@@ -1359,7 +1359,7 @@ function getStats(questionCounts, droppedQuestions, researched, followedUp) {
     dropped: droppedQuestions.length,
     claims: countByLane(claims),
     verified: countByLane(selectClaims(claims, VERIFIED)),
-    refuted: countByLane(selectClaims(claims, NOT_SUPPORTED)),
+    notSupported: countByLane(selectClaims(claims, NOT_SUPPORTED)),
     undecided: countByLane(selectClaims(claims, UNDECIDED)),
     notLaunched: notLaunchedCount,
     pathsRefused: claims.filter(({ isPathRefused }) => isPathRefused === true).length,
@@ -1392,7 +1392,7 @@ function countSourceClaims(claims) {
   return {
     claims: claims.length,
     verified: countOutcome(claims, VERIFIED),
-    refuted: countOutcome(claims, NOT_SUPPORTED),
+    notSupported: countOutcome(claims, NOT_SUPPORTED),
   };
 }
 
@@ -1594,7 +1594,7 @@ function formatRunBlock(stats) {
     formatCountLine('Follow-up verified', stats.followUps.verified),
     formatCountLine('Claims', stats.claims),
     formatCountLine('Verified', stats.verified),
-    formatCountLine('Not supported', stats.refuted),
+    formatCountLine('Not supported', stats.notSupported),
     formatCountLine('Undecided', stats.undecided),
     `- Not launched at the limit of ${ RUN_AGENT_LIMIT } workflow agents: ${ stats.notLaunched }`,
     `- Claims not sent to a verify agent for their path: ${ stats.pathsRefused }`,
@@ -1602,10 +1602,10 @@ function formatRunBlock(stats) {
     '',
     '| Source | Assigned | Claims | Verified | Not supported |',
     '| --- | --- | --- | --- | --- |',
-    ...catalog.map(({ id, assigned, claims, verified, refuted: notSupported }) => (
+    ...catalog.map(({ id, assigned, claims, verified, notSupported }) => (
       `| ${ id } | ${ assigned } | ${ claims } | ${ verified } | ${ notSupported } |`
     )),
-    `| other | - | ${ other.claims } | ${ other.verified } | ${ other.refuted } |`,
+    `| other | - | ${ other.claims } | ${ other.verified } | ${ other.notSupported } |`,
   ]);
 }
 
