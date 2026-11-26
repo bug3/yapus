@@ -1328,7 +1328,8 @@ function getOutcome(answers, quorum) {
 
 // A vote is the answer of a verify agent whose verdict line supports its claim
 // or does not. A verify agent that opened no source, ended its evidence with
-// no verdict line, returned nothing or was not launched casts none.
+// no verdict line, wrote no fact line before it, gave SUPPORTED with a
+// NOT_SHOWN_LABEL line, returned nothing or was not launched casts none.
 function isVote(answer) {
   const verdict = readVerdict(answer)?.verdict;
 
