@@ -551,11 +551,16 @@ const VERDICT_LINE_START = 'Verdict: ';
 const SHOWN_LABEL = 'Shown:';
 const NOT_SHOWN_LABEL = 'Not shown:';
 
-// The evidence the verify schema admits: text whose last line that is not
-// blank is VERDICT_LINE_START and a verdict, so the runtime refuses an
-// answer that readVerdict would read as no vote. It only validates;
-// readVerdict reads and cuts the line.
+// The evidence the verify schema admits matches the first two patterns and
+// not the third, so the runtime refuses an answer that readVerdict would read
+// as no vote. VERDICT_PATTERN: the last line that is not blank is
+// VERDICT_LINE_START and a verdict. FACT_LINE_PATTERN: a line starts with
+// SHOWN_LABEL or NOT_SHOWN_LABEL. NOT_SHOWN_SUPPORTED_PATTERN: a line starts
+// with NOT_SHOWN_LABEL and the verdict is SUPPORTED. They only validate;
+// readVerdict reads and cuts the verdict line.
 const VERDICT_PATTERN = `(^|\\n)\\s*${ VERDICT_LINE_START }(${ VERDICTS.join('|') })\\s*$`;
+const FACT_LINE_PATTERN = `(^|\\n)\\s*(${ SHOWN_LABEL }|${ NOT_SHOWN_LABEL })`;
+const NOT_SHOWN_SUPPORTED_PATTERN = `(^|\\n)\\s*${ NOT_SHOWN_LABEL }[\\s\\S]*(^|\\n)\\s*${ VERDICT_LINE_START }${ SUPPORTED }\\s*$`;
 
 // The votes of a kind that decide a claim of each lane: a web claim is
 // verified on its first vote when that supports it, and otherwise decided
@@ -576,7 +581,14 @@ const FAILED = 'failed';
 const VERDICT_SCHEMA = {
   type: 'object',
   properties: {
-    evidence: { type: 'string', pattern: VERDICT_PATTERN },
+    evidence: {
+      type: 'string',
+      allOf: [
+        { pattern: VERDICT_PATTERN },
+        { pattern: FACT_LINE_PATTERN },
+        { not: { pattern: NOT_SHOWN_SUPPORTED_PATTERN } },
+      ],
+    },
   },
   required: ['evidence'],
   additionalProperties: false,
@@ -1333,7 +1345,10 @@ function countVerdict(answers, verdict) {
 // The verdict a verify agent's answer gives and its evidence before the line
 // that gives it. The line is the last of the evidence that is not blank,
 // trimmed; an answer whose line is not exactly VERDICT_LINE_START and a
-// verdict gives none, and is no vote.
+// verdict gives none, and is no vote. So does an answer with no line before
+// it that, trimmed, starts with SHOWN_LABEL or NOT_SHOWN_LABEL, and a
+// SUPPORTED one with such a line that starts with NOT_SHOWN_LABEL: the
+// evidence VERDICT_SCHEMA refuses.
 function readVerdict(answer) {
   if (typeof answer?.evidence !== 'string') {
     return undefined;
@@ -1347,8 +1362,18 @@ function readVerdict(answer) {
 
   const verdictLine = lines.at(-1)?.trim();
   const verdict = VERDICTS.find((known) => verdictLine === `${ VERDICT_LINE_START }${ known }`);
+  const factLines = lines
+    .slice(0, -1)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith(SHOWN_LABEL) || line.startsWith(NOT_SHOWN_LABEL));
+  const isNotShownSupported =
+    verdict === SUPPORTED && factLines.some((line) => line.startsWith(NOT_SHOWN_LABEL));
 
-  return verdict === undefined ? undefined : { verdict, evidence: lines.slice(0, -1).join('\n') };
+  if (verdict === undefined || factLines.length === 0 || isNotShownSupported) {
+    return undefined;
+  }
+
+  return { verdict, evidence: lines.slice(0, -1).join('\n') };
 }
 
 function countOutcome(claims, counted) {

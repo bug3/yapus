@@ -57,7 +57,11 @@ const VERDICT_SCHEMA = {
   properties: {
     evidence: {
       type: 'string',
-      pattern: '(^|\\n)\\s*Verdict: (supported|unsupported|unopened)\\s*$',
+      allOf: [
+        { pattern: '(^|\\n)\\s*Verdict: (supported|unsupported|unopened)\\s*$' },
+        { pattern: '(^|\\n)\\s*(Shown:|Not shown:)' },
+        { not: { pattern: '(^|\\n)\\s*Not shown:[\\s\\S]*(^|\\n)\\s*Verdict: supported\\s*$' } },
+      ],
     },
   },
   required: ['evidence'],
@@ -76,7 +80,6 @@ const UNSUPPORTED_FIRST = {
 const UNOPENED = {
   evidence: 'Not shown: the source.\nThe source is not there.\nVerdict: unopened',
 } as const;
-const UNSUPPORTED_BLANK = { evidence: ' \t\n  \nVerdict: unsupported' } as const;
 const NO_VERDICT = { evidence: 'The source says so.' } as const;
 
 // Evidence texts of a repository verify answer, each opening with a fact
@@ -160,6 +163,74 @@ const VERDICT_LINE_CASES = [
   ],
 ] as const;
 const NO_VOTE_MARK = 'undecided 0 of 0';
+// Evidence texts of a verify answer and the verdict read from it, which
+// VERDICT_LINE_CASES do not hold: a verdict is read only from evidence with a
+// line that, trimmed, starts with `Shown:` or `Not shown:`, and no supported
+// verdict from evidence with a `Not shown:` line.
+const FACT_LINE_CASES = [
+  [
+    'with a Shown: line and a supported line',
+    'Shown: the line shows it.\nVerdict: supported',
+    'supported',
+  ],
+  [
+    'with a Not shown: line and an unsupported line',
+    'Not shown: the caller.\nVerdict: unsupported',
+    'unsupported',
+  ],
+  [
+    'with a Not shown: line and an unopened line',
+    'Not shown: the test was not opened.\nVerdict: unopened',
+    'unopened',
+  ],
+  [
+    'with no fact line and a supported line',
+    'The line shows it.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Not shown: line and a supported line',
+    'Not shown: the test was not opened.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line, a Not shown: line and a supported line',
+    'Shown: line 3.\nNot shown: the caller.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with an indented Not shown: line and a supported line',
+    'Shown: line 3.\n  Not shown: the caller.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line that names Not shown: and a supported line',
+    'Shown: line 3 names Not shown: here.\nVerdict: supported',
+    'supported',
+  ],
+  [
+    'with a lowercase not shown: line and an unsupported line',
+    'not shown: the caller.\nVerdict: unsupported',
+    undefined,
+  ],
+  [
+    'with an indented Shown: line and a supported line',
+    '  Shown: line 3.\nVerdict: supported',
+    'supported',
+  ],
+  [
+    'with a Not shown: line after a carriage return and a supported line',
+    'Shown: line 3.\r\nNot shown: the caller.\r\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with Shown: inside a line and a supported line',
+    'The line names Shown: here.\nVerdict: supported',
+    undefined,
+  ],
+] as const;
+// The flags a JSON Schema validator may compile a pattern with.
+const PATTERN_FLAGS = ['u', ''] as const;
 
 const REPOSITORY_CLAIM = {
   claim: 'The gate blocks a return\n  with no status word.',
@@ -541,18 +612,30 @@ for (const [name, evidence, mark] of VERDICT_LINE_CASES) {
   });
 }
 
-// The pattern of the verify schema admits exactly the evidence the script
-// reads a verdict from: a supported or unsupported verdict shows as a vote in
-// the mark, and an unopened one, which casts no vote, is held by the pattern
-// alone.
-for (const [name, evidence, , verdict] of VERDICT_LINE_CASES) {
+// The verify schema admits exactly the evidence the script reads a verdict
+// from, with its patterns compiled under each of PATTERN_FLAGS: a supported
+// or unsupported verdict shows as a vote in the mark, and an unopened one,
+// which casts no vote, is held by the patterns alone.
+for (const [name, evidence, verdict] of [
+  ...FACT_LINE_CASES,
+  ...VERDICT_LINE_CASES.map(([caseName, caseEvidence, , caseVerdict]) => [
+    `that ends ${ caseName }`,
+    caseEvidence,
+    caseVerdict,
+  ] as const),
+]) {
   const verb = verdict === undefined ? 'refuses' : 'admits';
 
-  test(`${ verb } in the verify schema evidence that ends ${ name }`, async () => {
+  test(`${ verb } in the verify schema and the script evidence ${ name }`, async () => {
     const run = await runClaim('repository', [{ evidence }]);
     const isVote = verdict === 'supported' || verdict === 'unsupported';
 
-    assert.equal(new RegExp(readEvidencePattern(run)).test(evidence), verdict !== undefined);
+    for (const flags of PATTERN_FLAGS) {
+      const isAdmitted = admitsEvidence(readEvidenceSchema(run), evidence, flags);
+
+      assert.equal(isAdmitted, verdict !== undefined);
+    }
+
     assert.equal(listClaimLines(run)[0]?.endsWith(NO_VOTE_MARK), !isVote);
   });
 }
@@ -633,20 +716,6 @@ test('prints the first evidence against a claim not supported on one line', asyn
   assert.deepEqual(listClaimLines(run), [
     `${ WEB_CLAIM_LINE } | not supported 1 of 3: Not shown: the stop. The page names no stop.`,
   ]);
-});
-
-test('prints the first evidence against a claim that is not blank', async () => {
-  const run = await runClaim('web', [UNSUPPORTED_BLANK, UNSUPPORTED]);
-
-  assert.deepEqual(listClaimLines(run), [
-    `${ WEB_CLAIM_LINE } | not supported 0 of 2: Not shown: the fact. The source says otherwise.`,
-  ]);
-});
-
-test('prints the mark alone of a claim whose evidence against is all blank', async () => {
-  const run = await runClaim('repository', [UNSUPPORTED_BLANK]);
-
-  assert.deepEqual(listClaimLines(run), [`${ REPOSITORY_CLAIM_LINE } | not supported 0 of 1`]);
 });
 
 test('makes 1000 calls when the claims ask for more verify agents', async () => {
@@ -802,13 +871,28 @@ function listClaimLines(run: WorkflowRun): string[] {
     .filter((line) => line.startsWith('- ') && line.includes(' | '));
 }
 
-// The pattern of the evidence in the schema the verify agent of the one
+// The parts of the evidence in the schema the verify agent of the one
 // repository claim of `run` carries, once that schema is the one written out
 // here.
-function readEvidencePattern(run: WorkflowRun): string {
+function readEvidenceSchema(
+  run: WorkflowRun,
+): typeof VERDICT_SCHEMA.properties.evidence.allOf {
   assert.deepEqual(findCall(run, 'verify-repo:Q1.C1')?.options.schema, VERDICT_SCHEMA);
 
-  return VERDICT_SCHEMA.properties.evidence.pattern;
+  return VERDICT_SCHEMA.properties.evidence.allOf;
+}
+
+// Whether `evidence` meets every part of the evidence schema, each pattern
+// compiled with `flags`: it matches a pattern and does not match a `not` one.
+function admitsEvidence(
+  parts: typeof VERDICT_SCHEMA.properties.evidence.allOf,
+  evidence: string,
+  flags: string,
+): boolean {
+  return parts.every((part) =>
+    'not' in part
+      ? !new RegExp(part.not.pattern, flags).test(evidence)
+      : new RegExp(part.pattern, flags).test(evidence));
 }
 
 // The block of the research file under the heading `title`, as the prompt
