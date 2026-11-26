@@ -3,7 +3,7 @@ name: write-plan
 description: Have the plan of deep work written before its first edit, reviewed, decided with the person and built slice by slice. Use when ORCH-1 rates a task deep or the person asks for a plan.
 ---
 
-- Launch `delegator:plan-writer` with the topic, the sources and the questions the plan must settle; it writes the plan to `.yapus/plans/<YYYY-MM>/<topic>/plan.md` in the project's root, and you name that path in every brief that rests on it.
+- Launch `delegator:plan-writer` with the topic, the sources and the questions the plan must settle; it writes the plan to `.yapus/plans/<YYYY-MM>/<topic>/plan.md` in the project's root, and you name its absolute path in every brief that rests on it.
 - On the plan-writer's first return, launch in one message, first and before the first edit, `delegator:plan-reviewer` once on the plan file and its acceptance criteria when the plan touches more than one module or a public interface, then the subagents that measure the facts it returns as unmeasured and run the probes and readings the plan names, the short ones together in one subagent, each working outside the repository.
 - When the plan-writer first returns the plan, read it against what the person said in the session while the plan-reviewer runs, and add each point it misses or contradicts to the defects you send the plan-writer, asking the person each one that is theirs to decide.
 - After the review, or at once when the plan needs none, ask the person the open decisions in one batch, in calls of up to four questions back to back with the most consequential first, then send the plan-writer the defects, the measurements and the answers in one message to fold each into the section it names.
