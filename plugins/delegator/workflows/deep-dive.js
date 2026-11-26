@@ -550,7 +550,7 @@ const WEB_QUORUM = 2;
 
 // What the votes make of a claim.
 const VERIFIED = 'verified';
-const REFUTED = 'refuted';
+const NOT_SUPPORTED = 'refuted';
 const UNDECIDED = 'undecided';
 
 // What the synthesize agent answers.
@@ -1044,11 +1044,11 @@ async function researchQuestion(task, question, gatherStageId) {
   );
 
   const verified = countOutcome(claims, VERIFIED);
-  const refuted = countOutcome(claims, REFUTED);
+  const notSupported = countOutcome(claims, NOT_SUPPORTED);
   const undecided = countOutcome(claims, UNDECIDED);
 
   log(
-    `${ question.id }: ${ claims.length } claims, ${ verified } verified, ${ refuted } refuted, ${ undecided } undecided`,
+    `${ question.id }: ${ claims.length } claims, ${ verified } verified, ${ notSupported } refuted, ${ undecided } undecided`,
   );
 
   return {
@@ -1295,7 +1295,7 @@ function getOutcome(answers, quorum) {
     return VERIFIED;
   }
 
-  return countVerdict(answers, UNSUPPORTED) >= quorum ? REFUTED : UNDECIDED;
+  return countVerdict(answers, UNSUPPORTED) >= quorum ? NOT_SUPPORTED : UNDECIDED;
 }
 
 // A vote is the answer of a verify agent that supports its claim or does not.
@@ -1333,7 +1333,7 @@ function getStats(questionCounts, droppedQuestions, researched, followedUp) {
     dropped: droppedQuestions.length,
     claims: countByLane(claims),
     verified: countByLane(selectClaims(claims, VERIFIED)),
-    refuted: countByLane(selectClaims(claims, REFUTED)),
+    refuted: countByLane(selectClaims(claims, NOT_SUPPORTED)),
     undecided: countByLane(selectClaims(claims, UNDECIDED)),
     notLaunched: notLaunchedCount,
     pathsRefused: claims.filter(({ isPathRefused }) => isPathRefused === true).length,
@@ -1366,7 +1366,7 @@ function countSourceClaims(claims) {
   return {
     claims: claims.length,
     verified: countOutcome(claims, VERIFIED),
-    refuted: countOutcome(claims, REFUTED),
+    refuted: countOutcome(claims, NOT_SUPPORTED),
   };
 }
 
@@ -1461,7 +1461,7 @@ function formatContent(researched, unmeasuredLines, stats) {
     ...researched.flatMap(listVerifiedLines),
     '',
     '## Blocks to copy',
-    formatClaimBlock('Refuted', selectClaims(claims, REFUTED).map(formatRefutedLine)),
+    formatClaimBlock('Refuted', selectClaims(claims, NOT_SUPPORTED).map(formatNotSupportedLine)),
     '',
     formatClaimBlock('Unverified', selectClaims(claims, UNDECIDED).map(formatClaimLine)),
     '',
@@ -1482,7 +1482,7 @@ function formatClaimLine({ text, source, mark }) {
   return `- ${ text } | ${ source } | ${ mark }`;
 }
 
-function formatRefutedLine(claim) {
+function formatNotSupportedLine(claim) {
   return `${ formatClaimLine(claim) }: ${ claim.evidence }`;
 }
 
@@ -1576,8 +1576,8 @@ function formatRunBlock(stats) {
     '',
     '| Source | Assigned | Claims | Verified | Refuted |',
     '| --- | --- | --- | --- | --- |',
-    ...catalog.map(({ id, assigned, claims, verified, refuted }) => (
-      `| ${ id } | ${ assigned } | ${ claims } | ${ verified } | ${ refuted } |`
+    ...catalog.map(({ id, assigned, claims, verified, refuted: notSupported }) => (
+      `| ${ id } | ${ assigned } | ${ claims } | ${ verified } | ${ notSupported } |`
     )),
     `| other | - | ${ other.claims } | ${ other.verified } | ${ other.refuted } |`,
   ]);
