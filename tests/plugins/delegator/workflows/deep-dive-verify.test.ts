@@ -600,6 +600,29 @@ test('puts each text of a web claim that holds a line break on one line', async 
   );
 });
 
+test('puts a path that holds a line or paragraph separator on one line', async () => {
+  const run = await runPaths([
+    'hooks/\u2028run.sh\u2029',
+    'hooks/a \r\n\u2028 b.ts',
+    'hooks/a \t b.ts',
+  ]);
+
+  assert.deepEqual(listClaimLines(run), [
+    '- The gate runs. | `hooks/ run.sh:35` | verified 1 of 1',
+    '- The gate runs. | `hooks/a b.ts:35` | verified 1 of 1',
+    '- The gate runs. | `hooks/a \t b.ts:35` | verified 1 of 1',
+  ]);
+});
+
+test('puts a path of 80000 spaces with no line break on one line in under 2 seconds', async () => {
+  const path = `hooks/${ ' '.repeat(80000) }x.ts`;
+  const start = performance.now();
+  const run = await runPaths([path]);
+
+  assert.equal(performance.now() - start < 2000, true);
+  assert.deepEqual(listClaimLines(run), [`- The gate runs. | \`${ path }:35\` | verified 1 of 1`]);
+});
+
 test('cites a range of lines of a repository claim in its verify prompt and block', async () => {
   const run = await runLines(557, 577);
 

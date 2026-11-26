@@ -555,8 +555,9 @@ const NOT_SHOWN_LABEL = 'Not shown:';
 // of SHOWN_LABEL.
 const [NOT_WORD, SHOWN_WORD] = NOT_SHOWN_LABEL.slice(0, -1).split(' ');
 
-// The characters that end a line of evidence, as the body of a pattern's
-// class, and what breaks evidence into lines: one of them, or \r\n.
+// The characters that end a line of evidence or of a text put on one line,
+// as the body of a pattern's class, and what breaks such a text into lines:
+// one of them, or \r\n.
 const LINE_ENDS = '\\n\\r\\u2028\\u2029';
 const LINE_BREAK = new RegExp(`\\r\\n|[${ LINE_ENDS }]`, 'u');
 
@@ -1035,9 +1036,11 @@ function formatLines(entries, absentLine) {
 }
 
 // A text of another workflow agent or of a page enters a prompt through here
-// too, so it cannot open a heading or a rule of its own there.
+// too, so it cannot open a heading or a rule of its own there. A run of
+// whitespace that holds a line break becomes one space; each run is matched
+// whole, so the time stays linear in the length of the text.
 function toOneLine(text) {
-  return text.replace(/\s*[\n\r]\s*/gu, ' ').trim();
+  return text.replace(/\s+/gu, (run) => (LINE_BREAK.test(run) ? ' ' : run)).trim();
 }
 
 // The paths of a list that a workflow agent may be handed: a path that may
