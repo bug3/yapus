@@ -157,27 +157,33 @@ const FIXED_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   }],
   ['verify-repo:Q1.C1', {
     evidence:
+      'Shown: :50 sends a return over the limit back once.\n' +
       'get-return-verdict.ts:31 holds the excerpt, and :50 sends back once.\nVerdict: supported',
   }],
   ['verify-repo:Q1.C2', {
     evidence:
+      'Not shown: a count of send-backs.\n' +
       'main.ts:12 reads the payload; the file holds no count of send-backs.\nVerdict: unsupported',
   }],
   ['verify-repo:Q2.C1', {
-    evidence: 'hooks.json has 126 lines.\nVerdict: unopened',
+    evidence: 'Not shown: the cited line.\nhooks.json has 126 lines.\nVerdict: unopened',
   }],
   ['verify-web:Q4.C1.v1', {
     evidence:
+      'Shown: Exit code 2 blocks the stop.\n' +
       'The page says: Exit code 2 blocks the stop and shows stderr to the subagent\nVerdict: supported',
   }],
   ['verify-web:Q4.C2.v1', {
-    evidence: 'The page names no second block.\nVerdict: unsupported',
+    evidence: 'Not shown: a second block.\nThe page names no second block.\nVerdict: unsupported',
   }],
   ['verify-web:Q4.C2.v2', {
-    evidence: 'The page holds the quote under Hooks.\nVerdict: supported',
+    evidence:
+      'Shown: a stop blocked twice is stopped.\nThe page holds the quote under Hooks.\nVerdict: supported',
   }],
   ['verify-web-third:Q4.C2.v3', {
-    evidence: 'The quote stands in the last paragraph of the page.\nVerdict: supported',
+    evidence:
+      'Shown: a stop blocked twice is stopped.\n' +
+      'The quote stands in the last paragraph of the page.\nVerdict: supported',
   }],
   ['completeness', {
     unreadAreas: ['tests/hooks/claude/gates/return'],
@@ -247,14 +253,18 @@ const FOLLOW_UP_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>
     notChecked: [],
   }],
   ['verify-repo:F1.C1', {
-    evidence: 'get-return-verdict.test.ts:20 names the test.\nVerdict: supported',
+    evidence:
+      'Shown: the test.\nget-return-verdict.test.ts:20 names the test.\nVerdict: supported',
   }],
   ['verify-repo:F1.C2', {
     evidence:
+      'Not shown: a count of send-backs.\n' +
       'get-return-verdict.test.ts:40 tests a return under the limit.\nVerdict: unsupported',
   }],
   ['verify-web:F2.C1.v1', {
-    evidence: 'The page says: SubagentStop hooks can block a stop\nVerdict: supported',
+    evidence:
+      'Shown: SubagentStop hooks can block a stop\n' +
+      'The page says: SubagentStop hooks can block a stop\nVerdict: supported',
   }],
 ]);
 

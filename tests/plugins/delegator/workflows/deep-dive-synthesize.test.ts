@@ -48,11 +48,11 @@ const COMPLETENESS_PROMPT = [
 
 // The digest is FNV-1a of 32 bits over the UTF-16 units of CONTENT below,
 // worked out by a program apart from the script.
-const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_10a522e6.md';
+const RESEARCH_PATH = '.yapus/plans/2026-11/return-retry/research_3cdbb1da.md';
 const BLOCKS = [
   '## Not supported',
   '',
-  '- The return gate keeps a count of send-backs for each session. | `hooks/claude/gates/return/main.ts:12` | not supported 0 of 1: main.ts:12 reads the payload; the file holds no count of send-backs.',
+  '- The return gate keeps a count of send-backs for each session. | `hooks/claude/gates/return/main.ts:12` | not supported 0 of 1: Not shown: a count of send-backs. main.ts:12 reads the payload; the file holds no count of send-backs.',
   '',
   '## Unverified',
   '',
@@ -104,7 +104,7 @@ const REPOSITORY_LANE_ARGS = { ...FIXED_ARGS, lanes: ['repository'] } as const;
 const REPOSITORY_LANE_BLOCKS = [
   '## Not supported',
   '',
-  '- The return gate keeps a count of send-backs for each session. | `hooks/claude/gates/return/main.ts:12` | not supported 0 of 1: main.ts:12 reads the payload; the file holds no count of send-backs.',
+  '- The return gate keeps a count of send-backs for each session. | `hooks/claude/gates/return/main.ts:12` | not supported 0 of 1: Not shown: a count of send-backs. main.ts:12 reads the payload; the file holds no count of send-backs.',
   '',
   '## Unverified',
   '',
@@ -170,7 +170,7 @@ const SYNTHESIZE_PROMPT = [
   'Add a retry limit to the return gate',
   '',
   '## File',
-  ".yapus/plans/2026-11/return-retry/research_10a522e6.md, under the project's root",
+  ".yapus/plans/2026-11/return-retry/research_3cdbb1da.md, under the project's root",
   '',
   CONTENT,
   '',
@@ -206,8 +206,8 @@ const FOLLOW_UP_VERIFIED_CLAIMS = [
 const FOLLOW_UP_BLOCKS = [
   '## Not supported',
   '',
-  '- The return gate keeps a count of send-backs for each session. | `hooks/claude/gates/return/main.ts:12` | not supported 0 of 1: main.ts:12 reads the payload; the file holds no count of send-backs.',
-  '- The verdict tests count the send-backs of a session. | `tests/hooks/claude/gates/return/get-return-verdict.test.ts:40` | not supported 0 of 1: get-return-verdict.test.ts:40 tests a return under the limit.',
+  '- The return gate keeps a count of send-backs for each session. | `hooks/claude/gates/return/main.ts:12` | not supported 0 of 1: Not shown: a count of send-backs. main.ts:12 reads the payload; the file holds no count of send-backs.',
+  '- The verdict tests count the send-backs of a session. | `tests/hooks/claude/gates/return/get-return-verdict.test.ts:40` | not supported 0 of 1: Not shown: a count of send-backs. get-return-verdict.test.ts:40 tests a return under the limit.',
   '',
   '## Unverified',
   '',
@@ -378,7 +378,7 @@ const SMALL_RUN_CLAIM = {
 const SMALL_RUN_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown>([
   ['scope', { questions: [{ lane: 'repository', question: 'What blocks a return?' }] }],
   ['gather-repo:Q1', { claims: [SMALL_RUN_CLAIM], notSearched: [] }],
-  ['verify-repo:Q1.C1', { evidence: 'The line says so.\nVerdict: supported' }],
+  ['verify-repo:Q1.C1', { evidence: 'Shown: the line.\nThe line says so.\nVerdict: supported' }],
   ['completeness', { unreadAreas: [], unansweredQuestions: [], followUps: [] }],
   ['synthesize', { outcome: 'written', detail: '' }],
 ]);
@@ -433,9 +433,11 @@ const LINKED_RUN_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, unknown
     ],
   }],
   ['follow-up-repo:F1', { claims: [SMALL_RUN_CLAIM], notSearched: [] }],
-  ['verify-repo:F1.C1', { evidence: 'The line says so.\nVerdict: supported' }],
+  ['verify-repo:F1.C1', { evidence: 'Shown: the line.\nThe line says so.\nVerdict: supported' }],
   ['follow-up-repo:F2', { claims: [SMALL_RUN_CLAIM], notSearched: [] }],
-  ['verify-repo:F2.C1', { evidence: 'The line says otherwise.\nVerdict: unsupported' }],
+  ['verify-repo:F2.C1', {
+    evidence: 'Not shown: the fact.\nThe line says otherwise.\nVerdict: unsupported',
+  }],
 ]);
 const SOURCES_HEADER = '| Source | Assigned | Claims | Verified | Not supported |';
 
@@ -473,11 +475,15 @@ const COUNTED_SOURCES_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, un
     notChecked: [],
   }],
   ['gather-repo:Q2', { claims: [SMALL_RUN_CLAIM], notSearched: [] }],
-  ['verify-web:Q1.C1.v1', { evidence: 'The page says limit.\nVerdict: supported' }],
-  ['verify-web:Q1.C2.v1', { evidence: 'The page says none.\nVerdict: unsupported' }],
-  ['verify-web:Q1.C2.v2', { evidence: 'The page says none.\nVerdict: unsupported' }],
-  ['verify-web:Q1.C3.v1', { evidence: 'The page says one.\nVerdict: supported' }],
-  ['verify-repo:Q2.C1', { evidence: 'The line says so.\nVerdict: supported' }],
+  ['verify-web:Q1.C1.v1', { evidence: 'Shown: limit.\nThe page says limit.\nVerdict: supported' }],
+  ['verify-web:Q1.C2.v1', {
+    evidence: 'Not shown: a second tool.\nThe page says none.\nVerdict: unsupported',
+  }],
+  ['verify-web:Q1.C2.v2', {
+    evidence: 'Not shown: a second tool.\nThe page says none.\nVerdict: unsupported',
+  }],
+  ['verify-web:Q1.C3.v1', { evidence: 'Shown: one.\nThe page says one.\nVerdict: supported' }],
+  ['verify-repo:Q2.C1', { evidence: 'Shown: the line.\nThe line says so.\nVerdict: supported' }],
   ['completeness', {
     unreadAreas: [],
     unansweredQuestions: [],
@@ -495,8 +501,12 @@ const COUNTED_SOURCES_ANSWERS: ReadonlyMap<string, unknown> = new Map<string, un
     ],
     notChecked: [],
   }],
-  ['verify-web:F1.C1.v1', { evidence: 'The page names none.\nVerdict: unsupported' }],
-  ['verify-web:F1.C1.v2', { evidence: 'The page names none.\nVerdict: unsupported' }],
+  ['verify-web:F1.C1.v1', {
+    evidence: 'Not shown: an RFC.\nThe page names none.\nVerdict: unsupported',
+  }],
+  ['verify-web:F1.C1.v2', {
+    evidence: 'Not shown: an RFC.\nThe page names none.\nVerdict: unsupported',
+  }],
   ['synthesize', { outcome: 'written', detail: '' }],
 ]);
 const FILE_LINE = /\n## File\n(?<fileLine>[^\n]+)\n/u;
@@ -1115,7 +1125,7 @@ test('names another file when the source of one claim differs', async () => {
 });
 
 test('names another file when the verdict on one claim differs', async () => {
-  const verdict = { evidence: 'The line says so.\nVerdict: unopened' };
+  const verdict = { evidence: 'Not shown: the line.\nThe line says so.\nVerdict: unopened' };
 
   const run = await runSmall();
   const changedRun = await runSmall(new Map([['verify-repo:Q1.C1', verdict]]));
