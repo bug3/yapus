@@ -75,7 +75,7 @@ const VERDICT_SCHEMA = {
             allOf: [
               {
                 pattern:
-                  '(^|[\\n\\r\\u2028\\u2029])[^A-Za-z\\n\\r\\u2028\\u2029]*[Nn][Oo][Tt][^A-Za-z\\n\\r\\u2028\\u2029]+[Ss][Hh][Oo][Ww][Nn]',
+                  '(^|[\\n\\r\\u2028\\u2029])[^A-Za-z\\n\\r\\u2028\\u2029]*[Nn][Oo][Tt][^A-Za-z\\n\\r\\u2028\\u2029]*[Ss][Hh][Oo][Ww][Nn]([^A-Za-z0-9_]|$)',
               },
               { pattern: `${ LINE_OPENING }Verdict: supported\\s*$` },
             ],
@@ -382,6 +382,31 @@ const FACT_LINE_CASES = [
     'with a Shown: line, a Not Shown: line and a supported line',
     'Shown: line 3.\nNot Shown: the caller.\nVerdict: supported',
     undefined,
+  ],
+  [
+    'with a Shown: line, a NotShown: line and a supported line',
+    'Shown: line 3.\nNotShown: the caller.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line, a NOTSHOWN: line and a supported line',
+    'Shown: line 3.\nNOTSHOWN: the caller.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line, a Not_shown: line and a supported line',
+    'Shown: line 3.\nNot_shown: the caller.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line, a line that opens with NOT_SHOWN_LABEL and a supported line',
+    'Shown: line 3.\nNOT_SHOWN_LABEL is defined at line 552.\nVerdict: supported',
+    'supported',
+  ],
+  [
+    'with a Shown: line, a line that opens with notShownCount and a supported line',
+    'Shown: line 3.\nnotShownCount = 3\nVerdict: supported',
+    'supported',
   ],
   [
     'with a Shown: line, a **Not shown:** line and a supported line',

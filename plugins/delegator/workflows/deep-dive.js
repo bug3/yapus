@@ -572,10 +572,11 @@ const LINE_SPACE = `[^\\S${ LINE_ENDS }]*`;
 // before that one, trimmed, starts with SHOWN_LABEL or NOT_SHOWN_LABEL
 // followed by text that is not blank, or when its verdict is SUPPORTED and a
 // line states a gap: after any characters that are not ASCII letters, it
-// starts with NOT_WORD, one or more characters that are not ASCII letters and
-// SHOWN_WORD, in any case. VERDICT_SCHEMA holds the rule so that the runtime
-// refuses such an answer, and readVerdict holds it so that the script reads no
-// verdict from one.
+// starts with NOT_WORD, any characters that are not ASCII letters and
+// SHOWN_WORD, in any case, then its end or a character that is not an ASCII
+// letter, a digit or an underscore. VERDICT_SCHEMA holds the rule so that the
+// runtime refuses such an answer, and readVerdict holds it so that the script
+// reads no verdict from one.
 //
 // The evidence the schema admits matches the first two patterns and not both
 // of the last two. VERDICT_PATTERN: the verdict line. FACT_LINE_PATTERN: a
@@ -592,7 +593,7 @@ const FACT_LINE_PATTERN = [
 ].join('');
 const GAP_LINE_PATTERN = [
   `${ LINE_START }[^A-Za-z${ LINE_ENDS }]*${ matchAnyCase(NOT_WORD) }`,
-  `[^A-Za-z${ LINE_ENDS }]+${ matchAnyCase(SHOWN_WORD) }`,
+  `[^A-Za-z${ LINE_ENDS }]*${ matchAnyCase(SHOWN_WORD) }([^A-Za-z0-9_]|$)`,
 ].join('');
 const GAP_LINE = new RegExp(GAP_LINE_PATTERN, 'u');
 const SUPPORTED_LINE_PATTERN =
