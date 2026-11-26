@@ -76,6 +76,12 @@ const VERDICT_SCHEMA = {
             ],
           },
         },
+        {
+          not: {
+            pattern:
+              '(^|\\n)\\s*(?!\\s|Shown:|Not shown:)[-*+>#_~` \\t]*(?:[0-9]+[.)][-*+>#_~` \\t]*)?([Nn][Oo][Tt][ \\t_-]*)?[Ss][Hh][Oo][Ww][Nn][*_~`]*[ \\t]*[:-]',
+          },
+        },
       ],
     },
   },
@@ -192,8 +198,10 @@ const VERDICT_LINE_CASES = [
 const NO_VOTE_MARK = 'undecided 0 of 0';
 // Evidence texts of a verify answer and the verdict read from it, which
 // VERDICT_LINE_CASES do not hold: a verdict is read only from evidence with a
-// line that, trimmed, starts with `Shown:` or `Not shown:`, and no supported
-// verdict from evidence with a `Not shown:` line.
+// line that, trimmed, starts with `Shown:` or `Not shown:`, no supported
+// verdict from evidence with a `Not shown:` line, and none from evidence with
+// a line that starts with a label in another form, such as `- Not shown:`,
+// `Not Shown:` or `1. Shown:`.
 const FACT_LINE_CASES = [
   [
     'with a Shown: line and a supported line',
@@ -253,6 +261,61 @@ const FACT_LINE_CASES = [
   [
     'with Shown: inside a line and a supported line',
     'The line names Shown: here.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line, a - Not shown: line and a supported line',
+    'Shown: line 3.\n- Not shown: the caller.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line, a Not Shown: line and a supported line',
+    'Shown: line 3.\nNot Shown: the caller.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line, a **Not shown:** line and a supported line',
+    'Shown: line 3.\n**Not shown:** the caller.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line, a Not shown - line and a supported line',
+    'Shown: line 3.\nNot shown - the caller.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line, a - Not shown: line and an unsupported line',
+    'Shown: line 3.\n- Not shown: the caller.\nVerdict: unsupported',
+    undefined,
+  ],
+  [
+    'with a **Shown:** line, a Shown: line and a supported line',
+    '**Shown:** line 3.\nShown: line 4.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line, Not shown with no separator and an unsupported line',
+    'Shown: line 3.\nNot shown in the cited lines is the caller.\nVerdict: unsupported',
+    'unsupported',
+  ],
+  [
+    'with a Shown: line, a lowercase shown: line and a supported line',
+    'Shown: line 3.\nshown: line 4.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line, an indented Not shown: line and an unsupported line',
+    'Shown: line 3.\n  Not shown: the caller.\nVerdict: unsupported',
+    'unsupported',
+  ],
+  [
+    'with a Shown: line, a 1. Not shown: line and a supported line',
+    'Shown: line 3.\n1. Not shown: the caller.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a 2) Shown: line, a Shown: line and a supported line',
+    '2) Shown: line 3.\nShown: line 4.\nVerdict: supported',
     undefined,
   ],
 ] as const;
