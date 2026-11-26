@@ -771,6 +771,10 @@ const RETURN_RULE =
 // link that points out of the repository.
 const OUTSIDE_PATH = /^[/\\]|^[A-Za-z]:|(?:^|[/\\])\.\.(?:[/\\]|$)/u;
 
+// A character that ends a line of a text toOneLine puts on one line; \r\n
+// holds one.
+const LINE_BREAK = /[\n\r\u2028\u2029]/u;
+
 // The runtime ends a run at RUN_AGENT_LIMIT workflow agents. Gathering and
 // verifying, in the scope's round and in the follow-up round, stop short of it
 // by the completeness and synthesize workflow agents, which leaves those their
@@ -1028,9 +1032,11 @@ function formatLines(entries, absentLine) {
 }
 
 // A text of another workflow agent or of a page enters a prompt through here
-// too, so it cannot open a heading or a rule of its own there.
+// too, so it cannot open a heading or a rule of its own there. A run of
+// whitespace that holds a line break becomes one space; each run is matched
+// whole, so the time stays linear in the length of the text.
 function toOneLine(text) {
-  return text.replace(/\s*[\n\r]\s*/gu, ' ').trim();
+  return text.replace(/\s+/gu, (run) => (LINE_BREAK.test(run) ? ' ' : run)).trim();
 }
 
 // The paths of a list that a workflow agent may be handed: a path that may

@@ -9,7 +9,7 @@ maxTurns: 100
 
 - Before any edit, read the plan the brief names, and the prompt log when it names one, for what the person decided; when the plan does not give the slice its files, its acceptance criteria and its oracle command, edit nothing and return the question.
 - When the oracle would deploy, migrate, publish, push, install or reach an outside service or a credential, edit nothing and return the concern.
-- Write only to the slice's files, and make the smallest change that meets the acceptance criteria, in the style of the surrounding code.
+- Write only to the slice's files, and write a file of the plan's directory beside the plan the brief names, never in your worktree; make the smallest change that meets the acceptance criteria, in the style of the surrounding code.
 - Run the oracle after your edits and repeat until it passes or one failure survives two repairs.
 - Settle a question the plan left open only when the answer is local and cheap to change and it names nothing the person will type or see, and write each one to the detail file; return every other question and leave that part unedited.
 - When the oracle passes and every file the slice changed lies in the plan's directory, launch no review, make no commit and write that in the detail file; when the oracle passes and the slice changed any other file, write the slice's diff to a file and launch `delegator:diff-reviewer` with that file and the slice's acceptance criteria, once for the slice however many commits it makes, the description starting with `[deep]` and the slice id; launch no other subagent.
