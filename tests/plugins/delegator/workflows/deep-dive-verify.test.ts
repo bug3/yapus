@@ -81,12 +81,6 @@ const VERDICT_SCHEMA = {
             ],
           },
         },
-        {
-          not: {
-            pattern:
-              `${ LINE_OPENING }(?!\\s|Shown:|Not shown:)[-*+>#_~\` \\t]*(?:[0-9]+[.)][-*+>#_~\` \\t]*)?([Nn][Oo][Tt][ \\t_-]*)?[Ss][Hh][Oo][Ww][Nn][*_~\`]*[ \\t]*[:-]`,
-          },
-        },
       ],
     },
   },
@@ -330,6 +324,26 @@ const FACT_LINE_CASES = [
     'supported',
   ],
   [
+    'with a Shown: line, a - Not shown: line and an unopened line',
+    'Shown: line 3.\n- Not shown: the file.\nVerdict: unopened',
+    'unopened',
+  ],
+  [
+    'with a Shown: line, a quoted shown: false line and a supported line',
+    'Shown: line 3 sets it.\nshown: false\nVerdict: supported',
+    'supported',
+  ],
+  [
+    'with a Shown: line, a quoted # shown: line and a supported line',
+    'Shown: line 3 holds it.\n# shown:\nVerdict: supported',
+    'supported',
+  ],
+  [
+    'with a Shown: line, a quoted --shown-only line and a supported line',
+    'Shown: line 3 names the flag.\n--shown-only\nVerdict: supported',
+    'supported',
+  ],
+  [
     'with Shown: inside a line and a supported line',
     'The line names Shown: here.\nVerdict: supported',
     undefined,
@@ -357,12 +371,12 @@ const FACT_LINE_CASES = [
   [
     'with a Shown: line, a - Not shown: line and an unsupported line',
     'Shown: line 3.\n- Not shown: the caller.\nVerdict: unsupported',
-    undefined,
+    'unsupported',
   ],
   [
     'with a **Shown:** line, a Shown: line and a supported line',
     '**Shown:** line 3.\nShown: line 4.\nVerdict: supported',
-    undefined,
+    'supported',
   ],
   [
     'with a Shown: line, Not shown with no separator and an unsupported line',
@@ -372,7 +386,7 @@ const FACT_LINE_CASES = [
   [
     'with a Shown: line, a lowercase shown: line and a supported line',
     'Shown: line 3.\nshown: line 4.\nVerdict: supported',
-    undefined,
+    'supported',
   ],
   [
     'with a Shown: line, an indented Not shown: line and an unsupported line',
@@ -387,7 +401,7 @@ const FACT_LINE_CASES = [
   [
     'with a 2) Shown: line, a Shown: line and a supported line',
     '2) Shown: line 3.\nShown: line 4.\nVerdict: supported',
-    undefined,
+    'supported',
   ],
 ] as const;
 // The flags a JSON Schema validator may compile a pattern with.
