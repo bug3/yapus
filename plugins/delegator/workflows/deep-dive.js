@@ -565,11 +565,16 @@ const LABEL_WORD_JOINERS = '_-';
 const LABEL_CLOSING_MARKS = '*_~`';
 const LABEL_SEPARATORS = ':-';
 
+// The characters that end a line of evidence, as the body of a pattern's
+// class, and what breaks evidence into lines: one of them, or \r\n.
+const LINE_ENDS = '\\n\\r\\u2028\\u2029';
+const LINE_BREAK = new RegExp(`\\r\\n|[${ LINE_ENDS }]`, 'u');
+
 // A line start in a pattern, and the whitespace a line may open with: no
-// line break, so that a pattern matched from each line start stays linear in
+// line end, so that a pattern matched from each line start stays linear in
 // the evidence length.
-const LINE_START = '(^|\\n)';
-const LINE_SPACE = '[^\\S\\n]*';
+const LINE_START = `(^|[${ LINE_ENDS }])`;
+const LINE_SPACE = `[^\\S${ LINE_ENDS }]*`;
 
 // The rule on refused evidence: a verify agent's evidence gives no verdict,
 // and its answer is no vote, when the last of its lines that is not blank,
@@ -1398,7 +1403,7 @@ function readVerdict(answer) {
     return undefined;
   }
 
-  const lines = answer.evidence.split('\n');
+  const lines = answer.evidence.split(LINE_BREAK);
 
   while (lines.length > 0 && lines.at(-1).trim() === '') {
     lines.pop();

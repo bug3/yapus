@@ -60,26 +60,28 @@ type SchemaPart =
   | { readonly not: SchemaPart }
   | { readonly allOf: readonly SchemaPart[] };
 
+// A line start of the evidence patterns and the whitespace the line opens with.
+const LINE_OPENING = '(^|[\\n\\r\\u2028\\u2029])[^\\S\\n\\r\\u2028\\u2029]*';
 const VERDICT_SCHEMA = {
   type: 'object',
   properties: {
     evidence: {
       type: 'string',
       allOf: [
-        { pattern: '(^|\\n)[^\\S\\n]*Verdict: (supported|unsupported|unopened)\\s*$' },
-        { pattern: '(^|\\n)[^\\S\\n]*(Shown:|Not shown:)' },
+        { pattern: `${ LINE_OPENING }Verdict: (supported|unsupported|unopened)\\s*$` },
+        { pattern: `${ LINE_OPENING }(Shown:|Not shown:)` },
         {
           not: {
             allOf: [
-              { pattern: '(^|\\n)[^\\S\\n]*Not shown:' },
-              { pattern: '(^|\\n)[^\\S\\n]*Verdict: supported\\s*$' },
+              { pattern: `${ LINE_OPENING }Not shown:` },
+              { pattern: `${ LINE_OPENING }Verdict: supported\\s*$` },
             ],
           },
         },
         {
           not: {
             pattern:
-              '(^|\\n)[^\\S\\n]*(?!\\s|Shown:|Not shown:)[-*+>#_~` \\t]*(?:[0-9]+[.)][-*+>#_~` \\t]*)?([Nn][Oo][Tt][ \\t_-]*)?[Ss][Hh][Oo][Ww][Nn][*_~`]*[ \\t]*[:-]',
+              `${ LINE_OPENING }(?!\\s|Shown:|Not shown:)[-*+>#_~\` \\t]*(?:[0-9]+[.)][-*+>#_~\` \\t]*)?([Nn][Oo][Tt][ \\t_-]*)?[Ss][Hh][Oo][Ww][Nn][*_~\`]*[ \\t]*[:-]`,
           },
         },
       ],
@@ -253,6 +255,31 @@ const FACT_LINE_CASES = [
     'with a Not shown: line after a carriage return and a supported line',
     'Shown: line 3.\r\nNot shown: the caller.\r\nVerdict: supported',
     undefined,
+  ],
+  [
+    'with a Shown: line, a Not shown: line after a lone carriage return and a supported line',
+    'Shown: line 3.\rNot shown: the caller.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line, a Not shown: line after a line separator and a supported line',
+    'Shown: line 3.\u2028Not shown: the caller.\nVerdict: supported',
+    undefined,
+  ],
+  [
+    'with a Shown: line and a supported line after a paragraph separator',
+    'Shown: line 3.\u2029Verdict: supported',
+    'supported',
+  ],
+  [
+    'with a Shown: line and an unsupported line after a lone carriage return',
+    'Shown: line 3.\rVerdict: unsupported\r',
+    'unsupported',
+  ],
+  [
+    'with a Shown: line after a line separator and a supported line',
+    'The source.\u2028Shown: line 3.\nVerdict: supported',
+    'supported',
   ],
   [
     'with Shown: inside a line and a supported line',
