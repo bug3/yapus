@@ -572,8 +572,11 @@ const LABEL_SEPARATORS = ':-';
 // starts with SHOWN_LABEL or NOT_SHOWN_LABEL. NOT_SHOWN_LINE_PATTERN: a line
 // starts with NOT_SHOWN_LABEL. SUPPORTED_LINE_PATTERN: the last line that is
 // not blank is VERDICT_LINE_START and SUPPORTED. VARIANT_LABEL_PATTERN: a line
-// starts, after whitespace, with no exact label but with LABEL_OPENING_MARKS,
-// spaces and tabs, a list number, the label words in any case and a
+// starts, after whitespace, with no exact label but with any
+// LABEL_OPENING_MARKS, spaces and tabs, an optional list number that ends in
+// LIST_NUMBER_ENDS and may take more of those marks, the label words in any
+// case, NOT_WORD optional and joined to SHOWN_WORD by spaces, tabs or
+// LABEL_WORD_JOINERS, then any LABEL_CLOSING_MARKS, spaces and tabs and a
 // LABEL_SEPARATORS character. The schema only validates; readVerdict reads and
 // cuts the verdict line, and reads none from evidence VARIANT_LABEL matches.
 const VERDICT_PATTERN = `(^|\\n)\\s*${ VERDICT_LINE_START }(${ VERDICTS.join('|') })\\s*$`;
