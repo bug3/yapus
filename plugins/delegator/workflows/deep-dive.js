@@ -565,20 +565,28 @@ const LABEL_WORD_JOINERS = '_-';
 const LABEL_CLOSING_MARKS = '*_~`';
 const LABEL_SEPARATORS = ':-';
 
-// The evidence the verify schema admits matches the first two patterns, not
-// both of the next two and not the last, so the runtime refuses an answer that
-// readVerdict would read as no vote. VERDICT_PATTERN: the last line that is
-// not blank is VERDICT_LINE_START and a verdict. FACT_LINE_PATTERN: a line
-// starts with SHOWN_LABEL or NOT_SHOWN_LABEL. NOT_SHOWN_LINE_PATTERN: a line
-// starts with NOT_SHOWN_LABEL. SUPPORTED_LINE_PATTERN: the last line that is
-// not blank is VERDICT_LINE_START and SUPPORTED. VARIANT_LABEL_PATTERN: a line
+// The rule on refused evidence: a verify agent's evidence gives no verdict,
+// and its answer is no vote, when the last of its lines that is not blank,
+// trimmed, is not exactly VERDICT_LINE_START and a verdict, when no line
+// before that one, trimmed, starts with SHOWN_LABEL or NOT_SHOWN_LABEL, when
+// its verdict is SUPPORTED and such a line starts with NOT_SHOWN_LABEL, or
+// when a line starts with a label in another form. VERDICT_SCHEMA holds the
+// rule so that the runtime refuses such an answer, and readVerdict holds it
+// so that the script reads no verdict from one.
+//
+// The evidence the schema admits matches the first two patterns, not both of
+// the next two and not the last. VERDICT_PATTERN: the last line that is not
+// blank is VERDICT_LINE_START and a verdict. FACT_LINE_PATTERN: a line starts
+// with SHOWN_LABEL or NOT_SHOWN_LABEL. NOT_SHOWN_LINE_PATTERN: a line starts
+// with NOT_SHOWN_LABEL. SUPPORTED_LINE_PATTERN: the last line that is not
+// blank is VERDICT_LINE_START and SUPPORTED. VARIANT_LABEL_PATTERN: a line
 // starts, after whitespace, with no exact label but with any
 // LABEL_OPENING_MARKS, spaces and tabs, an optional list number that ends in
 // LIST_NUMBER_ENDS and may take more of those marks, the label words in any
 // case, NOT_WORD optional and joined to SHOWN_WORD by spaces, tabs or
 // LABEL_WORD_JOINERS, then any LABEL_CLOSING_MARKS, spaces and tabs and a
 // LABEL_SEPARATORS character. The schema only validates; readVerdict reads and
-// cuts the verdict line, and reads none from evidence VARIANT_LABEL matches.
+// cuts the verdict line.
 const VERDICT_PATTERN = [
   `(^|\\n)\\s*${ escapePattern(VERDICT_LINE_START) }`,
   `(${ VERDICTS.map(escapePattern).join('|') })\\s*$`,
@@ -1363,10 +1371,9 @@ function getOutcome(answers, quorum) {
 }
 
 // A vote is the answer of a verify agent whose verdict line supports its claim
-// or does not. A verify agent that opened no source, ended its evidence with
-// no verdict line, wrote no fact line before it, gave SUPPORTED with a
-// NOT_SHOWN_LABEL line, wrote a label in another form, returned nothing or
-// was not launched casts none.
+// or does not. A verify agent that opened no source, returned evidence the
+// rule on refused evidence refuses (beside VERDICT_PATTERN), returned nothing
+// or was not launched casts none.
 function isVote(answer) {
   const verdict = readVerdict(answer)?.verdict;
 
@@ -1378,13 +1385,8 @@ function countVerdict(answers, verdict) {
 }
 
 // The verdict a verify agent's answer gives and its evidence before the line
-// that gives it. The line is the last of the evidence that is not blank,
-// trimmed; an answer whose line is not exactly VERDICT_LINE_START and a
-// verdict gives none, and is no vote. So does an answer with no line before
-// it that, trimmed, starts with SHOWN_LABEL or NOT_SHOWN_LABEL, a SUPPORTED
-// one with such a line that starts with NOT_SHOWN_LABEL, and one whose
-// evidence VARIANT_LABEL matches, whatever its verdict: the evidence
-// VERDICT_SCHEMA refuses.
+// that gives it, the last of the evidence that is not blank; evidence the rule
+// on refused evidence refuses (beside VERDICT_PATTERN) gives none.
 function readVerdict(answer) {
   if (typeof answer?.evidence !== 'string' || VARIANT_LABEL.test(answer.evidence)) {
     return undefined;

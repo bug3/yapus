@@ -105,10 +105,9 @@ const NO_VERDICT = { evidence: 'The source says so.' } as const;
 
 // Evidence texts of a repository verify answer, each but the last two opening
 // with a fact line, the mark each gives its claim and the verdict read from
-// it: the verdict is the last line that is not blank, trimmed, and only when
-// it is exactly `Verdict: ` and a verdict; the evidence printed is the
-// evidence before that line. An unopened verdict casts no vote, so its mark is
-// the mark of no verdict.
+// it under the rule on refused evidence in deep-dive.js; the evidence printed
+// is the evidence before the verdict line. An unopened verdict casts no vote,
+// so its mark is the mark of no verdict.
 const VERDICT_LINE_CASES = [
   [
     'with a supported line',
@@ -196,12 +195,9 @@ const VERDICT_LINE_CASES = [
   ],
 ] as const;
 const NO_VOTE_MARK = 'undecided 0 of 0';
-// Evidence texts of a verify answer and the verdict read from it, which
-// VERDICT_LINE_CASES do not hold: a verdict is read only from evidence with a
-// line that, trimmed, starts with `Shown:` or `Not shown:`, no supported
-// verdict from evidence with a `Not shown:` line, and none from evidence with
-// a line that starts with a label in another form, such as `- Not shown:`,
-// `Not Shown:` or `1. Shown:`.
+// Evidence texts of a verify answer and the verdict read from it under the
+// rule on refused evidence in deep-dive.js, which VERDICT_LINE_CASES do not
+// hold: cases of its fact lines and its labels.
 const FACT_LINE_CASES = [
   [
     'with a Shown: line and a supported line',
