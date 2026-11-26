@@ -66,20 +66,20 @@ const VERDICT_SCHEMA = {
     evidence: {
       type: 'string',
       allOf: [
-        { pattern: '(^|\\n)\\s*Verdict: (supported|unsupported|unopened)\\s*$' },
-        { pattern: '(^|\\n)\\s*(Shown:|Not shown:)' },
+        { pattern: '(^|\\n)[^\\S\\n]*Verdict: (supported|unsupported|unopened)\\s*$' },
+        { pattern: '(^|\\n)[^\\S\\n]*(Shown:|Not shown:)' },
         {
           not: {
             allOf: [
-              { pattern: '(^|\\n)\\s*Not shown:' },
-              { pattern: '(^|\\n)\\s*Verdict: supported\\s*$' },
+              { pattern: '(^|\\n)[^\\S\\n]*Not shown:' },
+              { pattern: '(^|\\n)[^\\S\\n]*Verdict: supported\\s*$' },
             ],
           },
         },
         {
           not: {
             pattern:
-              '(^|\\n)\\s*(?!\\s|Shown:|Not shown:)[-*+>#_~` \\t]*(?:[0-9]+[.)][-*+>#_~` \\t]*)?([Nn][Oo][Tt][ \\t_-]*)?[Ss][Hh][Oo][Ww][Nn][*_~`]*[ \\t]*[:-]',
+              '(^|\\n)[^\\S\\n]*(?!\\s|Shown:|Not shown:)[-*+>#_~` \\t]*(?:[0-9]+[.)][-*+>#_~` \\t]*)?([Nn][Oo][Tt][ \\t_-]*)?[Ss][Hh][Oo][Ww][Nn][*_~`]*[ \\t]*[:-]',
           },
         },
       ],
@@ -728,6 +728,19 @@ for (const [name, evidence, verdict] of [
     assert.equal(listClaimLines(run)[0]?.endsWith(NO_VOTE_MARK), !isVote);
   });
 }
+
+test('judges evidence of 40000 line breaks in under a second', async () => {
+  const evidence = `${ '\n'.repeat(40000) }Verdict: supported`;
+  const start = performance.now();
+  const run = await runClaim('repository', [{ evidence }]);
+  const admissions = PATTERN_FLAGS.map(
+    (flags) => admitsEvidence(readEvidenceSchema(run), evidence, flags),
+  );
+
+  assert.equal(performance.now() - start < 1000, true);
+  assert.deepEqual(admissions, [false, false]);
+  assert.equal(listClaimLines(run)[0]?.endsWith(NO_VOTE_MARK), true);
+});
 
 test('gives a web claim whose first answer ends in no verdict line a second vote', async () => {
   const run = await runClaim('web', [NO_VERDICT, SUPPORTED, SUPPORTED]);

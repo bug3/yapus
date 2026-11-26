@@ -565,6 +565,12 @@ const LABEL_WORD_JOINERS = '_-';
 const LABEL_CLOSING_MARKS = '*_~`';
 const LABEL_SEPARATORS = ':-';
 
+// A line start in a pattern, and the whitespace a line may open with: no
+// line break, so that a pattern matched from each line start stays linear in
+// the evidence length.
+const LINE_START = '(^|\\n)';
+const LINE_SPACE = '[^\\S\\n]*';
+
 // The rule on refused evidence: a verify agent's evidence gives no verdict,
 // and its answer is no vote, when the last of its lines that is not blank,
 // trimmed, is not exactly VERDICT_LINE_START and a verdict, when no line
@@ -588,16 +594,16 @@ const LABEL_SEPARATORS = ':-';
 // LABEL_SEPARATORS character. The schema only validates; readVerdict reads and
 // cuts the verdict line.
 const VERDICT_PATTERN = [
-  `(^|\\n)\\s*${ escapePattern(VERDICT_LINE_START) }`,
+  `${ LINE_START }${ LINE_SPACE }${ escapePattern(VERDICT_LINE_START) }`,
   `(${ VERDICTS.map(escapePattern).join('|') })\\s*$`,
 ].join('');
 const FACT_LINE_PATTERN =
-  `(^|\\n)\\s*(${ escapePattern(SHOWN_LABEL) }|${ escapePattern(NOT_SHOWN_LABEL) })`;
-const NOT_SHOWN_LINE_PATTERN = `(^|\\n)\\s*${ escapePattern(NOT_SHOWN_LABEL) }`;
+  `${ LINE_START }${ LINE_SPACE }(${ escapePattern(SHOWN_LABEL) }|${ escapePattern(NOT_SHOWN_LABEL) })`;
+const NOT_SHOWN_LINE_PATTERN = `${ LINE_START }${ LINE_SPACE }${ escapePattern(NOT_SHOWN_LABEL) }`;
 const SUPPORTED_LINE_PATTERN =
-  `(^|\\n)\\s*${ escapePattern(VERDICT_LINE_START) }${ escapePattern(SUPPORTED) }\\s*$`;
+  `${ LINE_START }${ LINE_SPACE }${ escapePattern(VERDICT_LINE_START) }${ escapePattern(SUPPORTED) }\\s*$`;
 const VARIANT_LABEL_PATTERN = [
-  `(^|\\n)\\s*(?!\\s|${ escapePattern(SHOWN_LABEL) }|${ escapePattern(NOT_SHOWN_LABEL) })`,
+  `${ LINE_START }${ LINE_SPACE }(?!\\s|${ escapePattern(SHOWN_LABEL) }|${ escapePattern(NOT_SHOWN_LABEL) })`,
   `[${ LABEL_OPENING_MARKS } \\t]*`,
   `(?:[0-9]+[${ LIST_NUMBER_ENDS }][${ LABEL_OPENING_MARKS } \\t]*)?`,
   `(${ matchAnyCase(NOT_WORD) }[ \\t${ LABEL_WORD_JOINERS }]*)?${ matchAnyCase(SHOWN_WORD) }`,
