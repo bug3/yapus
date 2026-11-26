@@ -11,7 +11,10 @@ import { getCompletions, type Completion } from './get-completions.ts';
 // nothing. A return of a launch by the main agent at deep depth judges a whole
 // plan and lands on nothing; one at another depth, or one whose launch row
 // cannot be reached, lands on the most recent builder completion before it in
-// the same session, and on none when there is no such completion. A plan
+// the same session, and on none when there is no such completion. Only a
+// finisher with an allowed diff-reviewer launch of its own counts, whatever
+// kept the others from launching one, such as a slice that changed only files
+// in the plan's directory. A plan
 // review is a diff-reviewer completion of a deep launch by the main agent.
 export interface Rework {
   readonly builders: number;
@@ -30,7 +33,8 @@ const DEEP = '[deep]';
 export function getRework(rows: readonly Row[], words: ReturnWords): Rework {
   const completions = getCompletions(rows);
   const builders = completions.filter((completion) => completion.subject === BUILDER);
-  const finishers = completions.filter((completion) => completion.subject === FINISHER);
+  const finishers = completions.filter((completion) => completion.subject === FINISHER
+    && hasLaunchedReviewer(rows, completion.agentId));
   const judges = rows.filter((row) => isReworkReturn(row, words));
   const landedOn = new Set(judges.flatMap((judge) => getLandedOn(rows, completions, judge) ?? []));
   const planReviews = completions.filter((completion) => completion.subject === DIFF_REVIEWER
@@ -63,6 +67,11 @@ function getLandedOn(
     ? getLatestBefore(completions.filter((completion) => completion.subject === BUILDER), judge)
     : completions.find((completion) =>
       completion.subject === FINISHER && completion.agentId === callerId);
+}
+
+function hasLaunchedReviewer(rows: readonly Row[], agentId: string): boolean {
+  return rows.some((row) => row.hook === 'launch' && row.allowed
+    && row.subject === DIFF_REVIEWER && row.callerId === agentId);
 }
 
 // The launch row of an agent is reached through its end row: the end row

@@ -188,6 +188,7 @@ test('counts a finisher once however many of its reviewers send it back', () => 
 test('lands a main-agent return without [deep] on the builder, not the finisher', () => {
   const rework = getRework([
     { ...END, time: 't1' },
+    { ...NESTED_LAUNCH, toolUseId: 'toolu_r' },
     FINISHER,
     { ...NESTED_LAUNCH, callerId: undefined, description: '[standard] review the diff' },
     JUDGE_END,
@@ -195,6 +196,25 @@ test('lands a main-agent return without [deep] on the builder, not the finisher'
   ], WORDS);
 
   assert.deepEqual(rework, { builders: 1, reworked: 1, finishers: 1, reworkedFinishers: 0,
+    planReviews: 0, reworkedPlanReviews: 0 });
+});
+
+test('counts only the finishers that launched a diff-reviewer', () => {
+  const rework = getRework([
+    NESTED_LAUNCH,
+    JUDGE_END,
+    { ...JUDGE, time: 't3' },
+    { ...FINISHER, time: 't4' },
+    { ...NESTED_LAUNCH, toolUseId: 'toolu_h', callerId: 'g' },
+    { ...JUDGE_END, agentId: 'h', toolUseId: 'toolu_h' },
+    { ...JUDGE, agentId: 'h', time: 't3', verdict: 'APPROVE' },
+    { ...FINISHER, agentId: 'g', time: 't4' },
+    { ...FINISHER, agentId: 'p', time: 't4' },
+    { ...NESTED_LAUNCH, allowed: false, toolUseId: 'toolu_q', callerId: 'q' },
+    { ...FINISHER, agentId: 'q', time: 't4' },
+  ], WORDS);
+
+  assert.deepEqual(rework, { builders: 0, reworked: 0, finishers: 2, reworkedFinishers: 1,
     planReviews: 0, reworkedPlanReviews: 0 });
 });
 
