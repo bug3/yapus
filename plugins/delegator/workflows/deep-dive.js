@@ -579,12 +579,18 @@ const LABEL_SEPARATORS = ':-';
 // LABEL_WORD_JOINERS, then any LABEL_CLOSING_MARKS, spaces and tabs and a
 // LABEL_SEPARATORS character. The schema only validates; readVerdict reads and
 // cuts the verdict line, and reads none from evidence VARIANT_LABEL matches.
-const VERDICT_PATTERN = `(^|\\n)\\s*${ VERDICT_LINE_START }(${ VERDICTS.join('|') })\\s*$`;
-const FACT_LINE_PATTERN = `(^|\\n)\\s*(${ SHOWN_LABEL }|${ NOT_SHOWN_LABEL })`;
-const NOT_SHOWN_LINE_PATTERN = `(^|\\n)\\s*${ NOT_SHOWN_LABEL }`;
-const SUPPORTED_LINE_PATTERN = `(^|\\n)\\s*${ VERDICT_LINE_START }${ SUPPORTED }\\s*$`;
+const VERDICT_PATTERN = [
+  `(^|\\n)\\s*${ escapePattern(VERDICT_LINE_START) }`,
+  `(${ VERDICTS.map(escapePattern).join('|') })\\s*$`,
+].join('');
+const FACT_LINE_PATTERN =
+  `(^|\\n)\\s*(${ escapePattern(SHOWN_LABEL) }|${ escapePattern(NOT_SHOWN_LABEL) })`;
+const NOT_SHOWN_LINE_PATTERN = `(^|\\n)\\s*${ escapePattern(NOT_SHOWN_LABEL) }`;
+const SUPPORTED_LINE_PATTERN =
+  `(^|\\n)\\s*${ escapePattern(VERDICT_LINE_START) }${ escapePattern(SUPPORTED) }\\s*$`;
 const VARIANT_LABEL_PATTERN = [
-  `(^|\\n)\\s*(?!\\s|${ SHOWN_LABEL }|${ NOT_SHOWN_LABEL })[${ LABEL_OPENING_MARKS } \\t]*`,
+  `(^|\\n)\\s*(?!\\s|${ escapePattern(SHOWN_LABEL) }|${ escapePattern(NOT_SHOWN_LABEL) })`,
+  `[${ LABEL_OPENING_MARKS } \\t]*`,
   `(?:[0-9]+[${ LIST_NUMBER_ENDS }][${ LABEL_OPENING_MARKS } \\t]*)?`,
   `(${ matchAnyCase(NOT_WORD) }[ \\t${ LABEL_WORD_JOINERS }]*)?${ matchAnyCase(SHOWN_WORD) }`,
   `[${ LABEL_CLOSING_MARKS }]*[ \\t]*[${ LABEL_SEPARATORS }]`,
@@ -1409,7 +1415,15 @@ function readVerdict(answer) {
 // A pattern that matches `word` in any case: each letter as a class of its
 // capital and its small form.
 function matchAnyCase(word) {
-  return [...word].map((letter) => `[${ letter.toUpperCase() }${ letter.toLowerCase() }]`).join('');
+  return [...word]
+    .map((letter) => `[${ escapePattern(letter.toUpperCase()) }${ escapePattern(letter.toLowerCase()) }]`)
+    .join('');
+}
+
+// A pattern that matches `text` as it is written: each character a pattern
+// reads as syntax, behind a backslash.
+function escapePattern(text) {
+  return text.replace(/[\\^$.*+?()[\]{}|/]/gu, '\\$&');
 }
 
 function countOutcome(claims, counted) {
