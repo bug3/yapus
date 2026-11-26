@@ -55,9 +55,13 @@ const WEB_VERIFY_PROMPT = [
 const VERDICT_SCHEMA = {
   type: 'object',
   properties: {
-    evidence: { type: 'string' },
+    evidence: {
+      type: 'string',
+      pattern: '(^|\\n)\\s*Verdict: (supported|unsupported|unopened)\\s*$',
+    },
   },
   required: ['evidence'],
+  additionalProperties: false,
 } as const;
 
 const SUPPORTED = { evidence: 'The source says so.\nVerdict: supported' } as const;
@@ -66,67 +70,86 @@ const UNSUPPORTED_FIRST = { evidence: 'The page\nnames no stop.\nVerdict: unsupp
 const UNOPENED = { evidence: 'The source is not there.\nVerdict: unopened' } as const;
 const NO_VERDICT = { evidence: 'The source says so.' } as const;
 
-// Evidence texts of a repository verify answer and the mark each gives its
-// claim: the verdict is the last line that is not blank, trimmed, and only
-// when it is exactly `Verdict: ` and a verdict; the evidence printed is the
-// evidence before that line.
+// Evidence texts of a repository verify answer, the mark each gives its claim
+// and the verdict read from it: the verdict is the last line that is not
+// blank, trimmed, and only when it is exactly `Verdict: ` and a verdict; the
+// evidence printed is the evidence before that line. An unopened verdict
+// casts no vote, so its mark is the mark of no verdict.
 const VERDICT_LINE_CASES = [
   [
     'with a supported line',
     'The line shows it.\nVerdict: supported',
     'verified 1 of 1',
+    'supported',
   ],
   [
     'with an unsupported line and a line break',
     'The line leaves it out.\nVerdict: unsupported\n',
     'not supported 0 of 1: The line leaves it out.',
+    'unsupported',
   ],
   [
     'with an unopened line after a carriage return and before spaces',
     'No such file.\r\nVerdict: unopened  ',
     'undecided 0 of 0',
+    'unopened',
   ],
   [
     'with an indented supported line',
     'Shown.\n  Verdict: supported',
     'verified 1 of 1',
+    'supported',
   ],
   [
     'with an unsupported line, then a supported one',
     'Verdict: unsupported\nVerdict: supported',
     'verified 1 of 1',
+    'supported',
   ],
   [
     'with a line after its verdict line',
     'Verdict: supported\nThe line shows it.',
     'undecided 0 of 0',
+    undefined,
   ],
   [
     'with a capital verdict word',
     'Shown.\nVerdict: Supported',
     'undecided 0 of 0',
+    undefined,
   ],
   [
     'with a bold verdict line',
     'Shown.\n**Verdict: supported**',
     'undecided 0 of 0',
+    undefined,
   ],
   [
     'with a period after its verdict word',
     'Shown.\nVerdict: supported.',
     'undecided 0 of 0',
+    undefined,
   ],
   [
     'with no verdict line',
     'Shown.',
     'undecided 0 of 0',
+    undefined,
   ],
   [
     'that is empty',
     '',
     'undecided 0 of 0',
+    undefined,
+  ],
+  [
+    'with an empty line before its supported line',
+    'Shown.\n\nVerdict: supported',
+    'verified 1 of 1',
+    'supported',
   ],
 ] as const;
+const NO_VOTE_MARK = 'undecided 0 of 0';
 
 const REPOSITORY_CLAIM = {
   claim: 'The gate blocks a return\n  with no status word.',
@@ -508,6 +531,22 @@ for (const [name, evidence, mark] of VERDICT_LINE_CASES) {
   });
 }
 
+// The pattern of the verify schema admits exactly the evidence the script
+// reads a verdict from: a supported or unsupported verdict shows as a vote in
+// the mark, and an unopened one, which casts no vote, is held by the pattern
+// alone.
+for (const [name, evidence, , verdict] of VERDICT_LINE_CASES) {
+  const verb = verdict === undefined ? 'refuses' : 'admits';
+
+  test(`${ verb } in the verify schema evidence that ends ${ name }`, async () => {
+    const run = await runClaim('repository', [{ evidence }]);
+    const isVote = verdict === 'supported' || verdict === 'unsupported';
+
+    assert.equal(new RegExp(readEvidencePattern(run)).test(evidence), verdict !== undefined);
+    assert.equal(listClaimLines(run)[0]?.endsWith(NO_VOTE_MARK), !isVote);
+  });
+}
+
 test('gives a web claim whose first answer ends in no verdict line a second vote', async () => {
   const run = await runClaim('web', [NO_VERDICT, SUPPORTED, SUPPORTED]);
 
@@ -737,6 +776,15 @@ function listClaimLines(run: WorkflowRun): string[] {
   return (findCall(run, 'synthesize')?.prompt ?? '')
     .split('\n')
     .filter((line) => line.startsWith('- ') && line.includes(' | '));
+}
+
+// The pattern of the evidence in the schema the verify agent of the one
+// repository claim of `run` carries, once that schema is the one written out
+// here.
+function readEvidencePattern(run: WorkflowRun): string {
+  assert.deepEqual(findCall(run, 'verify-repo:Q1.C1')?.options.schema, VERDICT_SCHEMA);
+
+  return VERDICT_SCHEMA.properties.evidence.pattern;
 }
 
 // The block of the research file under the heading `title`, as the prompt

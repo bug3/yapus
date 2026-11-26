@@ -545,6 +545,12 @@ const VERDICTS = [SUPPORTED, UNSUPPORTED, UNOPENED];
 // A verify agent ends its evidence with one line of this text and its verdict.
 const VERDICT_LINE_START = 'Verdict: ';
 
+// The evidence the verify schema admits: text whose last line that is not
+// blank is VERDICT_LINE_START and a verdict, so the runtime refuses an
+// answer that readVerdict would read as no vote. It only validates;
+// readVerdict reads and cuts the line.
+const VERDICT_PATTERN = `(^|\\n)\\s*${ VERDICT_LINE_START }(${ VERDICTS.join('|') })\\s*$`;
+
 // The votes of a kind that decide a claim of each lane: a web claim is
 // verified on its first vote when that supports it, and otherwise decided
 // by WEB_QUORUM.
@@ -564,9 +570,10 @@ const FAILED = 'failed';
 const VERDICT_SCHEMA = {
   type: 'object',
   properties: {
-    evidence: { type: 'string' },
+    evidence: { type: 'string', pattern: VERDICT_PATTERN },
   },
   required: ['evidence'],
+  additionalProperties: false,
 };
 
 // One question the run researches, as the agent that writes it returns it.
