@@ -82,12 +82,12 @@ const UNOPENED = {
 } as const;
 const NO_VERDICT = { evidence: 'The source says so.' } as const;
 
-// Evidence texts of a repository verify answer, each opening with a fact
-// line, the mark each gives its claim and the verdict read from it: the
-// verdict is the last line that is not blank, trimmed, and only when it is
-// exactly `Verdict: ` and a verdict; the evidence printed is the evidence
-// before that line. An unopened verdict casts no vote, so its mark is the
-// mark of no verdict.
+// Evidence texts of a repository verify answer, each but the last two opening
+// with a fact line, the mark each gives its claim and the verdict read from
+// it: the verdict is the last line that is not blank, trimmed, and only when
+// it is exactly `Verdict: ` and a verdict; the evidence printed is the
+// evidence before that line. An unopened verdict casts no vote, so its mark is
+// the mark of no verdict.
 const VERDICT_LINE_CASES = [
   [
     'with a supported line',
@@ -160,6 +160,18 @@ const VERDICT_LINE_CASES = [
     'Shown: the line.\nShown.\n\nVerdict: supported',
     'verified 1 of 1',
     'supported',
+  ],
+  [
+    'with no text at all',
+    '',
+    'undecided 0 of 0',
+    undefined,
+  ],
+  [
+    'with only blank lines',
+    ' \t\n  \n',
+    'undecided 0 of 0',
+    undefined,
   ],
 ] as const;
 const NO_VOTE_MARK = 'undecided 0 of 0';
