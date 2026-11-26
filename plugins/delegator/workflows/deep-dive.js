@@ -1303,15 +1303,12 @@ function formatWebVerifyPrompt({ claim, url, quote }) {
 
 // What the answers of its verify agents make of a claim: the outcome, the
 // mark that prints the outcome with the votes for the claim among the votes
-// cast, and the evidence of the first vote against it whose evidence is not
-// blank.
+// cast, and the evidence of the first vote against it.
 function judgeClaim(answers, quorum) {
   const outcome = getOutcome(answers, quorum);
   const supportedCount = countVerdict(answers, SUPPORTED);
   const voteCount = answers.filter(isVote).length;
-  const against = answers
-    .map(readVerdict)
-    .find((read) => read?.verdict === UNSUPPORTED && read.evidence.trim() !== '');
+  const against = answers.map(readVerdict).find((read) => read?.verdict === UNSUPPORTED);
 
   return {
     outcome,
