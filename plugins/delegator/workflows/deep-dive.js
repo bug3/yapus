@@ -570,20 +570,18 @@ const LINE_SPACE = `[^\\S${ LINE_ENDS }]*`;
 // and its answer is no vote, when the last of its lines that is not blank,
 // trimmed, is not exactly VERDICT_LINE_START and a verdict, when no line
 // before that one, trimmed, starts with SHOWN_LABEL or NOT_SHOWN_LABEL
-// followed by text that is not blank, when
-// its verdict is SUPPORTED and a line states a gap. VERDICT_SCHEMA holds the
-// rule so that the runtime refuses such an answer, and readVerdict holds it
-// so that the script reads no verdict from one.
+// followed by text that is not blank, or when its verdict is SUPPORTED and a
+// line states a gap: after any characters that are not ASCII letters, it
+// starts with NOT_WORD, one or more characters that are not ASCII letters and
+// SHOWN_WORD, in any case. VERDICT_SCHEMA holds the rule so that the runtime
+// refuses such an answer, and readVerdict holds it so that the script reads no
+// verdict from one.
 //
 // The evidence the schema admits matches the first two patterns and not both
-// of the last two. VERDICT_PATTERN: the last line that is not blank is
-// VERDICT_LINE_START and a verdict. FACT_LINE_PATTERN: a line starts with
-// SHOWN_LABEL or NOT_SHOWN_LABEL followed by text that is not blank. GAP_LINE_PATTERN: a line states a gap, that
-// is, after any characters that are not ASCII letters it starts with NOT_WORD,
-// one or more characters that are not ASCII letters and SHOWN_WORD, in any
-// case. SUPPORTED_LINE_PATTERN: the last line that is not blank is
-// VERDICT_LINE_START and SUPPORTED. The schema only validates; readVerdict
-// reads and cuts the verdict line.
+// of the last two. VERDICT_PATTERN: the verdict line. FACT_LINE_PATTERN: a
+// fact line. GAP_LINE_PATTERN: a line that states a gap.
+// SUPPORTED_LINE_PATTERN: the verdict line with SUPPORTED. The schema only
+// validates; readVerdict reads and cuts the verdict line.
 const VERDICT_PATTERN = [
   `${ LINE_START }${ LINE_SPACE }${ escapePattern(VERDICT_LINE_START) }`,
   `(${ VERDICTS.map(escapePattern).join('|') })\\s*$`,
