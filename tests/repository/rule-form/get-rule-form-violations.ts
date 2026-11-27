@@ -5,12 +5,14 @@ import { readUtf8 } from '../../helpers/read-utf8.ts';
 const STANDARDS = 'standards/';
 const FENCE = '---';
 const TITLE = /^# \S/;
-const RULE_HEADING = /^## [A-Z]+-\d+\. (.*)$/;
+const RULE_HEADING = /^## [A-Z]+-(\d+)\. (.*)$/;
 // One sentence: it ends with a period and nowhere starts a second one.
 const ONE_SENTENCE = /^(?!.*\. [A-Z`]).*\.$/;
 
 // Every line of a standard that is not its title, a rule heading of one
-// sentence or blank, as "<path>:<line>: <what is wrong>".
+// sentence or blank, and every rule heading whose number is not the one after
+// the previous heading's, or 1 for the first, as
+// "<path>:<line>: <what is wrong>".
 export function getRuleFormViolations(root: string): string[] {
   return listFiles(root, '.md')
     .filter((path) => path.startsWith(STANDARDS))
@@ -30,7 +32,24 @@ function getViolations(path: string, lines: readonly string[]): string[] {
 
       return judgeLine(line, `${ path }:${ lineNumber }`);
     }),
+    ...getNumberViolations(path, rules, bodyStart + 2),
   ];
+}
+
+function getNumberViolations(path: string, rules: readonly string[], firstLine: number): string[] {
+  const headings = rules.flatMap((line, index) => {
+    const ruleNumber = RULE_HEADING.exec(line)?.[1];
+    const lineNumber = firstLine + index;
+
+    return ruleNumber === undefined ? [] : [{ lineNumber, ruleNumber: Number(ruleNumber) }];
+  });
+
+  return headings.flatMap(({ lineNumber, ruleNumber }, index) => {
+    const expected = (headings[index - 1]?.ruleNumber ?? 0) + 1;
+    const location = `${ path }:${ String(lineNumber) }`;
+
+    return ruleNumber === expected ? [] : [`${ location }: not numbered ${ String(expected) }`];
+  });
 }
 
 function judgeLine(line: string, location: string): string[] {
@@ -38,7 +57,7 @@ function judgeLine(line: string, location: string): string[] {
     return [];
   }
 
-  const sentence = RULE_HEADING.exec(line)?.[1];
+  const sentence = RULE_HEADING.exec(line)?.[2];
 
   if (sentence === undefined) {
     return [`${ location }: not a rule heading`];
