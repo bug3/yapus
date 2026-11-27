@@ -1,7 +1,7 @@
 {
   "name": "ordo",
   "displayName": "Yapus Ordo",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "description": "Installs the yapus standards, the dashes hook and the git hooks once per machine and keeps them current.",
   "author": {
     "name": "bug3"
