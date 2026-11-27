@@ -12,7 +12,7 @@ const RULES_DIR = '.claude/rules/';
 const STANDARDS = 'standards/';
 // Claude Code follows an import up to four hops from CLAUDE.md.
 const MAX_HOPS = 4;
-const RULE_HEADING = /^## ([A-Z]+-\d+)\. /;
+const RULE_HEADING = /^## ([A-Z]+-[1-9]\d*)\. /;
 const HTML_COMMENT = /<!--[\s\S]*?-->/g;
 const FENCED_BLOCK = /^```[\s\S]*?^```$/gm;
 const CODE_SPAN = /`[^`\n]*`/g;
