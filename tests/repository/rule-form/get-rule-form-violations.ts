@@ -5,12 +5,14 @@ import { readUtf8 } from '../../helpers/read-utf8.ts';
 const STANDARDS = 'standards/';
 const FENCE = '---';
 const TITLE = /^# \S/;
-const RULE_HEADING = /^## [A-Z]+-\d+\. (.*)$/;
+const RULE_HEADING = /^## ([A-Z]+)-([1-9]\d*)\. (.*)$/;
 // One sentence: it ends with a period and nowhere starts a second one.
 const ONE_SENTENCE = /^(?!.*\. [A-Z`]).*\.$/;
 
 // Every line of a standard that is not its title, a rule heading of one
-// sentence or blank, as "<path>:<line>: <what is wrong>".
+// sentence or blank, and every rule heading whose prefix is not the first
+// rule heading's or whose number is not the one after the previous heading's,
+// or 1 for the first, as "<path>:<line>: <what is wrong>".
 export function getRuleFormViolations(root: string): string[] {
   return listFiles(root, '.md')
     .filter((path) => path.startsWith(STANDARDS))
@@ -30,7 +32,34 @@ function getViolations(path: string, lines: readonly string[]): string[] {
 
       return judgeLine(line, `${ path }:${ lineNumber }`);
     }),
+    // The title slot counts: a file with no title opens with its first rule.
+    ...getNumberingViolations(path, lines, bodyStart),
   ];
+}
+
+function getNumberingViolations(path: string, lines: readonly string[], start: number): string[] {
+  const headings = lines.slice(start).flatMap((line, index) => {
+    const [, prefix, ruleNumber] = RULE_HEADING.exec(line) ?? [];
+    const lineNumber = start + index + 1;
+
+    return prefix === undefined || ruleNumber === undefined
+      ? []
+      : [{ lineNumber, prefix, ruleNumber: Number(ruleNumber) }];
+  });
+  const firstPrefix = headings[0]?.prefix ?? '';
+
+  return headings.flatMap(({ lineNumber, prefix, ruleNumber }, index) => {
+    const expected = (headings[index - 1]?.ruleNumber ?? 0) + 1;
+    const location = `${ path }:${ String(lineNumber) }`;
+    const prefixViolations = prefix === firstPrefix
+      ? []
+      : [`${ location }: not prefixed ${ firstPrefix }`];
+    const numberViolations = ruleNumber === expected
+      ? []
+      : [`${ location }: not numbered ${ String(expected) }`];
+
+    return [...prefixViolations, ...numberViolations];
+  });
 }
 
 function judgeLine(line: string, location: string): string[] {
@@ -38,7 +67,7 @@ function judgeLine(line: string, location: string): string[] {
     return [];
   }
 
-  const sentence = RULE_HEADING.exec(line)?.[1];
+  const sentence = RULE_HEADING.exec(line)?.[3];
 
   if (sentence === undefined) {
     return [`${ location }: not a rule heading`];

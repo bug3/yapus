@@ -6,4 +6,4 @@ paths:
 
 # Git
 
-## GIT-2. Name a scope after an area of the project, not after a file.
+## GIT-1. Name a scope after an area of the project, not after a file.

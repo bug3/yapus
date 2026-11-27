@@ -37,6 +37,36 @@ test('names a standard that does not open with a title', (t) => {
   assert.deepEqual(getRuleFormViolations(root), ['standards/A.md:6: not a title']);
 });
 
+test('names a heading whose number skips one after the previous heading', (t) => {
+  const root = makeStandard(t, '# A\n\n## A-1. Do x.\n\n## A-3. Do y.\n\n## A-4. Do z.\n');
+
+  assert.deepEqual(getRuleFormViolations(root), ['standards/A.md:5: not numbered 2']);
+});
+
+test('names a first heading whose number is not 1', (t) => {
+  const root = makeStandard(t, '# A\n\n## A-2. Do x.\n\n## A-3. Do y.\n');
+
+  assert.deepEqual(getRuleFormViolations(root), ['standards/A.md:3: not numbered 1']);
+});
+
+test('names a heading whose prefix differs from the first heading', (t) => {
+  const root = makeStandard(t, '# A\n\n## A-1. Do x.\n\n## B-2. Do y.\n');
+
+  assert.deepEqual(getRuleFormViolations(root), ['standards/A.md:5: not prefixed A']);
+});
+
+test('names a heading whose number has a leading zero', (t) => {
+  const root = makeStandard(t, '# A\n\n## A-1. Do x.\n\n## A-02. Do y.\n');
+
+  assert.deepEqual(getRuleFormViolations(root), ['standards/A.md:5: not a rule heading']);
+});
+
+test('counts a rule heading in the title slot when numbering the next', (t) => {
+  const root = makeStandard(t, '## A-1. Do x.\n\n## A-2. Do y.\n');
+
+  assert.deepEqual(getRuleFormViolations(root), ['standards/A.md:1: not a title']);
+});
+
 function makeStandard(t: TestContext, text: string): string {
   const root = makeTempRepo(t);
 
