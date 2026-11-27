@@ -1,10 +1,12 @@
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
+import { POLICY_PATH } from '../../../hooks/claude/delegator/policy/get-context.ts';
 import { listAllFiles, listFiles } from '../../helpers/list-files.ts';
 import { readUtf8 } from '../../helpers/read-utf8.ts';
 
+const REPOSITORY = join(import.meta.dirname, '..', '..', '..');
 const STANDARDS = 'standards/';
-// The delegator's orchestration rules live outside standards/.
-const POLICY = 'hooks/claude/delegator/policy/policy.md';
+// The delegator's orchestration rules live outside standards/, relative to the root.
+const POLICY = relative(REPOSITORY, POLICY_PATH);
 const RULE_HEADING = /^## (([A-Z]+)-[1-9]\d*)\. /gm;
 const CITATION = /(?<![A-Za-z0-9_-])([A-Z]+)-[0-9]+(?![0-9])/g;
 

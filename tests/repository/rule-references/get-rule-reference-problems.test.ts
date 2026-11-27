@@ -18,6 +18,12 @@ test('names a cited ID that no rule heading defines', (t) => {
   assert.deepEqual(getRuleReferenceProblems(root), ['a.ts:2: A-2 names no rule']);
 });
 
+test('names a cited ID of a prefix that only the policy defines', (t) => {
+  const root = makeTempFiles(t, [STANDARD, POLICY, { path: 'a.ts', text: '// Z-1, then Z-2.\n' }]);
+
+  assert.deepEqual(getRuleReferenceProblems(root), ['a.ts:1: Z-2 names no rule']);
+});
+
 test('skips a word whose prefix no rule heading uses', (t) => {
   const root = makeTempFiles(t, [STANDARD, { path: 'a.ts', text: '// UTF-8 and B-2.\n' }]);
 
