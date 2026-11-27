@@ -21,20 +21,20 @@ paths:
 
 ## ENG-5. Keep the parts of one behavior together; when you split it, leave callers one entry point.
 
-## ENG-8. Turn every external input into a type that admits only valid values at the boundary; the core never sees raw input.
+## ENG-6. Turn every external input into a type that admits only valid values at the boundary; the core never sees raw input.
 
-## ENG-9. Make an illegal state unrepresentable in the type; keep absence a different case from error.
+## ENG-7. Make an illegal state unrepresentable in the type; keep absence a different case from error.
 
-## ENG-10. Write no boolean parameter that selects between two behaviors; write two functions or a type with one case per behavior.
+## ENG-8. Write no boolean parameter that selects between two behaviors; write two functions or a type with one case per behavior.
 
-## ENG-11. When the program itself states a closed set of cases, declare it in one place and handle it only through a construct the compiler or a linter checks for exhaustiveness.
+## ENG-9. When the program itself states a closed set of cases, declare it in one place and handle it only through a construct the compiler or a linter checks for exhaustiveness.
 
-## ENG-16. Give every hard-to-reverse effect a reverse path the repository can run.
+## ENG-10. Give every hard-to-reverse effect a reverse path the repository can run.
 
-## ENG-17. Give every invariant a test, and watch that test fail once against the broken invariant before it passes.
+## ENG-11. Give every invariant a test, and watch that test fail once against the broken invariant before it passes.
 
-## ENG-27. Use what the repository already depends on; open no second way to do the same thing.
+## ENG-12. Use what the repository already depends on; open no second way to do the same thing.
 
-## ENG-28. Wire the program's parts together in one place in its own code; adopt no framework that wires the program.
+## ENG-13. Wire the program's parts together in one place in its own code; adopt no framework that wires the program.
 
-## ENG-29. Grant a component the least authority its task needs and deny the rest by default.
+## ENG-14. Grant a component the least authority its task needs and deny the rest by default.

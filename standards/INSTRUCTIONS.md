@@ -20,6 +20,6 @@ paths:
 
 ## INST-5. Write a rule as an action the agent can take, never as a value it should hold.
 
-## INST-8. State where a rule applies when it does not apply everywhere.
+## INST-6. State where a rule applies when it does not apply everywhere.
 
-## INST-9. Leave no two rules that cannot both be obeyed, in one file or across files.
+## INST-7. Leave no two rules that cannot both be obeyed, in one file or across files.
