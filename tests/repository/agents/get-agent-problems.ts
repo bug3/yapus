@@ -28,6 +28,11 @@ const LOCAL_TOOLS: readonly string[] = ['Bash', 'Glob', 'Grep', 'LSP', 'PowerShe
 const BRACKETED = /^\[(.*)\]$/;
 const QUOTED = /^(["'])(.*)\1$/;
 const SCOPE = /\(.*$/;
+// Model prompting: the headings an agent definition's body holds for its
+// model tier, keyed by the model field.
+const MODEL_PROMPTING: ReadonlyMap<string, readonly string[]> = new Map([
+  ['haiku', ['## Steps', '## When unclear', '## Output format', '## Example']],
+]);
 
 // Every way an agent definition of a plugin under root leaves the roster's
 // limits: a missing field (one of tools or disallowedTools is enough), a name
@@ -43,11 +48,18 @@ const SCOPE = /\(.*$/;
 // pair of surrounding brackets is removed, else one pair of surrounding
 // quotes; the value is split at commas; each entry is trimmed and loses one
 // pair of surrounding quotes; a value with no character is a missing field.
-// A YAML block list reads as no tools.
+// A YAML block list reads as no tools. An agent definition whose model
+// MODEL_PROMPTING keys also leaves them by each heading of its model
+// prompting that no line of its body equals.
 export function getAgentProblems(root: string): string[] {
   return listFiles(root, '.md')
     .filter((path) => AGENT_FILE.test(path))
-    .flatMap((path) => getFileProblems(path, getFields(readUtf8(join(root, path)) ?? '')));
+    .flatMap((path) => {
+      const text = readUtf8(join(root, path)) ?? '';
+      const fields = getFields(text);
+
+      return [...getFileProblems(path, fields), ...getPromptingProblems(path, fields, text)];
+    });
 }
 
 function getFileProblems(path: string, fields: ReadonlyMap<string, string>): string[] {
@@ -81,6 +93,21 @@ function getFileProblems(path: string, fields: ReadonlyMap<string, string>): str
     ...listedDenied.map((entry) => `${ path }: lists ${ entry }`),
     ...unlistedDenied.map((tool) => `${ path }: does not disallow ${ tool }`),
   ];
+}
+
+// The headings of the model prompting of the definition's model that no line
+// of its body, the text after its frontmatter, equals, in their order.
+function getPromptingProblems(
+  path: string,
+  fields: ReadonlyMap<string, string>,
+  text: string,
+): string[] {
+  const model = fields.get('model') ?? '';
+  const lines = new Set(text.replace(FRONTMATTER, '').split('\n'));
+
+  return (MODEL_PROMPTING.get(model) ?? [])
+    .filter((heading) => !lines.has(heading))
+    .map((heading) => `${ path }: model prompting for ${ model } needs a ${ heading } section`);
 }
 
 // Whether the tool reads outside content.

@@ -5,6 +5,10 @@ import { type TestContext, test } from 'node:test';
 import { makeTempRepo } from '../../helpers/make-temp-repo.ts';
 import { getAgentProblems } from './get-agent-problems.ts';
 
+const PROMPTING_HEADINGS: readonly string[] = [
+  '## Steps', '## When unclear', '## Output format', '## Example',
+];
+
 interface Agent {
   readonly name: string;
   readonly text: string;
@@ -267,6 +271,44 @@ test('finds nothing in an agent definition without tools that disallows every lo
 
   assert.deepEqual(getAgentProblems(root), []);
 });
+
+test('finds nothing in a haiku agent definition with every heading of model prompting', (t) => {
+  const root = makeAgents(t, [{ name: 'runner', text: makeHaiku(PROMPTING_HEADINGS) }]);
+
+  assert.deepEqual(getAgentProblems(root), []);
+});
+
+for (const heading of PROMPTING_HEADINGS) {
+  test(`names the missing ${ heading } of a haiku agent definition`, (t) => {
+    const headings = PROMPTING_HEADINGS.filter((other) => other !== heading);
+    const root = makeAgents(t, [{ name: 'runner', text: makeHaiku(headings) }]);
+
+    assert.deepEqual(getAgentProblems(root), [makePromptingProblem(heading)]);
+  });
+}
+
+test('names every missing heading of a haiku agent definition without model prompting', (t) => {
+  const root = makeAgents(t, [{ name: 'runner', text: makeHaiku([]) }]);
+
+  assert.deepEqual(getAgentProblems(root), PROMPTING_HEADINGS.map(makePromptingProblem));
+});
+
+test('finds nothing in a sonnet agent definition without the headings of model prompting', (t) => {
+  const root = makeAgents(t, [{ name: 'runner', text: makeHead('runner', 'Read, Bash') }]);
+
+  assert.deepEqual(getAgentProblems(root), []);
+});
+
+function makePromptingProblem(heading: string): string {
+  return `plugins/p/agents/runner.md: model prompting for haiku needs a ${ heading } section`;
+}
+
+function makeHaiku(headings: readonly string[]): string {
+  const lines = ['name: runner', 'description: "d: x"', 'tools: Read, Bash', 'model: haiku'];
+  const body = headings.map((heading) => `${ heading }\n\nbody\n`).join('\n');
+
+  return `---\n${ lines.join('\n') }\n---\n\n${ body }`;
+}
 
 function makeHead(name: string, tools: string): string {
   return makeHeadWith(name, [`tools: ${ tools }`]);
