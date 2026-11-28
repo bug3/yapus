@@ -293,6 +293,13 @@ test('names every missing heading of a haiku agent definition without model prom
   assert.deepEqual(getAgentProblems(root), PROMPTING_HEADINGS.map(makePromptingProblem));
 });
 
+test('names every missing heading of a haiku agent definition whose model is quoted', (t) => {
+  const text = makeHaiku([]).replace('model: haiku', 'model: "haiku" ');
+  const root = makeAgents(t, [{ name: 'runner', text }]);
+
+  assert.deepEqual(getAgentProblems(root), PROMPTING_HEADINGS.map(makePromptingProblem));
+});
+
 test('finds nothing in a sonnet agent definition without the headings of model prompting', (t) => {
   const root = makeAgents(t, [{ name: 'runner', text: makeHead('runner', 'Read, Bash') }]);
 

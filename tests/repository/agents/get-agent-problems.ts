@@ -96,13 +96,15 @@ function getFileProblems(path: string, fields: ReadonlyMap<string, string>): str
 }
 
 // The headings of the model prompting of the definition's model that no line
-// of its body, the text after its frontmatter, equals, in their order.
+// of its body, the text after its frontmatter, equals, in their order. The
+// model is read like a tools entry: trimmed, then one pair of surrounding
+// quotes removed.
 function getPromptingProblems(
   path: string,
   fields: ReadonlyMap<string, string>,
   text: string,
 ): string[] {
-  const model = fields.get('model') ?? '';
+  const model = unquote((fields.get('model') ?? '').trim());
   const lines = new Set(text.replace(FRONTMATTER, '').split('\n'));
 
   return (MODEL_PROMPTING.get(model) ?? [])
